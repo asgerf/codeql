@@ -24,3 +24,37 @@ private import javascript
 private import internal.Shared as Shared
 import Shared::ModelInput as ModelInput
 import Shared::ModelOutput as ModelOutput
+
+/**
+ * A remote flow source originating from a CSV source row.
+ */
+private class RemoteFlowSourceFromCsv extends RemoteFlowSource {
+  RemoteFlowSourceFromCsv() { this = ModelOutput::getASourceNode("remote").getAnImmediateUse() }
+
+  override string getSourceType() { result = "Remote flow" }
+}
+
+/**
+ * Like `ModelOutput::summaryStep` but with API nodes mapped to data-flow nodes.
+ */
+private predicate summaryStepNodes(DataFlow::Node pred, DataFlow::Node succ, string kind) {
+  exists(API::Node predNode, API::Node succNode |
+    ModelOutput::summaryStep(predNode, succNode, kind) and
+    pred = predNode.getARhs() and
+    succ = succNode.getAnImmediateUse()
+  )
+}
+
+/** Data flow steps induced by summary models of kind `value`. */
+private class DataFlowStepFromSummary extends DataFlow::SharedFlowStep {
+  override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
+    summaryStepNodes(pred, succ, "value")
+  }
+}
+
+/** Taint steps induced by summary models of kind `taint`. */
+private class TaintStepFromSummary extends TaintTracking::SharedTaintStep {
+  override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
+    summaryStepNodes(pred, succ, "taint")
+  }
+}

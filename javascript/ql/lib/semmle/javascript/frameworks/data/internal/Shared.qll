@@ -163,14 +163,10 @@ private predicate summaryModel(string row) { any(SummaryModelCsv s).row(padded(r
 private predicate typeModel(string row) { any(TypeModelCsv s).row(padded(row)) }
 
 /**
- * Prefixes a non-empty path with `.` and replaces `..` with `-->`,
- * in order to simplify subsequent path-string manipulation.
+ * Replaces `..` with `-->` in order to simplify subsequent parsing.
  */
 bindingset[path]
 private string normalizePath(string path) {
-  path = "" and result = ""
-  or
-  path != "" and
   result = path.replaceAll("..", "-->")
 }
 
@@ -205,8 +201,8 @@ private predicate summaryModel(
     row.splitAt(";", 0) = package and
     row.splitAt(";", 1) = type and
     normalizePath(row.splitAt(";", 2)) = path and
-    row.splitAt(";", 3).replaceAll("..", "-->") = input and
-    row.splitAt(";", 4).replaceAll("..", "-->") = output and
+    normalizePath(row.splitAt(";", 3)) = input and
+    normalizePath(row.splitAt(";", 4)) = output and
     row.splitAt(";", 5) = kind
   )
 }
@@ -223,6 +219,18 @@ private predicate typeModel(
     row.splitAt(";", 3) = type2 and
     normalizePath(row.splitAt(";", 4)) = path
   )
+}
+
+/**
+ * Gets a package that should be seen as an alias for the given other `package`,
+ * or the `package` itself.
+ */
+bindingset[package]
+bindingset[result]
+string getAPackageAlias(string package) {
+  typeModel(package, "", result, "", "")
+  or
+  result = package
 }
 
 /**
@@ -285,18 +293,59 @@ private string appendToken(string package, string type, string path, string toke
 }
 
 /**
- * Gets a package that should be seen as an alias for the given other `package`,
- * or the `package` itself.
+ * Gets a successor of `node` in the API graph.
  */
-bindingset[package]
-bindingset[result]
-string getAPackageAlias(string package) {
-  typeModel(package, "", result, "", "")
+bindingset[token]
+private API::Node getSuccessorFromNode(API::Node node, AccessPathToken token) {
+  // API graphs use the same label for arguments and parameters. An edge originating from a
+  // use-node represents be an argument, and an edge originating from a def-node represents a parameter.
+  // We just map both to the same thing.
+  token.getName() = ["Argument", "Parameter"] and
+  result = node.getParameter(getAnIntFromStringUnbounded(token.getAnArgument()))
   or
-  result = package
+  token.getName() = "Member" and
+  result = node.getMember(token.getAnArgument())
+  or
+  token.getName() = "ReturnValue" and
+  result = node.getReturn()
+  or
+  // Language-specific tokens
+  result = Impl::getExtraSuccessorFromNode(node, token)
 }
 
-/** Gets the API node corresponding to `(package, type, path)` from a CSV row. */
+/**
+ * Gets an API-graph successor for the given invocation.
+ */
+bindingset[token]
+private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, AccessPathToken token) {
+  token.getName() = "Argument" and
+  (
+    result = invoke.getParameter(getAnIntFromStringUnbounded(token.getAnArgument()))
+    or
+    result = invoke.getParameter(getAnIntFromStringWithArity(token.getAnArgument(), invoke.getNumArgument()))
+  )
+  or
+  token.getName() = "ReturnValue" and
+  result = invoke.getReturn()
+  or
+  // Language-specific tokens
+  result = Impl::getExtraSuccessorFromInvoke(invoke, token)
+}
+
+/**
+ * Holds if `invoke` invokes a call-site filter given by `token`.
+ */
+pragma[inline]
+private predicate invocationMatchesCallSiteFilter(API::InvokeNode invoke, AccessPathToken token) {
+  token.getName() = "WithArity" and
+  invoke.getNumArgument() = getAnIntFromStringUnbounded(token.getAnArgument())
+  or
+  Impl::invocationMatchesExtraCallSiteFilter(invoke, token)
+}
+
+/**
+ * Gets the API node identified by the given `(package, type, path)` tuple.
+ */
 pragma[nomagic]
 API::Node getNodeFromPath(string package, string type, string path) {
   isRelevantPath(package, type, path) and
@@ -329,7 +378,7 @@ API::Node getNodeFromPath(string package, string type, string path) {
 }
 
 /**
- * Gets an invocation (call site) referenced by the given `(package, type, path)` tuple.
+ * Gets an invocation identified by the given `(package, type, path)` tuple.
  *
  * Unlike `getNodeFromPath`, the `path` may end with one or more call-site filters.
  */
@@ -344,21 +393,10 @@ API::InvokeNode getInvocationFromPath(string package, string type, string path) 
 }
 
 /**
- * Holds if `invoke` invokes a call-site filter given by `token`.
- */
-pragma[inline]
-private predicate invocationMatchesCallSiteFilter(API::InvokeNode invoke, AccessPathToken token) {
-  token.getName() = "WithArity" and
-  invoke.getNumArgument() = getAnIntFromStringUnbounded(token.getAnArgument())
-  or
-  Impl::invocationMatchesExtraCallSiteFilter(invoke, token)
-}
-
-/**
  * Holds if a summary edge with the given `input, output, kind` columns have a `package, type, path` tuple
  * that resolves to `baseNode`.
  */
-predicate resolvedSummaryBase(API::InvokeNode baseNode, string input, string output, string kind) {
+private predicate resolvedSummaryBase(API::InvokeNode baseNode, string input, string output, string kind) {
   exists(string package, string type, string path |
     summaryModel(package, type, path, input, output, kind) and
     baseNode = getNodeFromPath(package, type, path).getAnInvocation()
@@ -378,25 +416,6 @@ private predicate relevantInputOutputPath(API::InvokeNode base, string inputOrOu
 }
 
 /**
- * Gets an API-graph successor for the given invocation.
- */
-bindingset[token]
-private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, AccessPathToken token) {
-  token.getName() = "Argument" and
-  (
-    result = invoke.getParameter(getAnIntFromStringUnbounded(token.getAnArgument()))
-    or
-    result = invoke.getParameter(getAnIntFromStringWithArity(token.getAnArgument(), invoke.getNumArgument()))
-  )
-  or
-  token.getName() = "ReturnValue" and
-  result = invoke.getReturn()
-  or
-  token.getName() = "Instance" and
-  result = invoke.getInstance()
-}
-
-/**
  * Gets the result of appending `token` onto `path`, if the resulting path is relevant for
  * a summary of `invoke`.
  */
@@ -411,9 +430,6 @@ private string appendToken(API::InvokeNode invoke, string path, string token) {
 private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string path) {
   relevantInputOutputPath(baseNode, path) and
   (
-    // For the base case we must go through the API::InvokeNode type to correctly
-    // handle the case where the function reference has been moved into a local variable,
-    // since different calls have the same base API node.
     result = getSuccessorFromInvoke(baseNode, path)
     or
     exists(string basePath, string token |
@@ -547,27 +563,6 @@ private int getAnIntFromStringWithArity(string arg, int arity) {
     result = [arity - lo.toInt() .. hi.toInt()] and
     result >= 0
   )
-}
-
-/**
- * Gets a successor of `node` in the API graph.
- */
-bindingset[token]
-private API::Node getSuccessorFromNode(API::Node node, AccessPathToken token) {
-  // API graphs use the same label for arguments and parameters. An edge originating from a
-  // use-node represents be an argument, and an edge originating from a def-node represents a parameter.
-  // We just map both to the same thing.
-  token.getName() = ["Argument", "Parameter"] and
-  result = node.getParameter(getAnIntFromStringUnbounded(token.getAnArgument()))
-  or
-  token.getName() = "Member" and
-  result = node.getMember(token.getAnArgument())
-  or
-  token.getName() = "ReturnValue" and
-  result = node.getReturn()
-  or
-  // Language-specific tokens
-  result = Impl::getExtraSuccessorFromNode(node, token)
 }
 
 /**

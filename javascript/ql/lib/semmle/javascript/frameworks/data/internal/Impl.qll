@@ -2,22 +2,24 @@
  * Contains the language-specific part of the models-as-data implementation found in `Shared.qll`.
  *
  * It must export the following members:
- * - The `Unit` class
- * - The `API` module (API graphs)
- * - `isPackageUsed(string package)`
- * - `getExtraNodeFromPath(string package, string type, string path)`
- * - `getExtraApiGraphLabelFromPathToken(AccessPathToken token)`
- * - `invocationMatchesExtraCallSiteFilter(API::InvokeNode invoke, AccessPathToken token)`
+ * ```codeql
+ * class Unit // a unit type
+ * module API // the API graph module
+ * predicate isPackageUsed(string package)
+ * API::Node getExtraNodeFromPath(string package, string type, string path)
+ * API::Node getExtraSuccessorFromNode(API::Node node, AccessPathToken token)
+ * API::Node getExtraSuccessorFromInvoke(API::InvokeNode node, AccessPathToken token)
+ * predicate invocationMatchesExtraCallSiteFilter(API::InvokeNode invoke, AccessPathToken token)
+ * ```
  */
 
-import javascript as js
+private import javascript as js
+private import js::DataFlow as DataFlow
 private import Shared
 
 class Unit = js::Unit;
 
 module API = js::API;
-
-private module DataFlow = js::DataFlow;
 
 /**
  * Holds if models describing `package` may be relevant for the analysis of this database.
@@ -80,7 +82,9 @@ API::Node getExtraNodeFromPath(string package, string type, string path) {
   result = API::Node::ofType(getAPackageAlias(package), type)
 }
 
-/** Gets a JavaScript-specific API graph label corresponding to the given access path token */
+/**
+ * Gets a JavaScript-specific API graph successor of `node` reachable by resolving `token`.
+ */
 bindingset[token]
 API::Node getExtraSuccessorFromNode(API::Node node, AccessPathToken token) {
   token.getName() = "Instance" and
@@ -106,39 +110,20 @@ API::Node getExtraSuccessorFromNode(API::Node node, AccessPathToken token) {
 }
 
 /**
- * A remote flow source originating from a CSV source row.
+ * Gets a JavaScript-specific API graph successor of `node` reachable by resolving `token`.
+ *
+ * At the moment there are no JS-specific successors
  */
-private class RemoteFlowSourceFromCsv extends js::RemoteFlowSource {
-  RemoteFlowSourceFromCsv() { this = ModelOutput::getASourceNode("remote").getAnImmediateUse() }
-
-  override string getSourceType() { result = "Remote flow" }
+bindingset[token]
+API::Node getExtraSuccessorFromInvoke(API::InvokeNode node, AccessPathToken token) {
+  token.getName() = "Instance" and
+  result = node.getInstance()
 }
 
 /**
- * Like `ModelOutput::summaryStep` but with API nodes mapped to data-flow nodes.
+ * Holds if `invoke` matches the JS-specific call site filter in `token`.
  */
-private predicate summaryStepNodes(DataFlow::Node pred, DataFlow::Node succ, string kind) {
-  exists(API::Node predNode, API::Node succNode |
-    ModelOutput::summaryStep(predNode, succNode, kind) and
-    pred = predNode.getARhs() and
-    succ = succNode.getAnImmediateUse()
-  )
-}
-
-/** Data flow steps induced by summary models of kind `value`. */
-private class DataFlowStepFromSummary extends DataFlow::SharedFlowStep {
-  override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
-    summaryStepNodes(pred, succ, "value")
-  }
-}
-
-/** Taint steps induced by summary models of kind `taint`. */
-private class TaintStepFromSummary extends js::TaintTracking::SharedTaintStep {
-  override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
-    summaryStepNodes(pred, succ, "taint")
-  }
-}
-
+bindingset[token]
 predicate invocationMatchesExtraCallSiteFilter(API::InvokeNode invoke, AccessPathToken token) {
   token.getName() = "NewCall" and
   invoke instanceof API::NewNode
