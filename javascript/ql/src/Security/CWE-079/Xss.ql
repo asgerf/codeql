@@ -15,6 +15,8 @@ import javascript
 import semmle.javascript.security.dataflow.DomBasedXss::DomBasedXss
 import DataFlow::PathGraph
 
+import SomethingThatDoesNotExist
+
 from DataFlow::Configuration cfg, DataFlow::PathNode source, DataFlow::PathNode sink
 where
   (
