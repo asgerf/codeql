@@ -13,9 +13,6 @@ import meta.internal.TaintMetrics
 
 string getName(DataFlow::Node node) {
   result = node.(RemoteFlowSource).getSourceType()
-  or
-  not node instanceof RemoteFlowSource and
-  result = "Taint source"
 }
 
 from DataFlow::Node node

@@ -75,15 +75,11 @@ DataFlow::Node relevantTaintSink(string kind) {
 DataFlow::Node relevantTaintSink() { result = relevantTaintSink(_) }
 
 /**
- * Gets a remote flow source or `document.location` source.
+ * Gets a remote flow source in a relevant file.
  */
 DataFlow::Node relevantTaintSource() {
   not result.getFile() instanceof IgnoredFile and
-  (
-    result instanceof RemoteFlowSource
-    or
-    result = DOM::locationSource()
-  )
+  result instanceof RemoteFlowSource
 }
 
 /**
