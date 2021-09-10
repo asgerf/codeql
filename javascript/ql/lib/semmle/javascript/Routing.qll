@@ -67,6 +67,19 @@ module Routing {
      * Gets the root node of this node in the routing tree.
      */
     final RootNode getRootNode() { this = result.getADescendant() }
+
+    /**
+     * Holds if this node may invoke its continuation, that is, the
+     * incoming request may be passed on to the successor.
+     */
+    predicate mayInvokeContinuation() {
+      getLastChild().mayInvokeContinuation()
+      or
+      not exists(getLastChild()) and
+      not this instanceof RouteHandler
+      or
+      exists(this.(RouteHandler).getAContinuationInvocation())
+    }
   }
 
   /**
@@ -470,14 +483,51 @@ module Routing {
   }
 
   /**
+   * Gets a value flowing into the given route input access path somewhere in the subtree of `base`,
+   * provided that `base` may invoke its continuation (so the effect is observable by subsequent route handlers).
+   */
+  pragma[nomagic]
+  private DataFlow::Node getAnAccessPathRhsInSubtree(Node base, int n, string path) {
+    relevantAccessPath(path) and
+    result = getAnAccessPathRhs(base, n, path)
+    or
+    result = getAnAccessPathRhsInSubtree(base.getAChild(), n, path) and
+    // Only propagate up if the subtree can pass on the request
+    //
+    // For example, in `app.get('/', foo, (req, res) => {})`, the values assigned
+    // in `foo` should affect the callback, but not route handlers installed later on,
+    // so it will not propagate up to the `app.get()` call.
+    base.mayInvokeContinuation()
+  }
+
+  /**
+   * Gets a reference to the given access path within the subtree of `base`.
+   */
+  pragma[nomagic]
+  private DataFlow::Node getAnAccessPathReadInSubtree(Node base, int n, string path) {
+    relevantAccessPath(path) and
+    result = getAnAccessPathRead(base.getAChild*(), n, path)
+  }
+
+  /**
+   * `getAnAccessPathRhsInSubtree` restricted to nodes which have a sibling that reads from the same
+   * access path (within the subtree).
+   */
+  private DataFlow::Node getAnAccessPathRhsInSubtreeWithSiblingRead(Node base, int n, string path) {
+    result = getAnAccessPathRhsInSubtree(base, n, path) and
+    // As a faster way to check if a sibling subtree can read the access path, just check if the
+    // parent subtree can read from it.
+    exists(getAnAccessPathReadInSubtree(base.getParent(), n, path))
+  }
+
+  /**
    * A data-flow step between access paths on request input objects.
    */
   private class MiddlewareFlowStep extends DataFlow::SharedFlowStep {
     override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
-      // TODO: require happens-before, but for now just check if they're in the same app
-      exists(RootNode root, int n, string path |
-        pred = getAnAccessPathRhsUnderRoot(root, n, path) and
-        succ = getAnAccessPathReadUnderRoot(root, n, path)
+      exists(Node base, int n, string path |
+        pred = getAnAccessPathRhsInSubtreeWithSiblingRead(base, n, path) and
+        succ = getAnAccessPathReadInSubtree(pragma[only_bind_out](base).getNextSibling+(), n, path)
       )
     }
   }
