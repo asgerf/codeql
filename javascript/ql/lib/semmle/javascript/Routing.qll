@@ -80,6 +80,20 @@ module Routing {
       or
       exists(this.(RouteHandler).getAContinuationInvocation())
     }
+
+    /** Gets the parent of this node, provided that this node may invoke its continuation. */
+    private Node getContinuationParent() {
+      mayInvokeContinuation() and
+      result = getParent()
+    }
+
+    /**
+     * Holds if `node` has processed the incoming request prior to this node.
+     */
+    pragma[inline]
+    predicate isGuardedBy(Node node) {
+      pragma[only_bind_out](node).getContinuationParent*().getNextSibling+().getAChild*() = this
+    }
   }
 
   /**
