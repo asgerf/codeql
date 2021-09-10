@@ -75,6 +75,10 @@ module Express {
     result = "del"
   }
 
+  private class RoutingTreeSetup extends Routing::RouteSetup::MethodCall {
+    RoutingTreeSetup() { asExpr() instanceof RouteSetup }
+  }
+
   /**
    * A call to an Express router method that sets up a route.
    */
