@@ -142,6 +142,23 @@ module Routing {
         StepSummary::smallstep(result, this, routeStepSummary())
         or
         HTTP::routeHandlerStep(result, this)
+        or
+        exists(string prop, DataFlow::PropWrite write |
+          StepSummary::smallstep(result, getSourceProp(prop).getALocalUse(), StoreStep(prop))
+        )
+      }
+
+      /** Gets a node whose `prop` property flows to this use site. */
+      private DataFlow::SourceNode getSourceProp(string prop) {
+        StepSummary::step(result, this, LoadStep(prop))
+        or
+        StepSummary::step(result, getSourceProp(prop), routeStepSummary())
+        or
+        StepSummary::step(result, getSourceProp(prop), CopyStep(prop))
+        or
+        exists(string oldProp |
+          StepSummary::step(result, getSourceProp(oldProp), LoadStoreStep(prop, oldProp))
+        )
       }
 
       final override Routing::Node getLastChild() { result = getSource() and result != this }
