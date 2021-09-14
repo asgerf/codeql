@@ -122,6 +122,6 @@ function routerCaptured() {
     });
     addMiddlewares();
     app.get('/after', (req, res) => {
-        sink(req.taint); // NOT OK [INCONSISTENCY] - missing handling of side effects via captured variable
+        sink(req.taint); // NOT OK
     });
 }

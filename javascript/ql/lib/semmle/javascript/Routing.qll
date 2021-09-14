@@ -261,7 +261,7 @@ module Routing {
       /**
        * Holds if this route setup targets `router` and occurs at the given `cfgNode`.
        */
-      abstract predicate isInstalledAt(DataFlow::SourceNode router, ControlFlowNode cfgNode);
+      abstract predicate isInstalledAt(DataFlow::Node router, ControlFlowNode cfgNode);
     }
 
     /**
@@ -273,27 +273,57 @@ module Routing {
       DataFlow::MethodCallNode {
       override DataFlow::Node getChild(int n) { result = getArgument(n) }
 
-      override predicate isInstalledAt(DataFlow::SourceNode router, ControlFlowNode cfgNode) {
-        router = getReceiver().getALocalSource() and cfgNode = getEnclosingExpr()
+      override predicate isInstalledAt(DataFlow::Node router, ControlFlowNode cfgNode) {
+        router = getReceiver() and cfgNode = getEnclosingExpr()
       }
     }
+  }
+
+  /** Holds if `router` is the `SourceNode` targeted by some route setup. */
+  pragma[nomagic]
+  private predicate isRouter(DataFlow::SourceNode router) {
+    any(RouteSetup::Range r).isInstalledAt(router.getALocalUse(), _)
+  }
+
+  /**
+   * Gets the canonical data flow node representing references to `router` in `container`.
+   *
+   * For captured references to a router object, we use the SSA capture definition node at the function
+   * entry point (when such a node exists).
+   */
+  pragma[nomagic]
+  private DataFlow::Node getRouterNodeInContainer(DataFlow::SourceNode router, StmtContainer container) {
+    isRouter(router) and
+    (
+      container = router.getContainer() and
+      result = router
+      or
+      result.getALocalSource() = router and
+      exists(SsaVariableCapture capture |
+        capture.getBasicBlock() = container.getEntryBB() and
+        result = DataFlow::ssaDefinitionNode(capture)
+      )
+    )
   }
 
   /**
    * A `Node` generated from the router targeted by a `RouteSetup`.
    */
-  private class RouterRange extends Node::Range, DataFlow::SourceNode {
-    RouterRange() { any(RouteSetup::Range setup).isInstalledAt(this, _) }
+  private class RouterRange extends Node::Range, DataFlow::Node {
+    DataFlow::SourceNode routerSource;
+
+    RouterRange() {
+      this = getRouterNodeInContainer(routerSource, _)
+    }
 
     override Node getLastChild() {
-      // TODO: handle mutation through captured reference
-      result = getMostRecentRouteSetupAt(this, getContainer().getExit())
+      result = getMostRecentRouteSetupAt(routerSource, getContainer().getExit())
     }
 
     override predicate hasSiblingChildren(Node pred, Node succ) {
       exists(ControlFlowNode cfgNode |
-        succ.(RouteSetup::Range).isInstalledAt(this, cfgNode) and
-        pred = getMostRecentRouteSetupAt(this, cfgNode.getAPredecessor())
+        succ.(RouteSetup::Range).isInstalledAt(routerSource.getALocalUse(), cfgNode) and
+        pred = getMostRecentRouteSetupAt(routerSource, cfgNode.getAPredecessor())
       )
     }
   }
@@ -305,7 +335,7 @@ module Routing {
   private RouteSetup::Range getMostRecentRouteSetupAt(
     DataFlow::SourceNode router, ControlFlowNode node
   ) {
-    result.isInstalledAt(router, node)
+    result.isInstalledAt(router.getALocalUse(), node)
     or
     result = getMostRecentRouteSetupAt(router, node.getAPredecessor()) and
     not exists(RouteSetup::Range setup | setup.isInstalledAt(router, node))
@@ -348,16 +378,32 @@ module Routing {
     RouterRange targetRouter;
 
     ImpliedRouteSetup() {
+      // Router escaping into parameter: e.g `addMiddlewares(app)`
       DataFlow::argumentPassingStep(this, localRouter, _, targetRouter)
       or
+      // Router returned from function: e.g `app.use(getMiddlewares())`
       FlowSteps::returnStep(targetRouter, this) and
       localRouter = this
+      or
+      // Router captured by inner function, e.g:
+      //
+      //   app = express();
+      //   function addMiddlewares() {
+      //     app.use(...);
+      //   }
+      //   addMiddlewares();
+      //
+      exists(Function callee, DataFlow::SourceNode router |
+        FlowSteps::calls(this, callee) and
+        targetRouter = getRouterNodeInContainer(router, callee) and
+        localRouter = getRouterNodeInContainer(router, getContainer())
+      )
     }
 
     override Routing::Node getLastChild() { result = targetRouter }
 
-    override predicate isInstalledAt(DataFlow::SourceNode r, ControlFlowNode cfgNode) {
-      r = localRouter.getALocalSource() and
+    override predicate isInstalledAt(DataFlow::Node r, ControlFlowNode cfgNode) {
+      r = localRouter and
       cfgNode = getEnclosingExpr()
     }
   }
