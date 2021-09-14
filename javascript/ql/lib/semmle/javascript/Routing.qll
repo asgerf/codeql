@@ -157,7 +157,7 @@ module Routing {
         or
         HTTP::routeHandlerStep(result, this)
         or
-        exists(string prop, DataFlow::PropWrite write |
+        exists(string prop |
           StepSummary::smallstep(result, getSourceProp(prop).getALocalUse(), StoreStep(prop))
         )
       }
