@@ -125,3 +125,40 @@ function routerCaptured() {
         sink(req.taint); // NOT OK
     });
 }
+
+function withPath() {
+    const app = express();
+    app.use('/foo', (req, res, next) => {
+        req.taint = source();
+        next();
+    });
+    app.get('/foo', (req, res) => {
+        sink(req.taint); // NOT OK
+    });
+    app.get('/bar', (req, res) => {
+        sink(req.taint); // OK
+    });
+}
+
+
+function withNestedPath() {
+    const app = express();
+    app.use('/foo/bar', (req, res, next) => {
+        req.taint = source();
+        next();
+    });
+    function makeRouter() {
+        const router = express.Router();
+        router.get('/bar', (req, res) => {
+            sink(req.taint); // NOT OK
+        })
+        router.get('/baz', (req, res) => {
+            sink(req.taint); // OK
+        })
+        return router;
+    }
+    app.get('/foo', makeRouter());
+    app.get('/bar', (req, res) => {
+        sink(req.taint); // OK
+    });
+}

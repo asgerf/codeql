@@ -77,6 +77,10 @@ module Express {
 
   private class RoutingTreeSetup extends Routing::RouteSetup::MethodCall {
     RoutingTreeSetup() { asExpr() instanceof RouteSetup }
+
+    override string getRelativePath() {
+      result = getArgument(0).getStringValue()
+    }
   }
 
   private class AppTree extends Routing::Node::Range {

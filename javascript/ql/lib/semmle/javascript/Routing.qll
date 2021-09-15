@@ -88,12 +88,58 @@ module Routing {
     }
 
     /**
-     * Holds if `node` has processed the incoming request prior to this node.
+     * Gets a path prefix to be matched against the path of incoming requests.
+     *
+     * If the prefix matches, the request is dispatched to the first child, with a modified path
+     * where the matched prefix has been removed. For example, if the prefix is `/foo` and the incoming
+     * request has path `/foo/bar`, a request with path `/bar` is dispatched to the first child.
+     *
+     * If the prefix does not match, the request is passed on to the continuation.
+     */
+    final string getRelativePath() {
+      result = super.getRelativePath()
+    }
+
+    /**
+     * Gets the path prefix needed to reach this node from the given ancestor, that is, the concatenation
+     * of all relative paths between this node and the ancestor.
+     *
+     * To restrict the size of the predicate, this is only available for the ancestors that are "fork" nodes,
+     * that is, a node that has siblings (i.e. multiple children).
+     */
+    private string getPathFromFork(Node fork) {
+      super.hasSiblingChildren(_, _) and
+      this = fork and
+      result = ""
+      or
+      exists(Node parent | parent = getParent() |
+        not exists(parent.getRelativePath()) and
+        result = parent.getPathFromFork(fork)
+        or
+        result = parent.getPathFromFork(fork) + parent.getRelativePath() and
+        result.length() < 100
+      )
+    }
+
+    /**
+     * Holds if `node` has processed the incoming request strictly prior to this node.
      */
     pragma[inline]
     predicate isGuardedBy(Node node) {
-      pragma[only_bind_out](node).getContinuationParent*().getNextSibling+().getAChild*() = this
+      exists(Node base1, Node base2, Node fork |
+        base1 = pragma[only_bind_out](node).getContinuationParent*() and
+        base2 = base1.getNextSibling+() and
+        this = base2.getAChild*() and
+        fork = base1.getParent() and
+        isEitherPrefixOfTheOther(getPathFromFork(fork), node.getPathFromFork(fork))
+      )
     }
+  }
+
+  /** Holds if `a` is a prefix of `b` or the other way around. */
+  bindingset[a, b]
+  private predicate isEitherPrefixOfTheOther(string a, string b) {
+    a = b + any(string s) or b = a + any(string s)
   }
 
   /**
@@ -131,6 +177,17 @@ module Routing {
        * to the `req` parameter).
        */
       DataFlow::Node getValueAtAccessPath(int n, string path) { none() }
+
+      /**
+       * Gets a path prefix to be matched against the path of incoming requests.
+       *
+       * If the prefix matches, the request is dispatched to the first child, with a modified path
+       * where the matched prefix has been removed. For example, if the prefix is `/foo` and the incoming
+       * request has path `/foo/bar`, a request with path `/bar` is dispatched to the first child.
+       *
+       * If the prefix does not match, the request is passed on to the continuation.
+       */
+      string getRelativePath() { none() }
     }
 
     private StepSummary routeStepSummary() {
@@ -523,12 +580,6 @@ module Routing {
     not AccessPath::DominatingPaths::hasDominatingWrite(result)
   }
 
-  pragma[nomagic]
-  private predicate relevantAccessPath(string path) {
-    exists(getAnAccessPathRhs(_, _, path)) and
-    exists(getAnAccessPathRead(_, _, path))
-  }
-
   /**
    * Like `getAnAccessPathRhs` but with `base` mapped to its root node.
    */
@@ -560,51 +611,14 @@ module Routing {
   }
 
   /**
-   * Gets a value flowing into the given route input access path somewhere in the subtree of `base`,
-   * provided that `base` may invoke its continuation (so the effect is observable by subsequent route handlers).
-   */
-  pragma[nomagic]
-  private DataFlow::Node getAnAccessPathRhsInSubtree(Node base, int n, string path) {
-    relevantAccessPath(path) and
-    result = getAnAccessPathRhs(base, n, path)
-    or
-    result = getAnAccessPathRhsInSubtree(base.getAChild(), n, path) and
-    // Only propagate up if the subtree can pass on the request
-    //
-    // For example, in `app.get('/', foo, (req, res) => {})`, the values assigned
-    // in `foo` should affect the callback, but not route handlers installed later on,
-    // so it will not propagate up to the `app.get()` call.
-    base.mayInvokeContinuation()
-  }
-
-  /**
-   * Gets a reference to the given access path within the subtree of `base`.
-   */
-  pragma[nomagic]
-  private DataFlow::Node getAnAccessPathReadInSubtree(Node base, int n, string path) {
-    relevantAccessPath(path) and
-    result = getAnAccessPathRead(base.getAChild*(), n, path)
-  }
-
-  /**
-   * `getAnAccessPathRhsInSubtree` restricted to nodes which have a sibling that reads from the same
-   * access path (within the subtree).
-   */
-  private DataFlow::Node getAnAccessPathRhsInSubtreeWithSiblingRead(Node base, int n, string path) {
-    result = getAnAccessPathRhsInSubtree(base, n, path) and
-    // As a faster way to check if a sibling subtree can read the access path, just check if the
-    // parent subtree can read from it.
-    exists(getAnAccessPathReadInSubtree(base.getParent(), n, path))
-  }
-
-  /**
    * A data-flow step between access paths on request input objects.
    */
   private class MiddlewareFlowStep extends DataFlow::SharedFlowStep {
     override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
-      exists(Node base, int n, string path |
-        pred = getAnAccessPathRhsInSubtreeWithSiblingRead(base, n, path) and
-        succ = getAnAccessPathReadInSubtree(pragma[only_bind_out](base).getNextSibling+(), n, path)
+      exists(Node writer, Node reader, int n, string path |
+        pred = getAnAccessPathRhs(writer, n, path) and
+        succ = getAnAccessPathRead(reader, n, path) and
+        reader.isGuardedBy(writer)
       )
     }
   }
