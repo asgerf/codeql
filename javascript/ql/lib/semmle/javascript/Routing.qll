@@ -166,6 +166,14 @@ module Routing {
         areHttpMethodsMatching(base1.getHttpMethodFromFork(fork), base2.getHttpMethodFromFork(fork))
       )
     }
+
+    /**
+     * Gets an HTTP method name which this node will accept, or nothing if the node accepts all HTTP methods, not
+     * taking into account the context from ancestors or children nodes.
+     */
+    HTTP::RequestMethodName getOwnHttpMethod() {
+      result = super.getHttpMethod()
+    }
   }
 
   /** Holds if `a` is a prefix of `b` or the other way around. */

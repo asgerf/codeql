@@ -120,6 +120,14 @@ module HTTP {
       this = "SEARCH" or
       this = "TRACE"
     }
+
+    /**
+     * Holds if this kind of HTTP request should not generally be considered free of side effects,
+     * such as for `POST` or `PUT` requests.
+     */
+    predicate isUnsafe() {
+      not isSafe()
+    }
   }
 
   /**
