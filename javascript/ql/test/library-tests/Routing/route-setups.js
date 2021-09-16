@@ -162,3 +162,34 @@ function withNestedPath() {
         sink(req.taint); // OK
     });
 }
+
+function withHttpMethods() {
+    const app = express();
+    app.get('/foo', (req, res, next) => {
+        req.taintGet = source();
+        next();
+    });
+    app.post('/foo', (req, res, next) => {
+        req.taintPost = source();
+        next();
+    });
+    app.all('/foo', (req, res, next) => {
+        req.taintAll = source();
+        next();
+    });
+    app.get('/foo/a', (req, res) => {
+        sink(req.taintGet); // NOT OK
+        sink(req.taintPost); // OK - not tainted for GET requests
+        sink(req.taintAll); // NOT OK
+    });
+    app.post('/foo/b', (req, res) => {
+        sink(req.taintGet); // OK - not tainted for POST requests
+        sink(req.taintPost); // NOT OK
+        sink(req.taintAll); // NOT OK
+    });
+    app.all('/foo/c', (req, res) => {
+        sink(req.taintGet); // NOT OK
+        sink(req.taintPost); // NOT OK
+        sink(req.taintAll); // NOT OK
+    });
+}

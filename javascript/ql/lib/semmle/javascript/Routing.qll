@@ -122,6 +122,37 @@ module Routing {
     }
 
     /**
+     * Gets an HTTP method required to reach this node from the given ancestor, or `*` if any method
+     * can be used.
+     *
+     * To restrict the size of the predicate, this is only available for the ancestors that are "fork" nodes,
+     * that is, a node that has siblings (i.e. multiple children).
+     */
+    private string getHttpMethodFromFork(Node fork) {
+      super.hasSiblingChildren(_, _) and
+      this = fork and
+      (
+        result = super.getHttpMethod()
+        or
+        not exists(super.getHttpMethod()) and
+        result = "*"
+      )
+      or
+      result = getParent().getHttpMethodFromFork(fork) and
+      (
+        // Only the ancestor restricts the HTTP method
+        not exists(super.getHttpMethod())
+        or
+        // Intersect permitted HTTP methods
+        result = super.getHttpMethod()
+      )
+      or
+      // The ancestor allows any HTTP method, but this node restricts it
+      getParent().getHttpMethodFromFork(fork) = "*" and
+      result = super.getHttpMethod()
+    }
+
+    /**
      * Holds if `node` has processed the incoming request strictly prior to this node.
      */
     pragma[inline]
@@ -131,7 +162,8 @@ module Routing {
         base2 = base1.getNextSibling+() and
         this = base2.getAChild*() and
         fork = base1.getParent() and
-        isEitherPrefixOfTheOther(getPathFromFork(fork), node.getPathFromFork(fork))
+        isEitherPrefixOfTheOther(getPathFromFork(fork), node.getPathFromFork(fork)) and
+        areHttpMethodsMatching(base1.getHttpMethodFromFork(fork), base2.getHttpMethodFromFork(fork))
       )
     }
   }
@@ -141,6 +173,13 @@ module Routing {
   private predicate isEitherPrefixOfTheOther(string a, string b) {
     a = b + any(string s) or b = a + any(string s)
   }
+
+  /** Holds if `a` and `b` are the same HTTP method name or either of them is `*`. */
+  bindingset[a, b]
+  private predicate areHttpMethodsMatching(string a, string b) {
+    a = "*" or b = "*" or a = b
+  }
+
 
   /**
    * Companion module to the `Node` class, containing abstract classes
@@ -188,6 +227,12 @@ module Routing {
        * If the prefix does not match, the request is passed on to the continuation.
        */
       string getRelativePath() { none() }
+
+      /**
+       * Gets an HTTP request method name (in upper case) matched by this node, or nothing
+       * if all HTTP request method names are accepted.
+       */
+      HTTP::RequestMethodName getHttpMethod() { none() }
     }
 
     private StepSummary routeStepSummary() {

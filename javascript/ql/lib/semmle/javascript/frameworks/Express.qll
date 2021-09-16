@@ -81,6 +81,10 @@ module Express {
     override string getRelativePath() {
       result = getArgument(0).getStringValue()
     }
+
+    override HTTP::RequestMethodName getHttpMethod() {
+      result.toLowerCase() = getMethodName()
+    }
   }
 
   private class AppTree extends Routing::Node::Range {
