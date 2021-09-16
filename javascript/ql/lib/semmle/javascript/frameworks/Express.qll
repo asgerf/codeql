@@ -999,13 +999,21 @@ module Express {
    */
   private class RenderCallAsTemplateInstantiation extends Templating::TemplateInstantiation::Range,
     DataFlow::CallNode {
+    ResponseSource res;
+
     RenderCallAsTemplateInstantiation() {
-      this = any(ResponseSource res).ref().getAMethodCall("render")
+      this = res.ref().getAMethodCall("render")
     }
 
     override DataFlow::Node getTemplateFileNode() { result = getArgument(0) }
 
-    override DataFlow::Node getTemplateParamsNode() { result = getArgument(1) }
+    override DataFlow::Node getTemplateParamsNode() {
+      result = getArgument(1)
+    }
+
+    override DataFlow::Node getTemplateParamForValue(string accessPath) {
+      result = res.(Routing::RouteHandlerInput).getValueFromAccessPath("locals." + accessPath)
+    }
 
     override DataFlow::SourceNode getOutput() { result = getCallback(2).getParameter(1) }
   }

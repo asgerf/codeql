@@ -523,6 +523,18 @@ module Routing {
      * Gets the corresponding route handler, that is, the function on which this is a parameter.
      */
     final RouteHandler getRouteHandler() { result.getAParameter() = this }
+
+    /**
+     * Gets a node that is stored in the given access path on this route handler input, either
+     * during execution of this router handler, or in one of the preceding ones.
+     */
+    DataFlow::Node getValueFromAccessPath(string path) {
+      exists(RouteHandler handler, int i, Node predecessor |
+        this = handler.getParameter(i) and
+        result = getAnAccessPathRhs(predecessor, i, path) and
+        (handler.isGuardedBy(predecessor) or predecessor = handler)
+      )
+    }
   }
 
   /**

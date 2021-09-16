@@ -171,6 +171,17 @@ module Templating {
     DataFlow::SourceNode getAVariableUse(string name) {
       result = getScope().getVariable(name).getAnAccess().flow()
     }
+
+    /** Gets a data flow node corresponding to a use of the given template variable within this top-level. */
+    DataFlow::SourceNode getAnAccessPathUse(string accessPath) {
+      result = getAVariableUse(accessPath)
+      or
+      exists(string varName, string suffix |
+        accessPath = varName + "." + suffix and
+        suffix != "" and
+        result = AccessPath::getAReferenceTo(getAVariableUse(varName), suffix)
+      )
+    }
   }
 
   /**
@@ -189,6 +200,11 @@ module Templating {
 
     /** Gets a data flow node that refers to an object whose properties become variables in the template. */
     DataFlow::Node getTemplateParamsNode() { result = range.getTemplateParamsNode() }
+
+    /** Gets a data flow node that provides the value for the template variable at the given access path. */
+    DataFlow::Node getTemplateParamForValue(string accessPath) {
+      result = range.getTemplateParamForValue(accessPath)
+    }
 
     /** Gets the template file instantiated here, if any. */
     TemplateFile getTemplateFile() {
@@ -215,6 +231,9 @@ module Templating {
       /** Gets a data flow node that refers to an object whose properties become variables in the template. */
       abstract DataFlow::Node getTemplateParamsNode();
 
+      /** Gets a data flow node that provides the value for the template variable at the given access path. */
+      DataFlow::Node getTemplateParamForValue(string accessPath) { none() }
+
       /**
        * Gets the template syntax used by this template instantiation, if known.
        *
@@ -235,6 +254,16 @@ module Templating {
             .getAPlaceholder()
             .getInnerTopLevel()
             .getAVariableUse(name)
+    )
+    or
+    exists(TemplateInstantiation inst, string accessPath |
+      result.getARhs() = inst.getTemplateParamForValue(accessPath) and
+      succ =
+        inst.getTemplateFile()
+            .getAnImportedFile*()
+            .getAPlaceholder()
+            .getInnerTopLevel()
+            .getAnAccessPathUse(accessPath)
     )
     or
     exists(string prop, DataFlow::SourceNode prev |
