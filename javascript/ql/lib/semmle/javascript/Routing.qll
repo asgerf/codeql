@@ -83,8 +83,8 @@ module Routing {
 
     /** Gets the parent of this node, provided that this node may invoke its continuation. */
     private Node getContinuationParent() {
-      mayInvokeContinuation() and
-      result = getParent()
+      result = getParent() and
+      result.mayInvokeContinuation()
     }
 
     /**
