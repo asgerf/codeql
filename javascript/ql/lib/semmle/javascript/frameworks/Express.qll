@@ -79,6 +79,7 @@ module Express {
     RoutingTreeSetup() { asExpr() instanceof RouteSetup }
 
     override string getRelativePath() {
+      not getMethodName() = "param" and // do not treat parameter name as a path
       result = getArgument(0).getStringValue()
     }
 
