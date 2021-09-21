@@ -660,31 +660,57 @@ module Routing {
   }
 
   /**
-   * An API-graph step between access paths on request input objects.
+   * Holds if `pred -> succ` is an API-graph step between access paths on request input objects.
    * 
    * Since API graphs are mainly used to propagate type-like information, we do not require
    * a happens-before relation for this step. We only require that we stay within the same
    * web application, which is ensured by having a common root node.
    */
+  private predicate middlewareApiStep(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
+    exists(RootNode root, int n, string path |
+      pred = getAnAccessPathRhsUnderRoot(root, n, path) and
+      succ = getAnAccessPathReadUnderRoot(root, n, path)
+    )
+    or
+    // We can't augment the call graph as this depends on type tracking, so just
+    // manually add steps out of functions stored on a request input.
+    exists(DataFlow::FunctionNode function, DataFlow::CallNode call |
+      middlewareApiStep(function, call.getCalleeNode().getALocalSource()) and
+      pred = function.getReturnNode() and
+      succ = call
+    )
+  }
+
+  /** Contributes `middlewareApiStep` as an API graph step. */
   private class MiddlewareApiStep extends API::AdditionalUseStep {
     override predicate step(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
-      exists(RootNode root, int n, string path |
-        pred = getAnAccessPathRhsUnderRoot(root, n, path) and
-        succ = getAnAccessPathReadUnderRoot(root, n, path)
-      )
+      middlewareApiStep(pred, succ)
     }
   }
 
   /**
-   * A data-flow step between access paths on request input objects.
+   * Holds if `pred -> succ` is a data-flow step between access paths on request input objects.
    */
+  private predicate middlewareDataFlowStep(DataFlow::Node pred, DataFlow::Node succ) {
+    exists(Node writer, Node reader, int n, string path |
+      pred = getAnAccessPathRhs(writer, n, path) and
+      succ = getAnAccessPathRead(reader, n, path) and
+      reader.isGuardedBy(writer)
+    )
+    or
+    // Same as in `apiStep`: we can't augment the call graph, so just add flow out
+    // of functions stored on a request input.
+    exists(DataFlow::FunctionNode function, DataFlow::CallNode call |
+      middlewareDataFlowStep(function.getALocalUse(), call.getCalleeNode().getALocalSource()) and
+      pred = function.getReturnNode() and
+      succ = call
+    )
+  }
+
+  /** Contributes `middlewareDataFlowStep` as a value-preserving data flow step. */
   private class MiddlewareFlowStep extends DataFlow::SharedFlowStep {
     override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
-      exists(Node writer, Node reader, int n, string path |
-        pred = getAnAccessPathRhs(writer, n, path) and
-        succ = getAnAccessPathRead(reader, n, path) and
-        reader.isGuardedBy(writer)
-      )
+      middlewareDataFlowStep(pred, succ)
     }
   }
 }
