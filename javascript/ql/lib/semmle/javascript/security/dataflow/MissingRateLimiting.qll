@@ -29,11 +29,7 @@ private import semmle.javascript.frameworks.ConnectExpressShared::ConnectExpress
 /**
  * A route handler that should be rate-limited.
  */
-abstract class ExpensiveRouteHandler extends DataFlow::Node {
-  Express::RouteHandler impl;
-
-  ExpensiveRouteHandler() { this = impl }
-
+abstract class ExpensiveRouteHandler extends Routing::Node {
   /**
    * Holds if `explanation` is a string explaining why this route handler should be rate-limited.
    *
@@ -45,9 +41,15 @@ abstract class ExpensiveRouteHandler extends DataFlow::Node {
 }
 
 /**
- * A route handler expression that is rate limited.
+ * DEPRECATED. Use `RateLimitingMiddleware` instead.
+ *
+ * A route handler expression that is guarded by a rate limiter.
  */
-abstract class RateLimitedRouteHandlerExpr extends Express::RouteHandlerExpr { }
+deprecated class RateLimitedRouteHandlerExpr extends Express::RouteHandlerExpr {
+  RateLimitedRouteHandlerExpr() {
+    flow().(Routing::Node).isGuardedBy(any(RateLimitingMiddleware m))
+  }
+}
 
 // default implementations
 /**
@@ -106,11 +108,13 @@ class DatabaseAccessAsExpensiveAction extends ExpensiveAction {
 }
 
 /**
+ * DEPRECATED. Use the `Routing::Node` API instead.
+ *
  * A route handler expression that is rate-limited by a rate-limiting middleware.
  */
-class RouteHandlerExpressionWithRateLimiter extends RateLimitedRouteHandlerExpr {
+deprecated class RouteHandlerExpressionWithRateLimiter extends Expr {
   RouteHandlerExpressionWithRateLimiter() {
-    any(RateLimitingMiddleware m).ref().flowsToExpr(getAMatchingAncestor())
+    flow().(Routing::Node).isGuardedBy(any(RateLimitingMiddleware m))
   }
 }
 
@@ -160,12 +164,14 @@ class BruteForceRateLimit extends RateLimitingMiddleware {
 }
 
 /**
- * A route handler expression that is rate-limited by the `express-limiter` package.
+ * A rate limiter constructed using the `express-limiter` package.
+ *
+ * Note that the `express-limiter` package is unusual in that it may optionally install itself as a middleware.
+ * That aspect is handled by the Express core model.
  */
-class RouteHandlerLimitedByExpressLimiter extends RateLimitedRouteHandlerExpr {
+class RouteHandlerLimitedByExpressLimiter extends RateLimitingMiddleware {
   RouteHandlerLimitedByExpressLimiter() {
-    API::moduleImport("express-limiter").getParameter(0).getARhs().getALocalSource().asExpr() =
-      this.getSetup().getRouter()
+    this = API::moduleImport("express-limiter").getReturn().getReturn().getAnImmediateUse()
   }
 }
 

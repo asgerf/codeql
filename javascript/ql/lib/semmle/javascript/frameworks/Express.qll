@@ -87,6 +87,33 @@ module Express {
     }
   }
 
+  /**
+   * A route setup performed via `express-limiter`.
+   *
+   * `express-limiter` is unusual in that it can install the middleware on its own,
+   * rather than expecting the caller to install it with `app.use()` or similar.
+   *
+   * For example:
+   * ```js
+   * let app = express();
+   * require('express-limiter')(app, client)({ method: 'get', path: '/foo' });
+   * ```
+   */
+  private class RateLimiterRouteSetup extends Routing::RouteSetup::Range {
+    DataFlow::CallNode limitCall;
+
+    RateLimiterRouteSetup() {
+      limitCall = DataFlow::moduleImport("express-limiter").getACall() and
+      exists(limitCall.getOptionArgument(0, ["path", "method"])) and
+      this = limitCall.getACall()
+    }
+
+    override predicate isInstalledAt(DataFlow::Node router, ControlFlowNode cfgNode) {
+      router = limitCall.getArgument(0) and
+      cfgNode = asExpr()
+    }
+  }
+
   private class AppTree extends Routing::Node::Range {
     AppTree() {
       this = appCreation()
