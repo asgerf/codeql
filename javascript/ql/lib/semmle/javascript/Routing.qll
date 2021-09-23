@@ -174,6 +174,14 @@ module Routing {
     HTTP::RequestMethodName getOwnHttpMethod() {
       result = super.getHttpMethod()
     }
+
+    /** Gets a place where this route node is installed as a route handler. */
+    Node getAUseSite() {
+      if getParent().(Node::Range).hasSiblingChildren(_, _) then
+        result = this
+      else
+        result = getParent().getAUseSite()
+    }
   }
 
   /** Holds if `a` is a prefix of `b` or the other way around. */
