@@ -259,8 +259,7 @@ module Routing {
      * Framework models may extend this class to mark nodes as being use sites.
      */
     abstract class UseSite extends Range {
-      /** Gets a node that flows to this use site. */
-      DataFlow::Node getSource() {
+      private DataFlow::Node getRawSource() {
         result = getALocalSource()
         or
         StepSummary::smallstep(result, this, routeStepSummary())
@@ -270,6 +269,15 @@ module Routing {
         exists(string prop |
           StepSummary::smallstep(result, getSourceProp(prop).getALocalUse(), StoreStep(prop))
         )
+      }
+
+      /** Gets a node that flows to this use site. */
+      DataFlow::Node getSource() {
+        // If an alias for a router flows here, make sure we use the router as the source
+        result = getRawSource() and
+        not result = any(RouteSetup::Range r).getARouterAlias(_)
+        or
+        getRawSource() = getARouterRef(result)
       }
 
       /** Gets a node whose `prop` property flows to this use site. */
@@ -372,6 +380,14 @@ module Routing {
        * Holds if this route setup targets `router` and occurs at the given `cfgNode`.
        */
       abstract predicate isInstalledAt(DataFlow::Node router, ControlFlowNode cfgNode);
+
+      /**
+       * Gets a data-flow node that refers to the given `router`.
+       *
+       * This can be used to model route setups that return the router itself, to support
+       * chaining calls.
+       */
+      DataFlow::SourceNode getARouterAlias(DataFlow::Node router) { none() }
     }
 
     /**
@@ -386,7 +402,31 @@ module Routing {
       override predicate isInstalledAt(DataFlow::Node router, ControlFlowNode cfgNode) {
         router = getReceiver() and cfgNode = getEnclosingExpr()
       }
+
+      override DataFlow::SourceNode getARouterAlias(DataFlow::Node router) {
+        router = getReceiver() and
+        result = this
+      }
     }
+  }
+
+  /**
+   * Gets a node that refers to the given `router` via an alias established by
+   * a route setup (usually by the route setup returning `this`).
+   */
+  private DataFlow::SourceNode getARouterRef(DataFlow::SourceNode router) {
+    any(RouteSetup::Range r).isInstalledAt(router.getALocalUse(), _) and
+    result = router and
+    not result = any(RouteSetup::Range r).getARouterAlias(_) // only track the root alias
+    or
+    result = any(RouteSetup::Range r).getARouterAlias(getARouterRef(router).getALocalUse())
+  }
+
+  /**
+   * Like `RouteSetup::Range.isInstalledAt` but with the router mapped to its root alias.
+   */
+  private predicate isInstalledAt(RouteSetup::Range setup, DataFlow::SourceNode router, ControlFlowNode cfgNode) {
+    setup.isInstalledAt(getARouterRef(router).getALocalUse(), cfgNode)
   }
 
   /** Holds if `router` is the `SourceNode` targeted by some route setup. */
@@ -432,7 +472,7 @@ module Routing {
 
     override predicate hasSiblingChildren(Node pred, Node succ) {
       exists(ControlFlowNode cfgNode |
-        succ.(RouteSetup::Range).isInstalledAt(routerSource.getALocalUse(), cfgNode) and
+        isInstalledAt(succ, routerSource, cfgNode) and
         pred = getMostRecentRouteSetupAt(routerSource, cfgNode.getAPredecessor())
       )
     }
@@ -445,10 +485,10 @@ module Routing {
   private RouteSetup::Range getMostRecentRouteSetupAt(
     DataFlow::SourceNode router, ControlFlowNode node
   ) {
-    result.isInstalledAt(router.getALocalUse(), node)
+    isInstalledAt(result, router, node)
     or
     result = getMostRecentRouteSetupAt(router, node.getAPredecessor()) and
-    not exists(RouteSetup::Range setup | setup.isInstalledAt(router, node))
+    not exists(RouteSetup::Range setup | isInstalledAt(setup, router, node))
   }
 
   /**

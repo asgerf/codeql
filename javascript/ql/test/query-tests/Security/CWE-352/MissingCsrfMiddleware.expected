@@ -6,6 +6,7 @@
 | csurf_example.js:18:9:18:22 | cookieParser() | This cookie middleware is serving a request handler $@ without CSRF protection. | csurf_example.js:31:1:34:2 | app.pos ... ed')\\n}) | here |
 | lusca_example.js:9:9:9:22 | cookieParser() | This cookie middleware is serving a request handler $@ without CSRF protection. | lusca_example.js:26:1:29:2 | app.pos ... ed')\\n}) | here |
 | lusca_example.js:9:9:9:22 | cookieParser() | This cookie middleware is serving a request handler $@ without CSRF protection. | lusca_example.js:31:1:34:2 | app.pos ... ed')\\n}) | here |
+| tst.js:6:9:6:22 | cookieParser() | This cookie middleware is serving a request handler $@ without CSRF protection. | tst.js:8:1:10:2 | app.pos ... s.x;\\n}) | here |
 | unused_cookies.js:6:9:6:22 | cookieParser() | This cookie middleware is serving a request handler $@ without CSRF protection. | unused_cookies.js:8:1:13:2 | app.pos ... k');\\n}) | here |
 | unused_cookies.js:6:9:6:22 | cookieParser() | This cookie middleware is serving a request handler $@ without CSRF protection. | unused_cookies.js:29:1:32:2 | app.pos ... k');\\n}) | here |
 | unused_cookies.js:6:9:6:22 | cookieParser() | This cookie middleware is serving a request handler $@ without CSRF protection. | unused_cookies.js:34:1:37:2 | app.pos ... k');\\n}) | here |
