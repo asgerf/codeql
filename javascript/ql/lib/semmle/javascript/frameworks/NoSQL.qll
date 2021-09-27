@@ -50,10 +50,6 @@ private module MongoDB {
     result = getAMongoDbCallback().getParameter(1)
   }
 
-  private DataFlow::SourceNode test() {
-    result = getAMongoDb().getAUse()
-  }
-
   /** Gets a data flow node referring to a MongoDB collection. */
   private API::Node getACollection() {
     // A collection resulting from calling `Db.collection(...)`.
