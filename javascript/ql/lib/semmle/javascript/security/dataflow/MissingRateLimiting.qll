@@ -29,7 +29,7 @@ private import semmle.javascript.frameworks.ConnectExpressShared::ConnectExpress
 /**
  * A route handler that should be rate-limited.
  */
-abstract class ExpensiveRouteHandler extends Routing::Node {
+abstract class ExpensiveRouteHandler extends DataFlow::Node {
   /**
    * Holds if `explanation` is a string explaining why this route handler should be rate-limited.
    *
@@ -47,7 +47,7 @@ abstract class ExpensiveRouteHandler extends Routing::Node {
  */
 deprecated class RateLimitedRouteHandlerExpr extends Express::RouteHandlerExpr {
   RateLimitedRouteHandlerExpr() {
-    flow().(Routing::Node).isGuardedBy(any(RateLimitingMiddleware m))
+    Routing::getNode(flow()).isGuardedBy(any(RateLimitingMiddleware m))
   }
 }
 
@@ -114,7 +114,7 @@ class DatabaseAccessAsExpensiveAction extends ExpensiveAction {
  */
 deprecated class RouteHandlerExpressionWithRateLimiter extends Expr {
   RouteHandlerExpressionWithRateLimiter() {
-    flow().(Routing::Node).isGuardedBy(any(RateLimitingMiddleware m))
+    Routing::getNode(flow()).isGuardedBy(any(RateLimitingMiddleware m))
   }
 }
 
@@ -143,6 +143,11 @@ abstract class RateLimitingMiddleware extends DataFlow::SourceNode {
 
   /** Gets a data flow node referring to this middleware. */
   DataFlow::SourceNode ref() { result = ref(DataFlow::TypeTracker::end()) }
+
+  /** Gets a routing node corresponding to this middleware function. */
+  Routing::Node getRoutingNode() {
+    result = Routing::getNode(this)
+  }
 }
 
 /**
@@ -172,6 +177,13 @@ class BruteForceRateLimit extends RateLimitingMiddleware {
 class RouteHandlerLimitedByExpressLimiter extends RateLimitingMiddleware {
   RouteHandlerLimitedByExpressLimiter() {
     this = API::moduleImport("express-limiter").getReturn().getReturn().getAnImmediateUse()
+  }
+
+  override Routing::Node getRoutingNode() {
+    result = super.getRoutingNode()
+    or
+    // express-limiter can perform its own route setup
+    result = Routing::getRouteSetupNode(this)
   }
 }
 

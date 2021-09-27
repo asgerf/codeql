@@ -21,8 +21,8 @@ import semmle.javascript.RestrictedLocations
 from
   Routing::Node useSite, ExpensiveRouteHandler r, string explanation, DataFlow::Node reference, string referenceLabel
 where
-  useSite = r.getAUseSite() and
+  useSite = Routing::getNode(r).getAUseSite() and
   r.explain(explanation, reference, referenceLabel) and
-  not useSite.isGuardedBy(any(RateLimitingMiddleware m))
-select useSite.getAstNode().(FirstLineOf), "This route handler " + explanation + ", but is not rate-limited.",
+  not useSite.isGuardedByNode(any(RateLimitingMiddleware m).getRoutingNode())
+select useSite.asDataFlowNode().getAstNode().(FirstLineOf), "This route handler " + explanation + ", but is not rate-limited.",
   reference, referenceLabel

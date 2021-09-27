@@ -12,6 +12,67 @@ private import semmle.javascript.dataflow.internal.StepSummary
  * in a web server application. See `Routing::Node` for more details.
  */
 module Routing {
+  private newtype TNode =
+    MkDataFlowNode(Node::Range range) or
+    MkRouteSetup(RouteSetup::Range range)
+
+  /** Gets the routing node corresponding to the value of `node`. */
+  Node getNode(DataFlow::Node node) {
+    result = MkDataFlowNode(node)
+  }
+
+  /**
+   * Gets the routing node corresponding to the route installed at the given route setup.
+   *
+   * This is not generally the same as `getNode(call)`, since the route setup method can return a value
+   * that does not correspond to the route that was just installed.
+   * Typically this occurs when the route setup method is chainable and returns the router itself.
+   */
+  Node getRouteSetupNode(DataFlow::CallNode call) {
+    result = MkRouteSetup(call)
+  }
+
+  /** The common base type between `Node::Range` and `RouteSetup::Range`. */
+  private abstract class NodeBase extends DataFlow::Node {
+    /** Gets the last child of this node, if it has any children. */
+    Routing::Node getLastChild() { none() }
+
+    /** Holds if `pred` and `succ` are adjacent siblings, in that order. */
+    predicate hasSiblingChildren(Routing::Node pred, Routing::Node succ) { none() }
+
+    /**
+     * Gets a node whose value can be accessed via the given access path on `n`th route handler input,
+     * from any route handler that follows after this one.
+     *
+     * For example, in the context of Express, the `app` object is available as `req.app`:
+     * ```js
+     * app.get('/', (req, res) => {
+     *   req.app; // alias for 'app'
+     * })
+     * ```
+     * This can be modelled by mapping `(0, "app")` to the `app` data-flow node (`n=0` corresponds
+     * to the `req` parameter).
+     */
+    DataFlow::Node getValueAtAccessPath(int n, string path) { none() }
+
+    /**
+     * Gets a path prefix to be matched against the path of incoming requests.
+     *
+     * If the prefix matches, the request is dispatched to the first child, with a modified path
+     * where the matched prefix has been removed. For example, if the prefix is `/foo` and the incoming
+     * request has path `/foo/bar`, a request with path `/bar` is dispatched to the first child.
+     *
+     * If the prefix does not match, the request is passed on to the continuation.
+     */
+    string getRelativePath() { none() }
+
+    /**
+     * Gets an HTTP request method name (in upper case) matched by this node, or nothing
+     * if all HTTP request method names are accepted.
+     */
+    HTTP::RequestMethodName getHttpMethod() { none() }
+  }
+
   /**
    * A node in a routing tree modelling the composition of middleware functions and route handlers.
    *
@@ -25,16 +86,47 @@ module Routing {
    * in the tree. The successor is the next sibling, or in case there is no next sibling, it is the next sibling
    * of the first ancestor that has a next sibling.
    */
-  class Node extends DataFlow::Node instanceof Node::Range {
+  class Node extends TNode {
+    NodeBase range;
+
+    Node() {
+      this = MkDataFlowNode(range) or this = MkRouteSetup(range)
+    }
+
+    /** Gets a textual representation of this element. */
+    string toString() {
+      result = range.toString()
+    }
+
+    /**
+     * Holds if this element is at the specified location.
+     * The location spans column `startcolumn` of line `startline` to
+     * column `endcolumn` of line `endline` in file `filepath`.
+     * For more information, see
+     * [Locations](https://help.semmle.com/QL/learn-ql/ql/locations.html).
+     */
+    predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      range.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    /** Gets a data flow node corresponding to this node. */
+    DataFlow::Node asDataFlowNode() {
+      result = range
+    }
+
     /**
      * Gets the next sibling of this node in the routing tree.
      */
-    final Node getNextSibling() { any(Node::Range parent).hasSiblingChildren(this, result) }
+    final Node getNextSibling() {
+      any(NodeBase parent).hasSiblingChildren(this, result)
+    }
 
     /**
      * Gets the previous sibling of this node in the routing tree.
      */
-    final Node getPreviousSibling() { any(Node::Range parent).hasSiblingChildren(result, this) }
+    final Node getPreviousSibling() { any(NodeBase parent).hasSiblingChildren(result, this) }
 
     /**
      * Gets a child of this node in the routing tree.
@@ -61,7 +153,7 @@ module Routing {
     /**
      * Gets the last child of this node in the routing tree.
      */
-    final Node getLastChild() { result = super.getLastChild() }
+    final Node getLastChild() { result = range.getLastChild() }
 
     /**
      * Gets the root node of this node in the routing tree.
@@ -97,7 +189,7 @@ module Routing {
      * If the prefix does not match, the request is passed on to the continuation.
      */
     final string getRelativePath() {
-      result = super.getRelativePath()
+      result = range.getRelativePath()
     }
 
     /**
@@ -108,7 +200,7 @@ module Routing {
      * that is, a node that has siblings (i.e. multiple children).
      */
     private string getPathFromFork(Node fork) {
-      super.hasSiblingChildren(_, _) and
+      range.hasSiblingChildren(_, _) and
       this = fork and
       result = ""
       or
@@ -129,34 +221,34 @@ module Routing {
      * that is, a node that has siblings (i.e. multiple children).
      */
     private string getHttpMethodFromFork(Node fork) {
-      super.hasSiblingChildren(_, _) and
+      range.hasSiblingChildren(_, _) and
       this = fork and
       (
-        result = super.getHttpMethod()
+        result = range.getHttpMethod()
         or
-        not exists(super.getHttpMethod()) and
+        not exists(range.getHttpMethod()) and
         result = "*"
       )
       or
       result = getParent().getHttpMethodFromFork(fork) and
       (
         // Only the ancestor restricts the HTTP method
-        not exists(super.getHttpMethod())
+        not exists(range.getHttpMethod())
         or
         // Intersect permitted HTTP methods
-        result = super.getHttpMethod()
+        result = range.getHttpMethod()
       )
       or
       // The ancestor allows any HTTP method, but this node restricts it
       getParent().getHttpMethodFromFork(fork) = "*" and
-      result = super.getHttpMethod()
+      result = range.getHttpMethod()
     }
 
     /**
      * Holds if `node` has processed the incoming request strictly prior to this node.
      */
     pragma[inline]
-    predicate isGuardedBy(Node node) {
+    predicate isGuardedByNode(Node node) {
       exists(Node base1, Node base2, Node fork |
         base1 = pragma[only_bind_out](node).getContinuationParent*() and
         base2 = base1.getNextSibling+() and
@@ -168,20 +260,29 @@ module Routing {
     }
 
     /**
+     * Holds if the middleware corresponding to `node` has processed the incoming request strictly prior to this node.
+     */
+    predicate isGuardedBy(DataFlow::Node node) {
+      isGuardedByNode(getNode(node))
+    }
+
+    /**
      * Gets an HTTP method name which this node will accept, or nothing if the node accepts all HTTP methods, not
      * taking into account the context from ancestors or children nodes.
      */
     HTTP::RequestMethodName getOwnHttpMethod() {
-      result = super.getHttpMethod()
+      result = range.getHttpMethod()
     }
 
     /** Gets a place where this route node is installed as a route handler. */
     Node getAUseSite() {
-      if getParent().(Node::Range).hasSiblingChildren(_, _) then
+      if getParent().getRange().hasSiblingChildren(_, _) then
         result = this
       else
         result = getParent().getAUseSite()
     }
+
+    private NodeBase getRange() { result = range }
   }
 
   /** Holds if `a` is a prefix of `b` or the other way around. */
@@ -211,44 +312,7 @@ module Routing {
      * - `Routing::Node::WithArguments` for nodes with an indexed sequence of children,
      * - `Routing::RouteSetup::MethodCall` for nodes manipulating a router object
      */
-    abstract class Range extends DataFlow::Node {
-      /** Gets the last child of this node, if it has any children. */
-      Routing::Node getLastChild() { none() }
-
-      /** Holds if `pred` and `succ` are adjacent siblings, in that order. */
-      predicate hasSiblingChildren(Routing::Node pred, Routing::Node succ) { none() }
-
-      /**
-       * Gets a node whose value can be accessed via the given access path on `n`th route handler input,
-       * from any route handler that follows after this one.
-       *
-       * For example, in the context of Express, the `app` object is available as `req.app`:
-       * ```js
-       * app.get('/', (req, res) => {
-       *   req.app; // alias for 'app'
-       * })
-       * ```
-       * This can be modelled by mapping `(0, "app")` to the `app` data-flow node (`n=0` corresponds
-       * to the `req` parameter).
-       */
-      DataFlow::Node getValueAtAccessPath(int n, string path) { none() }
-
-      /**
-       * Gets a path prefix to be matched against the path of incoming requests.
-       *
-       * If the prefix matches, the request is dispatched to the first child, with a modified path
-       * where the matched prefix has been removed. For example, if the prefix is `/foo` and the incoming
-       * request has path `/foo/bar`, a request with path `/bar` is dispatched to the first child.
-       *
-       * If the prefix does not match, the request is passed on to the continuation.
-       */
-      string getRelativePath() { none() }
-
-      /**
-       * Gets an HTTP request method name (in upper case) matched by this node, or nothing
-       * if all HTTP request method names are accepted.
-       */
-      HTTP::RequestMethodName getHttpMethod() { none() }
+    abstract class Range extends NodeBase {
     }
 
     private StepSummary routeStepSummary() {
@@ -301,7 +365,13 @@ module Routing {
         )
       }
 
-      final override Routing::Node getLastChild() { result = getSource() and result != this }
+      final override Routing::Node getLastChild() {
+        exists(DataFlow::Node source |
+          source = getSource() and
+          source != this and
+          result = MkDataFlowNode(source)
+        )
+      }
     }
 
     /**
@@ -319,12 +389,12 @@ module Routing {
 
       private int getNumChild() { result = strictcount(getChild(_)) }
 
-      final override Routing::Node getLastChild() { result = getChild(getNumChild() - 1) }
+      final override Routing::Node getLastChild() { result = MkDataFlowNode(getChild(getNumChild() - 1)) }
 
       override predicate hasSiblingChildren(Routing::Node pred, Routing::Node succ) {
         exists(int n |
-          pred = getChild(n) and
-          succ = getChild(n + 1)
+          pred = MkDataFlowNode(getChild(n)) and
+          succ = MkDataFlowNode(getChild(n + 1))
         )
       }
     }
@@ -364,9 +434,7 @@ module Routing {
    * will have multiple previous/next siblings, reflecting the different paths the program may take
    * during setup.
    */
-  class RouteSetup extends Node {
-    RouteSetup() { this instanceof RouteSetup::Range }
-
+  class RouteSetup extends Node, MkRouteSetup {
     /**
      * Gets the router affected by this route setup.
      *
@@ -383,7 +451,7 @@ module Routing {
     /**
      * This class can be extended to contribute new kinds of route setups.
      */
-    abstract class Range extends Node::Range {
+    abstract class Range extends NodeBase {
       /**
        * Holds if this route setup targets `router` and occurs at the given `cfgNode`.
        */
@@ -431,10 +499,14 @@ module Routing {
   }
 
   /**
-   * Like `RouteSetup::Range.isInstalledAt` but with the router mapped to its root alias.
+   * Like `RouteSetup::Range.isInstalledAt` but with the router mapped to its root alias, and the route setup
+   * call mapped to the `MkRouteSetup` node.
    */
-  private predicate isInstalledAt(RouteSetup::Range setup, DataFlow::SourceNode router, ControlFlowNode cfgNode) {
-    setup.isInstalledAt(getARouterRef(router).getALocalUse(), cfgNode)
+  private predicate isInstalledAt(RouteSetup setupNode, DataFlow::SourceNode router, ControlFlowNode cfgNode) {
+    exists(RouteSetup::Range setup |
+      setup.isInstalledAt(getARouterRef(router).getALocalUse(), cfgNode) and
+      setupNode = MkRouteSetup(setup)
+    )
   }
 
   /** Holds if `router` is the `SourceNode` targeted by some route setup. */
@@ -467,7 +539,7 @@ module Routing {
   /**
    * A `Node` generated from the router targeted by a `RouteSetup`.
    */
-  private class RouterRange extends Node::Range, DataFlow::Node {
+  private class RouterRange extends Node::Range {
     DataFlow::SourceNode routerSource;
 
     RouterRange() {
@@ -490,13 +562,13 @@ module Routing {
    * Gets the route setup most recently performed on `router` at `node`, or in the case of branching control flow,
    * gets any route setup that could be the most recent one.
    */
-  private RouteSetup::Range getMostRecentRouteSetupAt(
+  private RouteSetup getMostRecentRouteSetupAt(
     DataFlow::SourceNode router, ControlFlowNode node
   ) {
     isInstalledAt(result, router, node)
     or
     result = getMostRecentRouteSetupAt(router, node.getAPredecessor()) and
-    not exists(RouteSetup::Range setup | isInstalledAt(setup, router, node))
+    not exists(RouteSetup setup | isInstalledAt(setup, router, node))
   }
 
   /**
@@ -558,7 +630,7 @@ module Routing {
       )
     }
 
-    override Routing::Node getLastChild() { result = targetRouter }
+    override Routing::Node getLastChild() { result = MkDataFlowNode(targetRouter) }
 
     override predicate isInstalledAt(DataFlow::Node r, ControlFlowNode cfgNode) {
       r = localRouter and
@@ -569,7 +641,13 @@ module Routing {
   /**
    * A function that handles an incoming request.
    */
-  class RouteHandler extends Node, DataFlow::FunctionNode {
+  class RouteHandler extends Node {
+    DataFlow::FunctionNode function;
+
+    RouteHandler() {
+      this = MkDataFlowNode(function)
+    }
+
     /**
      * Gets the `i`th parameter of this route handler.
      *
@@ -577,7 +655,7 @@ module Routing {
      *
      * To find all references to this parameter, use `getInput(n).ref()`.
      */
-    final RouteHandlerInput getInput(int n) { result = getParameter(n) }
+    final RouteHandlerInput getInput(int n) { result = function.getParameter(n) }
 
     /**
      * Gets a parameter of this route handler.
@@ -586,7 +664,12 @@ module Routing {
      *
      * To find all references to a parameter, use `getAnInput().ref()`.
      */
-    final RouteHandlerInput getAnInput() { result = getAParameter() }
+    final RouteHandlerInput getAnInput() { result = function.getAParameter() }
+
+    /** Gets the function implementing this route handler. */
+    DataFlow::FunctionNode getFunction() {
+      result = function
+    }
 
     /**
      * Gets a call that delegates the incoming request to the next route handler in the stack,
@@ -607,10 +690,19 @@ module Routing {
   }
 
   /**
+   * Gets the `RouteHandler` node corresponding to the given function.
+   *
+   * This has the same result as `getNode(function)` but is declared with a different return type.
+   */
+  RouteHandler getRouteHandler(DataFlow::FunctionNode function) {
+    result.getFunction() = function
+  }
+
+  /**
    * A parameter to a route handler function.
    */
   class RouteHandlerInput extends DataFlow::ParameterNode {
-    RouteHandlerInput() { this = any(RouteHandler h).getAParameter() }
+    RouteHandlerInput() { this = any(RouteHandler h).getFunction().getAParameter() }
 
     /** Gets a data flow node referring to this route handler input. */
     private DataFlow::SourceNode ref(DataFlow::TypeTracker t) {
@@ -626,7 +718,7 @@ module Routing {
     /**
      * Gets the corresponding route handler, that is, the function on which this is a parameter.
      */
-    final RouteHandler getRouteHandler() { result.getAParameter() = this }
+    final RouteHandler getRouteHandler() { result.getFunction().getAParameter() = this }
 
     /**
      * Gets a node that is stored in the given access path on this route handler input, either
@@ -634,9 +726,9 @@ module Routing {
      */
     DataFlow::Node getValueFromAccessPath(string path) {
       exists(RouteHandler handler, int i, Node predecessor |
-        this = handler.getParameter(i) and
+        this = handler.getFunction().getParameter(i) and
         result = getAnAccessPathRhs(predecessor, i, path) and
-        (handler.isGuardedBy(predecessor) or predecessor = handler)
+        (handler.isGuardedByNode(predecessor) or predecessor = handler)
       )
     }
   }
@@ -667,8 +759,9 @@ module Routing {
     )
     or
     // Implicit assignment contributed by framework model
-    exists(DataFlow::Node value, string path1 |
-      value = base.(Node::Range).getValueAtAccessPath(n, path1)
+    exists(DataFlow::Node value, string path1, NodeBase range |
+      base = MkDataFlowNode(range) and
+      value = range.getValueAtAccessPath(n, path1)
     |
       result = value and path = path1
       or
@@ -746,7 +839,7 @@ module Routing {
     exists(Node writer, Node reader, int n, string path |
       pred = getAnAccessPathRhs(writer, n, path) and
       succ = getAnAccessPathRead(reader, n, path) and
-      reader.isGuardedBy(writer)
+      reader.isGuardedByNode(writer)
     )
     or
     // Same as in `apiStep`: we can't augment the call graph, so just add flow out

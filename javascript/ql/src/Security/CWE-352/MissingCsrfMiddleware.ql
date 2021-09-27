@@ -92,7 +92,7 @@ private DataFlow::SourceNode nodeLeadingToCsrfWriteOrCheck(DataFlow::TypeBackTra
 private Routing::RouteHandler getAHandlerSettingCsrfCookie() {
   exists(HTTP::CookieDefinition setCookie |
     setCookie.getNameArgument().getStringValue().regexpMatch("(?i).*(csrf|xsrf).*") and
-    result = setCookie.getRouteHandler()
+    result = Routing::getRouteHandler(setCookie.getRouteHandler())
   )
 }
 
@@ -112,7 +112,7 @@ predicate isCsrfProtectionRouteHandler(Routing::RouteHandler handler) {
  * or a CSRF protecting library.
  */
 Routing::Node getACsrfMiddleware() {
-  result = csrfMiddlewareCreation()
+  result = Routing::getNode(csrfMiddlewareCreation())
   or
   isCsrfProtectionRouteHandler(result)
 }
@@ -121,11 +121,11 @@ Routing::Node getACsrfMiddleware() {
  * Holds if the given route handler is protected by CSRF middleware.
  */
 predicate hasCsrfMiddleware(Routing::RouteHandler handler) {
-  handler.isGuardedBy(getACsrfMiddleware())
+  handler.isGuardedByNode(getACsrfMiddleware())
 }
 
 from
-  Routing::Node setup, Routing::RouteHandler handler, Routing::Node cookie
+  Routing::RouteSetup setup, Routing::RouteHandler handler, HTTP::CookieMiddlewareInstance cookie
 where
   // Require that the handler uses cookies and has cookie middleware.
   //
@@ -137,7 +137,7 @@ where
   isRouteHandlerUsingCookies(handler) and
   hasCookieMiddleware(handler, cookie) and
   // Only flag the cookie parser registered first.
-  not hasCookieMiddleware(cookie, _) and
+  not hasCookieMiddleware(Routing::getNode(cookie), _) and
   not hasCsrfMiddleware(handler) and
   // Only warn for dangerous handlers, such as for POST and PUT.
   setup.getOwnHttpMethod().isUnsafe()
