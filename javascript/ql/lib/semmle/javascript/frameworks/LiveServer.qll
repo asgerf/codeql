@@ -10,14 +10,11 @@ private module LiveServer {
    * An expression that imports the live-server package, seen as a server-definition.
    */
   class ServerDefinition extends HTTP::Servers::StandardServerDefinition {
-    API::Node imp;
-
     ServerDefinition() {
-      imp = API::moduleImport("live-server") and
-      this = imp.getAnImmediateUse().asExpr()
+      this = DataFlow::moduleImport("live-server").asExpr()
     }
 
-    API::Node getImportNode() { result = imp }
+    API::Node getImportNode() { result.getAnImmediateUse().asExpr() = this }
   }
 
   /**

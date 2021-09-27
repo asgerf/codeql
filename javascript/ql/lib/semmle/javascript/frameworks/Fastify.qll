@@ -23,6 +23,40 @@ module Fastify {
     }
   }
 
+  /** Gets a data flow node referring to a fastify server. */
+  private DataFlow::SourceNode server(DataFlow::TypeTracker t) {
+    t.start() and
+    result = DataFlow::moduleImport("fastify").getAnInvocation()
+    or
+    // server.register((serverAlias) => ..., { options })
+    t.start() and
+    result = pluginCallback().(DataFlow::FunctionNode).getParameter(0)
+    or
+    exists(DataFlow::TypeTracker t2 |
+      result = server(t2).track(t2, t)
+    )
+  }
+
+  /** Gets a data flow node referring to a fastify server. */
+  DataFlow::SourceNode server() {
+    result = server(DataFlow::TypeTracker::end())
+  }
+
+
+  private DataFlow::SourceNode pluginCallback(DataFlow::TypeBackTracker t) {
+    t.start() and
+    result = server().getAMethodCall("register").getArgument(0).getALocalSource()
+    or
+    exists(DataFlow::TypeBackTracker t2 |
+      result = pluginCallback(t2).backtrack(t2, t)
+    )
+  }
+
+  /** Gets a data flow node being used as a Fastify plugin. */
+  private DataFlow::SourceNode pluginCallback() {
+    result = pluginCallback(DataFlow::TypeBackTracker::end())
+  }
+
   /**
    * A function used as a Fastify route handler.
    *
@@ -110,7 +144,7 @@ module Fastify {
     override Expr getServer() { result = server }
 
     /** Gets an argument that represents a route handler being registered. */
-    private DataFlow::Node getARouteHandlerExpr() {
+    DataFlow::Node getARouteHandlerExpr() {
       if methodName = "route"
       then
         result =
@@ -122,6 +156,66 @@ module Fastify {
                   "onSend", "onResponse", "handler"
                 ])
       else result = getLastArgument().flow()
+    }
+  }
+
+  private class ShorthandRoutingTreeSetup extends Routing::RouteSetup::MethodCall {
+    ShorthandRoutingTreeSetup() {
+      asExpr() instanceof RouteSetup and
+      not getMethodName() = "route"
+    }
+
+    override string getRelativePath() {
+      result = getArgument(0).getStringValue()
+    }
+
+    override HTTP::RequestMethodName getHttpMethod() {
+      result = getMethodName().toUpperCase()
+    }
+  }
+
+  /** Gets the name of the `n`th handler in  */
+  private string getNthHandlerName(int n) {
+    result = "onRequest,preParsing,preValidation,preHandler,handler,preSerialization,onSend,onResponse".splitAt(",", n)
+  }
+
+  private class FullRoutingTreeSetup extends Routing::RouteSetup::MethodCall {
+    FullRoutingTreeSetup() {
+      asExpr() instanceof RouteSetup and
+      getMethodName() = "route"
+    }
+
+    override string getRelativePath() {
+      result = getAPropertyWrite("url").getRhs().getStringValue()
+    }
+
+    override HTTP::RequestMethodName getHttpMethod() {
+      result = getAPropertyWrite("method").getStringValue().toUpperCase()
+    }
+
+    private DataFlow::Node getRawChild(int n) {
+      result = getAPropertyWrite(getNthHandlerName(n))
+    }
+
+    override DataFlow::Node getChild(int n) {
+      result = getRawChild(rank[n + 1](int k | exists(getRawChild(k))))
+    }
+  }
+
+  private class PluginRegistration extends Routing::RouteSetup::MethodCall {
+    ServerDefinition server;
+
+    PluginRegistration() {
+      server.flowsTo(this.getReceiver().asExpr()) and
+      getMethodName() = "register"
+    }
+
+    override HTTP::RequestMethodName getHttpMethod() {
+      result = getOptionArgument(1, "method").getStringValue().toUpperCase()
+    }
+
+    override string getRelativePath() {
+      result = getOptionArgument(1, "prefix").getStringValue()
     }
   }
 
