@@ -600,6 +600,9 @@ module Routing {
     DataFlow::CallNode getAContinuationInvocation() {
       result = getAnInput().ref().getAnInvocation() and
       result.getNumArgument() = 0
+      or
+      result.(DataFlow::MethodCallNode).getMethodName() = "then" and
+      result.getArgument(0) = getAnInput().ref().getALocalUse()
     }
   }
 

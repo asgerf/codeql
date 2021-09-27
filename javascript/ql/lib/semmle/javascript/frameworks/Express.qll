@@ -105,7 +105,7 @@ module Express {
 
     RateLimiterRouteSetup() {
       limitCall = DataFlow::moduleImport("express-limiter").getACall() and
-      exists(limitCall.getOptionArgument(0, ["path", "method"])) and
+      exists(this.(DataFlow::CallNode).getOptionArgument(0, ["path", "method"])) and
       this = limitCall.getACall()
     }
 
