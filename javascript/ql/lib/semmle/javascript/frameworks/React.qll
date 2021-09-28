@@ -864,3 +864,12 @@ private class PropsTaintStep extends TaintTracking::SharedTaintStep {
     )
   }
 }
+
+/**
+ * A DOM element obtained via `createRef()`.
+ */
+private class DomValueSourceFromRef extends DOM::DomValueSource::Range {
+  DomValueSourceFromRef() {
+    this = API::moduleImport("react").getMember("createRef").getReturn().getMember("current").getAnImmediateUse()
+  }
+}
