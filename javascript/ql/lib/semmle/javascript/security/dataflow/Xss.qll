@@ -319,6 +319,16 @@ module DomBasedXss {
   }
 
   /**
+   * A spread operator used in a JSX component, which could contain a `dangerouslySetInnerHTML`
+   * property.
+   */
+  class JsxSpreadSink extends Sink {
+    JsxSpreadSink() {
+      this = any(JSXSpreadAttribute attr).getValue().getOperand().flow()
+    }
+  }
+
+  /**
    * A React tooltip where the `data-html` attribute is set to `true`.
    */
   class TooltipSink extends Sink {
