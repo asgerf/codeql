@@ -212,3 +212,31 @@ function withChaining() {
         sink(req.taint); // NOT OK
     });
 }
+
+function withClass() {
+    class App {
+        constructor(router) {
+            this.router = router;
+            this.earlyRoutes();
+            this.addMiddleware();
+            this.lateRoutes();
+        }
+        earlyRoutes() {
+            this.router.get('/', (req, res) => {
+                sink(req.taint); // OK
+            })
+        }
+        addMiddleware() {
+            this.router.use((req, res, next) => {
+                req.taint = source();
+                next();
+            })
+        }
+        lateRoutes() {
+            this.router.get('/', (req, res) => {
+                sink(req.taint); // NOT OK
+            })
+        }
+    }
+    let app = new App(express());
+}
