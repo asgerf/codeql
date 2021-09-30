@@ -14,7 +14,27 @@ private import semmle.javascript.dataflow.internal.StepSummary
 module Routing {
   private newtype TNode =
     MkDataFlowNode(Node::Range range) or
-    MkRouteSetup(RouteSetup::Range range)
+    MkRouteSetup(RouteSetupBase range) or
+    MkRouter(Router::Range range, StmtContainer container) {
+      routerIsLiveInContainer(range, container)
+    }
+
+  private predicate routerIsLiveInContainer(Router::Range router, StmtContainer container) {
+    container = router.getContainer()
+    or
+    exists(RouteSetup::Range setup, ControlFlowNode cfg |
+      setup.isInstalledAt(router, cfg) and
+      container = cfg.getContainer()
+    )
+    or
+    // 'container' contains a call to a function in which 'router' is live
+    exists(DataFlow::InvokeNode invoke, Function f |
+      routerIsLiveInContainer(router, f) and
+      not f = router.getContainer() and // 'f' does not contain the creation of the router
+      FlowSteps::calls(invoke, f) and
+      container = invoke.getContainer()
+    )
+  }
 
   /** Gets the routing node corresponding to the value of `node`. */
   Node getNode(DataFlow::Node node) {
@@ -32,13 +52,11 @@ module Routing {
     result = MkRouteSetup(call)
   }
 
-  /** The common base type between `Node::Range` and `RouteSetup::Range`. */
+  /** The common base type between `Node::Range` and `RouteSetupBase`. */
   private abstract class NodeBase extends DataFlow::Node {
-    /** Gets the last child of this node, if it has any children. */
-    Routing::Node getLastChild() { none() }
+    Node getChild(int n) { none() }
 
-    /** Holds if `pred` and `succ` are adjacent siblings, in that order. */
-    predicate hasSiblingChildren(Routing::Node pred, Routing::Node succ) { none() }
+    final int getNumChild() { result = count(int n | exists(getChild(n))) }
 
     /**
      * Gets a node whose value can be accessed via the given access path on `n`th route handler input,
@@ -73,6 +91,95 @@ module Routing {
     HTTP::RequestMethodName getHttpMethod() { none() }
   }
 
+  private class NodeWithLinearChildren extends Node {
+    NodeBase range;
+
+    NodeWithLinearChildren() {
+      this = MkDataFlowNode(range) or this = MkRouteSetup(range)
+    }
+
+    override string toString() {
+      result = range.toString()
+    }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      range.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    override Node getAChild() {
+      result = range.getChild(_)
+    }
+
+    override Node getFirstChild() {
+      result = range.getChild(0)
+    }
+
+    override Node getLastChild() {
+      result = range.getChild(range.getNumChild() - 1)
+    }
+
+    override string getRelativePath() {
+      result = range.getRelativePath()
+    }
+
+    override HTTP::RequestMethodName getOwnHttpMethod() {
+      result = range.getHttpMethod()
+    }
+  }
+
+  private class NodeWithGraphChildren extends Node, MkRouter {
+    Router::Range router;
+    StmtContainer container;
+
+    NodeWithGraphChildren() {
+      this = MkRouter(router, container)
+    }
+
+    override string toString() {
+      result = router.toString() + " in " + [
+        container.(Function).describe(),
+        container.(TopLevel).getFile().getRelativePath()
+      ]
+    }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      router.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    private RouteSetupBase getARouteSetup() {
+      result.isInstalledAt(router, any(ControlFlowNode cfg | cfg.getContainer() = container))
+    }
+
+    override Node getAChild() {
+      result = MkRouteSetup(getARouteSetup())
+    }
+
+    override Node getLastChild() {
+      result = getMostRecentRouteSetupAt(router, container.getExit())
+    }
+
+    override Node getFirstChild() {
+      result = getAChild() and not exists(result.getPreviousSibling())
+    }
+  }
+
+  /** Holds if `pred` and `succ` are adjacent siblings. */
+  private predicate siblings(Node pred, Node succ) {
+    exists(NodeBase base, int n |
+      pred = base.getChild(n) and
+      succ = base.getChild(n + 1)
+    )
+    or
+    exists(Router::Range router, ControlFlowNode cfgNode |
+      isInstalledAt(succ, router, cfgNode) and
+      pred = getMostRecentRouteSetupAt(router, cfgNode.getAPredecessor())
+    )
+  }
+
   /**
    * A node in a routing tree modelling the composition of middleware functions and route handlers.
    *
@@ -87,16 +194,8 @@ module Routing {
    * of the first ancestor that has a next sibling.
    */
   class Node extends TNode {
-    NodeBase range;
-
-    Node() {
-      this = MkDataFlowNode(range) or this = MkRouteSetup(range)
-    }
-
     /** Gets a textual representation of this element. */
-    string toString() {
-      result = range.toString()
-    }
+    string toString() { none() } // Overridden in subclass
 
     /**
      * Holds if this element is at the specified location.
@@ -107,35 +206,25 @@ module Routing {
      */
     predicate hasLocationInfo(
       string filepath, int startline, int startcolumn, int endline, int endcolumn
-    ) {
-      range.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
-    }
+    ) { none() } // overridden in subclass
 
     /** Gets a data flow node corresponding to this node. */
-    DataFlow::Node asDataFlowNode() {
-      result = range
-    }
+    DataFlow::Node asDataFlowNode() { none() } // Overridden in subclass
 
     /**
      * Gets the next sibling of this node in the routing tree.
      */
-    final Node getNextSibling() {
-      any(NodeBase parent).hasSiblingChildren(this, result)
-    }
+    final Node getNextSibling() { siblings(this, result) }
 
     /**
      * Gets the previous sibling of this node in the routing tree.
      */
-    final Node getPreviousSibling() { any(NodeBase parent).hasSiblingChildren(result, this) }
+    final Node getPreviousSibling() { siblings(result, this) }
 
     /**
      * Gets a child of this node in the routing tree.
      */
-    final Node getAChild() {
-      result = getLastChild()
-      or
-      result = getAChild().getPreviousSibling()
-    }
+    Node getAChild() { none() } // Overridden in subclass
 
     /**
      * Gets the parent of this node in the routing tree.
@@ -145,15 +234,12 @@ module Routing {
     /**
      * Gets the first child of this node in the routing tree.
      */
-    final Node getFirstChild() {
-      result = getAChild() and
-      not exists(result.getPreviousSibling())
-    }
+    Node getFirstChild() { none() } // Overridden in subclass
 
     /**
      * Gets the last child of this node in the routing tree.
      */
-    final Node getLastChild() { result = range.getLastChild() }
+    Node getLastChild() { none() } // Overridden in subclass
 
     /**
      * Gets the root node of this node in the routing tree.
@@ -188,8 +274,12 @@ module Routing {
      *
      * If the prefix does not match, the request is passed on to the continuation.
      */
-    final string getRelativePath() {
-      result = range.getRelativePath()
+    string getRelativePath() { none() } // Overridden in subclass
+
+    final predicate isFork() {
+      exists(getAChild().getNextSibling())
+      or
+      this instanceof MkRouteSetup
     }
 
     /**
@@ -200,7 +290,7 @@ module Routing {
      * that is, a node that has siblings (i.e. multiple children).
      */
     private string getPathFromFork(Node fork) {
-      range.hasSiblingChildren(_, _) and
+      isFork() and
       this = fork and
       result = ""
       or
@@ -221,27 +311,27 @@ module Routing {
      * that is, a node that has siblings (i.e. multiple children).
      */
     private string getHttpMethodFromFork(Node fork) {
-      range.hasSiblingChildren(_, _) and
+      isFork() and
       this = fork and
       (
-        result = range.getHttpMethod()
+        result = getOwnHttpMethod()
         or
-        not exists(range.getHttpMethod()) and
+        not exists(getOwnHttpMethod()) and
         result = "*"
       )
       or
       result = getParent().getHttpMethodFromFork(fork) and
       (
         // Only the ancestor restricts the HTTP method
-        not exists(range.getHttpMethod())
+        not exists(getOwnHttpMethod())
         or
         // Intersect permitted HTTP methods
-        result = range.getHttpMethod()
+        result = getOwnHttpMethod()
       )
       or
       // The ancestor allows any HTTP method, but this node restricts it
       getParent().getHttpMethodFromFork(fork) = "*" and
-      result = range.getHttpMethod()
+      result = getOwnHttpMethod()
     }
 
     /**
@@ -270,19 +360,22 @@ module Routing {
      * Gets an HTTP method name which this node will accept, or nothing if the node accepts all HTTP methods, not
      * taking into account the context from ancestors or children nodes.
      */
-    HTTP::RequestMethodName getOwnHttpMethod() {
-      result = range.getHttpMethod()
+    HTTP::RequestMethodName getOwnHttpMethod() { none() } // Overridden in subclass
+
+    private Node getAUseSiteInRouteSetup() {
+      if getParent() instanceof RouteSetup then
+        result = this
+      else
+        result = getParent().getAUseSiteInRouteSetup()
     }
 
     /** Gets a place where this route node is installed as a route handler. */
     Node getAUseSite() {
-      if getParent().getRange().hasSiblingChildren(_, _) then
-        result = this
-      else
-        result = getParent().getAUseSite()
+      result = getAUseSiteInRouteSetup()
+      or
+      not exists(getAUseSiteInRouteSetup()) and
+      result = this
     }
-
-    private NodeBase getRange() { result = range }
   }
 
   /** Holds if `a` is a prefix of `b` or the other way around. */
@@ -296,7 +389,6 @@ module Routing {
   private predicate areHttpMethodsMatching(string a, string b) {
     a = "*" or b = "*" or a = b
   }
-
 
   /**
    * Companion module to the `Node` class, containing abstract classes
@@ -331,7 +423,7 @@ module Routing {
      * Framework models may extend this class to mark nodes as being use sites.
      */
     abstract class UseSite extends Range {
-      private DataFlow::Node getRawSource() {
+      DataFlow::Node getSource() {
         result = getALocalSource()
         or
         StepSummary::smallstep(result, this, routeStepSummary())
@@ -341,15 +433,6 @@ module Routing {
         exists(string prop |
           StepSummary::smallstep(result, getSourceProp(prop).getALocalUse(), StoreStep(prop))
         )
-      }
-
-      /** Gets a node that flows to this use site. */
-      DataFlow::Node getSource() {
-        // If an alias for a router flows here, make sure we use the router as the source
-        result = getRawSource() and
-        not result = any(RouteSetup::Range r).getARouterAlias(_)
-        or
-        getRawSource() = getARouterRef(result)
       }
 
       /** Gets a node whose `prop` property flows to this use site. */
@@ -365,11 +448,31 @@ module Routing {
         )
       }
 
-      final override Routing::Node getLastChild() {
+      private DataFlow::Node getStrictSource() {
+        result = getSource() and
+        result != this
+      }
+
+      final override Routing::Node getChild(int n) {
+        n = 0 and
         exists(DataFlow::Node source |
-          source = getSource() and
-          source != this and
-          result = MkDataFlowNode(source)
+          source = getStrictSource()
+        |
+          if source instanceof Router::Range then
+            result = MkRouter(source, source.getContainer())
+          else
+            result = MkDataFlowNode(source)
+        )
+        or
+        // If we cannot find the source of the use-site, but we know it's somehow a reference to a router,
+        // treat the router as the source. This is needed to handle chaining calls on the router, as the
+        // specific framework model knows about chaining steps, but the general `getSource()` predicate doesn't.
+        n = 0 and
+        not exists(getStrictSource()) and
+        exists(Router::Range router |
+          this != router and
+          this = router.getAReference().getALocalUse() and
+          result = MkRouter(router, getContainer())
         )
       }
     }
@@ -385,30 +488,23 @@ module Routing {
      * A node that has a linear sequence of children, which should all be marked as route objects.
      */
     abstract class WithArguments extends Range {
-      abstract DataFlow::Node getChild(int n);
+      abstract DataFlow::Node getArgumentNode(int n);
 
-      private int getNumChild() { result = strictcount(getChild(_)) }
-
-      final override Routing::Node getLastChild() { result = MkDataFlowNode(getChild(getNumChild() - 1)) }
-
-      override predicate hasSiblingChildren(Routing::Node pred, Routing::Node succ) {
-        exists(int n |
-          pred = MkDataFlowNode(getChild(n)) and
-          succ = MkDataFlowNode(getChild(n + 1))
-        )
+      final override Node getChild(int n) {
+        result = MkDataFlowNode(getArgumentNode(n))
       }
     }
 
     /** An argument to a `WithArguments` instance, seen as a use site. */
     private class Argument extends UseSite {
-      Argument() { this = any(WithArguments n).getChild(_) }
+      Argument() { this = any(WithArguments n).getArgumentNode(_) }
     }
 
     /** An array which has already been determined to a routing node, with children. */
     private class ImpliedArrayRoute extends Node::WithArguments, DataFlow::ArrayCreationNode {
       ImpliedArrayRoute() { this instanceof Node::UseSite }
 
-      override DataFlow::Node getChild(int n) { result = getElement(n) }
+      override DataFlow::Node getArgumentNode(int n) { result = getElement(n) }
     }
   }
 
@@ -443,6 +539,13 @@ module Routing {
     final Node getRouter() { result = getParent() }
   }
 
+  abstract class RouteSetupBase extends NodeBase {
+    /**
+     * Holds if this route setup targets `router` and occurs at the given `cfgNode`.
+     */
+    abstract predicate isInstalledAt(Router::Range router, ControlFlowNode cfgNode);
+  }
+
   /**
    * Companion module to the `RouteSetup` class, containing classes that can be use to contribute
    * new kinds of route setups.
@@ -451,19 +554,7 @@ module Routing {
     /**
      * This class can be extended to contribute new kinds of route setups.
      */
-    abstract class Range extends NodeBase {
-      /**
-       * Holds if this route setup targets `router` and occurs at the given `cfgNode`.
-       */
-      abstract predicate isInstalledAt(DataFlow::Node router, ControlFlowNode cfgNode);
-
-      /**
-       * Gets a data-flow node that refers to the given `router`.
-       *
-       * This can be used to model route setups that return the router itself, to support
-       * chaining calls.
-       */
-      DataFlow::SourceNode getARouterAlias(DataFlow::Node router) { none() }
+    abstract class Range extends RouteSetupBase {
     }
 
     /**
@@ -473,89 +564,29 @@ module Routing {
      */
     abstract class MethodCall extends RouteSetup::Range, Node::WithArguments,
       DataFlow::MethodCallNode {
-      override DataFlow::Node getChild(int n) { result = getArgument(n) }
+      override DataFlow::Node getArgumentNode(int n) { result = getArgument(n) }
 
-      override predicate isInstalledAt(DataFlow::Node router, ControlFlowNode cfgNode) {
-        router = getReceiver() and cfgNode = getEnclosingExpr()
-      }
-
-      override DataFlow::SourceNode getARouterAlias(DataFlow::Node router) {
-        router = getReceiver() and
-        result = this
+      override predicate isInstalledAt(Router::Range router, ControlFlowNode cfgNode) {
+        this = router.getAReference().getAMethodCall() and cfgNode = getEnclosingExpr()
       }
     }
   }
 
-  /**
-   * Gets a node that refers to the given `router` via an alias established by
-   * a route setup (usually by the route setup returning `this`).
-   */
-  private DataFlow::SourceNode getARouterRef(DataFlow::SourceNode router) {
-    any(RouteSetup::Range r).isInstalledAt(router.getALocalUse(), _) and
-    result = router and
-    not result = any(RouteSetup::Range r).getARouterAlias(_) // only track the root alias
-    or
-    result = any(RouteSetup::Range r).getARouterAlias(getARouterRef(router).getALocalUse())
+  module Router {
+    abstract class Range extends NodeBase {
+      /** Gets a reference to this router. */
+      abstract DataFlow::SourceNode getAReference();
+    }
   }
 
   /**
-   * Like `RouteSetup::Range.isInstalledAt` but with the router mapped to its root alias, and the route setup
-   * call mapped to the `MkRouteSetup` node.
+   * Like `RouteSetupBase.isInstalledAt` but with the route setup call mapped to the `MkRouteSetup` node.
    */
-  private predicate isInstalledAt(RouteSetup setupNode, DataFlow::SourceNode router, ControlFlowNode cfgNode) {
-    exists(RouteSetup::Range setup |
-      setup.isInstalledAt(getARouterRef(router).getALocalUse(), cfgNode) and
+  private predicate isInstalledAt(RouteSetup setupNode, Router::Range router, ControlFlowNode cfgNode) {
+    exists(RouteSetupBase setup |
+      setup.isInstalledAt(router, cfgNode) and
       setupNode = MkRouteSetup(setup)
     )
-  }
-
-  /** Holds if `router` is the `SourceNode` targeted by some route setup. */
-  pragma[nomagic]
-  private predicate isRouter(DataFlow::SourceNode router) {
-    any(RouteSetup::Range r).isInstalledAt(router.getALocalUse(), _)
-  }
-
-  /**
-   * Gets the canonical data flow node representing references to `router` in `container`.
-   *
-   * For captured references to a router object, we use the SSA capture definition node at the function
-   * entry point (when such a node exists).
-   */
-  pragma[nomagic]
-  private DataFlow::Node getRouterNodeInContainer(DataFlow::SourceNode router, StmtContainer container) {
-    isRouter(router) and
-    (
-      container = router.getContainer() and
-      result = router
-      or
-      result.getALocalSource() = router and
-      exists(SsaVariableCapture capture |
-        capture.getBasicBlock() = container.getEntryBB() and
-        result = DataFlow::ssaDefinitionNode(capture)
-      )
-    )
-  }
-
-  /**
-   * A `Node` generated from the router targeted by a `RouteSetup`.
-   */
-  private class RouterRange extends Node::Range {
-    DataFlow::SourceNode routerSource;
-
-    RouterRange() {
-      this = getRouterNodeInContainer(routerSource, _)
-    }
-
-    override Node getLastChild() {
-      result = getMostRecentRouteSetupAt(routerSource, getContainer().getExit())
-    }
-
-    override predicate hasSiblingChildren(Node pred, Node succ) {
-      exists(ControlFlowNode cfgNode |
-        isInstalledAt(succ, routerSource, cfgNode) and
-        pred = getMostRecentRouteSetupAt(routerSource, cfgNode.getAPredecessor())
-      )
-    }
   }
 
   /**
@@ -563,7 +594,7 @@ module Routing {
    * gets any route setup that could be the most recent one.
    */
   private RouteSetup getMostRecentRouteSetupAt(
-    DataFlow::SourceNode router, ControlFlowNode node
+    Router::Range router, ControlFlowNode node
   ) {
     isInstalledAt(result, router, node)
     or
@@ -603,37 +634,20 @@ module Routing {
    *     - `'/'`
    *     - `handleRequest`
    */
-  private class ImpliedRouteSetup extends RouteSetup::Range {
-    DataFlow::Node localRouter;
-    RouterRange targetRouter;
+  private class ImpliedRouteSetup extends RouteSetupBase, DataFlow::InvokeNode {
+    Router::Range router;
+    Function target;
 
     ImpliedRouteSetup() {
-      // Router escaping into parameter: e.g `addMiddlewares(app)`
-      DataFlow::argumentPassingStep(this, localRouter, _, targetRouter)
-      or
-      // Router returned from function: e.g `app.use(getMiddlewares())`
-      FlowSteps::returnStep(targetRouter, this) and
-      localRouter = this
-      or
-      // Router captured by inner function, e.g:
-      //
-      //   app = express();
-      //   function addMiddlewares() {
-      //     app.use(...);
-      //   }
-      //   addMiddlewares();
-      //
-      exists(Function callee, DataFlow::SourceNode router |
-        FlowSteps::calls(this, callee) and
-        targetRouter = getRouterNodeInContainer(router, callee) and
-        localRouter = getRouterNodeInContainer(router, getContainer())
-      )
+      FlowSteps::calls(this, target) and
+      routerIsLiveInContainer(router, target) and
+      routerIsLiveInContainer(router, getContainer())
     }
 
-    override Routing::Node getLastChild() { result = MkDataFlowNode(targetRouter) }
+    override Routing::Node getChild(int n) { result = MkRouter(router, target) and n = 0 }
 
-    override predicate isInstalledAt(DataFlow::Node r, ControlFlowNode cfgNode) {
-      r = localRouter and
+    override predicate isInstalledAt(Router::Range r, ControlFlowNode cfgNode) {
+      r = router and
       cfgNode = getEnclosingExpr()
     }
   }

@@ -75,6 +75,18 @@ module Express {
     result = "del"
   }
 
+  private class RouterRange extends Routing::Router::Range {
+    RouterDefinition def;
+
+    RouterRange() {
+      this = def.flow()
+    }
+
+    override DataFlow::SourceNode getAReference() {
+      result = def.ref()
+    }
+  }
+
   private class RoutingTreeSetup extends Routing::RouteSetup::MethodCall {
     RoutingTreeSetup() { asExpr() instanceof RouteSetup }
 
@@ -109,8 +121,8 @@ module Express {
       this = limitCall.getACall()
     }
 
-    override predicate isInstalledAt(DataFlow::Node router, ControlFlowNode cfgNode) {
-      router = limitCall.getArgument(0) and
+    override predicate isInstalledAt(Routing::Router::Range router, ControlFlowNode cfgNode) {
+      router.getAReference().getALocalUse() = limitCall.getArgument(0) and
       cfgNode = asExpr()
     }
   }
@@ -848,11 +860,16 @@ module Express {
       or
       exists(DataFlow::TypeTracker t2 | result = ref(t2).track(t2, t))
     }
+    
+    /** Gets a data flow node referring to this router. */
+    DataFlow::SourceNode ref() {
+      result = ref(DataFlow::TypeTracker::end())
+    }
 
     /**
      * Holds if `sink` may refer to this router.
      */
-    predicate flowsTo(Expr sink) { ref(DataFlow::TypeTracker::end()).flowsToExpr(sink) }
+    predicate flowsTo(Expr sink) { ref().flowsToExpr(sink) }
 
     /**
      * Gets a `RouteSetup` that was used for setting up a route on this router.

@@ -197,7 +197,7 @@ module Fastify {
       result = getAPropertyWrite(getNthHandlerName(n))
     }
 
-    override DataFlow::Node getChild(int n) {
+    override DataFlow::Node getArgumentNode(int n) {
       result = getRawChild(rank[n + 1](int k | exists(getRawChild(k))))
     }
   }
