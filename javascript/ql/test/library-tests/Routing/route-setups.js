@@ -193,3 +193,22 @@ function withHttpMethods() {
         sink(req.taintAll); // NOT OK
     });
 }
+
+function withChaining() {
+    const app = express();
+    app.use('/', (req, res) => {
+        sink(req.taint); // OK
+    });
+    function middleware() {
+        return express.Router()
+            .use((req, res, next) => {
+                req.taint = source();
+                next();
+            })
+            .use(blah());
+    }
+    app.use(middleware());
+    app.use('/', (req, res) => {
+        sink(req.taint); // NOT OK
+    });
+}
