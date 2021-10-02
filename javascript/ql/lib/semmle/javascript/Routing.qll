@@ -669,7 +669,7 @@ module Routing {
         router.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
       }
 
-      private RouteSetup::Range getARouteSetup() {
+      private RouteSetup::Base getARouteSetup() {
         result.isInstalledAt(router, any(ControlFlowNode cfg | cfg.getContainer() = container))
       }
 
@@ -688,10 +688,10 @@ module Routing {
   }
 
   /**
-   * Like `RouteSetup::Range.isInstalledAt` but with the route setup call mapped to the `MkRouteSetup` node.
+   * Like `RouteSetup::Base.isInstalledAt` but with the route setup call mapped to the `MkRouteSetup` node.
    */
   private predicate isInstalledAt(RouteSetup setupNode, Router::Range router, ControlFlowNode cfgNode) {
-    exists(RouteSetup::Range setup |
+    exists(RouteSetup::Base setup |
       setup.isInstalledAt(router, cfgNode) and
       setupNode = MkRouteSetup(setup)
     )
