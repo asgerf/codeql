@@ -441,14 +441,7 @@ module Routing {
 
       final override Routing::Node getChild(int n) {
         n = 0 and
-        exists(DataFlow::Node source |
-          source = getStrictSource()
-        |
-          if source instanceof Router::Range then
-            result = MkRouter(source, source.getContainer())
-          else
-            result = MkValueNode(source)
-        )
+        result = MkValueNode(getStrictSource())
         or
         // If we cannot find the source of the use-site, but we know it's somehow a reference to a router,
         // treat the router as the source. This is needed to handle chaining calls on the router, as the
@@ -456,7 +449,6 @@ module Routing {
         n = 0 and
         not exists(getStrictSource()) and
         exists(Router::Range router |
-          this != router and
           this = router.getAReference().getALocalUse() and
           result = MkRouter(router, getContainer())
         )
