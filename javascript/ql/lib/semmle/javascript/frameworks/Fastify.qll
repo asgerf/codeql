@@ -174,7 +174,7 @@ module Fastify {
     }
   }
 
-  /** Gets the name of the `n`th handler in  */
+  /** Gets the name of the `n`th handler function that can be installed a route setup, in order of execution. */
   private string getNthHandlerName(int n) {
     result = "onRequest,preParsing,preValidation,preHandler,handler,preSerialization,onSend,onResponse".splitAt(",", n)
   }
@@ -197,7 +197,7 @@ module Fastify {
       result = getAPropertyWrite(getNthHandlerName(n))
     }
 
-    override DataFlow::Node getArgumentNode(int n) {
+    override DataFlow::Node getChildNode(int n) {
       result = getRawChild(rank[n + 1](int k | exists(getRawChild(k))))
     }
   }
