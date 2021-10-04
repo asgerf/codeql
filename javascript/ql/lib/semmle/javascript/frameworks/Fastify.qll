@@ -24,37 +24,52 @@ module Fastify {
   }
 
   /** Gets a data flow node referring to a fastify server. */
-  private DataFlow::SourceNode server(DataFlow::TypeTracker t) {
+  private DataFlow::SourceNode server(DataFlow::SourceNode creation, DataFlow::TypeTracker t) {
     t.start() and
-    result = DataFlow::moduleImport("fastify").getAnInvocation()
+    result = DataFlow::moduleImport("fastify").getAnInvocation() and
+    creation = result
     or
     // server.register((serverAlias) => ..., { options })
     t.start() and
-    result = pluginCallback().(DataFlow::FunctionNode).getParameter(0)
+    result = pluginCallback(creation).(DataFlow::FunctionNode).getParameter(0)
     or
     exists(DataFlow::TypeTracker t2 |
-      result = server(t2).track(t2, t)
+      result = server(creation, t2).track(t2, t)
     )
+  }
+
+  /** Gets a data flow node referring to the given fastify server instance. */
+  DataFlow::SourceNode server(DataFlow::SourceNode creation) {
+    result = server(creation, DataFlow::TypeTracker::end())
   }
 
   /** Gets a data flow node referring to a fastify server. */
   DataFlow::SourceNode server() {
-    result = server(DataFlow::TypeTracker::end())
+    result = server(_)
   }
 
-
-  private DataFlow::SourceNode pluginCallback(DataFlow::TypeBackTracker t) {
+  private DataFlow::SourceNode pluginCallback(DataFlow::SourceNode creation, DataFlow::TypeBackTracker t) {
     t.start() and
-    result = server().getAMethodCall("register").getArgument(0).getALocalSource()
+    result = server(creation).getAMethodCall("register").getArgument(0).getALocalSource()
     or
     exists(DataFlow::TypeBackTracker t2 |
-      result = pluginCallback(t2).backtrack(t2, t)
+      result = pluginCallback(creation, t2).backtrack(t2, t)
     )
   }
 
   /** Gets a data flow node being used as a Fastify plugin. */
-  private DataFlow::SourceNode pluginCallback() {
-    result = pluginCallback(DataFlow::TypeBackTracker::end())
+  private DataFlow::SourceNode pluginCallback(DataFlow::SourceNode creation) {
+    result = pluginCallback(creation, DataFlow::TypeBackTracker::end())
+  }
+
+  private class RouterDef extends Routing::Router::Range {
+    RouterDef() {
+      exists(server(this))
+    }
+
+    override DataFlow::SourceNode getAReference() {
+      result = server(this)
+    }
   }
 
   /**
@@ -150,11 +165,7 @@ module Fastify {
         result =
           this.flow()
               .(DataFlow::MethodCallNode)
-              .getOptionArgument(0,
-                [
-                  "onRequest", "preParsing", "preValidation", "preHandler", "preSerialization",
-                  "onSend", "onResponse", "handler"
-                ])
+              .getOptionArgument(0, getNthHandlerName(_))
       else result = getLastArgument().flow()
     }
   }
@@ -186,15 +197,15 @@ module Fastify {
     }
 
     override string getRelativePath() {
-      result = getAPropertyWrite("url").getRhs().getStringValue()
+      result = getOptionArgument(0, "url").getStringValue()
     }
 
     override HTTP::RequestMethodName getHttpMethod() {
-      result = getAPropertyWrite("method").getStringValue().toUpperCase()
+      result = getOptionArgument(0, "method").getStringValue().toUpperCase()
     }
 
     private DataFlow::Node getRawChild(int n) {
-      result = getAPropertyWrite(getNthHandlerName(n))
+      result = getOptionArgument(0, getNthHandlerName(n))
     }
 
     override DataFlow::Node getChildNode(int n) {
@@ -396,5 +407,18 @@ module Fastify {
     override DataFlow::Node getTemplateFileNode() { result = getArgument(0) }
 
     override DataFlow::Node getTemplateParamsNode() { result = getArgument(1) }
+  }
+
+  private class FastifyCookieMiddleware extends HTTP::CookieMiddlewareInstance {
+    FastifyCookieMiddleware() {
+      this = DataFlow::moduleImport(["fastify-cookie", "fastify-session", "fastify-secure-session"])
+    }
+
+    override DataFlow::Node getASecretKey() {
+      exists(PluginRegistration registration |
+        this = registration.getArgument(0).getALocalSource() and
+        result = registration.getOptionArgument(1, "secret")
+      )
+    }
   }
 }

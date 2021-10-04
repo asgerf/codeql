@@ -614,7 +614,7 @@ module Routing {
      */
     abstract class MethodCall extends RouteSetup::Range, DataFlow::MethodCallNode {
       override Node getChild(int n) {
-        result = MkValueNode(getArgument(n))
+        result = MkValueNode(getChildNode(n))
       }
 
       /** Gets the `n`th child of this route setup. */

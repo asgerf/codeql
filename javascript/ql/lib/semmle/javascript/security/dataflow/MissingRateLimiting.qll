@@ -224,3 +224,9 @@ class RateLimiterFlexibleRateLimiter extends DataFlow::FunctionNode {
 class RouteHandlerLimitedByRateLimiterFlexible extends RateLimitingMiddleware {
   RouteHandlerLimitedByRateLimiterFlexible() { this instanceof RateLimiterFlexibleRateLimiter }
 }
+
+private class FastifyRateLimiter extends RateLimitingMiddleware {
+  FastifyRateLimiter() {
+    this = DataFlow::moduleImport("fastify-rate-limit")
+  }
+}

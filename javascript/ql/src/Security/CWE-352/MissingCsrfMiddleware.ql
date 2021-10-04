@@ -55,17 +55,21 @@ predicate hasCookieMiddleware(Routing::Node route, HTTP::CookieMiddlewareInstanc
  * })
  * ```
  */
-DataFlow::CallNode csrfMiddlewareCreation() {
+DataFlow::SourceNode csrfMiddlewareCreation() {
   exists(DataFlow::SourceNode callee | result = callee.getACall() |
     callee = DataFlow::moduleImport("csurf")
     or
     callee = DataFlow::moduleImport("lusca") and
-    exists(result.getOptionArgument(0, "csrf"))
+    exists(result.(DataFlow::CallNode).getOptionArgument(0, "csrf"))
     or
     callee = DataFlow::moduleMember("lusca", "csrf")
     or
     callee = DataFlow::moduleMember("express", "csrf")
   )
+  or
+  // Note: the 'fastify-csrf' plugin enables the 'fastify.csrfProtection' middleware to be installed.
+  // Simply having the plugin registered is not enough, so we look for the 'csrfProtection' middleware.
+  result = Fastify::server().getAPropertyRead("csrfProtection")
 }
 
 /**
