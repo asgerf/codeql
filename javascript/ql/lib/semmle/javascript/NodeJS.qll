@@ -100,6 +100,15 @@ class NodeModule extends Module {
   }
 
   override DataFlow::Node getABulkExportedNode() {
+    result = getABulkExportedNodeInternal()
+  }
+
+  /**
+   * INTERNAL. DO NOT USE.
+   *
+   * This does the same as `getABulkExportedNode` except this can be used in stages prior to type inference.
+   */
+  final DataFlow::Node getABulkExportedNodeInternal() {
     exists(DataFlow::PropWrite write |
       write.getBase().asExpr() = getModuleVariable().getAnAccess() and
       write.getPropertyName() = "exports" and

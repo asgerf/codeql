@@ -7,7 +7,7 @@ private import javascript
 private class WebpackConfigModule extends TopLevel {
   WebpackConfigModule() { getFile().getStem() = "webpack.config" }
 
-  DataFlow::Node getExportedNode() { result = this.(Module).getABulkExportedNode() }
+  DataFlow::Node getExportedNode() { result = this.(NodeModule).getABulkExportedNodeInternal() }
 
   DataFlow::SourceNode getMainObject() {
     result = getExportedNode().getALocalSource()
