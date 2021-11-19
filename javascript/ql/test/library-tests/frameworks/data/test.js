@@ -23,3 +23,10 @@ function testTaintIntoCallback(x) {
     sink(y); // OK - only callback 1-2 receive taint
   });
 }
+
+function testPreserveArgZeroAndTwo() {
+  sink(testlib.preserveArgZeroAndTwo(source(), 1, 1, 1)); // NOT OK
+  sink(testlib.preserveArgZeroAndTwo(1, source(), 1, 1)); // OK
+  sink(testlib.preserveArgZeroAndTwo(1, 1, source(), 1)); // NOT OK
+  sink(testlib.preserveArgZeroAndTwo(1, 1, 1, source())); // OK
+}

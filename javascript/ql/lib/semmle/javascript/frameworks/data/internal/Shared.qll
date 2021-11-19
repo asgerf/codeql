@@ -24,8 +24,8 @@
  * 3. The `path` column API-graph-like edges to follow starting at the node selected by `package` and `type`.
  *    It is a `.`-separated list of tokens of form:
  *     - Member[x] : a property named `x`. May be a comma-separated list of named.
- *     - Argument[n]: the n-th argument to a call. May be a range of form `x-y` (inclusive).
- *     - Parameter[n]: the n-th parameter of a callback. May be a range of form `x-y` (inclusive).
+ *     - Argument[n]: the n-th argument to a call. May be a range of form `x-y` (inclusive) and/or a comma-separated list.
+ *     - Parameter[n]: the n-th parameter of a callback. May be a range of form `x-y` (inclusive) and/or a comma-separated list.
  *     - ReturnValue: the value returned by a function call
  *     - Instance: the value returned by a constructor call
  *     - Awaited: the value from a resolved promise/future-like object
@@ -383,18 +383,18 @@ private string getApiGraphLabelFromPathToken(string token) {
       // use-node represents be an argument, and an edge originating from a def-node represents a parameter.
       // We just map both to the same thing.
       token = ["Argument[" + arg + "]", "Parameter[" + arg + "]"] and
-      result = API::EdgeLabel::parameterByStringIndex(arg)
+      exists(string part | part = arg.splitAt(",") |
+        result = API::EdgeLabel::parameterByStringIndex(part)
+        or
+        exists(string lo, string hi |
+          lo = part.regexpCapture("(\\d+)-(\\d+)", 1) and
+          hi = part.regexpCapture("(\\d+)-(\\d+)", 2) and
+          result = API::EdgeLabel::parameter([lo.toInt() .. hi.toInt()])
+        )
+      )
       or
       token = "Member[" + arg + "]" and
       result = API::EdgeLabel::member(arg.splitAt(","))
-    )
-    or
-    exists(string lo, string hi, string regexp |
-      // For tokens like Argument[1-5] we just enumerate the whole range of corresponding edge labels
-      regexp = "(?:Argument|Parameter)\\[(\\d+)-(\\d+)\\]" and
-      lo = token.regexpCapture(regexp, 1) and
-      hi = token.regexpCapture(regexp, 2) and
-      result = API::EdgeLabel::parameter([lo.toInt() .. hi.toInt()])
     )
     or
     token = "ReturnValue" and
