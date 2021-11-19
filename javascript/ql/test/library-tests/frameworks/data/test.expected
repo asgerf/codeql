@@ -1,0 +1,7 @@
+consistencyIssue
+taintFlow
+| test.js:5:30:5:37 | source() | test.js:5:8:5:38 | testlib ... urce()) |
+| test.js:6:22:6:29 | source() | test.js:6:8:6:30 | preserv ... urce()) |
+| test.js:7:41:7:48 | source() | test.js:7:8:7:49 | require ... urce()) |
+| test.js:13:29:13:36 | source() | test.js:14:10:14:10 | y |
+| test.js:19:29:19:36 | source() | test.js:20:10:20:10 | y |
