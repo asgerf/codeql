@@ -322,6 +322,23 @@ private predicate relevantInputOutputPath(API::InvokeNode base, string inputOrOu
 }
 
 /**
+ * Gets an API-graph successor for the given invocation.
+ */
+bindingset[label]
+private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, string label) {
+  exists(int i |
+    result = invoke.getParameter(i) and
+    label = API::EdgeLabel::parameter(i)
+  )
+  or
+  label = API::EdgeLabel::return() and
+  result = invoke.getReturn()
+  or
+  label = API::EdgeLabel::instance() and
+  result = invoke.getInstance()
+}
+
+/**
  * Gets the API node for the given input/output part, evaluated relative to `baseNode`, which corresponds to `package,type,path`.
  */
 private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string inputOrOutput) {
@@ -330,23 +347,7 @@ private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string in
     // For the base case we must go through the API::InvokeNode type to correctly
     // handle the case where the function reference has been moved into a local variable,
     // since different calls have the same base API node.
-    exists(string lo, string regexp |
-      regexp = "Argument\\[(\\d+)(?:-(\\d+))\\]" and
-      lo = inputOrOutput.regexpCapture(regexp, 1)
-    |
-      result = baseNode.getParameter(lo.toInt())
-      or
-      exists(string hi |
-        hi = inputOrOutput.regexpCapture(regexp, 2) and
-        result = baseNode.getParameter([lo.toInt() .. hi.toInt()])
-      )
-    )
-    or
-    inputOrOutput = "ReturnValue" and
-    result = baseNode.getReturn()
-    or
-    inputOrOutput = "Instance" and
-    result = baseNode.getInstance()
+    result = getSuccessorFromInvoke(baseNode, getApiGraphLabelFromPathToken(inputOrOutput))
     or
     exists(string prefix, string token, API::Node prefixNode |
       prefixNode = getNodeFromInputOutputPath(baseNode, prefix) and
