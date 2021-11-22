@@ -30,3 +30,10 @@ function testPreserveArgZeroAndTwo() {
   sink(testlib.preserveArgZeroAndTwo(1, 1, source(), 1)); // NOT OK
   sink(testlib.preserveArgZeroAndTwo(1, 1, 1, source())); // OK
 }
+
+function testPreserveAllButFirstArgument() {
+  sink(testlib.preserveAllButFirstArgument(source(), 1, 1, 1)); // OK
+  sink(testlib.preserveAllButFirstArgument(1, source(), 1, 1)); // NOT OK
+  sink(testlib.preserveAllButFirstArgument(1, 1, source(), 1)); // NOT OK
+  sink(testlib.preserveAllButFirstArgument(1, 1, 1, source())); // NOT OK
+}
