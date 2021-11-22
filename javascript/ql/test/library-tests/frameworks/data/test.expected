@@ -7,3 +7,6 @@ taintFlow
 | test.js:19:29:19:36 | source() | test.js:20:10:20:10 | y |
 | test.js:28:38:28:45 | source() | test.js:28:8:28:55 | testlib ... , 1, 1) |
 | test.js:30:44:30:51 | source() | test.js:30:8:30:55 | testlib ... e(), 1) |
+| test.js:36:47:36:54 | source() | test.js:36:8:36:61 | testlib ... , 1, 1) |
+| test.js:37:50:37:57 | source() | test.js:37:8:37:61 | testlib ... e(), 1) |
+| test.js:38:53:38:60 | source() | test.js:38:8:38:61 | testlib ... urce()) |

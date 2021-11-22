@@ -371,6 +371,18 @@ private predicate isAccessPathToken(string token) {
   )
 }
 
+private int getAnArgumentIndex() {
+  exists(string edge, string indexStr |
+    exists(any(API::Node node).getASuccessor(edge)) and
+    edge = API::EdgeLabel::parameterByStringIndex(indexStr) and
+    result = indexStr.toInt()
+  )
+}
+
+private int getMaxArgumentIndex() {
+  result = max(getAnArgumentIndex())
+}
+
 /**
  * Gets an API graph edge label corresponding to the given access path token.
  */
@@ -390,6 +402,11 @@ private string getApiGraphLabelFromPathToken(string token) {
           lo = part.regexpCapture("(\\d+)-(\\d+)", 1) and
           hi = part.regexpCapture("(\\d+)-(\\d+)", 2) and
           result = API::EdgeLabel::parameter([lo.toInt() .. hi.toInt()])
+        )
+        or
+        exists(string lo |
+          lo = part.regexpCapture("(\\d+)-", 1) and
+          result = API::EdgeLabel::parameter([lo.toInt() .. getMaxArgumentIndex()])
         )
       )
       or
