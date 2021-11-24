@@ -160,13 +160,16 @@ private predicate summaryModel(string row) { any(SummaryModelCsv s).row(padded(r
 
 private predicate typeModel(string row) { any(TypeModelCsv s).row(padded(row)) }
 
-/** Prefixes a non-empty path with `.` in order to simplify subsequent path-string manipulation. */
+/**
+ * Prefixes a non-empty path with `.` and replaces `..` with `-->`,
+ * in order to simplify subsequent path-string manipulation.
+ */
 bindingset[path]
 private string normalizePath(string path) {
   path = "" and result = ""
   or
   path != "" and
-  result = "." + path
+  result = "." + path.replaceAll("..", "-->")
 }
 
 /** Holds if a source model exists for the given parameters. */
@@ -200,8 +203,8 @@ private predicate summaryModel(
     row.splitAt(";", 0) = package and
     row.splitAt(";", 1) = type and
     normalizePath(row.splitAt(";", 2)) = path and
-    row.splitAt(";", 3) = input and
-    row.splitAt(";", 4) = output and
+    row.splitAt(";", 3).replaceAll("..", "-->") = input and
+    row.splitAt(";", 4).replaceAll("..", "-->") = output and
     row.splitAt(";", 5) = kind
   )
 }
@@ -398,14 +401,16 @@ private string getApiGraphLabelFromPathToken(string token) {
       exists(string part | part = arg.splitAt(",") |
         result = API::EdgeLabel::parameterByStringIndex(part)
         or
+        // Match "n1..n2", where ".." has previously been replaced with "-->" to simplify parsing
         exists(string lo, string hi |
-          lo = part.regexpCapture("(\\d+)-(\\d+)", 1) and
-          hi = part.regexpCapture("(\\d+)-(\\d+)", 2) and
+          lo = part.regexpCapture("(\\d+)-->(\\d+)", 1) and
+          hi = part.regexpCapture("(\\d+)-->(\\d+)", 2) and
           result = API::EdgeLabel::parameter([lo.toInt() .. hi.toInt()])
         )
         or
+        // Match "n..", where ".." has previously been replaced with "-->" to simplify parsing
         exists(string lo |
-          lo = part.regexpCapture("(\\d+)-", 1) and
+          lo = part.regexpCapture("(\\d+)-->", 1) and
           result = API::EdgeLabel::parameter([lo.toInt() .. getMaxArgumentIndex()])
         )
       )

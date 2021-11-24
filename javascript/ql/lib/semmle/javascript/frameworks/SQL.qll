@@ -500,8 +500,8 @@ private module Sequelize {
           "sequelize;;Member[literal,asIs].Argument[0];sql-injection",
           "sequelize;;Argument[1];credentials[user name]",
           "sequelize;;Argument[2];credentials[password]",
-          "sequelize;;Argument[0-99].Member[username];credentials[user name]",
-          "sequelize;;Argument[0-99].Member[password];credentials[password]"
+          "sequelize;;Argument[0..].Member[username];credentials[user name]",
+          "sequelize;;Argument[0..].Member[password];credentials[password]"
         ]
     }
   }
@@ -516,7 +516,7 @@ private module SpannerCsv {
           "@google-cloud/spanner;;@google-cloud/spanner;;Member[Spanner]",
           "@google-cloud/spanner;Database;@google-cloud/spanner;;ReturnValue.Member[instance].ReturnValue.Member[database].ReturnValue",
           "@google-cloud/spanner;v1.SpannerClient;@google-cloud/spanner;;Member[v1].Member[SpannerClient].Instance",
-          "@google-cloud/spanner;Transaction;@google-cloud/spanner;Database;Member[runTransaction,runTransactionAsync].Argument[0-1].Parameter[1]",
+          "@google-cloud/spanner;Transaction;@google-cloud/spanner;Database;Member[runTransaction,runTransactionAsync].Argument[0..1].Parameter[1]",
           "@google-cloud/spanner;BatchTransaction;@google-cloud/spanner;Database;Member[batchTransaction].ReturnValue",
           "@google-cloud/spanner;BatchTransaction;@google-cloud/spanner;Database;Member[createBatchTransaction].ReturnValue.Awaited",
           "@google-cloud/spanner;~SqlExecutorDirect;@google-cloud/spanner;Database;Member[run,runPartitionedUpdate,runStream]",
