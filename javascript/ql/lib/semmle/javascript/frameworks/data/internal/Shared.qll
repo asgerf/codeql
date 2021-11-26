@@ -418,24 +418,17 @@ class AccessPathToken extends string {
     isAccessPathToken(this)
   }
 
-  /** Holds if this has the form `name[argumentList]` or is just `name` with an empty `argumentList`. */
-  private predicate hasParts(string name, string argumentList) {
-    regexpCaptureTwo(this, "(.+?)\\[(.*?)\\]", name, argumentList)
-    or
-    // Match token without arguments
-    not this.matches("%[%") and
-    this = name and
-    argumentList = ""
-  }
-
   /** Gets the name of the token, such as `Member` from `Member[x]` */
   string getName() {
-    hasParts(result, _)
+    result = this.regexpCapture("(.+?)(?:\\[.*?\\])?", 1)
   }
 
-  /** Gets the argument list, such as `1,2` from `Member[1,2]`. */
+  /**
+   * Gets the argument list, such as `1,2` from `Member[1,2]`,
+   * or has no result if there are no arguments.
+   */
   string getArgumentList() {
-    hasParts(_, result)
+    result = this.regexpCapture(".+?\\[(.*?)\\]", 1)
   }
 
   /** Gets the `n`th argument to this token, such as `x` or `y` from `Member[x,y]`. */
