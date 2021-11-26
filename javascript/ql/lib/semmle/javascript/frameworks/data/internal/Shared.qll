@@ -278,7 +278,7 @@ private predicate decomposePath(string path, string basePath, string token) {
  * Only has a result for identifying access paths relevant for `package;type`.
  */
 private string appendToken(string package, string type, string path, string token) {
-  isRelevantFullPath(package, type, result) and
+  isRelevantPath(package, type, result) and
   decomposePath(result, path, token)
 }
 
@@ -313,10 +313,49 @@ API::Node getNodeFromPath(string package, string type, string path) {
     result = Impl::getExtraNodeFromPath(package, type, path)
   )
   or
-  exists(string basePath, string token |
-    result = getNodeFromPath(package, type, basePath).getASuccessor(getApiGraphLabelFromPathToken(token)) and
+  exists(string basePath, AccessPathToken token |
+    result =
+      getNodeFromPath(package, type, basePath).getASuccessor(getApiGraphLabelFromPathToken(token)) and
     path = appendToken(package, type, basePath, token)
   )
+  or
+  // Similar to the other recursive case, but where the path may have stepped through one or more call-site filters
+  exists(string basePath, AccessPathToken token |
+    result =
+      getSuccessorFromInvoke(getInvocationFromPath(package, type, basePath),
+        getApiGraphLabelFromPathToken(token)) and
+    path = appendToken(package, type, basePath, token)
+  )
+}
+
+/**
+ * Gets an invocation (call site) referenced by the given `(package, type, path)` tuple.
+ *
+ * Unlike `getNodeFromPath`, the `path` may end with one or more call-site filters.
+ */
+API::InvokeNode getInvocationFromPath(string package, string type, string path) {
+  result = getNodeFromPath(package, type, path).getAnInvocation()
+  or
+  exists(string basePath, AccessPathToken token |
+    result = getInvocationFromPath(package, type, basePath) and
+    path = appendToken(package, type, basePath, token) and
+    invocationMatchesCallSiteFilter(result, token)
+  )
+}
+
+/**
+ * Holds if `invoke` invokes a call-site filter given by `token`.
+ */
+pragma[inline]
+private predicate invocationMatchesCallSiteFilter(API::InvokeNode invoke, AccessPathToken token) {
+  token.getName() = "WithArity" and
+  (
+    invoke.getNumArgument() = getAnIntFromString(token.getAnArgument())
+    or
+    invoke.getNumArgument() >= getLowerBoundFromString(token.getAnArgument())
+  )
+  or
+  Impl::invocationMatchesExtraCallSiteFilter(invoke, token)
 }
 
 /**
@@ -359,6 +398,10 @@ private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, string label) {
   result = invoke.getInstance()
 }
 
+/**
+ * Gets the result of appending `token` onto `path`, if the resulting path is relevant for
+ * a summary of `invoke`.
+ */
 private string appendToken(API::InvokeNode invoke, string path, string token) {
   relevantInputOutputPath(invoke, result) and
   decomposePath(result, path, token)
@@ -376,7 +419,9 @@ private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string pa
     result = getSuccessorFromInvoke(baseNode, getApiGraphLabelFromPathToken(path))
     or
     exists(string basePath, string token |
-      result = getNodeFromInputOutputPath(baseNode, basePath).getASuccessor(getApiGraphLabelFromPathToken(token)) and
+      result =
+        getNodeFromInputOutputPath(baseNode, basePath)
+            .getASuccessor(getApiGraphLabelFromPathToken(token)) and
       path = appendToken(baseNode, basePath, token)
     )
   )
@@ -385,7 +430,7 @@ private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string pa
 /**
  * Convenience-predicate for extracting two capture groups at once.
  */
-bindingset[input,regexp]
+bindingset[input, regexp]
 private predicate regexpCaptureTwo(string input, string regexp, string capture1, string capture2) {
   capture1 = input.regexpCapture(regexp, 1) and
   capture2 = input.regexpCapture(regexp, 2)
@@ -399,9 +444,7 @@ private predicate isAccessPathToken(string token) {
   exists(string path |
     isRelevantFullPath(_, _, path)
     or
-    exists(string package |
-      isRelevantPackage(package)
-    |
+    exists(string package | isRelevantPackage(package) |
       summaryModel(_, _, _, path, _, _) or
       summaryModel(_, _, _, _, path, _)
     )
@@ -414,37 +457,49 @@ private predicate isAccessPathToken(string token) {
  * An access part token such as `Argument[1]` or `ReturnValue`, appearing in one or more access paths.
  */
 class AccessPathToken extends string {
-  AccessPathToken() {
-    isAccessPathToken(this)
-  }
+  AccessPathToken() { isAccessPathToken(this) }
 
   /** Gets the name of the token, such as `Member` from `Member[x]` */
-  string getName() {
-    result = this.regexpCapture("(.+?)(?:\\[.*?\\])?", 1)
-  }
+  string getName() { result = this.regexpCapture("(.+?)(?:\\[.*?\\])?", 1) }
 
   /**
    * Gets the argument list, such as `1,2` from `Member[1,2]`,
    * or has no result if there are no arguments.
    */
-  string getArgumentList() {
-    result = this.regexpCapture(".+?\\[(.*?)\\]", 1)
-  }
+  string getArgumentList() { result = this.regexpCapture(".+?\\[(.*?)\\]", 1) }
 
   /** Gets the `n`th argument to this token, such as `x` or `y` from `Member[x,y]`. */
-  string getArgument(int n) {
-    result = getArgumentList().splitAt(",", n)
-  }
+  string getArgument(int n) { result = getArgumentList().splitAt(",", n) }
 
   /** Gets an argument to this token, such as `x` or `y` from `Member[x,y]`. */
-  string getAnArgument() {
-    result = getArgument(_)
-  }
+  string getAnArgument() { result = getArgument(_) }
 
   /** Gets the number of arguments to this token, such as 2 for `Member[x,y]` or zero for `ReturnValue`. */
-  int getNumArgument() {
-    result = count(int n | exists(getArgument(n)))
-  }
+  int getNumArgument() { result = count(int n | exists(getArgument(n))) }
+}
+
+/**
+ * Parses an integer constant `n` or interval `n1..n2` (inclusive) and gets the value
+ * of the constant or any value contained in the interval.
+ */
+bindingset[arg]
+private int getAnIntFromString(string arg) {
+  result = arg.toInt()
+  or
+  // Match "n1..n2", where ".." has previously been replaced with "-->" to simplify parsing
+  exists(string lo, string hi |
+    regexpCaptureTwo(arg, "(\\d+)-->(\\d+)", lo, hi) and
+    result = [lo.toInt() .. hi.toInt()]
+  )
+}
+
+/**
+ * Parses a lower-bounded interval `n..` and gets the lower bound.
+ */
+bindingset[arg]
+private int getLowerBoundFromString(string arg) {
+  // Match "n..", where ".." has previously been replaced with "-->" to simplify parsing
+  result = arg.regexpCapture("(\\d+)-->", 1).toInt()
 }
 
 /**
@@ -457,19 +512,9 @@ private string getApiGraphLabelFromPathToken(AccessPathToken token) {
   // We just map both to the same thing.
   token.getName() = ["Argument", "Parameter"] and
   (
-    result = API::EdgeLabel::parameterByStringIndex(token.getAnArgument())
+    result = API::EdgeLabel::parameter(getAnIntFromString(token.getAnArgument()))
     or
-    // Match "n1..n2", where ".." has previously been replaced with "-->" to simplify parsing
-    exists(string lo, string hi |
-      regexpCaptureTwo(token.getAnArgument(), "(\\d+)-->(\\d+)", lo, hi) and
-      result = API::EdgeLabel::parameter([lo.toInt() .. hi.toInt()])
-    )
-    or
-    // Match "n..", where ".." has previously been replaced with "-->" to simplify parsing
-    exists(string lo |
-      lo = token.getAnArgument().regexpCapture("(\\d+)-->", 1) and
-      result = API::EdgeLabel::parameter([lo.toInt() .. 99])
-    )
+    result = API::EdgeLabel::parameter([getLowerBoundFromString(token.getAnArgument()) .. 99])
   )
   or
   token.getName() = "Member" and

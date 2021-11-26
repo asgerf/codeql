@@ -6,7 +6,8 @@
  * - The `API` module (API graphs)
  * - `isPackageUsed(string package)`
  * - `getExtraNodeFromPath(string package, string type, string path)`
- * - `getExtraApiGraphLabelFromPathToken(string token)`
+ * - `getExtraApiGraphLabelFromPathToken(AccessPathToken token)`
+ * - `invocationMatchesExtraCallSiteFilter(API::InvokeNode invoke, AccessPathToken token)`
  */
 
 import javascript as js
@@ -78,21 +79,21 @@ API::Node getExtraNodeFromPath(string package, string type, string path) {
 
 /** Gets a JavaScript-specific API graph label corresponding to the given access path token */
 bindingset[token]
-string getExtraApiGraphLabelFromPathToken(string token) {
-  token = "Instance" and
+string getExtraApiGraphLabelFromPathToken(AccessPathToken token) {
+  token.getName() = "Instance" and
   result = API::EdgeLabel::instance()
   or
-  token = "Awaited" and
+  token.getName() = "Awaited" and
   result = API::EdgeLabel::promised()
   or
-  token = "ArrayElement" and
+  token.getName() = "ArrayElement" and
   result = API::EdgeLabel::member(DataFlow::PseudoProperties::arrayElement())
   or
-  token = "Element" and
+  token.getName() = "Element" and
   result = API::EdgeLabel::member(DataFlow::PseudoProperties::arrayLikeElement())
   or
   // Note: MapKey not currently supported
-  token = "MapValue" and
+  token.getName() = "MapValue" and
   result = API::EdgeLabel::member(DataFlow::PseudoProperties::mapValueAll())
 }
 
@@ -128,4 +129,13 @@ private class TaintStepFromSummary extends js::TaintTracking::SharedTaintStep {
   override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
     summaryStepNodes(pred, succ, "taint")
   }
+}
+
+predicate invocationMatchesExtraCallSiteFilter(API::InvokeNode invoke, AccessPathToken token) {
+  token.getName() = "NewCall" and
+  invoke instanceof API::NewNode
+  or
+  token.getName() = "Call" and
+  invoke instanceof API::CallNode and
+  invoke instanceof DataFlow::CallNode // Workaround compiler bug
 }

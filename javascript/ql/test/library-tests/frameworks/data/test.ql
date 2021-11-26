@@ -14,6 +14,17 @@ class Steps extends ModelInput::SummaryModelCsv {
   }
 }
 
+class Sinks extends ModelInput::SinkModelCsv {
+  override predicate row(string row) {
+    // package;type;path;kind
+    row = [
+      "testlib;;Member[mySink].Argument[0];test-sink",
+      "testlib;;Member[mySinkIfCall].Call.Argument[0];test-sink",
+      "testlib;;Member[mySinkIfNew].NewCall.Argument[0];test-sink",
+    ]
+  }
+}
+
 class BasicTaintTracking extends TaintTracking::Configuration {
   BasicTaintTracking() { this = "BasicTaintTracking" }
 
@@ -23,9 +34,15 @@ class BasicTaintTracking extends TaintTracking::Configuration {
 
   override predicate isSink(DataFlow::Node sink) {
     sink = any(DataFlow::CallNode call | call.getCalleeName() = "sink").getAnArgument()
+    or
+    sink = ModelOutput::getASinkNode("test-sink").getARhs()
   }
 }
 
 query predicate taintFlow(DataFlow::Node source, DataFlow::Node sink) {
   any(BasicTaintTracking tr).hasFlow(source, sink)
+}
+
+query predicate isSink(DataFlow::Node node, string kind) {
+  node = ModelOutput::getASinkNode(kind).getARhs()
 }
