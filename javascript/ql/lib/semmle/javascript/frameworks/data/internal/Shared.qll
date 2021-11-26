@@ -169,7 +169,7 @@ private string normalizePath(string path) {
   path = "" and result = ""
   or
   path != "" and
-  result = "." + path.replaceAll("..", "-->")
+  result = path.replaceAll("..", "-->")
 }
 
 /** Holds if a source model exists for the given parameters. */
@@ -256,8 +256,30 @@ pragma[nomagic]
 private predicate isRelevantPath(string package, string type, string path) {
   exists(string fullPath |
     isRelevantFullPath(package, type, fullPath) and
-    path = fullPath.prefix([fullPath.indexOf("."), fullPath.length()])
+    path = fullPath.prefix([0, fullPath.indexOf("."), fullPath.length()])
   )
+}
+
+/** Holds if `path` has the form `basePath.token` where `token` is a single token. */
+bindingset[path]
+private predicate decomposePath(string path, string basePath, string token) {
+  token = max(int n | | path.splitAt(".", n) order by n) and
+  (
+    basePath = path.prefix(path.length() - token.length() - 1)
+    or
+    token = path and
+    basePath = ""
+  )
+}
+
+/**
+ * Gets the result of appending `token` onto `path`.
+ *
+ * Only has a result for identifying access paths relevant for `package;type`.
+ */
+private string appendToken(string package, string type, string path, string token) {
+  isRelevantFullPath(package, type, result) and
+  decomposePath(result, path, token)
 }
 
 /**
@@ -291,13 +313,9 @@ API::Node getNodeFromPath(string package, string type, string path) {
     result = Impl::getExtraNodeFromPath(package, type, path)
   )
   or
-  // To get a good join order in the recursive case, scan the recursive delta, check the API graph
-  // for outgoing edges, and then map those back to access path tokens, not the other way around.
-  exists(API::Node baseNode, string base, string token |
-    baseNode = getNodeFromPath(package, type, pragma[only_bind_into](base)) and
-    result = baseNode.getASuccessor(getApiGraphLabelFromPathToken(pragma[only_bind_into](token))) and
-    path = base + "." + token and
-    isRelevantPath(package, type, pragma[only_bind_out](path))
+  exists(string basePath, string token |
+    result = getNodeFromPath(package, type, basePath).getASuccessor(getApiGraphLabelFromPathToken(token)) and
+    path = appendToken(package, type, basePath, token)
   )
 }
 
@@ -341,23 +359,36 @@ private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, string label) {
   result = invoke.getInstance()
 }
 
+private string appendToken(API::InvokeNode invoke, string path, string token) {
+  relevantInputOutputPath(invoke, result) and
+  decomposePath(result, path, token)
+}
+
 /**
- * Gets the API node for the given input/output part, evaluated relative to `baseNode`, which corresponds to `package,type,path`.
+ * Gets the API node for the given input/output path, evaluated relative to `baseNode`, which corresponds to `package,type,path`.
  */
-private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string inputOrOutput) {
-  relevantInputOutputPath(baseNode, inputOrOutput) and
+private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string path) {
+  relevantInputOutputPath(baseNode, path) and
   (
     // For the base case we must go through the API::InvokeNode type to correctly
     // handle the case where the function reference has been moved into a local variable,
     // since different calls have the same base API node.
-    result = getSuccessorFromInvoke(baseNode, getApiGraphLabelFromPathToken(inputOrOutput))
+    result = getSuccessorFromInvoke(baseNode, getApiGraphLabelFromPathToken(path))
     or
-    exists(string prefix, string token, API::Node prefixNode |
-      prefixNode = getNodeFromInputOutputPath(baseNode, prefix) and
-      inputOrOutput = prefix + "." + token and
-      result = prefixNode.getASuccessor(getApiGraphLabelFromPathToken(token))
+    exists(string basePath, string token |
+      result = getNodeFromInputOutputPath(baseNode, basePath).getASuccessor(getApiGraphLabelFromPathToken(token)) and
+      path = appendToken(baseNode, basePath, token)
     )
   )
+}
+
+/**
+ * Convenience-predicate for extracting two capture groups at once.
+ */
+bindingset[input,regexp]
+private predicate regexpCaptureTwo(string input, string regexp, string capture1, string capture2) {
+  capture1 = input.regexpCapture(regexp, 1) and
+  capture2 = input.regexpCapture(regexp, 2)
 }
 
 /**
@@ -366,65 +397,96 @@ private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string in
  */
 private predicate isAccessPathToken(string token) {
   exists(string path |
-    isRelevantFullPath(_, _, path) or
-    summaryModel(_, _, _, path, _, _) or
-    summaryModel(_, _, _, _, path, _)
+    isRelevantFullPath(_, _, path)
+    or
+    exists(string package |
+      isRelevantPackage(package)
+    |
+      summaryModel(_, _, _, path, _, _) or
+      summaryModel(_, _, _, _, path, _)
+    )
   |
     token = path.splitAt(".")
   )
 }
 
-private int getAnArgumentIndex() {
-  exists(string edge, string indexStr |
-    exists(any(API::Node node).getASuccessor(edge)) and
-    edge = API::EdgeLabel::parameterByStringIndex(indexStr) and
-    result = indexStr.toInt()
-  )
-}
+/**
+ * An access part token such as `Argument[1]` or `ReturnValue`, appearing in one or more access paths.
+ */
+class AccessPathToken extends string {
+  AccessPathToken() {
+    isAccessPathToken(this)
+  }
 
-private int getMaxArgumentIndex() {
-  result = max(getAnArgumentIndex())
+  /** Holds if this has the form `name[argumentList]` or is just `name` with an empty `argumentList`. */
+  private predicate hasParts(string name, string argumentList) {
+    regexpCaptureTwo(this, "(.+?)\\[(.*?)\\]", name, argumentList)
+    or
+    // Match token without arguments
+    not this.matches("%[%") and
+    this = name and
+    argumentList = ""
+  }
+
+  /** Gets the name of the token, such as `Member` from `Member[x]` */
+  string getName() {
+    hasParts(result, _)
+  }
+
+  /** Gets the argument list, such as `1,2` from `Member[1,2]`. */
+  string getArgumentList() {
+    hasParts(_, result)
+  }
+
+  /** Gets the `n`th argument to this token, such as `x` or `y` from `Member[x,y]`. */
+  string getArgument(int n) {
+    result = getArgumentList().splitAt(",", n)
+  }
+
+  /** Gets an argument to this token, such as `x` or `y` from `Member[x,y]`. */
+  string getAnArgument() {
+    result = getArgument(_)
+  }
+
+  /** Gets the number of arguments to this token, such as 2 for `Member[x,y]` or zero for `ReturnValue`. */
+  int getNumArgument() {
+    result = count(int n | exists(getArgument(n)))
+  }
 }
 
 /**
  * Gets an API graph edge label corresponding to the given access path token.
  */
 pragma[noinline]
-private string getApiGraphLabelFromPathToken(string token) {
-  isAccessPathToken(token) and
+private string getApiGraphLabelFromPathToken(AccessPathToken token) {
+  // API graphs use the same label for arguments and parameters. An edge originating from a
+  // use-node represents be an argument, and an edge originating from a def-node represents a parameter.
+  // We just map both to the same thing.
+  token.getName() = ["Argument", "Parameter"] and
   (
-    exists(string arg |
-      // API graphs use the same label for arguments and parameters. An edge originating from a
-      // use-node represents be an argument, and an edge originating from a def-node represents a parameter.
-      // We just map both to the same thing.
-      token = ["Argument[" + arg + "]", "Parameter[" + arg + "]"] and
-      exists(string part | part = arg.splitAt(",") |
-        result = API::EdgeLabel::parameterByStringIndex(part)
-        or
-        // Match "n1..n2", where ".." has previously been replaced with "-->" to simplify parsing
-        exists(string lo, string hi |
-          lo = part.regexpCapture("(\\d+)-->(\\d+)", 1) and
-          hi = part.regexpCapture("(\\d+)-->(\\d+)", 2) and
-          result = API::EdgeLabel::parameter([lo.toInt() .. hi.toInt()])
-        )
-        or
-        // Match "n..", where ".." has previously been replaced with "-->" to simplify parsing
-        exists(string lo |
-          lo = part.regexpCapture("(\\d+)-->", 1) and
-          result = API::EdgeLabel::parameter([lo.toInt() .. getMaxArgumentIndex()])
-        )
-      )
-      or
-      token = "Member[" + arg + "]" and
-      result = API::EdgeLabel::member(arg.splitAt(","))
+    result = API::EdgeLabel::parameterByStringIndex(token.getAnArgument())
+    or
+    // Match "n1..n2", where ".." has previously been replaced with "-->" to simplify parsing
+    exists(string lo, string hi |
+      regexpCaptureTwo(token.getAnArgument(), "(\\d+)-->(\\d+)", lo, hi) and
+      result = API::EdgeLabel::parameter([lo.toInt() .. hi.toInt()])
     )
     or
-    token = "ReturnValue" and
-    result = API::EdgeLabel::return()
-    or
-    // Language-specific tokens
-    result = Impl::getExtraApiGraphLabelFromPathToken(token)
+    // Match "n..", where ".." has previously been replaced with "-->" to simplify parsing
+    exists(string lo |
+      lo = token.getAnArgument().regexpCapture("(\\d+)-->", 1) and
+      result = API::EdgeLabel::parameter([lo.toInt() .. 99])
+    )
   )
+  or
+  token.getName() = "Member" and
+  result = API::EdgeLabel::member(token.getAnArgument())
+  or
+  token.getName() = "ReturnValue" and
+  result = API::EdgeLabel::return()
+  or
+  // Language-specific tokens
+  result = Impl::getExtraApiGraphLabelFromPathToken(token)
 }
 
 /**
