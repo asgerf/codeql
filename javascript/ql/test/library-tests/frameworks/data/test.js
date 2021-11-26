@@ -37,3 +37,14 @@ function testPreserveAllButFirstArgument() {
   sink(testlib.preserveAllButFirstArgument(1, 1, source(), 1)); // NOT OK
   sink(testlib.preserveAllButFirstArgument(1, 1, 1, source())); // NOT OK
 }
+
+function testSinks() {
+  testlib.mySink(source()); // NOT OK
+  new testlib.mySink(source()); // NOT OK
+
+  testlib.mySinkIfCall(source()); // NOT OK
+  new testlib.mySinkIfCall(source()); // OK
+
+  testlib.mySinkIfNew(source()); // OK
+  new testlib.mySinkIfNew(source()); // NOT OK
+}

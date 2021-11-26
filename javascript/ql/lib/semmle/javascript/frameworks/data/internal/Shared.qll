@@ -313,10 +313,50 @@ API::Node getNodeFromPath(string package, string type, string path) {
     result = Impl::getExtraNodeFromPath(package, type, path)
   )
   or
-  exists(string basePath, string token |
+  exists(string basePath, AccessPathToken token |
     result = getNodeFromPath(package, type, basePath).getASuccessor(getApiGraphLabelFromPathToken(token)) and
     path = appendToken(package, type, basePath, token)
   )
+  or
+  // Similar to the other recursive case, but where the path may have stepped through one or more call-site filters
+  exists(string basePath, AccessPathToken token |
+    result = getSuccessorFromInvoke(getInvocationFromPath(package, type, basePath), getApiGraphLabelFromPathToken(token)) and
+    path = appendToken(package, type, basePath, token)
+  )
+}
+
+/**
+ * Gets an invocation (call site) referenced by the given `(package, type, path)` tuple.
+ *
+ * Unlike `getNodeFromPath`, the `path` may end with one or more call-site filters.
+ */
+API::InvokeNode getInvocationFromPath(string package, string type, string path) {
+  result = getNodeFromPath(package, type, path).getAnInvocation()
+  or
+  exists(string basePath, AccessPathToken token |
+    result = getInvocationFromPath(package, type, basePath) and
+    path = appendToken(package, type, basePath, token) and
+    invocationMatchesCallSiteFilter(result, token)
+  )
+}
+
+/**
+ * Holds if `invoke` invokes a call-site filter given by `token`.
+ */
+pragma[inline]
+private predicate invocationMatchesCallSiteFilter(API::InvokeNode invoke, AccessPathToken token) {
+  token.getName() = "WithArity" and
+  (
+    invoke.getNumArgument() = getAnIntFromString(token.getAnArgument())
+    or
+    invoke.getNumArgument() >= getLowerBoundFromString(token.getAnArgument())
+  )
+  or
+  token.getName() = "NewCall" and
+  invoke instanceof API::NewNode
+  or
+  token.getName() = "Call" and
+  invoke instanceof API::CallNode
 }
 
 /**
@@ -359,6 +399,10 @@ private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, string label) {
   result = invoke.getInstance()
 }
 
+/**
+ * Gets the result of appending `token` onto `path`, if the resulting path is relevant for
+ * a summary of `invoke`.
+ */
 private string appendToken(API::InvokeNode invoke, string path, string token) {
   relevantInputOutputPath(invoke, result) and
   decomposePath(result, path, token)
@@ -448,6 +492,30 @@ class AccessPathToken extends string {
 }
 
 /**
+ * Parses an integer constant `n` or interval `n1..n2` (inclusive) and gets the value
+ * of the constant or any value contained in the interval.
+ */
+bindingset[arg]
+private int getAnIntFromString(string arg) {
+  result = arg.toInt()
+  or
+  // Match "n1..n2", where ".." has previously been replaced with "-->" to simplify parsing
+  exists(string lo, string hi |
+    regexpCaptureTwo(arg, "(\\d+)-->(\\d+)", lo, hi) and
+    result = [lo.toInt() .. hi.toInt()]
+  )
+}
+
+/**
+ * Parses a lower-bounded interval `n..` and gets the lower bound.
+ */
+bindingset[arg]
+private int getLowerBoundFromString(string arg) {
+  // Match "n..", where ".." has previously been replaced with "-->" to simplify parsing
+  result = arg.regexpCapture("(\\d+)-->", 1).toInt()
+}
+
+/**
  * Gets an API graph edge label corresponding to the given access path token.
  */
 pragma[noinline]
@@ -457,19 +525,9 @@ private string getApiGraphLabelFromPathToken(AccessPathToken token) {
   // We just map both to the same thing.
   token.getName() = ["Argument", "Parameter"] and
   (
-    result = API::EdgeLabel::parameterByStringIndex(token.getAnArgument())
+    result = API::EdgeLabel::parameter(getAnIntFromString(token.getAnArgument()))
     or
-    // Match "n1..n2", where ".." has previously been replaced with "-->" to simplify parsing
-    exists(string lo, string hi |
-      regexpCaptureTwo(token.getAnArgument(), "(\\d+)-->(\\d+)", lo, hi) and
-      result = API::EdgeLabel::parameter([lo.toInt() .. hi.toInt()])
-    )
-    or
-    // Match "n..", where ".." has previously been replaced with "-->" to simplify parsing
-    exists(string lo |
-      lo = token.getAnArgument().regexpCapture("(\\d+)-->", 1) and
-      result = API::EdgeLabel::parameter([lo.toInt() .. 99])
-    )
+    result = API::EdgeLabel::parameter([getLowerBoundFromString(token.getAnArgument()) .. 99])
   )
   or
   token.getName() = "Member" and

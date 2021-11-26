@@ -1,4 +1,8 @@
 consistencyIssue
+| library-tests/frameworks/data/test.js:42 | expected an alert, but found none | NOT OK |  |
+| library-tests/frameworks/data/test.js:43 | expected an alert, but found none | NOT OK |  |
+| library-tests/frameworks/data/test.js:45 | expected an alert, but found none | NOT OK |  |
+| library-tests/frameworks/data/test.js:49 | expected an alert, but found none | NOT OK |  |
 taintFlow
 | test.js:5:30:5:37 | source() | test.js:5:8:5:38 | testlib ... urce()) |
 | test.js:6:22:6:29 | source() | test.js:6:8:6:30 | preserv ... urce()) |
@@ -10,3 +14,4 @@ taintFlow
 | test.js:36:47:36:54 | source() | test.js:36:8:36:61 | testlib ... , 1, 1) |
 | test.js:37:50:37:57 | source() | test.js:37:8:37:61 | testlib ... e(), 1) |
 | test.js:38:53:38:60 | source() | test.js:38:8:38:61 | testlib ... urce()) |
+isSink
