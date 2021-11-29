@@ -46,3 +46,9 @@ query predicate taintFlow(DataFlow::Node source, DataFlow::Node sink) {
 query predicate isSink(DataFlow::Node node, string kind) {
   node = ModelOutput::getASinkNode(kind).getARhs()
 }
+
+import semmle.javascript.frameworks.data.internal.Shared as Internal
+
+query predicate invocationMatchesCallSiteFilter(API::InvokeNode invoke, Internal::AccessPathToken token) {
+  Internal::invocationMatchesCallSiteFilter(invoke, token)
+}

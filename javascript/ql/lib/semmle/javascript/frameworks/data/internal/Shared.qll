@@ -278,7 +278,7 @@ private predicate decomposePath(string path, string basePath, string token) {
  * Only has a result for identifying access paths relevant for `package;type`.
  */
 private string appendToken(string package, string type, string path, string token) {
-  isRelevantFullPath(package, type, result) and
+  isRelevantPath(package, type, result) and
   decomposePath(result, path, token)
 }
 
@@ -314,13 +314,16 @@ API::Node getNodeFromPath(string package, string type, string path) {
   )
   or
   exists(string basePath, AccessPathToken token |
-    result = getNodeFromPath(package, type, basePath).getASuccessor(getApiGraphLabelFromPathToken(token)) and
+    result =
+      getNodeFromPath(package, type, basePath).getASuccessor(getApiGraphLabelFromPathToken(token)) and
     path = appendToken(package, type, basePath, token)
   )
   or
   // Similar to the other recursive case, but where the path may have stepped through one or more call-site filters
   exists(string basePath, AccessPathToken token |
-    result = getSuccessorFromInvoke(getInvocationFromPath(package, type, basePath), getApiGraphLabelFromPathToken(token)) and
+    result =
+      getSuccessorFromInvoke(getInvocationFromPath(package, type, basePath),
+        getApiGraphLabelFromPathToken(token)) and
     path = appendToken(package, type, basePath, token)
   )
 }
@@ -344,7 +347,7 @@ API::InvokeNode getInvocationFromPath(string package, string type, string path) 
  * Holds if `invoke` invokes a call-site filter given by `token`.
  */
 pragma[inline]
-private predicate invocationMatchesCallSiteFilter(API::InvokeNode invoke, AccessPathToken token) {
+predicate invocationMatchesCallSiteFilter(API::InvokeNode invoke, AccessPathToken token) {
   token.getName() = "WithArity" and
   (
     invoke.getNumArgument() = getAnIntFromString(token.getAnArgument())
@@ -353,10 +356,11 @@ private predicate invocationMatchesCallSiteFilter(API::InvokeNode invoke, Access
   )
   or
   token.getName() = "NewCall" and
-  invoke instanceof API::NewNode
+  invoke instanceof API::NewNode 
   or
   token.getName() = "Call" and
   invoke instanceof API::CallNode
+   //and invoke instanceof Impl::js::DataFlow::CallNode
 }
 
 /**
@@ -420,7 +424,9 @@ private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string pa
     result = getSuccessorFromInvoke(baseNode, getApiGraphLabelFromPathToken(path))
     or
     exists(string basePath, string token |
-      result = getNodeFromInputOutputPath(baseNode, basePath).getASuccessor(getApiGraphLabelFromPathToken(token)) and
+      result =
+        getNodeFromInputOutputPath(baseNode, basePath)
+            .getASuccessor(getApiGraphLabelFromPathToken(token)) and
       path = appendToken(baseNode, basePath, token)
     )
   )
@@ -429,7 +435,7 @@ private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string pa
 /**
  * Convenience-predicate for extracting two capture groups at once.
  */
-bindingset[input,regexp]
+bindingset[input, regexp]
 private predicate regexpCaptureTwo(string input, string regexp, string capture1, string capture2) {
   capture1 = input.regexpCapture(regexp, 1) and
   capture2 = input.regexpCapture(regexp, 2)
@@ -443,9 +449,7 @@ private predicate isAccessPathToken(string token) {
   exists(string path |
     isRelevantFullPath(_, _, path)
     or
-    exists(string package |
-      isRelevantPackage(package)
-    |
+    exists(string package | isRelevantPackage(package) |
       summaryModel(_, _, _, path, _, _) or
       summaryModel(_, _, _, _, path, _)
     )
@@ -458,37 +462,25 @@ private predicate isAccessPathToken(string token) {
  * An access part token such as `Argument[1]` or `ReturnValue`, appearing in one or more access paths.
  */
 class AccessPathToken extends string {
-  AccessPathToken() {
-    isAccessPathToken(this)
-  }
+  AccessPathToken() { isAccessPathToken(this) }
 
   /** Gets the name of the token, such as `Member` from `Member[x]` */
-  string getName() {
-    result = this.regexpCapture("(.+?)(?:\\[.*?\\])?", 1)
-  }
+  string getName() { result = this.regexpCapture("(.+?)(?:\\[.*?\\])?", 1) }
 
   /**
    * Gets the argument list, such as `1,2` from `Member[1,2]`,
    * or has no result if there are no arguments.
    */
-  string getArgumentList() {
-    result = this.regexpCapture(".+?\\[(.*?)\\]", 1)
-  }
+  string getArgumentList() { result = this.regexpCapture(".+?\\[(.*?)\\]", 1) }
 
   /** Gets the `n`th argument to this token, such as `x` or `y` from `Member[x,y]`. */
-  string getArgument(int n) {
-    result = getArgumentList().splitAt(",", n)
-  }
+  string getArgument(int n) { result = getArgumentList().splitAt(",", n) }
 
   /** Gets an argument to this token, such as `x` or `y` from `Member[x,y]`. */
-  string getAnArgument() {
-    result = getArgument(_)
-  }
+  string getAnArgument() { result = getArgument(_) }
 
   /** Gets the number of arguments to this token, such as 2 for `Member[x,y]` or zero for `ReturnValue`. */
-  int getNumArgument() {
-    result = count(int n | exists(getArgument(n)))
-  }
+  int getNumArgument() { result = count(int n | exists(getArgument(n))) }
 }
 
 /**
@@ -513,6 +505,18 @@ bindingset[arg]
 private int getLowerBoundFromString(string arg) {
   // Match "n..", where ".." has previously been replaced with "-->" to simplify parsing
   result = arg.regexpCapture("(\\d+)-->", 1).toInt()
+}
+
+class Sinks extends ModelInput::SinkModelCsv {
+  override predicate row(string row) {
+    // package;type;path;kind
+    row =
+      [
+        "testlib;;Member[mySink].Argument[0];test-sink",
+        "testlib;;Member[mySinkIfCall].Call.Argument[0];test-sink",
+        "testlib;;Member[mySinkIfNew].NewCall.Argument[0];test-sink",
+      ]
+  }
 }
 
 /**

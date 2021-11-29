@@ -1,8 +1,5 @@
 consistencyIssue
-| library-tests/frameworks/data/test.js:42 | expected an alert, but found none | NOT OK |  |
-| library-tests/frameworks/data/test.js:43 | expected an alert, but found none | NOT OK |  |
-| library-tests/frameworks/data/test.js:45 | expected an alert, but found none | NOT OK |  |
-| library-tests/frameworks/data/test.js:49 | expected an alert, but found none | NOT OK |  |
+| library-tests/frameworks/data/test.js:46 | did not expect an alert, but found an alert for BasicTaintTracking | OK |  |
 taintFlow
 | test.js:5:30:5:37 | source() | test.js:5:8:5:38 | testlib ... urce()) |
 | test.js:6:22:6:29 | source() | test.js:6:8:6:30 | preserv ... urce()) |
@@ -14,4 +11,41 @@ taintFlow
 | test.js:36:47:36:54 | source() | test.js:36:8:36:61 | testlib ... , 1, 1) |
 | test.js:37:50:37:57 | source() | test.js:37:8:37:61 | testlib ... e(), 1) |
 | test.js:38:53:38:60 | source() | test.js:38:8:38:61 | testlib ... urce()) |
+| test.js:42:18:42:25 | source() | test.js:42:18:42:25 | source() |
+| test.js:43:22:43:29 | source() | test.js:43:22:43:29 | source() |
+| test.js:45:24:45:31 | source() | test.js:45:24:45:31 | source() |
+| test.js:46:28:46:35 | source() | test.js:46:28:46:35 | source() |
+| test.js:49:27:49:34 | source() | test.js:49:27:49:34 | source() |
 isSink
+| test.js:42:18:42:25 | source() | test-sink |
+| test.js:43:22:43:29 | source() | test-sink |
+| test.js:45:24:45:31 | source() | test-sink |
+| test.js:46:28:46:35 | source() | test-sink |
+| test.js:49:27:49:34 | source() | test-sink |
+invocationMatchesCallSiteFilter
+| test.js:5:8:5:38 | testlib ... urce()) | Call |
+| test.js:6:8:6:30 | preserv ... urce()) | Call |
+| test.js:7:8:7:49 | require ... urce()) | Call |
+| test.js:8:8:8:47 | require ... 'safe') | Call |
+| test.js:9:8:9:52 | require ... urce()) | Call |
+| test.js:13:3:15:4 | testlib ... OK\\n  }) | Call |
+| test.js:16:3:18:4 | testlib ... OK\\n  }) | Call |
+| test.js:19:3:21:4 | testlib ... OK\\n  }) | Call |
+| test.js:22:3:24:4 | testlib ... nt\\n  }) | Call |
+| test.js:28:8:28:55 | testlib ... , 1, 1) | Call |
+| test.js:29:8:29:55 | testlib ... , 1, 1) | Call |
+| test.js:30:8:30:55 | testlib ... e(), 1) | Call |
+| test.js:31:8:31:55 | testlib ... urce()) | Call |
+| test.js:35:8:35:61 | testlib ... , 1, 1) | Call |
+| test.js:36:8:36:61 | testlib ... , 1, 1) | Call |
+| test.js:37:8:37:61 | testlib ... e(), 1) | Call |
+| test.js:38:8:38:61 | testlib ... urce()) | Call |
+| test.js:42:3:42:26 | testlib ... urce()) | Call |
+| test.js:43:3:43:30 | new tes ... urce()) | Call |
+| test.js:43:3:43:30 | new tes ... urce()) | NewCall |
+| test.js:45:3:45:32 | testlib ... urce()) | Call |
+| test.js:46:3:46:36 | new tes ... urce()) | Call |
+| test.js:46:3:46:36 | new tes ... urce()) | NewCall |
+| test.js:48:3:48:31 | testlib ... urce()) | Call |
+| test.js:49:3:49:35 | new tes ... urce()) | Call |
+| test.js:49:3:49:35 | new tes ... urce()) | NewCall |
