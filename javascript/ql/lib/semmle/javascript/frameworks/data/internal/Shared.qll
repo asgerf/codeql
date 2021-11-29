@@ -322,8 +322,7 @@ API::Node getNodeFromPath(string package, string type, string path) {
   // Similar to the other recursive case, but where the path may have stepped through one or more call-site filters
   exists(string basePath, AccessPathToken token |
     result =
-      getSuccessorFromInvoke(getInvocationFromPath(package, type, basePath),
-        getApiGraphLabelFromPathToken(token)) and
+      getSuccessorFromInvoke(getInvocationFromPath(package, type, basePath), token) and
     path = appendToken(package, type, basePath, token)
   )
 }
@@ -384,18 +383,31 @@ private predicate relevantInputOutputPath(API::InvokeNode base, string inputOrOu
 /**
  * Gets an API-graph successor for the given invocation.
  */
-bindingset[label]
-private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, string label) {
-  exists(int i |
-    result = invoke.getParameter(i) and
-    label = API::EdgeLabel::parameter(i)
+bindingset[token]
+private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, AccessPathToken token) {
+  exists(string label |
+    label = getApiGraphLabelFromPathToken(token)
+  |
+    exists(int i |
+      result = invoke.getParameter(i) and
+      label = API::EdgeLabel::parameter(i)
+    )
+    or
+    label = API::EdgeLabel::return() and
+    result = invoke.getReturn()
+    or
+    label = API::EdgeLabel::instance() and
+    result = invoke.getInstance()
   )
   or
-  label = API::EdgeLabel::return() and
-  result = invoke.getReturn()
-  or
-  label = API::EdgeLabel::instance() and
-  result = invoke.getInstance()
+  token.getName() = "LastArgument" and
+  exists(int n | n = invoke.getNumArgument() |
+    // LastArgument is interpreted as LastArgument[0]
+    token.getNumArgument() = 0 and
+    result = invoke.getParameter(n - 1)
+    or
+    result = invoke.getParameter(n - 1 - getAnIntFromString(token.getAnArgument()))
+  )
 }
 
 /**
@@ -416,7 +428,7 @@ private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string pa
     // For the base case we must go through the API::InvokeNode type to correctly
     // handle the case where the function reference has been moved into a local variable,
     // since different calls have the same base API node.
-    result = getSuccessorFromInvoke(baseNode, getApiGraphLabelFromPathToken(path))
+    result = getSuccessorFromInvoke(baseNode, path)
     or
     exists(string basePath, string token |
       result =

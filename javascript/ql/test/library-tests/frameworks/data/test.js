@@ -47,4 +47,14 @@ function testSinks() {
 
   testlib.mySinkIfNew(source()); // OK
   new testlib.mySinkIfNew(source()); // NOT OK
+
+  testlib.mySinkLast(source(), 2, 3, 4); // OK
+  testlib.mySinkLast(1, source(), 3, 4); // OK
+  testlib.mySinkLast(1, 2, source(), 4); // OK
+  testlib.mySinkLast(1, 2, 3, source()); // NOT OK
+
+  testlib.mySinkSecondLast(source(), 2, 3, 4); // OK
+  testlib.mySinkSecondLast(1, source(), 3, 4); // OK
+  testlib.mySinkSecondLast(1, 2, source(), 4); // NOT OK
+  testlib.mySinkSecondLast(1, 2, 3, source()); // OK
 }

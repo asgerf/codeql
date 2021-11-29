@@ -14,8 +14,18 @@ taintFlow
 | test.js:43:22:43:29 | source() | test.js:43:22:43:29 | source() |
 | test.js:45:24:45:31 | source() | test.js:45:24:45:31 | source() |
 | test.js:49:27:49:34 | source() | test.js:49:27:49:34 | source() |
+| test.js:54:31:54:38 | source() | test.js:54:31:54:38 | source() |
+| test.js:58:34:58:41 | source() | test.js:58:34:58:41 | source() |
 isSink
 | test.js:42:18:42:25 | source() | test-sink |
 | test.js:43:22:43:29 | source() | test-sink |
 | test.js:45:24:45:31 | source() | test-sink |
 | test.js:49:27:49:34 | source() | test-sink |
+| test.js:51:38:51:38 | 4 | test-sink |
+| test.js:52:38:52:38 | 4 | test-sink |
+| test.js:53:38:53:38 | 4 | test-sink |
+| test.js:54:31:54:38 | source() | test-sink |
+| test.js:56:41:56:41 | 3 | test-sink |
+| test.js:57:41:57:41 | 3 | test-sink |
+| test.js:58:34:58:41 | source() | test-sink |
+| test.js:59:34:59:34 | 3 | test-sink |
