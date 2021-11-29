@@ -359,8 +359,10 @@ predicate invocationMatchesCallSiteFilter(API::InvokeNode invoke, AccessPathToke
   invoke instanceof API::NewNode 
   or
   token.getName() = "Call" and
-  invoke instanceof API::CallNode
-   //and invoke instanceof Impl::js::DataFlow::CallNode
+  invoke instanceof API::CallNode and
+  // The following 'instanceof' is redundant as the class is a basetype of API::CallNode
+  // (The complicated access path has nothing to do with it, it's just hard to access that class from here)
+  invoke instanceof Impl::js::DataFlow::CallNode
 }
 
 /**
