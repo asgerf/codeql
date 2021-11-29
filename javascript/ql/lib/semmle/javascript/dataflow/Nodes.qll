@@ -254,13 +254,16 @@ class InvokeNode extends DataFlow::SourceNode instanceof DataFlow::Impl::InvokeN
  * Math.abs(x)
  * ```
  */
-class CallNode extends InvokeNode instanceof DataFlow::Impl::CallNodeDef {
+class CallNode extends InvokeNode {
+  CallNode() {
+    this instanceof DataFlow::Impl::CallNodeDef
+  }
   /**
    * Gets the data flow node corresponding to the receiver expression of this method call.
    *
    * For example, the receiver of `x.m()` is `x`.
    */
-  DataFlow::Node getReceiver() { result = super.getReceiver() }
+  DataFlow::Node getReceiver() { result = this.(DataFlow::Impl::CallNodeDef).getReceiver() }
 }
 
 /**

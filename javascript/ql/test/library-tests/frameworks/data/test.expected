@@ -1,5 +1,4 @@
 consistencyIssue
-| library-tests/frameworks/data/test.js:46 | did not expect an alert, but found an alert for BasicTaintTracking | OK |  |
 taintFlow
 | test.js:5:30:5:37 | source() | test.js:5:8:5:38 | testlib ... urce()) |
 | test.js:6:22:6:29 | source() | test.js:6:8:6:30 | preserv ... urce()) |
@@ -14,13 +13,11 @@ taintFlow
 | test.js:42:18:42:25 | source() | test.js:42:18:42:25 | source() |
 | test.js:43:22:43:29 | source() | test.js:43:22:43:29 | source() |
 | test.js:45:24:45:31 | source() | test.js:45:24:45:31 | source() |
-| test.js:46:28:46:35 | source() | test.js:46:28:46:35 | source() |
 | test.js:49:27:49:34 | source() | test.js:49:27:49:34 | source() |
 isSink
 | test.js:42:18:42:25 | source() | test-sink |
 | test.js:43:22:43:29 | source() | test-sink |
 | test.js:45:24:45:31 | source() | test-sink |
-| test.js:46:28:46:35 | source() | test-sink |
 | test.js:49:27:49:34 | source() | test-sink |
 invocationMatchesCallSiteFilter
 | test.js:5:8:5:38 | testlib ... urce()) | Call |
@@ -41,11 +38,8 @@ invocationMatchesCallSiteFilter
 | test.js:37:8:37:61 | testlib ... e(), 1) | Call |
 | test.js:38:8:38:61 | testlib ... urce()) | Call |
 | test.js:42:3:42:26 | testlib ... urce()) | Call |
-| test.js:43:3:43:30 | new tes ... urce()) | Call |
 | test.js:43:3:43:30 | new tes ... urce()) | NewCall |
 | test.js:45:3:45:32 | testlib ... urce()) | Call |
-| test.js:46:3:46:36 | new tes ... urce()) | Call |
 | test.js:46:3:46:36 | new tes ... urce()) | NewCall |
 | test.js:48:3:48:31 | testlib ... urce()) | Call |
-| test.js:49:3:49:35 | new tes ... urce()) | Call |
 | test.js:49:3:49:35 | new tes ... urce()) | NewCall |
