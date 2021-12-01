@@ -253,7 +253,7 @@ predicate isRelevantFullPath(string package, string type, string path) {
  * Holds if `path` or some suffix thereof is used with the `package,type` combination in some CSV row.
  */
 pragma[nomagic]
-private predicate isRelevantPath(string package, string type, string path) {
+predicate isRelevantPath(string package, string type, string path) {
   exists(string fullPath |
     isRelevantFullPath(package, type, fullPath) and
     path = fullPath.prefix([0, fullPath.indexOf("."), fullPath.length()])
@@ -314,8 +314,7 @@ API::Node getNodeFromPath(string package, string type, string path) {
   )
   or
   exists(string basePath, AccessPathToken token |
-    result =
-      getNodeFromPath(package, type, basePath).getASuccessor(getApiGraphLabelFromPathToken(token)) and
+    result = getSuccessorFromNode(getNodeFromPath(package, type, basePath), token) and
     path = appendToken(package, type, basePath, token)
   )
   or
@@ -385,21 +384,6 @@ private predicate relevantInputOutputPath(API::InvokeNode base, string inputOrOu
  */
 bindingset[token]
 private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, AccessPathToken token) {
-  exists(string label |
-    label = getApiGraphLabelFromPathToken(token)
-  |
-    exists(int i |
-      result = invoke.getParameter(i) and
-      label = API::EdgeLabel::parameter(i)
-    )
-    or
-    label = API::EdgeLabel::return() and
-    result = invoke.getReturn()
-    or
-    label = API::EdgeLabel::instance() and
-    result = invoke.getInstance()
-  )
-  or
   token.getName() = "Argument" and
   result = invoke.getParameter(getAnIntFromStringUnbounded(token.getAnArgument()))
   or
@@ -411,6 +395,12 @@ private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, AccessPathToken
     or
     result = invoke.getParameter(n - 1 - getAnIntFromStringUnbounded(token.getAnArgument()))
   )
+  or
+  token.getName() = "ReturnValue" and
+  result = invoke.getReturn()
+  or
+  token.getName() = "Instance" and
+  result = invoke.getInstance()
 }
 
 /**
@@ -435,8 +425,7 @@ private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string pa
     or
     exists(string basePath, string token |
       result =
-        getNodeFromInputOutputPath(baseNode, basePath)
-            .getASuccessor(getApiGraphLabelFromPathToken(token)) and
+        getSuccessorFromNode(getNodeFromInputOutputPath(baseNode, basePath), token) and
       path = appendToken(baseNode, basePath, token)
     )
   )
@@ -528,29 +517,40 @@ private int getAnIntFromStringUnbounded(string arg) {
   result >= getLowerBoundFromString(arg)
 }
 
+pragma[nomagic]
+private predicate isParameterIndex(int index) {
+  exists(string label, string indexStr |
+    exists(any(API::Node node).getASuccessor(label)) and
+    label = API::EdgeLabel::parameterByStringIndex(indexStr) and
+    index = indexStr.toInt()
+  )
+}
+
+pragma[inline]
+private int bindParameterIndex(int arg) {
+  result = arg and
+  isParameterIndex(result)
+}
+
 /**
- * Gets an API graph edge label corresponding to the given access path token.
+ * Gets a successor of `node` in the API graph.
  */
-pragma[noinline]
-private string getApiGraphLabelFromPathToken(AccessPathToken token) {
+bindingset[token]
+private API::Node getSuccessorFromNode(API::Node node, AccessPathToken token) {
   // API graphs use the same label for arguments and parameters. An edge originating from a
   // use-node represents be an argument, and an edge originating from a def-node represents a parameter.
   // We just map both to the same thing.
   token.getName() = ["Argument", "Parameter"] and
-  (
-    result = API::EdgeLabel::parameter(getAnIntFromString(token.getAnArgument()))
-    or
-    result = API::EdgeLabel::parameter([getLowerBoundFromString(token.getAnArgument()) .. 99])
-  )
+  result = node.getParameter(bindParameterIndex(getAnIntFromStringUnbounded(token.getAnArgument())))
   or
   token.getName() = "Member" and
-  result = API::EdgeLabel::member(token.getAnArgument())
+  result = node.getMember(token.getAnArgument())
   or
   token.getName() = "ReturnValue" and
-  result = API::EdgeLabel::return()
+  result = node.getReturn()
   or
   // Language-specific tokens
-  result = Impl::getExtraApiGraphLabelFromPathToken(token)
+  result = Impl::getExtraSuccessorFromNode(node, token)
 }
 
 /**

@@ -32,9 +32,10 @@ predicate isPackageUsed(string package) {
 
 /** Holds if `global` is a global variable referenced via a the `global` package in a CSV row. */
 private predicate isRelevantGlobal(string global) {
-  exists(string path |
-    isRelevantFullPath("global", "", path) and
-    getExtraApiGraphLabelFromPathToken(path.splitAt(".", 0)) = API::EdgeLabel::member(global)
+  exists(AccessPathToken token |
+    isRelevantPath("global", "", token) and
+    token.getName() = "Member" and
+    global = token.getAnArgument()
   )
 }
 
@@ -79,22 +80,22 @@ API::Node getExtraNodeFromPath(string package, string type, string path) {
 
 /** Gets a JavaScript-specific API graph label corresponding to the given access path token */
 bindingset[token]
-string getExtraApiGraphLabelFromPathToken(AccessPathToken token) {
+API::Node getExtraSuccessorFromNode(API::Node node, AccessPathToken token) {
   token.getName() = "Instance" and
-  result = API::EdgeLabel::instance()
+  result = node.getInstance()
   or
   token.getName() = "Awaited" and
-  result = API::EdgeLabel::promised()
+  result = node.getPromised()
   or
   token.getName() = "ArrayElement" and
-  result = API::EdgeLabel::member(DataFlow::PseudoProperties::arrayElement())
+  result = node.getMember(DataFlow::PseudoProperties::arrayElement())
   or
   token.getName() = "Element" and
-  result = API::EdgeLabel::member(DataFlow::PseudoProperties::arrayLikeElement())
+  result = node.getMember(DataFlow::PseudoProperties::arrayLikeElement())
   or
   // Note: MapKey not currently supported
   token.getName() = "MapValue" and
-  result = API::EdgeLabel::member(DataFlow::PseudoProperties::mapValueAll())
+  result = node.getMember(DataFlow::PseudoProperties::mapValueAll())
 }
 
 /**
