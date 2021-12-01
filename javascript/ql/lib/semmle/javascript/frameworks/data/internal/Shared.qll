@@ -400,13 +400,16 @@ private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, AccessPathToken
     result = invoke.getInstance()
   )
   or
+  token.getName() = "Argument" and
+  result = invoke.getParameter(getAnIntFromStringUnbounded(token.getAnArgument()))
+  or
   token.getName() = "LastArgument" and
   exists(int n | n = invoke.getNumArgument() |
     // LastArgument is interpreted as LastArgument[0]
     token.getNumArgument() = 0 and
     result = invoke.getParameter(n - 1)
     or
-    result = invoke.getParameter(n - 1 - getAnIntFromString(token.getAnArgument()))
+    result = invoke.getParameter(n - 1 - getAnIntFromStringUnbounded(token.getAnArgument()))
   )
 }
 
@@ -512,6 +515,17 @@ bindingset[arg]
 private int getLowerBoundFromString(string arg) {
   // Match "n..", where ".." has previously been replaced with "-->" to simplify parsing
   result = arg.regexpCapture("(\\d+)-->", 1).toInt()
+}
+
+/**
+ * Parses an integer constant or interval (bounded or unbounded) and gets any
+ * of the integers contained within (of which there may be infinitely many).
+ */
+bindingset[arg, result]
+private int getAnIntFromStringUnbounded(string arg) {
+  result = getAnIntFromString(arg)
+  or
+  result >= getLowerBoundFromString(arg)
 }
 
 /**

@@ -57,4 +57,14 @@ function testSinks() {
   testlib.mySinkSecondLast(1, source(), 3, 4); // OK
   testlib.mySinkSecondLast(1, 2, source(), 4); // NOT OK
   testlib.mySinkSecondLast(1, 2, 3, source()); // OK
+
+  testlib.mySinkTwoLast(source(), 2, 3, 4); // OK
+  testlib.mySinkTwoLast(1, source(), 3, 4); // OK
+  testlib.mySinkTwoLast(1, 2, source(), 4); // NOT OK
+  testlib.mySinkTwoLast(1, 2, 3, source()); // NOT OK
+
+  testlib.mySinkExceptLast(source(), 2, 3, 4); // NOT OK
+  testlib.mySinkExceptLast(1, source(), 3, 4); // NOT OK
+  testlib.mySinkExceptLast(1, 2, source(), 4); // NOT OK
+  testlib.mySinkExceptLast(1, 2, 3, source()); // OK
 }
