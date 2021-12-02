@@ -541,21 +541,6 @@ private int getAnIntFromStringWithArity(string arg, int arity) {
   )
 }
 
-pragma[nomagic]
-private predicate isParameterIndex(int index) {
-  exists(string label, string indexStr |
-    exists(any(API::Node node).getASuccessor(label)) and
-    label = API::EdgeLabel::parameterByStringIndex(indexStr) and
-    index = indexStr.toInt()
-  )
-}
-
-pragma[inline]
-private int bindParameterIndex(int arg) {
-  result = arg and
-  isParameterIndex(result)
-}
-
 /**
  * Gets a successor of `node` in the API graph.
  */
@@ -565,7 +550,7 @@ private API::Node getSuccessorFromNode(API::Node node, AccessPathToken token) {
   // use-node represents be an argument, and an edge originating from a def-node represents a parameter.
   // We just map both to the same thing.
   token.getName() = ["Argument", "Parameter"] and
-  result = node.getParameter(bindParameterIndex(getAnIntFromStringUnbounded(token.getAnArgument())))
+  result = node.getParameter(getAnIntFromStringUnbounded(token.getAnArgument()))
   or
   token.getName() = "Member" and
   result = node.getMember(token.getAnArgument())

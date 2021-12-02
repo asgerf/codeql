@@ -60,17 +60,19 @@ private class GlobalApiEntryPoint extends API::EntryPoint {
  * Gets an API node referring to the given global variable (if relevant).
  */
 private API::Node getGlobalNode(string globalName) {
-  result = API::root().getASuccessor(any(GlobalApiEntryPoint e | e.getGlobal() = globalName))
+  result = any(GlobalApiEntryPoint e | e.getGlobal() = globalName).getNode()
 }
 
 /** Gets a JavaScript-specific interpretation of the given `(package, type, path)` tuple. */
 API::Node getExtraNodeFromPath(string package, string type, string path) {
   // Global variable accesses is via the 'global' package
-  exists(string globalName |
+  exists(string globalName, AccessPathToken token |
     result = getGlobalNode(globalName) and
     package = getAPackageAlias("global") and
     type = "" and
-    path = "Member[" + globalName + "]"
+    path = token and
+    token.getName() = "Member" and
+    token.getAnArgument() = globalName
   )
   or
   // Access instance of a type based on type annotations
