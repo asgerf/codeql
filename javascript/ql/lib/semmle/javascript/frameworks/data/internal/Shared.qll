@@ -515,9 +515,13 @@ private int getAnIntFromStringUnbounded(string arg) {
 /**
  * Parses an integer constant or interval (bounded or unbounded) that explicitly
  * references the arity, such as `N-1` or `N-3..N-1`.
+ *
+ * Note that such expressions will never resolve to a negative index, even if the
+ * arity is zero (it will have no result in that case).
  */
 bindingset[arg, arity]
 private int getAnIntFromStringWithArity(string arg, int arity) {
+  result >= 0 and // do not allow N-1 to resolve to a negative index
   exists(string lo |
     // N-x
     lo = arg.regexpCapture("N-(\\d+)", 1) and
@@ -535,11 +539,13 @@ private int getAnIntFromStringWithArity(string arg, int arity) {
     or
     // N-x..Ny
     regexpCaptureTwo(arg, "N-(\\d+)-->N-(\\d+)", lo, hi) and
-    result = [arity - lo.toInt() .. arity - hi.toInt()]
+    result = [arity - lo.toInt() .. arity - hi.toInt()] and
+    result >= 0
     or
     // N-x..y
     regexpCaptureTwo(arg, "N-(\\d+)-->(\\d+)", lo, hi) and
-    result = [arity - lo.toInt() .. hi.toInt()]
+    result = [arity - lo.toInt() .. hi.toInt()] and
+    result >= 0
   )
 }
 
