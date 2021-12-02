@@ -24,11 +24,13 @@
  * 3. The `path` column API-graph-like edges to follow starting at the node selected by `package` and `type`.
  *    It is a `.`-separated list of tokens of form:
  *     - Member[x] : a property named `x`. May be a comma-separated list of named.
- *     - Argument[n]: the n-th argument to a call. May be a range of form `x-y` (inclusive) and/or a comma-separated list.
- *     - Parameter[n]: the n-th parameter of a callback. May be a range of form `x-y` (inclusive) and/or a comma-separated list.
+ *     - Argument[n]: the n-th argument to a call. May be a range of form `x..y` (inclusive) and/or a comma-separated list.
+ *                    Additionally, `N-1` refers to the last argument, `N-2` refers to the second-last, and so on.
+ *     - Parameter[n]: the n-th parameter of a callback. May be a range of form `x..y` (inclusive) and/or a comma-separated list.
  *     - ReturnValue: the value returned by a function call
  *     - Instance: the value returned by a constructor call
  *     - Awaited: the value from a resolved promise/future-like object
+ *     - WithArity[n]: match a call with the given arity. May be a range of form `x..y` (inclusive) and/or a comma-separated list.
  *     - Other langauge-specific tokens mentioned in `ModelsAsData.qll`.
  * 4. The `input` and `output` columns specify how data enters and leaves the element selected by the
  *    first `(package, type, path)` tuple. Both strings are `.`-separated access paths
