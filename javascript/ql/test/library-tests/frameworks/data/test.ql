@@ -21,10 +21,11 @@ class Sinks extends ModelInput::SinkModelCsv {
       "testlib;;Member[mySink].Argument[0];test-sink",
       "testlib;;Member[mySinkIfCall].Call.Argument[0];test-sink",
       "testlib;;Member[mySinkIfNew].NewCall.Argument[0];test-sink",
-      "testlib;;Member[mySinkLast].LastArgument;test-sink",
-      "testlib;;Member[mySinkSecondLast].LastArgument[1];test-sink",
-      "testlib;;Member[mySinkTwoLast].LastArgument[0,1];test-sink",
-      "testlib;;Member[mySinkExceptLast].LastArgument[1..];test-sink",
+      "testlib;;Member[mySinkLast].Argument[N-1];test-sink",
+      "testlib;;Member[mySinkSecondLast].Argument[N-2];test-sink",
+      "testlib;;Member[mySinkTwoLast].Argument[N-1,N-2];test-sink",
+      "testlib;;Member[mySinkTwoLastRange].Argument[N-2..N-1];test-sink",
+      "testlib;;Member[mySinkExceptLast].Argument[0..N-2];test-sink",
     ]
   }
 }

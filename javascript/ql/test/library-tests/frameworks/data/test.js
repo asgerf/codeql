@@ -63,6 +63,11 @@ function testSinks() {
   testlib.mySinkTwoLast(1, 2, source(), 4); // NOT OK
   testlib.mySinkTwoLast(1, 2, 3, source()); // NOT OK
 
+  testlib.mySinkTwoLastRange(source(), 2, 3, 4); // OK
+  testlib.mySinkTwoLastRange(1, source(), 3, 4); // OK
+  testlib.mySinkTwoLastRange(1, 2, source(), 4); // NOT OK
+  testlib.mySinkTwoLastRange(1, 2, 3, source()); // NOT OK
+
   testlib.mySinkExceptLast(source(), 2, 3, 4); // NOT OK
   testlib.mySinkExceptLast(1, source(), 3, 4); // NOT OK
   testlib.mySinkExceptLast(1, 2, source(), 4); // NOT OK

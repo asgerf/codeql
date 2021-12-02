@@ -347,11 +347,7 @@ API::InvokeNode getInvocationFromPath(string package, string type, string path) 
 pragma[inline]
 private predicate invocationMatchesCallSiteFilter(API::InvokeNode invoke, AccessPathToken token) {
   token.getName() = "WithArity" and
-  (
-    invoke.getNumArgument() = getAnIntFromString(token.getAnArgument())
-    or
-    invoke.getNumArgument() >= getLowerBoundFromString(token.getAnArgument())
-  )
+  invoke.getNumArgument() = getAnIntFromStringUnbounded(token.getAnArgument())
   or
   Impl::invocationMatchesExtraCallSiteFilter(invoke, token)
 }
@@ -385,15 +381,10 @@ private predicate relevantInputOutputPath(API::InvokeNode base, string inputOrOu
 bindingset[token]
 private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, AccessPathToken token) {
   token.getName() = "Argument" and
-  result = invoke.getParameter(getAnIntFromStringUnbounded(token.getAnArgument()))
-  or
-  token.getName() = "LastArgument" and
-  exists(int n | n = invoke.getNumArgument() |
-    // LastArgument is interpreted as LastArgument[0]
-    token.getNumArgument() = 0 and
-    result = invoke.getParameter(n - 1)
+  (
+    result = invoke.getParameter(getAnIntFromStringUnbounded(token.getAnArgument()))
     or
-    result = invoke.getParameter(n - 1 - getAnIntFromStringUnbounded(token.getAnArgument()))
+    result = invoke.getParameter(getAnIntFromStringWithArity(token.getAnArgument(), invoke.getNumArgument()))
   )
   or
   token.getName() = "ReturnValue" and
@@ -509,12 +500,45 @@ private int getLowerBoundFromString(string arg) {
 /**
  * Parses an integer constant or interval (bounded or unbounded) and gets any
  * of the integers contained within (of which there may be infinitely many).
+ *
+ * Has no result for arguments involving an explicit arity, such as `N-1`.
  */
 bindingset[arg, result]
 private int getAnIntFromStringUnbounded(string arg) {
   result = getAnIntFromString(arg)
   or
   result >= getLowerBoundFromString(arg)
+}
+
+/**
+ * Parses an integer constant or interval (bounded or unbounded) that explicitly
+ * references the arity, such as `N-1` or `N-3..N-1`.
+ */
+bindingset[arg, arity]
+private int getAnIntFromStringWithArity(string arg, int arity) {
+  exists(string lo |
+    // N-x
+    lo = arg.regexpCapture("N-(\\d+)", 1) and
+    result = arity - lo.toInt()
+    or
+    // N-x..
+    lo = arg.regexpCapture("N-(\\d+)-->", 1) and
+    result = [arity - lo.toInt(), arity - 1]
+  )
+  or
+  exists(string lo, string hi |
+    // x..N-y
+    regexpCaptureTwo(arg, "(\\d+)-->N-(\\d+)", lo, hi) and
+    result = [lo.toInt() .. arity - hi.toInt()]
+    or
+    // N-x..Ny
+    regexpCaptureTwo(arg, "N-(\\d+)-->N-(\\d+)", lo, hi) and
+    result = [arity - lo.toInt() .. arity - hi.toInt()]
+    or
+    // N-x..y
+    regexpCaptureTwo(arg, "N-(\\d+)-->(\\d+)", lo, hi) and
+    result = [arity - lo.toInt() .. hi.toInt()]
+  )
 }
 
 pragma[nomagic]
