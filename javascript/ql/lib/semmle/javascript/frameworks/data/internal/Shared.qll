@@ -15,14 +15,14 @@
  *
  * The interpretation of a row is similar to API-graphs with a left-to-right
  * reading.
- * 1. The `package` column selects an NPM package name, or "global" for the global scope.
- *    It may also be a path within an NPM package, such as `lodash/extend`.
- *    Lastly it can be a synthetic package used for a type definition (see type definitions below).
+ * 1. The `package` column selects a package name, as it would be referenced in the source code,
+ *    such as an NPM package, PIP package, or Ruby gem. (See `ModelsAsData.qll` for language-specific details).
+ *    It may also be a synthetic package used for a type definition (see type definitions below).
  * 2. The `type` column selects all instances of a named type originating from that package,
- *    or the empty string if referring to the package itself (its exported object).
+ *    or the empty string if referring to the package itself.
  *    It can also be a synthetic type name defined by a type definition (see type definitions below).
- * 3. The `path` column API-graph-like edges to follow starting at the node selected by `package` and `type`.
- *    It is a `.`-separated list of tokens of form:
+ * 3. The `path` column is a `.`-separated list of "access path tokens" to resolve, starting at the node selected by `package` and `type`.
+ *    The possible access path tokens are:
  *     - Member[x] : a property named `x`. May be a comma-separated list of named.
  *     - Argument[n]: the n-th argument to a call. May be a range of form `x..y` (inclusive) and/or a comma-separated list.
  *                    Additionally, `N-1` refers to the last argument, `N-2` refers to the second-last, and so on.
