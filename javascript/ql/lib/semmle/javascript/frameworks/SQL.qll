@@ -534,7 +534,7 @@ private module SpannerCsv {
           "@google-cloud/spanner;~SqlExecutorDirect;Argument[0];sql-injection",
           "@google-cloud/spanner;~SqlExecutorDirect;Argument[0].Member[sql];sql-injection",
           "@google-cloud/spanner;Transaction;Member[batchUpdate].Argument[0];sql-injection",
-          "@google-cloud/spanner;Transaction;Member[batchUpdate].Argument[0].Member[*].Member[sql];sql-injection",
+          "@google-cloud/spanner;Transaction;Member[batchUpdate].Argument[0].ArrayElement.Member[sql];sql-injection",
           "@google-cloud/spanner;v1.SpannerClient;Member[executeSql,executeStreamingSql].Argument[0].Member[sql];sql-injection",
         ]
     }

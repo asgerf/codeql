@@ -98,6 +98,11 @@ API::Node getExtraSuccessorFromNode(API::Node node, AccessPathToken token) {
   // Note: MapKey not currently supported
   token.getName() = "MapValue" and
   result = node.getMember(DataFlow::PseudoProperties::mapValueAll())
+  or
+  // Currently we need to include the "unknown member" for ArrayElement and Element since
+  // API graphs do not use store/load steps for arrays
+  token.getName() = ["ArrayElement", "Element"] and
+  result = node.getUnknownMember()
 }
 
 /**
