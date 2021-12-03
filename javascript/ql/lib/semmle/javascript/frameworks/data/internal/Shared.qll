@@ -399,7 +399,7 @@ API::InvokeNode getInvocationFromPath(string package, string type, string path) 
 private predicate resolvedSummaryBase(API::InvokeNode baseNode, string input, string output, string kind) {
   exists(string package, string type, string path |
     summaryModel(package, type, path, input, output, kind) and
-    baseNode = getNodeFromPath(package, type, path).getAnInvocation()
+    baseNode = getInvocationFromPath(package, type, path)
   )
 }
 
