@@ -111,8 +111,6 @@ API::Node getExtraSuccessorFromNode(API::Node node, AccessPathToken token) {
 
 /**
  * Gets a JavaScript-specific API graph successor of `node` reachable by resolving `token`.
- *
- * At the moment there are no JS-specific successors
  */
 bindingset[token]
 API::Node getExtraSuccessorFromInvoke(API::InvokeNode node, AccessPathToken token) {
