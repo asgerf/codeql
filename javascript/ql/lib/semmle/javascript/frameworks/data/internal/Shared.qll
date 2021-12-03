@@ -441,15 +441,6 @@ private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string pa
 }
 
 /**
- * Convenience-predicate for extracting two capture groups at once.
- */
-bindingset[input, regexp]
-private predicate regexpCaptureTwo(string input, string regexp, string capture1, string capture2) {
-  capture1 = input.regexpCapture(regexp, 1) and
-  capture2 = input.regexpCapture(regexp, 2)
-}
-
-/**
  * Holds if `token` is a token used in an access path, that is,
  * either the `path`, `input`, or `output` part of a CSV row.
  */
@@ -489,6 +480,15 @@ class AccessPathToken extends string {
 
   /** Gets the number of arguments to this token, such as 2 for `Member[x,y]` or zero for `ReturnValue`. */
   int getNumArgument() { result = count(int n | exists(getArgument(n))) }
+}
+
+/**
+ * Convenience-predicate for extracting two capture groups at once.
+ */
+bindingset[input, regexp]
+private predicate regexpCaptureTwo(string input, string regexp, string capture1, string capture2) {
+  capture1 = input.regexpCapture(regexp, 1) and
+  capture2 = input.regexpCapture(regexp, 2)
 }
 
 /**
