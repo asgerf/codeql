@@ -18,16 +18,17 @@ class Steps extends ModelInput::SummaryModelCsv {
 class Sinks extends ModelInput::SinkModelCsv {
   override predicate row(string row) {
     // package;type;path;kind
-    row = [
-      "testlib;;Member[mySink].Argument[0];test-sink",
-      "testlib;;Member[mySinkIfCall].Call.Argument[0];test-sink",
-      "testlib;;Member[mySinkIfNew].NewCall.Argument[0];test-sink",
-      "testlib;;Member[mySinkLast].Argument[N-1];test-sink",
-      "testlib;;Member[mySinkSecondLast].Argument[N-2];test-sink",
-      "testlib;;Member[mySinkTwoLast].Argument[N-1,N-2];test-sink",
-      "testlib;;Member[mySinkTwoLastRange].Argument[N-2..N-1];test-sink",
-      "testlib;;Member[mySinkExceptLast].Argument[0..N-2];test-sink",
-    ]
+    row =
+      [
+        "testlib;;Member[mySink].Argument[0];test-sink",
+        "testlib;;Member[mySinkIfCall].Call.Argument[0];test-sink",
+        "testlib;;Member[mySinkIfNew].NewCall.Argument[0];test-sink",
+        "testlib;;Member[mySinkLast].Argument[N-1];test-sink",
+        "testlib;;Member[mySinkSecondLast].Argument[N-2];test-sink",
+        "testlib;;Member[mySinkTwoLast].Argument[N-1,N-2];test-sink",
+        "testlib;;Member[mySinkTwoLastRange].Argument[N-2..N-1];test-sink",
+        "testlib;;Member[mySinkExceptLast].Argument[0..N-2];test-sink",
+      ]
   }
 }
 

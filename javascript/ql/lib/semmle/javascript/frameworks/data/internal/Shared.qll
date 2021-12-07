@@ -166,9 +166,7 @@ private predicate typeModel(string row) { any(TypeModelCsv s).row(padded(row)) }
  * Replaces `..` with `-->` in order to simplify subsequent parsing.
  */
 bindingset[path]
-private string normalizePath(string path) {
-  result = path.replaceAll("..", "-->")
-}
+private string normalizePath(string path) { result = path.replaceAll("..", "-->") }
 
 /** Holds if a source model exists for the given parameters. */
 predicate sourceModel(string package, string type, string path, string kind) {
@@ -322,7 +320,9 @@ private API::Node getSuccessorFromInvoke(API::InvokeNode invoke, AccessPathToken
   (
     result = invoke.getParameter(getAnIntFromStringUnbounded(token.getAnArgument()))
     or
-    result = invoke.getParameter(getAnIntFromStringWithArity(token.getAnArgument(), invoke.getNumArgument()))
+    result =
+      invoke
+          .getParameter(getAnIntFromStringWithArity(token.getAnArgument(), invoke.getNumArgument()))
   )
   or
   token.getName() = "ReturnValue" and
@@ -371,8 +371,7 @@ API::Node getNodeFromPath(string package, string type, string path) {
   or
   // Similar to the other recursive case, but where the path may have stepped through one or more call-site filters
   exists(string basePath, AccessPathToken token |
-    result =
-      getSuccessorFromInvoke(getInvocationFromPath(package, type, basePath), token) and
+    result = getSuccessorFromInvoke(getInvocationFromPath(package, type, basePath), token) and
     path = appendToken(package, type, basePath, token)
   )
 }
@@ -396,7 +395,9 @@ API::InvokeNode getInvocationFromPath(string package, string type, string path) 
  * Holds if a summary edge with the given `input, output, kind` columns have a `package, type, path` tuple
  * that resolves to `baseNode`.
  */
-private predicate resolvedSummaryBase(API::InvokeNode baseNode, string input, string output, string kind) {
+private predicate resolvedSummaryBase(
+  API::InvokeNode baseNode, string input, string output, string kind
+) {
   exists(string package, string type, string path |
     summaryModel(package, type, path, input, output, kind) and
     baseNode = getInvocationFromPath(package, type, path)
@@ -433,8 +434,7 @@ private API::Node getNodeFromInputOutputPath(API::InvokeNode baseNode, string pa
     result = getSuccessorFromInvoke(baseNode, path)
     or
     exists(string basePath, string token |
-      result =
-        getSuccessorFromNode(getNodeFromInputOutputPath(baseNode, basePath), token) and
+      result = getSuccessorFromNode(getNodeFromInputOutputPath(baseNode, basePath), token) and
       path = appendToken(baseNode, basePath, token)
     )
   )
