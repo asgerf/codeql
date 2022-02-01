@@ -271,14 +271,14 @@ module API {
      * Holds if `ref` is a use of a node that should have an incoming edge labeled `lbl`,
      * from a use node that flows to `node`.
      */
-    private predicate useStep(string lbl, ExprCfgNode node, DataFlow::Node ref) {
+    private predicate useStep(string lbl, DataFlow::Node node, DataFlow::Node ref) {
       // // Referring to an attribute on a node that is a use of `base`:
       // pred = `Rails` part of `Rails::Whatever`
       // lbl = `Whatever`
       // ref = `Rails::Whatever`
       exists(ExprNodes::ConstantAccessCfgNode c, ConstantReadAccess read |
         not exists(resolveTopLevel(read)) and
-        node = c.getScopeExpr() and
+        node.asExpr() = c.getScopeExpr() and
         lbl = Label::member(read.getName()) and
         ref.asExpr() = c and
         read = c.getExpr()
@@ -286,7 +286,7 @@ module API {
       or
       // Calling a method on a node that is a use of `base`
       exists(ExprNodes::MethodCallCfgNode call, string name |
-        node = call.getReceiver() and
+        node.asExpr() = call.getReceiver() and
         name = call.getExpr().getMethodName() and
         lbl = Label::return(name) and
         name != "new" and
@@ -295,7 +295,7 @@ module API {
       or
       // Calling the `new` method on a node that is a use of `base`, which creates a new instance
       exists(ExprNodes::MethodCallCfgNode call |
-        node = call.getReceiver() and
+        node.asExpr() = call.getReceiver() and
         lbl = Label::instance() and
         call.getExpr().getMethodName() = "new" and
         ref.asExpr() = call
@@ -306,9 +306,8 @@ module API {
     private predicate isUse(DataFlow::Node nd) {
       useRoot(_, nd)
       or
-      exists(ExprCfgNode node, DataFlow::LocalSourceNode pred |
-        pred = useCandFwd() and
-        pred.flowsTo(any(DataFlow::ExprNode n | n.getExprNode() = node)) and
+      exists(DataFlow::Node node |
+        useCandFwd().flowsTo(node) and
         useStep(_, node, nd)
       )
     }
@@ -383,9 +382,9 @@ module API {
         pred = MkRoot() and
         useRoot(lbl, ref)
         or
-        exists(ExprCfgNode node, DataFlow::Node src |
+        exists(DataFlow::Node node, DataFlow::Node src |
           pred = MkUse(src) and
-          trackUseNode(src).flowsTo(any(DataFlow::ExprNode n | n.getExprNode() = node)) and
+          trackUseNode(src).flowsTo(node) and
           useStep(lbl, node, ref)
         )
       )
