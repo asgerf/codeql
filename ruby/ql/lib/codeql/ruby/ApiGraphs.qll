@@ -44,6 +44,11 @@ module API {
     DataFlow::LocalSourceNode getAnImmediateUse() { Impl::use(this, result) }
 
     /**
+     * Gets a data-flow node corresponding the value flowing into this API component.
+     */
+    DataFlow::Node getARhs() { result = Impl::trackDefNode(result) }
+
+    /**
      * Gets a call to a method on the receiver represented by this API component.
      */
     DataFlow::CallNode getAMethodCall(string method) {
@@ -94,6 +99,25 @@ module API {
      * Gets a node representing the result of calling a method on the receiver represented by this node.
      */
     Node getReturn(string method) { result = this.getASuccessor(Label::return(method)) }
+
+    private predicate hasParameterIndex(int n) { exists(this.getASuccessor(Label::parameter(n))) }
+
+    /** Gets an API node representing the `n`th positional parameter. */
+    Node getParameter(int n) {
+      result = this.getASuccessor(Label::parameter(n)) and this.hasParameterIndex(n)
+    }
+
+    private predicate hasKeywordParameter(string name) {
+      exists(this.getASuccessor(Label::keywordParameter(name)))
+    }
+
+    /** Gets an API node representing the given keyword parameter. */
+    Node getKeywordParameter(string name) {
+      result = this.getASuccessor(Label::keywordParameter(name)) and this.hasKeywordParameter(name)
+    }
+
+    /** Gets an API node representing the block parameter. */
+    Node getBlock() { result = this.getASuccessor(Label::blockParameter()) }
 
     /**
      * Gets a `new` call to the function represented by this API component.
@@ -241,7 +265,9 @@ module API {
       /** The root of the API graph. */
       MkRoot() or
       /** A use of an API member at the node `nd`. */
-      MkUse(DataFlow::Node nd) { isUse(nd) }
+      MkUse(DataFlow::Node nd) { isUse(nd) } or
+      /** A value that escapes into an API at the node `nd` */
+      MkDef(DataFlow::Node nd) { isDef(nd) }
 
     private string resolveTopLevel(ConstantReadAccess read) {
       TResolved(result) = resolveConstantReadAccess(read) and
@@ -301,6 +327,8 @@ module API {
         useCandFwd().flowsTo(node) and
         useStep(_, node, nd)
       )
+      or
+      parameterStep(_, defCand(), nd)
     }
 
     /**
@@ -309,6 +337,13 @@ module API {
     cached
     predicate use(TApiNode nd, DataFlow::Node ref) { nd = MkUse(ref) }
 
+    /**
+     * Holds if `ref` is a RHS of node `nd`.
+     */
+    cached
+    predicate def(TApiNode nd, DataFlow::Node rhs) { nd = MkDef(rhs) }
+
+    /** Gets a node reachable from a use-node. */
     private DataFlow::LocalSourceNode useCandFwd(TypeTracker t) {
       t.start() and
       isUse(result)
@@ -316,6 +351,7 @@ module API {
       exists(TypeTracker t2 | result = useCandFwd(t2).track(t2, t))
     }
 
+    /** Gets a node reachable from a use-node. */
     private DataFlow::LocalSourceNode useCandFwd() { result = useCandFwd(TypeTracker::end()) }
 
     private DataFlow::Node useCandRev(TypeBackTracker tb) {
@@ -333,6 +369,73 @@ module API {
     private DataFlow::LocalSourceNode useCandRev() {
       result = useCandRev(TypeBackTracker::end()) and
       isUse(result)
+    }
+
+    private predicate isDef(DataFlow::Node rhs) {
+      exists(DataFlow::Node use |
+        useCandFwd().flowsTo(use) and
+        argumentStep(_, use, rhs)
+      )
+    }
+
+    /** Gets a data flow node that flows to the RHS of a def-node. */
+    private DataFlow::LocalSourceNode defCand(TypeBackTracker t) {
+      t.start() and
+      exists(DataFlow::Node rhs |
+        isDef(rhs) and
+        result = rhs.getALocalSource()
+      )
+      or
+      exists(TypeBackTracker t2 | result = defCand(t2).backtrack(t2, t))
+    }
+
+    /** Gets a data flow node that flows to the RHS of a def-node. */
+    private DataFlow::LocalSourceNode defCand() { result = defCand(TypeBackTracker::end()) }
+
+    /**
+     * Holds if there should be a `lbl`-edge from the given call to an argument.
+     */
+    pragma[nomagic]
+    private predicate argumentStep(string lbl, DataFlow::CallNode call, DataFlow::Node argument) {
+      exists(int n |
+        argument = call.getArgument(n) and
+        lbl = Label::parameter(n)
+      )
+      or
+      exists(string name |
+        argument = call.getKeywordArgument(name) and
+        lbl = Label::keywordParameter(name)
+      )
+      or
+      argument = call.getBlock() and
+      lbl = Label::blockParameter()
+    }
+
+    /**
+     * Holds if there should be a `lbl`-edge from the given callable to a parameter.
+     */
+    pragma[nomagic]
+    private predicate parameterStep(string lbl, DataFlow::Node func, DataFlow::Node parameter) {
+      exists(Callable callable, int n, Parameter param |
+        func.asExpr().getExpr() = callable and
+        parameter.asParameter() = callable.getParameter(n) and
+        lbl = getLabelFromParameter(param)
+      )
+    }
+
+    private string getLabelFromParameter(Parameter param) {
+      result = Label::keywordParameter(param.(KeywordParameter).getName())
+      or
+      param instanceof BlockParameter and
+      result = Label::blockParameter()
+      or
+      // TODO: the index can be offset by preceding non-positional parameters; translate correctly
+      (
+        param instanceof SimpleParameter
+        or
+        param instanceof OptionalParameter
+      ) and
+      result = Label::parameter(param.getPosition())
     }
 
     /**
@@ -363,6 +466,21 @@ module API {
       result = trackUseNode(src, TypeTracker::end())
     }
 
+    /** Gets a data flow node reaching the RHS of the given def node. */
+    private DataFlow::LocalSourceNode trackDefNode(DataFlow::Node rhs, TypeBackTracker t) {
+      t.start() and
+      isDef(rhs) and
+      result = rhs.getALocalSource()
+      or
+      exists(TypeBackTracker t2 | result = trackDefNode(rhs, t2).backtrack(t2, t))
+    }
+
+    /** Gets a data flow node reaching the RHS of the given def node. */
+    cached
+    DataFlow::LocalSourceNode trackDefNode(DataFlow::Node rhs) {
+      result = trackDefNode(rhs, TypeBackTracker::end())
+    }
+
     /**
      * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
      */
@@ -378,6 +496,17 @@ module API {
           trackUseNode(src).flowsTo(node) and
           useStep(lbl, node, ref)
         )
+      )
+      or
+      exists(DataFlow::Node use, DataFlow::Node base, DataFlow::Node rhs |
+        pred = MkUse(use) and
+        trackUseNode(use).flowsTo(base) and
+        argumentStep(lbl, base, rhs) and
+        succ = MkDef(rhs)
+        or
+        pred = MkDef(rhs) and
+        parameterStep(lbl, trackDefNode(rhs), use) and
+        succ = MkUse(use)
       )
     }
 
@@ -407,4 +536,15 @@ private module Label {
   string return(string m) { result = "getReturn(\"" + m + "\")" }
 
   string subclass() { result = "getASubclass()" }
+
+  /** Gets the label representing the given keword argument/parameter. */
+  bindingset[name]
+  string keywordParameter(string name) { result = "getKeywordParameter(\"" + name + "\")" }
+
+  /** Gets the label representing the `n`th positional argument/parameter. */
+  bindingset[n]
+  string parameter(int n) { result = "getParameter(" + n + ")" }
+
+  /** Gets the label representing the block argument/parameter. */
+  string blockParameter() { result = "getBlock()" }
 }

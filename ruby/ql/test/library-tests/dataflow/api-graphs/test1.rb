@@ -14,7 +14,7 @@ Foo::Bar::Baz #$ use=getMember("Foo").getMember("Bar").getMember("Baz")
 
 Const = [1, 2, 3] #$ use=getMember("Array").getReturn("[]")
 Const.each do |c| #$ use=getMember("Const").getReturn("each")
-    puts c
+    puts c #$ use=getMember("Const").getReturn("each").getBlock().getParameter(0)
 end
 
 foo = Foo #$ use=getMember("Foo")
