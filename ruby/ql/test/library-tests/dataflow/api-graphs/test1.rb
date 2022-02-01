@@ -1,20 +1,20 @@
 MyModule #$ use=getMember("MyModule")
-print MyModule.foo #$ use=getMember("MyModule").getReturn("foo")
-Kernel.print(e) #$ use=getMember("Kernel").getReturn("print")
+print MyModule.foo #$ use=getMember("MyModule").getMethod("foo").getReturn()
+Kernel.print(e) #$ use=getMember("Kernel").getMethod("print").getReturn()
 Object::Kernel #$ use=getMember("Kernel")
-Object::Kernel.print(e)  #$ use=getMember("Kernel").getReturn("print")
+Object::Kernel.print(e)  #$ use=getMember("Kernel").getMethod("print").getReturn()
 begin
-    print MyModule.bar #$ use=getMember("MyModule").getReturn("bar")
+    print MyModule.bar #$ use=getMember("MyModule").getMethod("bar").getReturn()
     raise AttributeError #$ use=getMember("AttributeError")
 rescue AttributeError => e #$ use=getMember("AttributeError")
-    Kernel.print(e)  #$ use=getMember("Kernel").getReturn("print")
+    Kernel.print(e)  #$ use=getMember("Kernel").getMethod("print").getReturn()
 end
-Unknown.new.run #$ use=getMember("Unknown").getReturn("new").getReturn("run")
+Unknown.new.run #$ use=getMember("Unknown").getMethod("new").getReturn().getMethod("run").getReturn()
 Foo::Bar::Baz #$ use=getMember("Foo").getMember("Bar").getMember("Baz")
 
-Const = [1, 2, 3] #$ use=getMember("Array").getReturn("[]")
-Const.each do |c| #$ use=getMember("Const").getReturn("each")
-    puts c #$ use=getMember("Const").getReturn("each").getBlock().getParameter(0)
+Const = [1, 2, 3] #$ use=getMember("Array").getMethod("[]").getReturn()
+Const.each do |c| #$ use=getMember("Const").getMethod("each").getReturn()
+    puts c #$ use=getMember("Const").getMethod("each").getBlock().getParameter(0)
 end
 
 foo = Foo #$ use=getMember("Foo")
@@ -28,4 +28,4 @@ module Outer
     end
 end
 
-Outer::Inner.foo #$ use=getMember("Outer").getMember("Inner").getReturn("foo")
+Outer::Inner.foo #$ use=getMember("Outer").getMember("Inner").getMethod("foo").getReturn()
