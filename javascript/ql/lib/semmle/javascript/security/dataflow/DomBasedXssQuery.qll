@@ -43,6 +43,10 @@ class HtmlInjectionConfiguration extends TaintTracking::Configuration {
   override predicate isSanitizerEdge(DataFlow::Node pred, DataFlow::Node succ) {
     isOptionallySanitizedEdge(pred, succ)
   }
+
+  override predicate isAdditionalTaintStep(DataFlow::Node pred, DataFlow::Node succ) {
+    isRequestForgeryStep(pred, succ)
+  }
 }
 
 /**
@@ -89,5 +93,9 @@ class JQueryHtmlOrSelectorInjectionConfiguration extends TaintTracking::Configur
       inlbl = TaintedUrlSuffix::label() and
       outlbl.isTaint()
     )
+  }
+
+  override predicate isAdditionalTaintStep(DataFlow::Node pred, DataFlow::Node succ) {
+    isRequestForgeryStep(pred, succ)
   }
 }
