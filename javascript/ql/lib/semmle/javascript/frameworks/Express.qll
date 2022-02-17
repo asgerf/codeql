@@ -662,6 +662,23 @@ module Express {
   }
 
   /**
+   * An access to the `req.ip` property.
+   *
+   * This is seen as a header access as its value may be derived from the `X-Forwarded-For` header.
+   */
+  private class RequestIpAccess extends HTTP::RequestHeaderAccess {
+    RequestSource request;
+
+    RequestIpAccess() { this = request.ref().getAPropertyRead(["ip", "ips"]) }
+
+    override string getAHeaderName() { result = "x-forwarded-for" }
+
+    override HTTP::RouteHandler getRouteHandler() { result = request.getRouteHandler() }
+
+    override string getKind() { result = "header" }
+  }
+
+  /**
    * HTTP headers created by Express calls
    */
   abstract private class ExplicitHeader extends HTTP::ExplicitHeaderDefinition { }

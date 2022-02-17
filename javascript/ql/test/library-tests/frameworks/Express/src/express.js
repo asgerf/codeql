@@ -48,4 +48,7 @@ app.post('/headers', function(req, res) {
   req.host;
   req.hostname;
   req.headers[config.headerName];
+  req.ip;
+  req.ips[0];
+  req.ips.pop();
 });
