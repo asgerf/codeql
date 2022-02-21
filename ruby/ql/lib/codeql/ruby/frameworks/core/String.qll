@@ -77,7 +77,7 @@ module String {
     override MethodCall getACall() { result = mc }
 
     override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
-      input = ["Receiver", "Argument[0]", "ArrayElement of Argument[0]"] and
+      input = ["Receiver", "Argument[0]", "Argument[0].ArrayElement"] and
       output = "ReturnValue" and
       preservesValue = true
     }
@@ -238,9 +238,9 @@ module String {
       preservesValue = false and
       input = "Receiver" and
       (
-        output = "Parameter[0] of BlockArgument"
+        output = "BlockArgument.Parameter[0]"
         or
-        not this.hasBlock() and output = "ArrayElement[?] of ReturnValue"
+        not this.hasBlock() and output = "ReturnValue.ArrayElement[?]"
         or
         this.hasBlock() and output = "ReturnValue"
       )
@@ -299,7 +299,7 @@ module String {
         input = ["Receiver", "Argument[1]"] and
         preservesValue = false
         or
-        input = "ReturnValue of BlockArgument" and preservesValue = true
+        input = "BlockArgument.ReturnValue" and preservesValue = true
       ) and
       output = "ReturnValue"
     }
@@ -366,7 +366,7 @@ module String {
 
     override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
       input = "Receiver" and
-      output = "ArrayElement[" + [0, 1, 2] + "] of ReturnValue" and
+      output = "ReturnValue.ArrayElement[" + [0, 1, 2] + "]" and
       preservesValue = false
     }
   }
@@ -413,11 +413,11 @@ module String {
       (
         // scan(pattern) {|match, ...| block } -> str
         not this.hasBlock() and
-        output = "ArrayElement[?] of ReturnValue" and
+        output = "ReturnValue.ArrayElement[?]" and
         preservesValue = false
         or
         // Parameter[_] doesn't seem to work
-        output = "Parameter[" + [0 .. 10] + "] of BlockArgument" and preservesValue = false
+        output = "BlockArgument.Parameter[" + [0 .. 10] + "]" and preservesValue = false
         or
         // scan(pattern) -> array
         this.hasBlock() and
@@ -441,13 +441,13 @@ module String {
 
     override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
       input = "Receiver" and
-      output = "Parameter[0] of BlockArgument" and
+      output = "BlockArgument.Parameter[0]" and
       preservesValue = true
       or
       input = "Argument[0]" and output = "ReturnValue" and preservesValue = true
       or
       this.hasBlock() and
-      input = "ReturnValue of BlockArgument" and
+      input = "BlockArgument.ReturnValue" and
       output = "ReturnValue" and
       preservesValue = true
       or
@@ -464,7 +464,7 @@ module String {
 
     override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
       input = "Receiver" and
-      output = "ArrayElement[?] of ReturnValue" and
+      output = "ReturnValue.ArrayElement[?]" and
       preservesValue = false
     }
   }
@@ -530,12 +530,12 @@ module String {
       valueIdentityFlow(input, output, preservesValue)
       or
       input = ["Receiver", "Argument[0]"] and
-      output = "Parameter[0] of BlockArgument" and
+      output = "BlockArgument.Parameter[0]" and
       preservesValue = true
       or
       not this.hasBlock() and
-      input = "ReturnValue of BlockArgument" and
-      output = "ArrayElement[?] of ReturnValue" and
+      input = "BlockArgument.ReturnValue" and
+      output = "ReturnValue.ArrayElement[?]" and
       preservesValue = true
     }
   }
