@@ -88,20 +88,18 @@ private module MySql {
     }
   }
 
-  /** An expression that is passed to the `query` method and hence interpreted as SQL. */
-  class QueryString extends SQL::SqlString {
-    QueryString() { this = any(QueryCall qc).getAQueryArgument().asExpr() }
-  }
-
-  /** A call to the `escape` or `escapeId` method that performs SQL sanitization. */
-  class EscapingSanitizer extends SQL::SqlSanitizer, MethodCallExpr {
-    EscapingSanitizer() {
-      this = [mysql(), pool(), connection()].getMember(["escape", "escapeId"]).getACall().asExpr() and
-      input = this.getArgument(0) and
-      output = this
-    }
-  }
-
+  // /** An expression that is passed to the `query` method and hence interpreted as SQL. */
+  // class QueryString extends SQL::SqlString {
+  //   QueryString() { this = any(QueryCall qc).getAQueryArgument().asExpr() }
+  // }
+  // /** A call to the `escape` or `escapeId` method that performs SQL sanitization. */
+  // class EscapingSanitizer extends SQL::SqlSanitizer, MethodCallExpr {
+  //   EscapingSanitizer() {
+  //     this = [mysql(), pool(), connection()].getMember(["escape", "escapeId"]).getACall().asExpr() and
+  //     input = this.getArgument(0) and
+  //     output = this
+  //   }
+  // }
   /** An expression that is passed as user name or password to `mysql.createConnection`. */
   class Credentials extends CredentialsExpr {
     string kind;
@@ -195,15 +193,14 @@ private module Postgres {
     override DataFlow::Node getAQueryArgument() { result = this.getArgument(0) }
   }
 
-  /** An expression that is passed to the `query` method and hence interpreted as SQL. */
-  class QueryString extends SQL::SqlString {
-    QueryString() {
-      this = any(QueryCall qc).getAQueryArgument().asExpr()
-      or
-      this = API::moduleImport("pg-cursor").getParameter(0).asSink().asExpr()
-    }
-  }
-
+  // /** An expression that is passed to the `query` method and hence interpreted as SQL. */
+  // class QueryString extends SQL::SqlString {
+  //   QueryString() {
+  //     this = any(QueryCall qc).getAQueryArgument().asExpr()
+  //     or
+  //     this = API::moduleImport("pg-cursor").getParameter(0).asSink().asExpr()
+  //   }
+  // }
   /** An expression that is passed as user name or password when creating a client or a pool. */
   class Credentials extends CredentialsExpr {
     string kind;
@@ -395,11 +392,10 @@ private module Sqlite {
 
     override DataFlow::Node getAQueryArgument() { result = this.getArgument(0) }
   }
-
-  /** An expression that is passed to the `query` method and hence interpreted as SQL. */
-  class QueryString extends SQL::SqlString {
-    QueryString() { this = any(QueryCall qc).getAQueryArgument().asExpr() }
-  }
+  // /** An expression that is passed to the `query` method and hence interpreted as SQL. */
+  // class QueryString extends SQL::SqlString {
+  //   QueryString() { this = any(QueryCall qc).getAQueryArgument().asExpr() }
+  // }
 }
 
 /**
@@ -466,15 +462,14 @@ private module MsSql {
     override DataFlow::Node getAQueryArgument() { result = this.getArgument(0) }
   }
 
-  /** An expression that is passed to a method that interprets it as SQL. */
-  class QueryString extends SQL::SqlString {
-    QueryString() {
-      exists(DatabaseAccess dba | dba instanceof QueryTemplateExpr or dba instanceof QueryCall |
-        this = dba.getAQueryArgument().asExpr()
-      )
-    }
-  }
-
+  // /** An expression that is passed to a method that interprets it as SQL. */
+  // class QueryString extends SQL::SqlString {
+  //   QueryString() {
+  //     exists(DatabaseAccess dba | dba instanceof QueryTemplateExpr or dba instanceof QueryCall |
+  //       this = dba.getAQueryArgument().asExpr()
+  //     )
+  //   }
+  // }
   /** An element of a query template, which is automatically sanitized. */
   class QueryTemplateSanitizer extends SQL::SqlSanitizer {
     QueryTemplateSanitizer() {
@@ -529,9 +524,9 @@ private module Sequelize {
     override predicate row(string row) {
       row =
         [
-          "sequelize;Sequelize;Member[query].Argument[0];sql-injection",
-          "sequelize;Sequelize;Member[query].Argument[0].Member[query];sql-injection",
-          "sequelize;;Member[literal,asIs].Argument[0];sql-injection",
+          // "sequelize;Sequelize;Member[query].Argument[0];sql-injection",
+          // "sequelize;Sequelize;Member[query].Argument[0].Member[query];sql-injection",
+          // "sequelize;;Member[literal,asIs].Argument[0];sql-injection",
           "sequelize;;Argument[1];credentials[user name]",
           "sequelize;;Argument[2];credentials[password]",
           "sequelize;;Argument[0..].Member[username];credentials[user name]",
@@ -573,20 +568,19 @@ private module SpannerCsv {
     }
   }
 
-  class SpannerSinks extends ModelInput::SinkModelCsv {
-    override predicate row(string row) {
-      // package; type; path; kind
-      row =
-        [
-          "@google-cloud/spanner;~SqlExecutorDirect;Argument[0];sql-injection",
-          "@google-cloud/spanner;~SqlExecutorDirect;Argument[0].Member[sql];sql-injection",
-          "@google-cloud/spanner;Transaction;Member[batchUpdate].Argument[0];sql-injection",
-          "@google-cloud/spanner;Transaction;Member[batchUpdate].Argument[0].ArrayElement.Member[sql];sql-injection",
-          "@google-cloud/spanner;v1.SpannerClient;Member[executeSql,executeStreamingSql].Argument[0].Member[sql];sql-injection",
-        ]
-    }
-  }
-
+  // class SpannerSinks extends ModelInput::SinkModelCsv {
+  //   override predicate row(string row) {
+  //     // package; type; path; kind
+  //     row =
+  //       [
+  //         "@google-cloud/spanner;~SqlExecutorDirect;Argument[0];sql-injection",
+  //         "@google-cloud/spanner;~SqlExecutorDirect;Argument[0].Member[sql];sql-injection",
+  //         "@google-cloud/spanner;Transaction;Member[batchUpdate].Argument[0];sql-injection",
+  //         "@google-cloud/spanner;Transaction;Member[batchUpdate].Argument[0].ArrayElement.Member[sql];sql-injection",
+  //         "@google-cloud/spanner;v1.SpannerClient;Member[executeSql,executeStreamingSql].Argument[0].Member[sql];sql-injection",
+  //       ]
+  //   }
+  // }
   class SpannerSources extends ModelInput::SourceModelCsv {
     override predicate row(string row) {
       row =
