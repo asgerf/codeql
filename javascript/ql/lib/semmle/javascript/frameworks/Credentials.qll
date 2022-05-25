@@ -17,6 +17,15 @@ abstract class CredentialsExpr extends Expr {
   abstract string getCredentialsKind();
 }
 
+/** Companion module to the `CredentialsExpr` class. */
+module CredentialsExpr {
+  /** Normalizes a credentials kind, mapping `username` to `user name`. */
+  bindingset[kind]
+  string normalizeKind(string kind) {
+    if kind = "username" then result = "user name" else result = kind
+  }
+}
+
 private class CredentialsFromModel extends CredentialsExpr {
   string kind;
 
@@ -24,5 +33,5 @@ private class CredentialsFromModel extends CredentialsExpr {
     this = ModelOutput::getASinkNode("credentials[" + kind + "]").asSink().asExpr()
   }
 
-  override string getCredentialsKind() { result = kind }
+  override string getCredentialsKind() { result = CredentialsExpr::normalizeKind(kind) }
 }
