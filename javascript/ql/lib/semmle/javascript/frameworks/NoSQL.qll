@@ -11,6 +11,10 @@ module NoSql {
     /** Gets an expression that is interpreted as a code operator in this query. */
     DataFlow::Node getACodeOperator() { none() }
   }
+
+  private class NoSqlQueryFromModel extends Query {
+    NoSqlQueryFromModel() { this = ModelOutput::getASinkNode("nosql-injection").asSink().asExpr() }
+  }
 }
 
 /** DEPRECATED: Alias for NoSql */
@@ -78,17 +82,14 @@ private module MongoDB {
     }
   }
 
-  /**
-   * An expression that is interpreted as a MongoDB query.
-   */
-  class Query extends NoSql::Query {
-    QueryCall qc;
-
-    Query() { this = qc.getAQueryArgument().asExpr() }
-
-    override DataFlow::Node getACodeOperator() { result = qc.getACodeOperator() }
-  }
-
+  // /**
+  //  * An expression that is interpreted as a MongoDB query.
+  //  */
+  // class Query extends NoSql::Query {
+  //   QueryCall qc;
+  //   Query() { this = qc.getAQueryArgument().asExpr() }
+  //   override DataFlow::Node getACodeOperator() { result = qc.getACodeOperator() }
+  // }
   /**
    * Provides signatures for the Collection methods.
    */
