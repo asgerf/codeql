@@ -63,6 +63,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mysql2;;mysql2;;", //
         "mysql2;Connection;mysql2;;Member[createConnection].ReturnValue", //
         "mysql2;Connection;mysql2;PoolConnection;", //
+        "mysql2;Connection;mysql2;authPlugins;Argument[0].Member[connection]", //
         "mysql2;Pool;mysql2;;Member[createPool].ReturnValue", //
         "mysql2;PoolCluster;mysql2/promise;;Member[createPoolCluster].ReturnValue", //
         "mysql2;PoolCluster;mysql2/typings/mysql;;Member[createPoolCluster].ReturnValue", //

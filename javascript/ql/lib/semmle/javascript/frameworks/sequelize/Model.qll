@@ -15,6 +15,13 @@ private class Types extends ModelInput::TypeModelCsv {
   override predicate row(string row) {
     row =
       [
+        "sequelize;AnyFindOptions;sequelize;BelongsToManyAddAssociationMixin;Argument[1]", //
+        "sequelize;AnyFindOptions;sequelize;BelongsToManyAddAssociationsMixin;Argument[1]", //
+        "sequelize;AnyFindOptions;sequelize;BelongsToManySetAssociationsMixin;Argument[1]", //
+        "sequelize;AnyFindOptions;sequelize;DefineOptions;Member[defaultScope]", //
+        "sequelize;AnyFindOptions;sequelize;HasManySetAssociationsMixin;Argument[1]", //
+        "sequelize;AnyFindOptions;sequelize;Instance;Member[reload].Argument[0]", //
+        "sequelize;AnyFindOptions;sequelize;Model;Member[addScope].Argument[1]", //
         "sequelize;AssociationOptionsBelongsToMany;sequelize;Associations;Member[belongsToMany].Argument[1]", //
         "sequelize;Associations;sequelize;Model;", //
         "sequelize;BuildOptions;sequelize;CreateOptions;", //
@@ -27,10 +34,15 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize;CreateOptions;sequelize;Model;Member[create].Argument[1]", //
         "sequelize;DefineAttributeColumnOptions;sequelize;QueryInterface;Member[addColumn,changeColumn].Argument[2]", //
         "sequelize;DefineAttributeColumnReferencesOptions;sequelize;DefineAttributeColumnOptions;Member[references]", //
+        "sequelize;DefineOptions;sequelize;Options;Member[define]", //
+        "sequelize;DefineOptions;sequelize;Sequelize;Member[define].Argument[2]", //
         "sequelize;FindCreateFindOptions;sequelize;Model;Member[findCreateFind].Argument[0]", //
+        "sequelize;FindOptions;sequelize;AnyFindOptions;", //
         "sequelize;FindOptions;sequelize;FindCreateFindOptions;", //
         "sequelize;FindOptions;sequelize;FindOrInitializeOptions;", //
         "sequelize;FindOptions;sequelize;Model;Member[all,find,findAll,findAndCount,findAndCountAll,findOne].Argument[0]", //
+        "sequelize;FindOptionsOrderArray;sequelize;FindOptions;Member[order]", //
+        "sequelize;FindOptionsOrderArray;sequelize;FindOptions;Member[order].ArrayElement", //
         "sequelize;FindOrInitializeOptions;sequelize;Model;Member[findOrBuild,findOrCreate,findOrInitialize].Argument[0]", //
         "sequelize;HasManyGetAssociationsMixinOptions;sequelize;HasManyGetAssociationsMixin;Argument[0]", //
         "sequelize;HasManyGetAssociationsMixinOptions;sequelize;HasManyHasAssociationMixin;Argument[1]", //
@@ -62,6 +74,8 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize;Model;sequelize;FindOptions;Member[include]", //
         "sequelize;Model;sequelize;FindOptions;Member[include].ArrayElement", //
         "sequelize;Model;sequelize;FindOptions;Member[lock].Member[of]", //
+        "sequelize;Model;sequelize;FindOptionsOrderArray;ArrayElement", //
+        "sequelize;Model;sequelize;FindOptionsOrderArray;ArrayElement.Member[model]", //
         "sequelize;Model;sequelize;Hooks;Member[afterDefine].Argument[0,1].Argument[0]", //
         "sequelize;Model;sequelize;IncludeAssociation;Member[source,target]", //
         "sequelize;Model;sequelize;IncludeOptions;Member[include,model]", //
