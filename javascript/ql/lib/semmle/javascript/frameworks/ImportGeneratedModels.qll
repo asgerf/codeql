@@ -1,4 +1,5 @@
 private import MySql.Model
+private import minimongo.Model
 private import mongodb.Model
 private import mongodb2.Model
 private import mongoose.Model
