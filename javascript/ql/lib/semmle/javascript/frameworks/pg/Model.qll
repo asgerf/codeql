@@ -16,7 +16,10 @@ private class Types extends ModelInput::TypeModelCsv {
   override predicate row(string row) {
     row =
       [
-        "pg;;pg;;", //
+        "pg-cursor;;pg-cursor;Static;ReturnValue", //
+        "pg-cursor;Static;pg-cursor;;", //
+        "pg-pool;;pg-pool;Static;ReturnValue", //
+        "pg-pool;Static;pg-pool;;", //
         "pg;Client;pg;ClientStatic;ReturnValue", //
         "pg;Client;pg;Events;Member[on].Argument[1].Argument[1]", //
         "pg;ClientBase;pg;Client;", //
@@ -24,13 +27,18 @@ private class Types extends ModelInput::TypeModelCsv {
         "pg;ClientBase;pg;PoolClient;", //
         "pg;ClientBaseStatic;pg;;Member[ClientBase]", //
         "pg;ClientStatic;pg;;Member[Client]", //
+        "pg;Connection;pg-cursor;;Member[submit].Argument[0]", //
         "pg;Connection;pg;ConnectionStatic;ReturnValue", //
         "pg;Connection;pg;Query;Member[submit].Argument[0]", //
         "pg;Connection;pg;Submittable;Member[submit].Argument[0]", //
         "pg;ConnectionStatic;pg;;Member[Connection]", //
         "pg;Events;pg;EventsStatic;ReturnValue", //
         "pg;EventsStatic;pg;;Member[Events]", //
+        "pg;Pool;pg-pool;;", //
         "pg;Pool;pg;PoolStatic;ReturnValue", //
+        "pg;PoolClient;pg-pool;;Member[connect].Argument[0].Argument[1]", //
+        "pg;PoolClient;pg-pool;;Member[connect].ReturnValue.Awaited", //
+        "pg;PoolClient;pg-pool;;Member[on].Argument[1].Argument[0,1]", //
         "pg;PoolClient;pg;Pool;Member[connect].Argument[0].Argument[1]", //
         "pg;PoolClient;pg;Pool;Member[connect].ReturnValue.Awaited", //
         "pg;PoolClient;pg;Pool;Member[on].Argument[1].Argument[0,1]", //

@@ -15,7 +15,6 @@ private class Types extends ModelInput::TypeModelCsv {
   override predicate row(string row) {
     row =
       [
-        "mongodb;;mongodb/mongodb;;", //
         "mongodb;AbstractCursorOptions;mongodb/mongodb;AbstractCursorOptions;", //
         "mongodb;AbstractCursorOptions;mongodb;AggregationCursorOptions;", //
         "mongodb;AddUserOptions;mongodb/mongodb;AddUserOptions;", //
@@ -108,18 +107,12 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;CommandOperationOptions;mongodb/mongodb;CommandOperationOptions;", //
         "mongodb;CommandOperationOptions;mongodb;AddUserOptions;", //
         "mongodb;CommandOperationOptions;mongodb;Admin;Member[buildInfo,ping,replSetGetStatus,serverInfo,serverStatus].Argument[0]", //
-        "mongodb;CommandOperationOptions;mongodb;Admin;Member[command,removeUser].Argument[1]", //
         "mongodb;CommandOperationOptions;mongodb;AggregateOptions;", //
         "mongodb;CommandOperationOptions;mongodb;BulkWriteOptions;", //
         "mongodb;CommandOperationOptions;mongodb;CollStatsOptions;", //
-        "mongodb;CommandOperationOptions;mongodb;Collection;Member[distinct].Argument[2]", //
-        "mongodb;CommandOperationOptions;mongodb;Collection;Member[dropIndex].Argument[1]", //
-        "mongodb;CommandOperationOptions;mongodb;Collection;Member[dropIndexes].Argument[0]", //
         "mongodb;CommandOperationOptions;mongodb;CountOptions;", //
         "mongodb;CommandOperationOptions;mongodb;CreateCollectionOptions;", //
         "mongodb;CommandOperationOptions;mongodb;CreateIndexesOptions;", //
-        "mongodb;CommandOperationOptions;mongodb;Db;Member[command,removeUser,setProfilingLevel].Argument[1]", //
-        "mongodb;CommandOperationOptions;mongodb;Db;Member[dropDatabase,profilingLevel].Argument[0]", //
         "mongodb;CommandOperationOptions;mongodb;DbStatsOptions;", //
         "mongodb;CommandOperationOptions;mongodb;DeleteOptions;", //
         "mongodb;CommandOperationOptions;mongodb;DistinctOptions;", //
@@ -171,11 +164,15 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;DeleteOptions;mongodb/mongodb;DeleteOptions;", //
         "mongodb;DeleteOptions;mongodb;Collection;Member[deleteMany,deleteOne,remove].Argument[1]", //
         "mongodb;DistinctOptions;mongodb/mongodb;DistinctOptions;", //
+        "mongodb;DistinctOptions;mongodb;Collection;Member[distinct].Argument[2]", //
         "mongodb;DropCollectionOptions;mongodb/mongodb;DropCollectionOptions;", //
         "mongodb;DropCollectionOptions;mongodb;Collection;Member[drop].Argument[0]", //
         "mongodb;DropCollectionOptions;mongodb;Db;Member[dropCollection].Argument[1]", //
         "mongodb;DropDatabaseOptions;mongodb/mongodb;DropDatabaseOptions;", //
+        "mongodb;DropDatabaseOptions;mongodb;Db;Member[dropDatabase].Argument[0]", //
         "mongodb;DropIndexesOptions;mongodb/mongodb;DropIndexesOptions;", //
+        "mongodb;DropIndexesOptions;mongodb;Collection;Member[dropIndex].Argument[1]", //
+        "mongodb;DropIndexesOptions;mongodb;Collection;Member[dropIndexes].Argument[0]", //
         "mongodb;EstimatedDocumentCountOptions;mongodb/mongodb;EstimatedDocumentCountOptions;", //
         "mongodb;EstimatedDocumentCountOptions;mongodb;Collection;Member[estimatedDocumentCount].Argument[0]", //
         "mongodb;EvalOptions;mongodb/mongodb;EvalOptions;", //
@@ -267,19 +264,25 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;OrderedBulkOperationStatic;mongodb/mongodb;OrderedBulkOperationStatic;", //
         "mongodb;OrderedBulkOperationStatic;mongodb;;Member[OrderedBulkOperation]", //
         "mongodb;ProfilingLevelOptions;mongodb/mongodb;ProfilingLevelOptions;", //
+        "mongodb;ProfilingLevelOptions;mongodb;Db;Member[profilingLevel].Argument[0]", //
         "mongodb;ReadPreferenceFromOptions;mongodb/mongodb;ReadPreferenceFromOptions;", //
         "mongodb;ReadPreferenceFromOptions;mongodb;ReadPreferenceStatic;Member[fromOptions].Argument[0]", //
         "mongodb;ReadPreferenceStatic;mongodb/mongodb;ReadPreferenceStatic;", //
         "mongodb;ReadPreferenceStatic;mongodb;;Member[ReadPreference]", //
         "mongodb;RemoveUserOptions;mongodb/mongodb;RemoveUserOptions;", //
+        "mongodb;RemoveUserOptions;mongodb;Admin;Member[removeUser].Argument[1]", //
+        "mongodb;RemoveUserOptions;mongodb;Db;Member[removeUser].Argument[1]", //
         "mongodb;RenameOptions;mongodb/mongodb;RenameOptions;", //
         "mongodb;RenameOptions;mongodb;Collection;Member[rename].Argument[1]", //
         "mongodb;RenameOptions;mongodb;Db;Member[renameCollection].Argument[2]", //
         "mongodb;ReplaceOptions;mongodb/mongodb;ReplaceOptions;", //
         "mongodb;ReplaceOptions;mongodb;Collection;Member[replaceOne].Argument[2]", //
         "mongodb;RunCommandOptions;mongodb/mongodb;RunCommandOptions;", //
+        "mongodb;RunCommandOptions;mongodb;Admin;Member[command].Argument[1]", //
+        "mongodb;RunCommandOptions;mongodb;Db;Member[command].Argument[1]", //
         "mongodb;SelectServerOptions;mongodb/mongodb;SelectServerOptions;", //
         "mongodb;SetProfilingLevelOptions;mongodb/mongodb;SetProfilingLevelOptions;", //
+        "mongodb;SetProfilingLevelOptions;mongodb;Db;Member[setProfilingLevel].Argument[1]", //
         "mongodb;Transaction;mongodb/mongodb;Transaction;", //
         "mongodb;Transaction;mongodb;ClientSession;Member[transaction]", //
         "mongodb;Transaction;mongodb;TransactionStatic;ReturnValue", //

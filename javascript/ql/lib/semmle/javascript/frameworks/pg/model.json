@@ -27,7 +27,6 @@
             "pg-cursor;Static;pg-cursor;;",
             "pg-pool;;pg-pool;Static;ReturnValue",
             "pg-pool;Static;pg-pool;;",
-            "pg;;pg;;",
             "pg;Client;pg;ClientStatic;ReturnValue",
             "pg;Client;pg;Events;Member[on].Argument[1].Argument[1]",
             "pg;ClientBase;pg;Client;",
