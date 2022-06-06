@@ -180,6 +180,34 @@ class PackageJson extends JsonObject {
   Module getMainModule() {
     result = min(Module m, int prio | m.getFile() = resolveMainModule(this, prio) | m order by prio)
   }
+
+  /**
+   * Gets the `types` or `typings` field of this package.
+   */
+  string getTypings() { result = this.getPropStringValue(["types", "typings"]) }
+
+  /**
+   * Gets the file containing the typings of this package, which can either be from the `types` or
+   * `typings` field, or derived from the `main` or `module` fields.
+   */
+  File getTypingsFile() {
+    result = TypingsModulePath::of(this).resolve()
+    or
+    not exists(TypingsModulePath::of(this)) and
+    exists(File mainFile |
+      mainFile = this.getMainModule().getFile() and
+      result =
+        mainFile
+            .getParentContainer()
+            .getFile(mainFile.getStem().regexpReplaceAll("\\.d$", "") + ".d.ts")
+    )
+  }
+
+  /**
+   * Gets the module containing the typings of this package, which can either be from the `types` or
+   * `typings` field, or derived from the `main` or `module` fields.
+   */
+  Module getTypingsModule() { result.getFile() = this.getTypingsFile() }
 }
 
 /** DEPRECATED: Alias for PackageJson */
