@@ -1,0 +1,7 @@
+{
+    "packages": {
+        "sequelize-typescript": "2.1.3"
+    },
+    "resolutions": {},
+    "language": "javascript"
+}
