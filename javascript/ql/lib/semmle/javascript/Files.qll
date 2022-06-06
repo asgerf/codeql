@@ -176,7 +176,7 @@ class Folder extends Container, @folder {
   }
 
   /** Like `getFile` except `d.ts` is treated as a single extension. */
-  private File getFileLongExtension(string stem, string extension) {
+  File getFileLongExtension(string stem, string extension) {
     not (stem.matches("%.d") and extension = "ts") and
     result = this.getFile(stem, extension)
     or
