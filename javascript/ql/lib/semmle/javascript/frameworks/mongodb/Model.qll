@@ -21,7 +21,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;AddUserOptions;mongodb;Admin;Member[addUser].Argument[1,2]", //
         "mongodb;AddUserOptions;mongodb;Db;Member[addUser].Argument[1,2]", //
         "mongodb;Admin;mongodb/mongodb;Admin;", //
-        "mongodb;Admin;mongodb;AdminStatic;ReturnValue", //
+        "mongodb;Admin;mongodb;AdminStatic;Instance", //
         "mongodb;Admin;mongodb;Db;Member[admin].ReturnValue", //
         "mongodb;AdminStatic;mongodb/mongodb;AdminStatic;", //
         "mongodb;AdminStatic;mongodb;;Member[Admin]", //
@@ -33,7 +33,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;AggregateOptions;mongodb;Db;Member[aggregate].Argument[1]", //
         "mongodb;AggregationCursorOptions;mongodb/mongodb;AggregationCursorOptions;", //
         "mongodb;AutoEncrypter;mongodb/mongodb;AutoEncrypter;", //
-        "mongodb;AutoEncrypter;mongodb;AutoEncrypter;ReturnValue", //
+        "mongodb;AutoEncrypter;mongodb;AutoEncrypter;Instance", //
         "mongodb;AutoEncrypter;mongodb;ConnectionOptions;Member[autoEncrypter]", //
         "mongodb;AutoEncrypter;mongodb;MongoClient;Member[autoEncrypter]", //
         "mongodb;AutoEncrypter;mongodb;MongoOptions;Member[autoEncrypter]", //
@@ -42,7 +42,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;AutoEncryptionOptions;mongodb;MongoClientOptions;Member[autoEncryption]", //
         "mongodb;BulkOperationBase;mongodb/mongodb;BulkOperationBase;", //
         "mongodb;BulkOperationBase;mongodb;BulkOperationBase;Member[insert].ReturnValue", //
-        "mongodb;BulkOperationBase;mongodb;BulkOperationBaseStatic;ReturnValue", //
+        "mongodb;BulkOperationBase;mongodb;BulkOperationBaseStatic;Instance", //
         "mongodb;BulkOperationBase;mongodb;FindOperators;Member[bulkOperation]", //
         "mongodb;BulkOperationBase;mongodb;FindOperators;Member[delete,deleteOne,replaceOne,update,updateOne].ReturnValue", //
         "mongodb;BulkOperationBase;mongodb;OrderedBulkOperation;", //
@@ -56,7 +56,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;BulkWriteOptions;mongodb;OrderedBulkOperationStatic;Argument[1]", //
         "mongodb;BulkWriteOptions;mongodb;UnorderedBulkOperationStatic;Argument[1]", //
         "mongodb;ChangeStream;mongodb/mongodb;ChangeStream;", //
-        "mongodb;ChangeStream;mongodb;ChangeStreamStatic;ReturnValue", //
+        "mongodb;ChangeStream;mongodb;ChangeStreamStatic;Instance", //
         "mongodb;ChangeStream;mongodb;Collection;Member[watch].ReturnValue", //
         "mongodb;ChangeStream;mongodb;Db;Member[watch].ReturnValue", //
         "mongodb;ChangeStream;mongodb;MongoClient;Member[watch].ReturnValue", //
@@ -71,7 +71,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;ClientSession;mongodb;AbstractCursorOptions;Member[session]", //
         "mongodb;ClientSession;mongodb;ClientSession;Member[equals].Argument[0]", //
         "mongodb;ClientSession;mongodb;ClientSessionEvents;Member[ended].Argument[0]", //
-        "mongodb;ClientSession;mongodb;ClientSessionStatic;ReturnValue", //
+        "mongodb;ClientSession;mongodb;ClientSessionStatic;Instance", //
         "mongodb;ClientSession;mongodb;IndexInformationOptions;Member[session]", //
         "mongodb;ClientSession;mongodb;MongoClient;Member[startSession].ReturnValue", //
         "mongodb;ClientSession;mongodb;OperationOptions;Member[session]", //
@@ -90,7 +90,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;Collection;mongodb;ChangeStream;Member[parent]", //
         "mongodb;Collection;mongodb;Collection;Member[rename].Argument[1,2].Argument[1]", //
         "mongodb;Collection;mongodb;Collection;Member[rename].ReturnValue.Awaited", //
-        "mongodb;Collection;mongodb;CollectionStatic;ReturnValue", //
+        "mongodb;Collection;mongodb;CollectionStatic;Instance", //
         "mongodb;Collection;mongodb;Db;Member[collection].ReturnValue", //
         "mongodb;Collection;mongodb;Db;Member[collections].Argument[0,1].Argument[1].ArrayElement", //
         "mongodb;Collection;mongodb;Db;Member[collections].ReturnValue.Awaited.ArrayElement", //
@@ -152,7 +152,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;CreateIndexesOptions;mongodb;Db;Member[createIndex].Argument[2]", //
         "mongodb;Db;mongodb/mongodb;Db;", //
         "mongodb;Db;mongodb;ChangeStream;Member[parent]", //
-        "mongodb;Db;mongodb;DbStatic;ReturnValue", //
+        "mongodb;Db;mongodb;DbStatic;Instance", //
         "mongodb;Db;mongodb;GridFSBucketStatic;Argument[0]", //
         "mongodb;Db;mongodb;ListCollectionsCursor;Member[parent]", //
         "mongodb;Db;mongodb;ListCollectionsCursorStatic;Argument[0]", //
@@ -179,7 +179,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;FindCursor;mongodb/mongodb;FindCursor;", //
         "mongodb;FindCursor;mongodb;Collection;Member[find].ReturnValue", //
         "mongodb;FindCursor;mongodb;FindCursor;Member[clone,map,project].ReturnValue", //
-        "mongodb;FindCursor;mongodb;FindCursorStatic;ReturnValue", //
+        "mongodb;FindCursor;mongodb;FindCursorStatic;Instance", //
         "mongodb;FindCursor;mongodb;GridFSBucket;Member[find].ReturnValue", //
         "mongodb;FindCursorStatic;mongodb/mongodb;FindCursorStatic;", //
         "mongodb;FindCursorStatic;mongodb;;Member[FindCursor]", //
@@ -191,20 +191,20 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;FindOneAndUpdateOptions;mongodb;Collection;Member[findOneAndUpdate].Argument[2]", //
         "mongodb;FindOperators;mongodb/mongodb;FindOperators;", //
         "mongodb;FindOperators;mongodb;BulkOperationBase;Member[find].ReturnValue", //
-        "mongodb;FindOperators;mongodb;FindOperatorsStatic;ReturnValue", //
+        "mongodb;FindOperators;mongodb;FindOperatorsStatic;Instance", //
         "mongodb;FindOperatorsStatic;mongodb/mongodb;FindOperatorsStatic;", //
         "mongodb;FindOperatorsStatic;mongodb;;Member[FindOperators]", //
         "mongodb;FindOptions;mongodb/mongodb;FindOptions;", //
         "mongodb;FindOptions;mongodb;Collection;Member[find,findOne].Argument[1]", //
         "mongodb;FindOptions;mongodb;GridFSBucket;Member[find].Argument[1]", //
         "mongodb;GridFSBucket;mongodb/mongodb;GridFSBucket;", //
-        "mongodb;GridFSBucket;mongodb;GridFSBucketStatic;ReturnValue", //
+        "mongodb;GridFSBucket;mongodb;GridFSBucketStatic;Instance", //
         "mongodb;GridFSBucket;mongodb;GridFSBucketWriteStream;Member[bucket]", //
         "mongodb;GridFSBucketStatic;mongodb/mongodb;GridFSBucketStatic;", //
         "mongodb;GridFSBucketStatic;mongodb;;Member[GridFSBucket]", //
         "mongodb;GridFSBucketWriteStream;mongodb/mongodb;GridFSBucketWriteStream;", //
         "mongodb;GridFSBucketWriteStream;mongodb;GridFSBucket;Member[openUploadStream,openUploadStreamWithId].ReturnValue", //
-        "mongodb;GridFSBucketWriteStream;mongodb;GridFSBucketWriteStreamStatic;ReturnValue", //
+        "mongodb;GridFSBucketWriteStream;mongodb;GridFSBucketWriteStreamStatic;Instance", //
         "mongodb;GridFSBucketWriteStreamStatic;mongodb/mongodb;GridFSBucketWriteStreamStatic;", //
         "mongodb;GridFSBucketWriteStreamStatic;mongodb;;Member[GridFSBucketWriteStream]", //
         "mongodb;IndexInformationOptions;mongodb/mongodb;IndexInformationOptions;", //
@@ -216,7 +216,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;ListCollectionsCursor;mongodb/mongodb;ListCollectionsCursor;", //
         "mongodb;ListCollectionsCursor;mongodb;Db;Member[listCollections].ReturnValue", //
         "mongodb;ListCollectionsCursor;mongodb;ListCollectionsCursor;Member[clone].ReturnValue", //
-        "mongodb;ListCollectionsCursor;mongodb;ListCollectionsCursorStatic;ReturnValue", //
+        "mongodb;ListCollectionsCursor;mongodb;ListCollectionsCursorStatic;Instance", //
         "mongodb;ListCollectionsCursorStatic;mongodb/mongodb;ListCollectionsCursorStatic;", //
         "mongodb;ListCollectionsCursorStatic;mongodb;;Member[ListCollectionsCursor]", //
         "mongodb;ListCollectionsOptions;mongodb/mongodb;ListCollectionsOptions;", //
@@ -229,7 +229,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;ListIndexesCursor;mongodb/mongodb;ListIndexesCursor;", //
         "mongodb;ListIndexesCursor;mongodb;Collection;Member[listIndexes].ReturnValue", //
         "mongodb;ListIndexesCursor;mongodb;ListIndexesCursor;Member[clone].ReturnValue", //
-        "mongodb;ListIndexesCursor;mongodb;ListIndexesCursorStatic;ReturnValue", //
+        "mongodb;ListIndexesCursor;mongodb;ListIndexesCursorStatic;Instance", //
         "mongodb;ListIndexesCursorStatic;mongodb/mongodb;ListIndexesCursorStatic;", //
         "mongodb;ListIndexesCursorStatic;mongodb;;Member[ListIndexesCursor]", //
         "mongodb;ListIndexesOptions;mongodb/mongodb;ListIndexesOptions;", //
@@ -244,9 +244,9 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;MongoClient;mongodb;ChangeStream;Member[parent]", //
         "mongodb;MongoClient;mongodb;DbStatic;Argument[0]", //
         "mongodb;MongoClient;mongodb;MongoClientEvents;Member[open].Argument[0]", //
+        "mongodb;MongoClient;mongodb;MongoClientStatic;Instance", //
         "mongodb;MongoClient;mongodb;MongoClientStatic;Member[connect].Argument[1,2].Argument[1]", //
         "mongodb;MongoClient;mongodb;MongoClientStatic;Member[connect].ReturnValue.Awaited", //
-        "mongodb;MongoClient;mongodb;MongoClientStatic;ReturnValue", //
         "mongodb;MongoClientEvents;mongodb/mongodb;MongoClientEvents;", //
         "mongodb;MongoClientOptions;mongodb/mongodb;MongoClientOptions;", //
         "mongodb;MongoClientOptions;mongodb;MongoClientStatic;Argument[1]", //
@@ -260,7 +260,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;OperationOptions;mongodb;CommandOperationOptions;", //
         "mongodb;OrderedBulkOperation;mongodb/mongodb;OrderedBulkOperation;", //
         "mongodb;OrderedBulkOperation;mongodb;Collection;Member[initializeOrderedBulkOp].ReturnValue", //
-        "mongodb;OrderedBulkOperation;mongodb;OrderedBulkOperationStatic;ReturnValue", //
+        "mongodb;OrderedBulkOperation;mongodb;OrderedBulkOperationStatic;Instance", //
         "mongodb;OrderedBulkOperationStatic;mongodb/mongodb;OrderedBulkOperationStatic;", //
         "mongodb;OrderedBulkOperationStatic;mongodb;;Member[OrderedBulkOperation]", //
         "mongodb;ProfilingLevelOptions;mongodb/mongodb;ProfilingLevelOptions;", //
@@ -285,7 +285,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;SetProfilingLevelOptions;mongodb;Db;Member[setProfilingLevel].Argument[1]", //
         "mongodb;Transaction;mongodb/mongodb;Transaction;", //
         "mongodb;Transaction;mongodb;ClientSession;Member[transaction]", //
-        "mongodb;Transaction;mongodb;TransactionStatic;ReturnValue", //
+        "mongodb;Transaction;mongodb;TransactionStatic;Instance", //
         "mongodb;TransactionOptions;mongodb/mongodb;TransactionOptions;", //
         "mongodb;TransactionOptions;mongodb;ClientSession;Member[defaultTransactionOptions]", //
         "mongodb;TransactionOptions;mongodb;ClientSession;Member[startTransaction].Argument[0]", //
@@ -296,7 +296,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;TransactionStatic;mongodb;;Member[Transaction]", //
         "mongodb;UnorderedBulkOperation;mongodb/mongodb;UnorderedBulkOperation;", //
         "mongodb;UnorderedBulkOperation;mongodb;Collection;Member[initializeUnorderedBulkOp].ReturnValue", //
-        "mongodb;UnorderedBulkOperation;mongodb;UnorderedBulkOperationStatic;ReturnValue", //
+        "mongodb;UnorderedBulkOperation;mongodb;UnorderedBulkOperationStatic;Instance", //
         "mongodb;UnorderedBulkOperationStatic;mongodb/mongodb;UnorderedBulkOperationStatic;", //
         "mongodb;UnorderedBulkOperationStatic;mongodb;;Member[UnorderedBulkOperation]", //
         "mongodb;UpdateOptions;mongodb/mongodb;UpdateOptions;", //

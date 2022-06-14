@@ -25,22 +25,22 @@ private class Types extends ModelInput::TypeModelCsv {
         "mysql2/promise;PoolConnection;mysql2/promise;Pool;Member[getConnection].ReturnValue.Awaited", //
         "mysql2/promise;PoolConnection;mysql2/promise;Pool;Member[on].Argument[1].Argument[0]", //
         "mysql2/promise;PoolConnection;mysql2;PoolConnection;Member[promise].ReturnValue", //
-        "mysql2/typings/mysql/lib/Connection;;mysql2/typings/mysql/lib/Connection;Static;ReturnValue", //
+        "mysql2/typings/mysql/lib/Connection;;mysql2/typings/mysql/lib/Connection;Static;Instance", //
         "mysql2/typings/mysql/lib/Connection;;mysql2/typings/mysql/lib/PoolConnection;;", //
         "mysql2/typings/mysql/lib/Connection;;mysql2/typings/mysql;Connection;", //
         "mysql2/typings/mysql/lib/Connection;Static;mysql2/typings/mysql/lib/Connection;;", //
-        "mysql2/typings/mysql/lib/Pool;;mysql2/typings/mysql/lib/Pool;Static;ReturnValue", //
+        "mysql2/typings/mysql/lib/Pool;;mysql2/typings/mysql/lib/Pool;Static;Instance", //
         "mysql2/typings/mysql/lib/Pool;;mysql2/typings/mysql;Pool;", //
         "mysql2/typings/mysql/lib/Pool;Static;mysql2/typings/mysql/lib/Pool;;", //
         "mysql2/typings/mysql/lib/PoolCluster;;mysql2/typings/mysql/lib/PoolCluster;;Member[of].ReturnValue", //
-        "mysql2/typings/mysql/lib/PoolCluster;;mysql2/typings/mysql/lib/PoolCluster;Static;ReturnValue", //
+        "mysql2/typings/mysql/lib/PoolCluster;;mysql2/typings/mysql/lib/PoolCluster;Static;Instance", //
         "mysql2/typings/mysql/lib/PoolCluster;;mysql2;PoolCluster;", //
         "mysql2/typings/mysql/lib/PoolCluster;Static;mysql2/typings/mysql/lib/PoolCluster;;", //
         "mysql2/typings/mysql/lib/PoolConnection;;mysql2/typings/mysql/lib/Pool;;Member[getConnection].Argument[0].Argument[1]", //
         "mysql2/typings/mysql/lib/PoolConnection;;mysql2/typings/mysql/lib/Pool;;Member[on].Argument[1].Argument[0]", //
         "mysql2/typings/mysql/lib/PoolConnection;;mysql2/typings/mysql/lib/PoolCluster;;Member[getConnection].Argument[0,1,2].Argument[1]", //
         "mysql2/typings/mysql/lib/PoolConnection;;mysql2/typings/mysql/lib/PoolCluster;;Member[on].Argument[1].Argument[0]", //
-        "mysql2/typings/mysql/lib/PoolConnection;;mysql2/typings/mysql/lib/PoolConnection;Static;ReturnValue", //
+        "mysql2/typings/mysql/lib/PoolConnection;;mysql2/typings/mysql/lib/PoolConnection;Static;Instance", //
         "mysql2/typings/mysql/lib/PoolConnection;;mysql2/typings/mysql;PoolConnection;", //
         "mysql2/typings/mysql/lib/PoolConnection;Static;mysql2/typings/mysql/lib/PoolConnection;;", //
         "mysql2/typings/mysql/lib/protocol/sequences/Query;QueryOptions;mysql2/promise;Connection;Member[execute,query].Argument[0]", //
