@@ -77,7 +77,7 @@ File loadAsDirectory(Require req, int rootPriority, int priority) {
  */
 bindingset[basename]
 File tryExtensions(Folder dir, string basename, int priority) {
-  exists(string ext | result = dir.getFileLongExtension(basename, ext) |
+  exists(string ext | result = dir.getFile(basename, ext) |
     priority = getFileExtensionPriority(ext)
   )
 }
