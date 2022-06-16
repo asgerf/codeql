@@ -191,9 +191,10 @@ class PackageJson extends JsonObject {
    * `typings` field, or derived from the `main` or `module` fields.
    */
   File getTypingsFile() {
-    result = TypingsModulePath::of(this).resolve()
+    result =
+      TypingsModulePathString::of(this).resolve(this.getFile().getParentContainer()).getContainer()
     or
-    not exists(TypingsModulePath::of(this)) and
+    not exists(TypingsModulePathString::of(this)) and
     exists(File mainFile |
       mainFile = this.getMainModule().getFile() and
       result =
