@@ -9,8 +9,10 @@
     "language": "javascript",
     "model": {
         "sinks": [
-            "mysql2/promise;Connection;Member[execute].Argument[0];sql-injection",
-            "mysql2/promise;Pool;Member[execute].Argument[0];sql-injection",
+            "mysql2/promise;Connection;Member[execute,query].Argument[0];sql-injection",
+            "mysql2/promise;Pool;Member[execute,query].Argument[0];sql-injection",
+            "mysql2/typings/mysql/lib/Connection;;Member[query].Argument[0];sql-injection",
+            "mysql2/typings/mysql/lib/Pool;;Member[query].Argument[0];sql-injection",
             "mysql2/typings/mysql/lib/protocol/sequences/Query;QueryOptions;Member[sql];sql-injection",
             "mysql2;Connection;Member[execute].Argument[0];sql-injection",
             "mysql2;Pool;Member[execute].Argument[0];sql-injection"
