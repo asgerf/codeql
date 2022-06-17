@@ -4,9 +4,11 @@ private class Sinks extends ModelInput::SinkModelCsv {
   override predicate row(string row) {
     row =
       [
-        "mongodb;Collection;Member[count,countDocuments,deleteMany,deleteOne,find,findOne,findOneAndDelete,findOneAndReplace,remove,replaceOne].Argument[0];nosql-injection", //
+        "mongodb;Collection;Member[aggregate,count,countDocuments,deleteMany,deleteOne,find,findOne,findOneAndDelete,findOneAndReplace,remove,replaceOne,watch].Argument[0];nosql-injection", //
         "mongodb;Collection;Member[distinct].Argument[1];nosql-injection", //
         "mongodb;Collection;Member[findOneAndUpdate,update,updateMany,updateOne].Argument[0,1];nosql-injection", //
+        "mongodb;Db;Member[aggregate,watch].Argument[0];nosql-injection", //
+        "mongodb;MongoClient;Member[watch].Argument[0];nosql-injection", //
         "mongodb;UpdateManyModel;Member[update];nosql-injection", //
         "mongodb;UpdateOneModel;Member[update];nosql-injection", //
       ]
