@@ -4,6 +4,7 @@ private class Sinks extends ModelInput::SinkModelCsv {
   override predicate row(string row) {
     row =
       [
+        "pg-cursor;Static;Argument[0];sql-injection", //
         "pg;ClientBase;Member[query].Argument[0];sql-injection", //
         "pg;Connection;Member[execute,query].Argument[0];sql-injection", //
         "pg;Pool;Member[query].Argument[0];sql-injection", //
