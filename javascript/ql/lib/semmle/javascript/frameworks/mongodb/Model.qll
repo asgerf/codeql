@@ -4,9 +4,11 @@ private class Sinks extends ModelInput::SinkModelCsv {
   override predicate row(string row) {
     row =
       [
-        "mongodb;Collection;Member[count,countDocuments,deleteMany,deleteOne,find,findOne,findOneAndDelete,findOneAndReplace,findOneAndUpdate,remove,replaceOne,updateMany].Argument[0];nosql-injection", //
+        "mongodb;Collection;Member[count,countDocuments,deleteMany,deleteOne,find,findOne,findOneAndDelete,findOneAndReplace,remove,replaceOne].Argument[0];nosql-injection", //
         "mongodb;Collection;Member[distinct].Argument[1];nosql-injection", //
-        "mongodb;Collection;Member[update,updateOne].Argument[0,1];nosql-injection", //
+        "mongodb;Collection;Member[findOneAndUpdate,update,updateMany,updateOne].Argument[0,1];nosql-injection", //
+        "mongodb;UpdateManyModel;Member[update];nosql-injection", //
+        "mongodb;UpdateOneModel;Member[update];nosql-injection", //
       ]
   }
 }
@@ -32,6 +34,9 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;AggregateOptions;mongodb;CountDocumentsOptions;", //
         "mongodb;AggregateOptions;mongodb;Db;Member[aggregate].Argument[1]", //
         "mongodb;AggregationCursorOptions;mongodb/mongodb;AggregationCursorOptions;", //
+        "mongodb;AnyBulkWriteOperation;mongodb/mongodb;AnyBulkWriteOperation;", //
+        "mongodb;AnyBulkWriteOperation;mongodb;BulkOperationBase;Member[raw].Argument[0]", //
+        "mongodb;AnyBulkWriteOperation;mongodb;Collection;Member[bulkWrite].Argument[0].ArrayElement", //
         "mongodb;AutoEncrypter;mongodb/mongodb;AutoEncrypter;", //
         "mongodb;AutoEncrypter;mongodb;AutoEncrypter;Instance", //
         "mongodb;AutoEncrypter;mongodb;ConnectionOptions;Member[autoEncrypter]", //
@@ -299,6 +304,10 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;UnorderedBulkOperation;mongodb;UnorderedBulkOperationStatic;Instance", //
         "mongodb;UnorderedBulkOperationStatic;mongodb/mongodb;UnorderedBulkOperationStatic;", //
         "mongodb;UnorderedBulkOperationStatic;mongodb;;Member[UnorderedBulkOperation]", //
+        "mongodb;UpdateManyModel;mongodb/mongodb;UpdateManyModel;", //
+        "mongodb;UpdateManyModel;mongodb;AnyBulkWriteOperation;Member[updateMany]", //
+        "mongodb;UpdateOneModel;mongodb/mongodb;UpdateOneModel;", //
+        "mongodb;UpdateOneModel;mongodb;AnyBulkWriteOperation;Member[updateOne]", //
         "mongodb;UpdateOptions;mongodb/mongodb;UpdateOptions;", //
         "mongodb;UpdateOptions;mongodb;Collection;Member[update,updateMany,updateOne].Argument[2]", //
         "mongodb;ValidateCollectionOptions;mongodb/mongodb;ValidateCollectionOptions;", //
