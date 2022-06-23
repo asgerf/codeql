@@ -106,7 +106,8 @@ where
   isCaseSensitiveMiddleware(middleware, regexp, arg) and
   example = getCaseSensitiveBypassExample(regexp.getRoot()) and
   isGuardedCaseInsensitiveEndpoint(endpoint, middleware) and
-  exists(endpoint.getRelativePath().toLowerCase().indexOf(example.toLowerCase()))
+  exists(endpoint.getRelativePath().toLowerCase().indexOf(example.toLowerCase())) and
+  none()
 select arg,
   "This route uses a case-sensitive path $@, but is guarding a case-insensitive path $@. A path such as '"
     + example + "' will bypass the middleware.", regexp, "pattern", endpoint, "here"
