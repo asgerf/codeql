@@ -659,7 +659,7 @@ module API {
         any(Type t).hasUnderlyingType(moduleName, exportName)
       } or
       MkSyntheticCallbackArg(DataFlow::Node src, int bound, DataFlow::InvokeNode nd) {
-        trackUseNode(src, true, bound, "").flowsTo(nd.getCalleeNode())
+        trackUseNode(src, true, bound).flowsTo(nd.getCalleeNode())
       }
 
     class TDef = MkModuleDef or TNonModuleDef;
@@ -802,7 +802,7 @@ module API {
      */
     private predicate argumentPassing(TApiNode base, int i, DataFlow::Node arg) {
       exists(DataFlow::Node use, DataFlow::SourceNode pred, int bound |
-        use(base, use) and pred = trackUseNode(use, _, bound, "")
+        use(base, use) and pred = trackUseNode(use, _, bound)
       |
         arg = pred.getAnInvocation().getArgument(i - bound)
         or
@@ -831,29 +831,20 @@ module API {
     }
 
     /**
-     * Holds if `ref` is a read of a property described by `lbl` on `pred`, and
-     * `propDesc` is compatible with that property, meaning it is either the
-     * name of the property itself or the empty string.
+     * Holds if `ref` is a read of a property described by `lbl` on `pred`.
      */
     pragma[noinline]
     private predicate propertyRead(
-      DataFlow::SourceNode pred, string propDesc, Label::ApiLabel lbl, DataFlow::Node ref
+      DataFlow::SourceNode pred, Label::ApiLabel lbl, DataFlow::Node ref
     ) {
       ref = pred.getAPropertyRead() and
-      lbl = Label::memberFromRef(ref) and
-      (
-        lbl = Label::member(propDesc)
-        or
-        propDesc = ""
-      )
+      lbl = Label::memberFromRef(ref)
       or
       PromiseFlow::loadStep(pred.getALocalUse(), ref, Promises::valueProp()) and
-      lbl = Label::promised() and
-      (propDesc = Promises::valueProp() or propDesc = "")
+      lbl = Label::promised()
       or
       PromiseFlow::loadStep(pred.getALocalUse(), ref, Promises::errorProp()) and
-      lbl = Label::promisedError() and
-      (propDesc = Promises::errorProp() or propDesc = "")
+      lbl = Label::promisedError()
     }
 
     /**
@@ -873,8 +864,8 @@ module API {
         // property reads
         exists(DataFlow::SourceNode src, DataFlow::SourceNode pred, string propDesc |
           use(base, src) and
-          pred = trackUseNode(src, false, 0, propDesc) and
-          propertyRead(pred, propDesc, lbl, ref) and
+          pred = trackUseNode(src, false, 0) and
+          propertyRead(pred, lbl, ref) and
           // `module.exports` is special: it is a use of a def-node, not a use-node,
           // so we want to exclude it here
           (base instanceof TNonModuleDef or base instanceof TUse)
@@ -1108,10 +1099,10 @@ module API {
     private import semmle.javascript.dataflow.internal.StepSummary
 
     private DataFlow::SourceNode trackUseNode(
-      DataFlow::SourceNode nd, boolean promisified, int boundArgs, string prop
+      DataFlow::SourceNode nd, boolean promisified, int boundArgs
     ) {
-      result = Deep::trackNode(nd, _, _, promisified, boundArgs) and
-      prop = ""
+      use(_, nd) and
+      result = Deep::trackNode(nd, _, _, promisified, boundArgs)
     }
 
     /**
@@ -1119,7 +1110,7 @@ module API {
      */
     cached
     DataFlow::SourceNode trackUseNode(DataFlow::SourceNode nd) {
-      result = trackUseNode(nd, false, 0, "")
+      result = trackUseNode(nd, false, 0)
     }
 
     /**
