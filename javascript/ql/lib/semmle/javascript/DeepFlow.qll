@@ -45,6 +45,15 @@ module Deep {
     StepSummary::step(pred, succ, LoadStep(prop))
   }
 
+  pragma[nomagic]
+  private predicate loadStoreStep(
+    DataFlow::SourceNode pred, DataFlow::SourceNode succ, string prop1, string prop2
+  ) {
+    StepSummary::step(pred, succ, LoadStoreStep(prop1, prop2))
+    or
+    StepSummary::step(pred, succ, CopyStep(prop1)) and prop2 = prop1
+  }
+
   /**
    * Holds if `pred` can flow to `succ`.
    *
@@ -109,6 +118,40 @@ module Deep {
     exists(DataFlow::SourceNode obj, string prop |
       storeStep(pred, obj, prop) and
       loadStep(trackNode(obj, hasCall, hasReturn, false, 0), succ, prop)
+      or
+      exists(boolean return1, boolean call1, boolean return2, boolean call2 |
+        storeChain(pred, obj, call1, return1, prop) and
+        loadStep(trackNode(obj, call2, return2, false, 0), succ, prop) and
+        return1.booleanAnd(call2) = false and
+        hasCall = call1.booleanOr(call2) and
+        hasReturn = return1.booleanOr(return2)
+      )
+    )
+  }
+
+  /**
+   * Holds if `pred` can flow to the `prop` property of `succ` via a store followed by one or
+   * more load-store steps (not yet finalized by a load step).
+   *
+   * `hasCall` and `hasReturn` indicate if the paths of the carrying objects contain
+   * calls and returns, respectively.
+   */
+  pragma[nomagic]
+  predicate storeChain(
+    DataFlow::SourceNode pred, DataFlow::SourceNode succ, boolean hasCall, boolean hasReturn,
+    string prop
+  ) {
+    exists(DataFlow::SourceNode obj, string midProp |
+      storeStep(pred, obj, midProp) and
+      loadStoreStep(trackNode(obj, hasCall, hasReturn, false, 0), succ, midProp, prop)
+      or
+      exists(boolean call1, boolean return1, boolean call2, boolean return2 |
+        storeChain(pred, obj, call1, return1, midProp) and
+        loadStoreStep(trackNode(obj, call2, return2, false, 0), succ, midProp, prop) and
+        return1.booleanAnd(call2) = false and
+        hasCall = call1.booleanOr(call2) and
+        hasReturn = return1.booleanOr(return2)
+      )
     )
   }
 
