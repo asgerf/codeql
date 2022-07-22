@@ -1188,7 +1188,8 @@ module API {
      */
     cached
     DataFlow::SourceNode trackDefNode(DataFlow::Node nd) {
-      result = trackDefNode(nd, DataFlow::TypeBackTracker::end())
+      rhs(_, nd) and
+      Deep::hasFlowTo(result, nd.getALocalSource())
     }
 
     private DataFlow::SourceNode awaited(DataFlow::InvokeNode call, DataFlow::TypeTracker t) {

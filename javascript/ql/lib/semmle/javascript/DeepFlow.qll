@@ -33,6 +33,32 @@ module Deep {
     StepSummary::step(pred, succ, LevelStep())
     or
     any(API::AdditionalUseStep st).step(pred, succ)
+    or
+    // additional flow `exports` or `module.exports` in `require('m')`
+    exists(Import imp | imp.getImportedModuleNode() = succ |
+      pred = DataFlow::exportsVarNode(imp.getImportedModule())
+      or
+      pred = DataFlow::moduleVarNode(imp.getImportedModule()).getAPropertyRead("exports")
+    )
+  }
+
+  /**
+   * Holds if `pred` is cloned or has its properties copied into `succ`.
+   */
+  pragma[nomagic]
+  private predicate massAssignmentStep(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
+    // p -> { ...p }
+    exists(ObjectExpr obj |
+      succ = obj.flow() and
+      pred =
+        obj.getAProperty()
+            .(SpreadProperty)
+            .getInit()
+            .(SpreadElement)
+            .getOperand()
+            .flow()
+            .getALocalSource()
+    )
   }
 
   pragma[nomagic]
@@ -81,6 +107,9 @@ module Deep {
     )
     or
     levelStep(trackNode(node, hasCall, hasReturn, promisified, boundArgs), result)
+    or
+    // note: for now, mass assignment steps are simply treated as level steps
+    massAssignmentStep(trackNode(node, hasCall, hasReturn, promisified, boundArgs), result)
     or
     exists(boolean call1, boolean call2, boolean return1, boolean return2 |
       derivedPropStep(trackNode(node, call1, return1, promisified, boundArgs), result, call2,
