@@ -1127,9 +1127,7 @@ module API {
     private DataFlow::SourceNode trackUseNode(
       DataFlow::SourceNode nd, boolean promisified, int boundArgs, string prop
     ) {
-      result = Deep::trackNode(nd, _, _) and
-      promisified = false and
-      boundArgs = 0 and
+      result = Deep::trackNode(nd, _, _, promisified, boundArgs) and
       prop = ""
       // result = trackUseNode(nd, promisified, boundArgs, prop, DataFlow::TypeTracker::end())
     }
