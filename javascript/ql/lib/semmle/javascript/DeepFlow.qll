@@ -3,13 +3,14 @@ private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 private import semmle.javascript.dataflow.internal.StepSummary
 private import semmle.javascript.dataflow.TypeTracking
 private import internal.CachedStages
+private import semmle.javascript.dataflow.internal.DataFlowNode
 
 module Deep {
   private predicate shouldTrack(DataFlow::SourceNode node) {
     not node.getTopLevel().isExterns() and
     not node.getAstNode().isAmbient() and
     not node.getFile().getBaseName().matches("%.d.ts") and
-    // only track synthetic return node of async/generator functions where it represents an allocation
+    // only track synthetic return node of async/generator functions, where it represents an allocation
     not exists(Function f |
       DataFlow::functionReturnNode(node, f) and
       not f.isAsyncOrGenerator()
@@ -86,5 +87,45 @@ module Deep {
       storeStep(pred, obj, prop) and
       loadStep(trackNode(obj, hasCall, hasReturn), succ, prop)
     )
+  }
+
+  cached
+  predicate hasFlowTo(DataFlow::SourceNode source, DataFlow::SourceNode dest) {
+    trackNode(source, _, _) = dest
+  }
+
+  class Node extends TNode instanceof DataFlow::SourceNode {
+    string toString() { result = this.(DataFlow::SourceNode).toString() }
+
+    predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      this.(DataFlow::SourceNode)
+          .hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    cached
+    DataFlow::SourceNode getAUse() { result = trackNode(this, _, _) }
+
+    cached
+    DataFlow::SourceNode getASource() { trackNode(result, _, _) = this }
+
+    Node getAPropertyRead(string prop) { result = this.getAUse().getAPropertyRead(prop) }
+
+    Node getAPropertyRead() { result = this.getAUse().getAPropertyRead() }
+
+    DataFlow::PropWrite getAPropertyWrite(string name) {
+      result = this.getAUse().getAPropertyWrite(name)
+    }
+
+    DataFlow::PropWrite getAPropertyWrite() { result = this.getAUse().getAPropertyWrite() }
+
+    DataFlow::MethodCallNode getAMethodCall(string name) {
+      result = this.getAUse().getAMethodCall(name)
+    }
+
+    DataFlow::MethodCallNode getAMethodCall() { result = this.getAUse().getAMethodCall() }
+
+    DataFlow::CallNode getACall() { result = this.getAUse().getACall() }
   }
 }

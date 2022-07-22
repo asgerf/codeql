@@ -40,6 +40,9 @@ class SourceNode extends DataFlow::Node {
     none() and this instanceof SourceNode::Internal::RecursionGuard
   }
 
+  /** Gets a view of this node, whose predicates use deep (interprocedural) data flow instead of local data flow. */
+  Deep::Node deep() { result = this }
+
   /**
    * Holds if this node flows into `sink` in zero or more local (that is,
    * intra-procedural) steps.

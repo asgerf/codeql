@@ -18,6 +18,7 @@ import semmle.javascript.Comments
 import semmle.javascript.Concepts
 import semmle.javascript.Constants
 import semmle.javascript.DefUse
+import semmle.javascript.DeepFlow
 import semmle.javascript.DOM
 import semmle.javascript.E4X
 import semmle.javascript.EmailClients
