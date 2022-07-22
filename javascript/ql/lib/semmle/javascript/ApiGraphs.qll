@@ -1107,29 +1107,11 @@ module API {
     // }
     private import semmle.javascript.dataflow.internal.StepSummary
 
-    // /**
-    //  * Holds if `nd`, which is a use of an API-graph node, flows in zero or more potentially
-    //  * inter-procedural steps to some intermediate node, and then from that intermediate node to
-    //  * `res` in one step. The entire flow is described by the resulting `TypeTracker`.
-    //  *
-    //  * This predicate exists solely to enforce a better join order in `trackUseNode` above.
-    //  */
-    // pragma[noopt]
-    // private DataFlow::TypeTracker useStep(
-    //   DataFlow::Node nd, boolean promisified, int boundArgs, string prop, DataFlow::Node res
-    // ) {
-    //   exists(DataFlow::TypeTracker t, StepSummary summary, DataFlow::SourceNode prev |
-    //     prev = trackUseNode(nd, promisified, boundArgs, prop, t) and
-    //     StepSummary::step(prev, res, summary) and
-    //     result = t.append(summary)
-    //   )
-    // }
     private DataFlow::SourceNode trackUseNode(
       DataFlow::SourceNode nd, boolean promisified, int boundArgs, string prop
     ) {
       result = Deep::trackNode(nd, _, _, promisified, boundArgs) and
       prop = ""
-      // result = trackUseNode(nd, promisified, boundArgs, prop, DataFlow::TypeTracker::end())
     }
 
     /**
@@ -1138,49 +1120,6 @@ module API {
     cached
     DataFlow::SourceNode trackUseNode(DataFlow::SourceNode nd) {
       result = trackUseNode(nd, false, 0, "")
-    }
-
-    private DataFlow::SourceNode trackDefNode(DataFlow::Node nd, DataFlow::TypeBackTracker t) {
-      t.start() and
-      rhs(_, nd) and
-      result = nd.getALocalSource()
-      or
-      // additional backwards step from `require('m')` to `exports` or `module.exports` in m
-      exists(Import imp | imp.getImportedModuleNode() = trackDefNode(nd, t.continue()) |
-        result = DataFlow::exportsVarNode(imp.getImportedModule())
-        or
-        result = DataFlow::moduleVarNode(imp.getImportedModule()).getAPropertyRead("exports")
-      )
-      or
-      exists(ObjectExpr obj |
-        obj = trackDefNode(nd, t.continue()).asExpr() and
-        result =
-          obj.getAProperty()
-              .(SpreadProperty)
-              .getInit()
-              .(SpreadElement)
-              .getOperand()
-              .flow()
-              .getALocalSource()
-      )
-      or
-      t = defStep(nd, result)
-    }
-
-    /**
-     * Holds if `nd`, which is a def of an API-graph node, can be reached in zero or more potentially
-     * inter-procedural steps from some intermediate node, and `prev` flows into that intermediate node
-     * in one step. The entire flow is described by the resulting `TypeTracker`.
-     *
-     * This predicate exists solely to enforce a better join order in `trackDefNode` above.
-     */
-    pragma[noopt]
-    private DataFlow::TypeBackTracker defStep(DataFlow::Node nd, DataFlow::SourceNode prev) {
-      exists(DataFlow::TypeBackTracker t, StepSummary summary, DataFlow::Node next |
-        next = trackDefNode(nd, t) and
-        StepSummary::step(prev, next, summary) and
-        result = t.prepend(summary)
-      )
     }
 
     /**
