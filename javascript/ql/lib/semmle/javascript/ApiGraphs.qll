@@ -1040,62 +1040,6 @@ module API {
 
     private import semmle.javascript.dataflow.TypeTracking
     private import semmle.javascript.DeepFlow
-    // /**
-    //  * Gets a data-flow node to which `nd`, which is a use of an API-graph node, flows.
-    //  *
-    //  * The flow from `nd` to that node may be inter-procedural, and is further described by three
-    //  * flags:
-    //  *
-    //  *   - `promisified`: if true `true`, the flow goes through a promisification;
-    //  *   - `boundArgs`: for function values, tracks how many arguments have been bound throughout
-    //  *     the flow. To ensure termination, we somewhat arbitrarily constrain the number of bound
-    //  *     arguments to be at most ten.
-    //  *   - `prop`: if non-empty, the flow is only guaranteed to preserve the value of this property,
-    //  *     and not necessarily the entire object.
-    //  */
-    // private DataFlow::SourceNode trackUseNode(
-    //   DataFlow::SourceNode nd, boolean promisified, int boundArgs, string prop,
-    //   DataFlow::TypeTracker t
-    // ) {
-    //   t.start() and
-    //   use(_, nd) and
-    //   result = nd and
-    //   promisified = false and
-    //   boundArgs = 0 and
-    //   prop = ""
-    //   or
-    //   exists(Promisify::PromisifyCall promisify |
-    //     trackUseNode(nd, false, boundArgs, prop, t.continue()).flowsTo(promisify.getArgument(0)) and
-    //     promisified = true and
-    //     prop = "" and
-    //     result = promisify
-    //   )
-    //   or
-    //   exists(DataFlow::PartialInvokeNode pin, DataFlow::Node pred, int predBoundArgs |
-    //     trackUseNode(nd, promisified, predBoundArgs, prop, t.continue()).flowsTo(pred) and
-    //     prop = "" and
-    //     result = pin.getBoundFunction(pred, boundArgs - predBoundArgs) and
-    //     boundArgs in [0 .. 10]
-    //   )
-    //   or
-    //   exists(DataFlow::SourceNode mid |
-    //     mid = trackUseNode(nd, promisified, boundArgs, prop, t) and
-    //     AdditionalUseStep::step(pragma[only_bind_out](mid), result)
-    //   )
-    //   or
-    //   exists(DataFlow::Node pred, string preprop |
-    //     trackUseNode(nd, promisified, boundArgs, preprop, t.continue()).flowsTo(pred) and
-    //     promisified = false and
-    //     boundArgs = 0 and
-    //     SharedTypeTrackingStep::loadStoreStep(pred, result, prop)
-    //   |
-    //     prop = preprop
-    //     or
-    //     preprop = ""
-    //   )
-    //   or
-    //   t = useStep(nd, promisified, boundArgs, prop, result)
-    // }
     private import semmle.javascript.dataflow.internal.StepSummary
 
     private DataFlow::SourceNode trackUseNode(
