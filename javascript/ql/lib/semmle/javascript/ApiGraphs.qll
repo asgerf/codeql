@@ -862,7 +862,7 @@ module API {
         )
         or
         // property reads
-        exists(DataFlow::SourceNode src, DataFlow::SourceNode pred, string propDesc |
+        exists(DataFlow::SourceNode src, DataFlow::SourceNode pred |
           use(base, src) and
           pred = trackUseNode(src, false, 0) and
           propertyRead(pred, lbl, ref) and
