@@ -32,6 +32,11 @@ module DataFlow {
    */
   class Node extends TNode {
     /**
+     * Gets an API node for backtracking from here, that is, for determining what can flow here.
+     */
+    API::Node backtrack() { result.asSink() = this }
+
+    /**
      * Gets a data flow node from which data may flow to this node in one local step.
      */
     Node getAPredecessor() { localFlowStep(result, this) }
