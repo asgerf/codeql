@@ -72,6 +72,16 @@ module Deep {
   }
 
   pragma[nomagic]
+  private predicate returnStep(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
+    StepSummary::step(pred, succ, ReturnStep())
+  }
+
+  pragma[nomagic]
+  private predicate callStep(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
+    StepSummary::step(pred, succ, CallStep())
+  }
+
+  pragma[nomagic]
   private predicate loadStoreStep(
     DataFlow::SourceNode pred, DataFlow::SourceNode succ, string prop1, string prop2
   ) {
@@ -95,13 +105,13 @@ module Deep {
     or
     exists(DataFlow::SourceNode mid |
       mid = trackNode(node, _, hasReturn, promisified, boundArgs) and
-      FlowSteps::callStep(mid.getALocalUse(), result) and
+      callStep(mid, result) and
       hasCall = true
     )
     or
     exists(DataFlow::SourceNode mid |
       mid = trackNode(node, false, _, promisified, boundArgs) and
-      FlowSteps::returnStep(mid.getALocalUse(), result) and
+      returnStep(mid, result) and
       hasReturn = true and
       hasCall = false
     )
