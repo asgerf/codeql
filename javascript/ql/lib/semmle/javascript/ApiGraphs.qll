@@ -533,8 +533,8 @@ module API {
 
   /** Gets a node corresponding to an import of module `m`. */
   Node moduleImport(string m) {
-    result = Impl::MkModuleImport(m) or
-    result = Impl::MkModuleImport(m).(Node).getMember("default")
+    result = Impl::MkUse(DataFlow::moduleImport(m)) or
+    result = Impl::MkUse(DataFlow::moduleImport(m)).(Node).getMember("default")
   }
 
   /** Gets a node corresponding to an export of module `m`. */
@@ -626,7 +626,6 @@ module API {
     newtype TApiNode =
       MkRoot() or
       MkModuleDef(string m) { exists(MkModuleExport(m)) } or
-      MkModuleUse(string m) { exists(MkModuleImport(m)) } or
       MkModuleExport(string m) {
         exists(Module mod | mod = importableModule(m) |
           // exclude modules that don't actually export anything
@@ -638,13 +637,6 @@ module API {
             exists(SSA::implicitInit([nm.getModuleVariable(), nm.getExportsVariable()]))
           )
         )
-      } or
-      MkModuleImport(string m) {
-        imports(_, m)
-        or
-        any(TypeAnnotation n).hasQualifiedName(m, _)
-        or
-        any(Type t).hasUnderlyingType(m, _)
       } or
       MkClassInstance(DataFlow::ClassNode cls) { cls = trackDefNode(_) and hasSemantics(cls) } or
       MkAsyncFuncResult(DataFlow::FunctionNode f) {
@@ -667,17 +659,7 @@ module API {
     class TNonModuleDef =
       MkModuleExport or MkClassInstance or MkAsyncFuncResult or MkDef or MkSyntheticCallbackArg;
 
-    class TUse = MkModuleUse or MkModuleImport or MkUse or MkTypeUse;
-
-    private predicate hasSemantics(DataFlow::Node nd) { not nd.getTopLevel().isExterns() }
-
-    /** Holds if `imp` is an import of module `m`. */
-    private predicate imports(DataFlow::Node imp, string m) {
-      imp = DataFlow::moduleImport(m) and
-      // path must not start with a dot or a slash
-      m.regexpMatch("[^./].*") and
-      hasSemantics(imp)
-    }
+    class TUse = MkUse or MkTypeUse;
 
     /**
      * Holds if `rhs` is the right-hand side of a definition of a node that should have an
@@ -861,6 +843,12 @@ module API {
           ref = e.getASource()
         )
         or
+        base = MkRoot() and
+        exists(string moduleName |
+          imports(ref, moduleName) and
+          lbl = Label::moduleLabel(moduleName)
+        )
+        or
         // property reads
         exists(DataFlow::SourceNode src, DataFlow::SourceNode pred |
           use(base, src) and
@@ -1024,11 +1012,6 @@ module API {
         )
       )
       or
-      exists(string m |
-        nd = MkModuleImport(m) and
-        ref = DataFlow::moduleImport(m)
-      )
-      or
       exists(DataFlow::ClassNode cls | nd = MkClassInstance(cls) |
         ref = cls.getAReceiverNode()
         or
@@ -1092,18 +1075,12 @@ module API {
         lbl = Label::moduleLabel(m)
       |
         succ = MkModuleDef(m)
-        or
-        succ = MkModuleUse(m)
       )
       or
       exists(string m |
         pred = MkModuleDef(m) and
         lbl = Label::member("exports") and
         succ = MkModuleExport(m)
-        or
-        pred = MkModuleUse(m) and
-        lbl = Label::member("exports") and
-        succ = MkModuleImport(m)
       )
       or
       exists(DataFlow::SourceNode ref |
@@ -1123,7 +1100,7 @@ module API {
       )
       or
       exists(string moduleName, string exportName |
-        pred = MkModuleImport(moduleName) and
+        pred = MkUse(DataFlow::moduleImport(moduleName)) and // TODO: should be removed
         lbl = Label::member(exportName) and
         succ = MkTypeUse(moduleName, exportName)
       )
@@ -1313,7 +1290,7 @@ module API {
       newtype TLabel =
         MkLabelModule(string mod) {
           exists(Impl::MkModuleExport(mod)) or
-          exists(Impl::MkModuleImport(mod))
+          imports(_, mod)
         } or
         MkLabelInstance() or
         MkLabelMember(string prop) {
@@ -1477,3 +1454,13 @@ private Module importableModule(string m) {
     m = pkg.getPackageName()
   )
 }
+
+/** Holds if `imp` is an import of module `m`. */
+private predicate imports(DataFlow::Node imp, string m) {
+  imp = DataFlow::moduleImport(m) and
+  // path must not start with a dot or a slash
+  m.regexpMatch("[^./].*") and
+  hasSemantics(imp)
+}
+
+private predicate hasSemantics(DataFlow::Node nd) { not nd.getTopLevel().isExterns() }
