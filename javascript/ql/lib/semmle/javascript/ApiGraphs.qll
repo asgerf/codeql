@@ -544,7 +544,10 @@ module API {
   module Node {
     /** Gets a node whose type has the given qualified name. */
     Node ofType(string moduleName, string exportedName) {
-      result = Impl::MkTypeUse(moduleName, exportedName).(Node).getInstance()
+      exists(DataFlow::SourceNode node |
+        node.hasUnderlyingType(moduleName, exportedName) and
+        result = Impl::MkUse(node)
+      )
     }
   }
 
@@ -652,12 +655,6 @@ module API {
       } or
       MkDef(DataFlow::Node nd) { rhs(_, _, nd) } or
       MkUse(DataFlow::Node nd) { use(_, _, nd) } or
-      /** A use of a TypeScript type. */
-      MkTypeUse(string moduleName, string exportName) {
-        any(TypeAnnotation n).hasQualifiedName(moduleName, exportName)
-        or
-        any(Type t).hasUnderlyingType(moduleName, exportName)
-      } or
       MkSyntheticCallbackArg(DataFlow::Node src, int bound, DataFlow::InvokeNode nd) {
         trackUseNode(src, true, bound, "").flowsTo(nd.getCalleeNode())
       }
@@ -667,15 +664,14 @@ module API {
     class TNonModuleDef =
       MkModuleExport or MkClassInstance or MkAsyncFuncResult or MkDef or MkSyntheticCallbackArg;
 
-    class TUse = MkModuleUse or MkModuleImport or MkUse or MkTypeUse;
+    class TUse = MkModuleUse or MkModuleImport or MkUse;
 
     private predicate hasSemantics(DataFlow::Node nd) { not nd.getTopLevel().isExterns() }
 
     /** Holds if `imp` is an import of module `m`. */
     private predicate imports(DataFlow::Node imp, string m) {
       imp = DataFlow::moduleImport(m) and
-      // path must not start with a dot or a slash
-      m.regexpMatch("[^./].*") and
+      isViableExternalPackageName(m) and
       hasSemantics(imp)
     }
 
@@ -870,6 +866,12 @@ module API {
           ref = e.getASource()
         )
         or
+        base = MkRoot() and
+        exists(string moduleName, string typeName |
+          lbl = Label::typeUse(moduleName, typeName) and
+          ref.(DataFlow::SourceNode).hasUnderlyingType(moduleName, typeName)
+        )
+        or
         // property reads
         exists(DataFlow::SourceNode src, DataFlow::SourceNode pred, string propDesc |
           use(base, src) and
@@ -908,12 +910,6 @@ module API {
         |
           lbl = Label::parameter(i) and
           ref = cls.getConstructor().getParameter(i)
-        )
-        or
-        exists(string moduleName, string exportName |
-          base = MkTypeUse(moduleName, exportName) and
-          lbl = Label::instance() and
-          ref.(DataFlow::SourceNode).hasUnderlyingType(moduleName, exportName)
         )
         or
         exists(DataFlow::InvokeNode call |
@@ -1247,12 +1243,6 @@ module API {
         succ = MkClassInstance(trackDefNode(def))
       )
       or
-      exists(string moduleName, string exportName |
-        pred = MkModuleImport(moduleName) and
-        lbl = Label::member(exportName) and
-        succ = MkTypeUse(moduleName, exportName)
-      )
-      or
       exists(DataFlow::Node nd, DataFlow::FunctionNode f |
         pred = MkDef(nd) and
         f = trackDefNode(nd) and
@@ -1360,6 +1350,12 @@ module API {
     bindingset[result]
     LabelMember member(string m) { result.getProperty() = m }
 
+    /** Gets the `type-use` edge label. */
+    LabelTypeUse typeUse(string moduleName, string typeName) {
+      result.getModuleName() = moduleName and
+      result.getTypeName() = typeName
+    }
+
     /** Gets the `member` edge label for the unknown member. */
     LabelUnknownMember unknownMember() { any() }
 
@@ -1447,8 +1443,11 @@ module API {
           prop = "exports" or
           prop = any(CanonicalName c).getName() or
           prop = any(DataFlow::PropRef p).getPropertyName() or
-          exists(Impl::MkTypeUse(_, prop)) or
           exists(any(Module m).getAnExportedValue(prop))
+        } or
+        MkLabelTypeUse(string moduleName, string typeName) {
+          any(DataFlow::SourceNode sn).hasUnderlyingType(moduleName, typeName) and
+          isViableExternalPackageName(moduleName)
         } or
         MkLabelUnknownMember() or
         MkLabelParameter(int i) {
@@ -1523,6 +1522,24 @@ module API {
         string getProperty() { result = prop }
 
         override string toString() { result = "getMember(\"" + prop + "\")" }
+      }
+
+      /** A label for the use of type from a module. */
+      class LabelTypeUse extends ApiLabel, MkLabelTypeUse {
+        string moduleName;
+        string typeName;
+
+        LabelTypeUse() { this = MkLabelTypeUse(moduleName, typeName) }
+
+        /** Gets the module name. */
+        string getModuleName() { result = moduleName }
+
+        /** Gets the type name. */
+        string getTypeName() { result = typeName }
+
+        override string toString() {
+          result = "typeUse(\"" + moduleName + "\",\"" + typeName + "\")"
+        }
       }
 
       /** A label for a member with an unknown name. */
@@ -1602,3 +1619,12 @@ private Module importableModule(string m) {
     m = pkg.getPackageName()
   )
 }
+
+/**
+ * Holds if `name` could be an NPM package name.
+ *
+ * Concretely, this holds if it does not start with a dot or a slash, as these refer
+ * to local files.
+ */
+bindingset[name]
+private predicate isViableExternalPackageName(string name) { name.regexpMatch("[^./].*") }
