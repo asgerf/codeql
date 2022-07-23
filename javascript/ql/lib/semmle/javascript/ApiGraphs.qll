@@ -538,7 +538,7 @@ module API {
   }
 
   /** Gets a node corresponding to an export of module `m`. */
-  Node moduleExport(string m) { result = Impl::MkModuleDef(m).(Node).getMember("exports") }
+  deprecated Node moduleExport(string m) { none() } // TODO: still a valid feature, we should reintroduce this based on DataFlow nodes
 
   /** Provides helper predicates for accessing API-graph nodes. */
   module Node {
@@ -625,19 +625,6 @@ module API {
     cached
     newtype TApiNode =
       MkRoot() or
-      MkModuleDef(string m) { exists(MkModuleExport(m)) } or
-      MkModuleExport(string m) {
-        exists(Module mod | mod = importableModule(m) |
-          // exclude modules that don't actually export anything
-          exports(m, _)
-          or
-          exports(m, _, _)
-          or
-          exists(NodeModule nm | nm = mod |
-            exists(SSA::implicitInit([nm.getModuleVariable(), nm.getExportsVariable()]))
-          )
-        )
-      } or
       MkClassInstance(DataFlow::ClassNode cls) { cls = trackDefNode(_) and hasSemantics(cls) } or
       MkAsyncFuncResult(DataFlow::FunctionNode f) {
         f = trackDefNode(_) and f.getFunction().isAsync() and hasSemantics(f)
@@ -654,10 +641,9 @@ module API {
         trackUseNode(src, true, bound).flowsTo(nd.getCalleeNode())
       }
 
-    class TDef = MkModuleDef or TNonModuleDef;
+    class TDef = TNonModuleDef;
 
-    class TNonModuleDef =
-      MkModuleExport or MkClassInstance or MkAsyncFuncResult or MkDef or MkSyntheticCallbackArg;
+    class TNonModuleDef = MkClassInstance or MkAsyncFuncResult or MkDef or MkSyntheticCallbackArg;
 
     class TUse = MkUse or MkTypeUse;
 
@@ -673,12 +659,6 @@ module API {
         exists(EntryPoint e |
           lbl = Label::entryPoint(e) and
           rhs = e.getASink()
-        )
-        or
-        exists(string m, string prop |
-          base = MkModuleExport(m) and
-          lbl = Label::member(prop) and
-          exports(m, prop, rhs)
         )
         or
         exists(DataFlow::Node def, DataFlow::SourceNode pred |
@@ -806,11 +786,7 @@ module API {
      * Holds if `rhs` is the right-hand side of a definition of node `nd`.
      */
     cached
-    predicate rhs(TApiNode nd, DataFlow::Node rhs) {
-      exists(string m | nd = MkModuleExport(m) | exports(m, rhs))
-      or
-      nd = MkDef(rhs)
-    }
+    predicate rhs(TApiNode nd, DataFlow::Node rhs) { nd = MkDef(rhs) }
 
     /**
      * Holds if `ref` is a read of a property described by `lbl` on `pred`.
@@ -1000,18 +976,6 @@ module API {
      */
     cached
     predicate use(TApiNode nd, DataFlow::Node ref) {
-      exists(string m, Module mod | nd = MkModuleDef(m) and mod = importableModule(m) |
-        ref = DataFlow::moduleVarNode(mod)
-      )
-      or
-      exists(string m, Module mod | nd = MkModuleExport(m) and mod = importableModule(m) |
-        ref = DataFlow::exportsVarNode(mod)
-        or
-        exists(DataFlow::Node base | use(MkModuleDef(m), base) |
-          ref = trackUseNode(base).getAPropertyRead("exports")
-        )
-      )
-      or
       exists(DataFlow::ClassNode cls | nd = MkClassInstance(cls) |
         ref = cls.getAReceiverNode()
         or
@@ -1070,19 +1034,6 @@ module API {
     cached
     predicate edge(TApiNode pred, Label::ApiLabel lbl, TApiNode succ) {
       Stages::ApiStage::ref() and
-      exists(string m |
-        pred = MkRoot() and
-        lbl = Label::moduleLabel(m)
-      |
-        succ = MkModuleDef(m)
-      )
-      or
-      exists(string m |
-        pred = MkModuleDef(m) and
-        lbl = Label::member("exports") and
-        succ = MkModuleExport(m)
-      )
-      or
       exists(DataFlow::SourceNode ref |
         use(pred, lbl, ref) and
         succ = MkUse(ref)
@@ -1288,13 +1239,9 @@ module API {
 
     private module LabelImpl {
       newtype TLabel =
-        MkLabelModule(string mod) {
-          exists(Impl::MkModuleExport(mod)) or
-          imports(_, mod)
-        } or
+        MkLabelModule(string mod) { imports(_, mod) } or
         MkLabelInstance() or
         MkLabelMember(string prop) {
-          exports(_, prop, _) or
           exists(any(DataFlow::ClassNode c).getInstanceMethod(prop)) or
           prop = "exports" or
           prop = any(CanonicalName c).getName() or
@@ -1417,42 +1364,6 @@ module API {
       }
     }
   }
-}
-
-/** Holds if module `m` exports `rhs`. */
-private predicate exports(string m, DataFlow::Node rhs) {
-  exists(Module mod | mod = importableModule(m) |
-    rhs = mod.(AmdModule).getDefine().getModuleExpr().flow()
-    or
-    exports(m, "default", rhs)
-    or
-    exists(ExportAssignDeclaration assgn | assgn.getTopLevel() = mod |
-      rhs = assgn.getExpression().flow()
-    )
-    or
-    rhs = mod.(Closure::ClosureModule).getExportsVariable().getAnAssignedExpr().flow()
-  )
-}
-
-/** Holds if module `m` exports `rhs` under the name `prop`. */
-private predicate exports(string m, string prop, DataFlow::Node rhs) {
-  exists(ExportDeclaration exp | exp.getEnclosingModule() = importableModule(m) |
-    rhs = exp.getSourceNode(prop)
-    or
-    exists(Variable v |
-      exp.exportsAs(v, prop) and
-      rhs = v.getAnAssignedExpr().flow()
-    )
-  )
-}
-
-/** Gets the definition of module `m`. */
-private Module importableModule(string m) {
-  exists(NpmPackage pkg, PackageJson json | json = pkg.getPackageJson() and not json.isPrivate() |
-    result = pkg.getMainModule() and
-    not result.isExterns() and
-    m = pkg.getPackageName()
-  )
 }
 
 /** Holds if `imp` is an import of module `m`. */
