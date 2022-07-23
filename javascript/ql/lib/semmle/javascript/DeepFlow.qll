@@ -194,6 +194,32 @@ module Deep {
     )
   }
 
+  /**
+   * Holds if the `prop` property of `pred` can flow to `succ` via one or more load-store steps
+   * followed by a load step.
+   *
+   * `hasCall` and `hasReturn` indicate if the paths of the carrying objects contain
+   * calls and returns, respectively.
+   */
+  pragma[nomagic]
+  predicate indirectLoad(
+    DataFlow::SourceNode pred, DataFlow::SourceNode succ, boolean hasCall, boolean hasReturn,
+    string prop
+  ) {
+    exists(DataFlow::SourceNode mid, string midProp |
+      loadStoreStep(pred, mid, prop, midProp) and
+      loadStep(trackNode(mid, hasCall, hasReturn, false, 0), succ, midProp)
+      or
+      exists(boolean call1, boolean return1, boolean call2, boolean return2 |
+        loadStoreStep(pred, mid, prop, midProp) and
+        indirectLoad(trackNode(mid, call1, return1, false, 0), succ, call2, return2, prop) and
+        return1.booleanAnd(call2) = false and
+        hasCall = call1.booleanOr(call2) and
+        hasReturn = return1.booleanOr(return2)
+      )
+    )
+  }
+
   cached
   predicate hasFlowTo(DataFlow::SourceNode source, DataFlow::SourceNode dest) {
     trackNode(source, _, _, false, 0) = dest

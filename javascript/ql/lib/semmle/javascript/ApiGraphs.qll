@@ -8,6 +8,7 @@
 import javascript
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 private import internal.CachedStages
+private import semmle.javascript.DeepFlow
 
 /**
  * Provides classes and predicates for working with the API boundary between the current
@@ -790,6 +791,11 @@ module API {
       ref = pred.getAPropertyRead() and
       lbl = Label::memberFromRef(ref)
       or
+      exists(string prop |
+        Deep::indirectLoad(pred, ref, _, _, prop) and
+        lbl = Label::memberFromPropName(prop)
+      )
+      or
       PromiseFlow::loadStep(pred.getALocalUse(), ref, Promises::valueProp()) and
       lbl = Label::promised()
       or
@@ -978,7 +984,6 @@ module API {
     }
 
     private import semmle.javascript.dataflow.TypeTracking
-    private import semmle.javascript.DeepFlow
     private import semmle.javascript.dataflow.internal.StepSummary
 
     private DataFlow::SourceNode trackUseNode(
@@ -1191,6 +1196,21 @@ module API {
       not exists(pr.getPropertyName()) and
       not exists(getIndirectPropName(pr)) and
       result = unknownMember()
+    }
+
+    ApiLabel memberFromPseudoProperty(string prop) {
+      prop = Promises::valueProp() and
+      result = promised()
+      or
+      prop = Promises::errorProp() and
+      result = promisedError()
+    }
+
+    ApiLabel memberFromPropName(string prop) {
+      result = memberFromPseudoProperty(prop)
+      or
+      not exists(memberFromPseudoProperty(prop)) and
+      result = member(prop)
     }
 
     /** Gets the `instance` edge label. */
