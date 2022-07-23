@@ -460,7 +460,6 @@ module API {
       this = Impl::MkClassInstance(result) or
       this = Impl::MkUse(result) or
       this = Impl::MkDef(result) or
-      this = Impl::MkAsyncFuncResult(result) or
       this = Impl::MkSyntheticCallbackArg(_, _, result)
     }
 
@@ -650,9 +649,6 @@ module API {
         any(Type t).hasUnderlyingType(m, _)
       } or
       MkClassInstance(DataFlow::ClassNode cls) { cls = trackDefNode(_) and hasSemantics(cls) } or
-      MkAsyncFuncResult(DataFlow::FunctionNode f) {
-        f = trackDefNode(_) and f.getFunction().isAsync() and hasSemantics(f)
-      } or
       MkDef(DataFlow::Node nd) { rhs(_, _, nd) } or
       MkUse(DataFlow::Node nd) { use(_, _, nd) } or
       MkSyntheticCallbackArg(DataFlow::Node src, int bound, DataFlow::InvokeNode nd) {
@@ -661,8 +657,7 @@ module API {
 
     class TDef = MkModuleDef or TNonModuleDef;
 
-    class TNonModuleDef =
-      MkModuleExport or MkClassInstance or MkAsyncFuncResult or MkDef or MkSyntheticCallbackArg;
+    class TNonModuleDef = MkModuleExport or MkClassInstance or MkDef or MkSyntheticCallbackArg;
 
     class TUse = MkModuleUse or MkModuleImport or MkUse;
 
@@ -713,9 +708,9 @@ module API {
           )
           or
           exists(DataFlow::FunctionNode fn | fn = pred |
-            not fn.getFunction().isAsync() and
             lbl = Label::return() and
-            rhs = fn.getAReturn()
+            // Only use the synthetic return node for async functions where it represents the Promise creation
+            if fn.getFunction().isAsync() then rhs = fn.getReturnNode() else rhs = fn.getAReturn()
           )
           or
           lbl = Label::promised() and
@@ -756,13 +751,12 @@ module API {
         )
         or
         exists(DataFlow::FunctionNode f |
-          base = MkAsyncFuncResult(f) and
+          f.getFunction().isAsync() and
+          base = MkDef(f.getReturnNode())
+        |
           lbl = Label::promised() and
           rhs = f.getAReturn()
-        )
-        or
-        exists(DataFlow::FunctionNode f |
-          base = MkAsyncFuncResult(f) and
+          or
           lbl = Label::promisedError() and
           rhs = f.getExceptionalReturn()
         )
@@ -1247,7 +1241,7 @@ module API {
         pred = MkDef(nd) and
         f = trackDefNode(nd) and
         lbl = Label::return() and
-        succ = MkAsyncFuncResult(f)
+        succ = MkDef(f.getReturnNode())
       )
       or
       exists(int bound, DataFlow::InvokeNode call |
