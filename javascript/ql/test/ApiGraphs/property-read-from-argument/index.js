@@ -5,5 +5,5 @@ exports.assertNotNull = function (x) {
 
 exports.foo = function(x) {
     exports.assertNotNull(x);
-    sink(x.f); /* MISSING: use=moduleImport("property-read-from-argument").getMember("exports").getMember("assertNotNull").getParameter(0).getMember("f") */ /* use=moduleImport("property-read-from-argument").getMember("exports").getMember("foo").getParameter(0).getMember("f") */
+    sink(x.f); /* MISSING: use=moduleImport("property-read-from-argument").getMember("assertNotNull").getParameter(0).getMember("f") */ /* use=moduleImport("property-read-from-argument").getMember("foo").getParameter(0).getMember("f") */
 }

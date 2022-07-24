@@ -5,5 +5,5 @@ async function readFileUtf8(path: string): Promise<string> {
 }
 
 async function test(path: string) {
-    await readFileUtf8(path); /* use=moduleImport("fs/promises").getMember("exports").getMember("readFile").getReturn() */
+    await readFileUtf8(path); /* use=moduleImport("fs/promises").getMember("readFile").getReturn() */
 }
