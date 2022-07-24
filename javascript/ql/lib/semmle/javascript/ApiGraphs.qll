@@ -458,7 +458,6 @@ module API {
      * Gets the data-flow node that gives rise to this node, if any.
      */
     DataFlow::Node getInducingNode() {
-      this = Impl::MkClassInstance(result) or
       this = Impl::MkUse(result) or
       this = Impl::MkDef(result) or
       this = Impl::MkSyntheticCallbackArg(_, _, result)
@@ -628,7 +627,6 @@ module API {
     cached
     newtype TApiNode =
       MkRoot() or
-      MkClassInstance(DataFlow::ClassNode cls) { cls = trackDefNode(_) and hasSemantics(cls) } or
       MkDef(DataFlow::Node nd) { rhs(_, _, nd) } or
       MkUse(DataFlow::Node nd) { use(_, _, nd) } or
       MkSyntheticCallbackArg(DataFlow::Node src, int bound, DataFlow::InvokeNode nd) {
@@ -637,7 +635,7 @@ module API {
 
     class TDef = TNonModuleDef;
 
-    class TNonModuleDef = MkClassInstance or MkDef or MkSyntheticCallbackArg;
+    class TNonModuleDef = MkDef or MkSyntheticCallbackArg;
 
     class TUse = MkUse;
 
@@ -707,7 +705,7 @@ module API {
         )
         or
         exists(DataFlow::ClassNode cls, string name |
-          base = MkClassInstance(cls) and
+          base = MkUse(cls.getConstructor().getReceiver()) and
           lbl = Label::member(name)
         |
           rhs = cls.getInstanceMethod(name)
@@ -833,10 +831,7 @@ module API {
         exists(DataFlow::SourceNode src, DataFlow::SourceNode pred |
           use(base, src) and
           pred = trackUseNode(src, false, 0) and
-          propertyRead(pred, lbl, ref) and
-          // `module.exports` is special: it is a use of a def-node, not a use-node,
-          // so we want to exclude it here
-          (base instanceof TNonModuleDef or base instanceof TUse)
+          propertyRead(pred, lbl, ref)
         )
         or
         // invocations
@@ -862,11 +857,16 @@ module API {
           ref = fn.getReceiver()
         )
         or
-        exists(DataFlow::Node def, DataFlow::ClassNode cls, int i |
+        exists(DataFlow::Node def, DataFlow::ClassNode cls |
           rhs(base, def) and cls = trackDefNode(def)
         |
-          lbl = Label::parameter(i) and
-          ref = cls.getConstructor().getParameter(i)
+          exists(int i |
+            lbl = Label::parameter(i) and
+            ref = cls.getConstructor().getParameter(i)
+          )
+          or
+          lbl = Label::instance() and
+          ref = cls.getConstructor().getReceiver()
         )
         or
         exists(DataFlow::InvokeNode call |
@@ -974,10 +974,13 @@ module API {
      */
     cached
     predicate use(TApiNode nd, DataFlow::Node ref) {
-      exists(DataFlow::ClassNode cls | nd = MkClassInstance(cls) |
-        ref = cls.getAReceiverNode()
-        or
-        ref = cls.(DataFlow::ClassNode::FunctionStyleClass).getAPrototypeReference()
+      exists(DataFlow::ClassNode cls |
+        nd = MkUse(cls.getConstructor().getReceiver()) and
+        ref =
+          [
+            cls.getAReceiverNode(),
+            cls.(DataFlow::ClassNode::FunctionStyleClass).getAPrototypeReference()
+          ]
       )
       or
       nd = MkUse(ref)
@@ -1039,12 +1042,6 @@ module API {
       exists(DataFlow::Node rhs |
         rhs(pred, lbl, rhs) and
         succ = MkDef(rhs)
-      )
-      or
-      exists(DataFlow::Node def |
-        rhs(pred, def) and
-        lbl = Label::instance() and
-        succ = MkClassInstance(trackDefNode(def))
       )
       or
       exists(DataFlow::Node nd, DataFlow::FunctionNode f |
