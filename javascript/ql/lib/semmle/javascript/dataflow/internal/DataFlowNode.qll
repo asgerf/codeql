@@ -7,10 +7,10 @@
 private import javascript
 
 /**
- * The raw data type underlying `DataFlow::Node`.
+ * The raw data type underlying `DataFlow::Node` and `API::Node`.
  */
 cached
-newtype TNode =
+newtype TDataFlowNodeOrApiNode =
   TValueNode(AST::ValueNode nd) or
   TSsaDefNode(SsaDefinition d) or
   TCapturedVariableNode(LocalVariable v) { v.isCaptured() } or
@@ -31,4 +31,18 @@ newtype TNode =
   TExceptionalFunctionReturnNode(Function f) or
   TExceptionalInvocationReturnNode(InvokeExpr e) or
   TGlobalAccessPathRoot() or
-  TTemplatePlaceholderTag(Templating::TemplatePlaceholderTag tag)
+  TTemplatePlaceholderTag(Templating::TemplatePlaceholderTag tag) or
+  // API nodes - these must be generated at a later stage than DataFlow::Node
+  TApiSyntheticCallbackArg(DataFlow::CallNode call) {
+    Deep::trackNode(_, _, _, true, _).flowsTo(call.getCalleeNode())
+  }
+
+/**
+ * The raw data type underlying `DataFlow::Node`.
+ */
+class TNode =
+  TValueNode or TSsaDefNode or TCapturedVariableNode or TPropNode or TRestPatternNode or
+      TElementPatternNode or TElementNode or TReflectiveCallNode or TThisNode or
+      TDestructuredModuleImportNode or THtmlAttributeNode or TFunctionReturnNode or
+      TExceptionalFunctionReturnNode or TExceptionalInvocationReturnNode or TGlobalAccessPathRoot or
+      TTemplatePlaceholderTag;

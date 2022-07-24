@@ -9,6 +9,7 @@ import javascript
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 private import internal.CachedStages
 private import semmle.javascript.DeepFlow
+private import semmle.javascript.dataflow.internal.DataFlowNode
 
 /**
  * Provides classes and predicates for working with the API boundary between the current
@@ -460,7 +461,7 @@ module API {
     DataFlow::Node getInducingNode() {
       this = Impl::MkUse(result) or
       this = Impl::MkDef(result) or
-      this = Impl::MkSyntheticCallbackArg(result)
+      this = Impl::MkDef(TApiSyntheticCallbackArg(result))
     }
 
     /**
@@ -627,15 +628,12 @@ module API {
     cached
     newtype TApiNode =
       MkRoot() or
-      MkDef(DataFlow::Node nd) { rhs(_, _, nd) } or
-      MkUse(DataFlow::Node nd) { use(_, _, nd) } or
-      MkSyntheticCallbackArg(DataFlow::CallNode call) {
-        Deep::trackNode(_, _, _, true, _).flowsTo(call.getCalleeNode())
-      }
+      MkDef(TDataFlowNodeOrApiNode nd) { rhs(_, _, nd) } or
+      MkUse(DataFlow::Node nd) { use(_, _, nd) }
 
     class TDef = TNonModuleDef;
 
-    class TNonModuleDef = MkDef or MkSyntheticCallbackArg;
+    class TNonModuleDef = MkDef;
 
     class TUse = MkUse;
 
@@ -644,7 +642,7 @@ module API {
      * incoming edge from `base` labeled `lbl` in the API graph.
      */
     cached
-    predicate rhs(TApiNode base, Label::ApiLabel lbl, DataFlow::Node rhs) {
+    predicate rhs(TApiNode base, Label::ApiLabel lbl, TDataFlowNodeOrApiNode rhs) {
       hasSemantics(rhs) and
       (
         base = MkRoot() and
@@ -745,6 +743,12 @@ module API {
         decoratorPropEdge(base, lbl, write) and
         rhs = write.getRhs()
       )
+      or
+      exists(int bound, DataFlow::CallNode call |
+        call = getAPromisifiedInvocation(base, bound) and
+        lbl = Label::parameter(bound + call.getNumArgument()) and
+        rhs = TApiSyntheticCallbackArg(call)
+      )
     }
 
     /**
@@ -777,7 +781,7 @@ module API {
      * Holds if `rhs` is the right-hand side of a definition of node `nd`.
      */
     cached
-    predicate rhs(TApiNode nd, DataFlow::Node rhs) { nd = MkDef(rhs) }
+    predicate rhs(TApiNode nd, TDataFlowNodeOrApiNode rhs) { nd = MkDef(rhs) }
 
     /**
      * Holds if `ref` is a read of a property described by `lbl` on `pred`.
@@ -870,7 +874,7 @@ module API {
         )
         or
         exists(DataFlow::CallNode call |
-          base = MkSyntheticCallbackArg(call) and
+          base = MkDef(TApiSyntheticCallbackArg(call)) and
           lbl = Label::parameter(1) and
           ref = Deep::getLoad(call, Promises::valueProp())
         )
@@ -1024,7 +1028,7 @@ module API {
         succ = MkUse(ref)
       )
       or
-      exists(DataFlow::Node rhs |
+      exists(TDataFlowNodeOrApiNode rhs |
         rhs(pred, lbl, rhs) and
         succ = MkDef(rhs)
       )
@@ -1034,12 +1038,6 @@ module API {
         f = trackDefNode(nd) and
         lbl = Label::return() and
         succ = MkDef(f.getReturnNode())
-      )
-      or
-      exists(int bound, DataFlow::CallNode call |
-        call = getAPromisifiedInvocation(pred, bound) and
-        lbl = Label::parameter(bound + call.getNumArgument()) and
-        succ = MkSyntheticCallbackArg(call)
       )
     }
 
@@ -1398,4 +1396,6 @@ private predicate imports(DataFlow::Node imp, string m) {
 bindingset[name]
 private predicate isViableExternalPackageName(string name) { name.regexpMatch("[^./].*") }
 
-private predicate hasSemantics(DataFlow::Node nd) { not nd.getTopLevel().isExterns() }
+private predicate hasSemantics(TDataFlowNodeOrApiNode nd) {
+  not nd.(DataFlow::Node).getTopLevel().isExterns()
+}
