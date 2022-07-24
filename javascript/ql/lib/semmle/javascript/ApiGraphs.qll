@@ -1352,7 +1352,9 @@ module API {
         /** Gets the type name. */
         string getTypeName() { result = typeName }
 
-        override string toString() { result = "type(\"" + moduleName + "\", \"" + typeName + "\")" }
+        override string toString() {
+          result = "typeUse(\"" + moduleName + "\",\"" + typeName + "\")"
+        }
       }
 
       /** A label for a member with an unknown name. */

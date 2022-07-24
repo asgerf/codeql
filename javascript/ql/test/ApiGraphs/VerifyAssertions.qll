@@ -46,7 +46,7 @@ class Assertion extends Comment {
   Assertion() {
     exists(string txt, string rex |
       txt = this.getText().trim() and
-      rex = ".*?((?:MISSING: )?)(def|use)=([\\w\\(\\)\"\\.\\-\\/\\@\\:]*).*"
+      rex = ".*?((?:MISSING: )?)(def|use)=([\\w\\(\\)\"\\.\\-\\/\\@\\:,]*).*"
     |
       polarity = txt.regexpCapture(rex, 1) and
       expectedKind = txt.regexpCapture(rex, 2) and
@@ -59,7 +59,7 @@ class Assertion extends Comment {
     // matches a single edge. E.g. `getParameter(1)` or `getMember("foo")`.
     // The lookbehind/lookahead ensure that the boundary is correct, that is
     // either the edge is next to a ".", or it's the end of the string.
-    result = path.regexpFind("(?<=\\.|^)([\\w\\(\\)\"\\-\\/\\@\\:]+)(?=\\.|$)", i, _).trim()
+    result = path.regexpFind("(?<=\\.|^)([\\w\\(\\)\"\\-\\/\\@\\:,]+)(?=\\.|$)", i, _).trim()
   }
 
   int getPathLength() { result = max(int i | exists(this.getEdgeLabel(i))) + 1 }
