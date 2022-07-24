@@ -1,9 +1,11 @@
-exports.assertNotNull = function (x) {
+const testlib = require('testlib');
+
+function assertNotNull(x) {
     if (x === null)
         throw new TypeError();
 }
 
-exports.foo = function(x) {
-    exports.assertNotNull(x);
-    sink(x.f); /* MISSING: use=moduleImport("property-read-from-argument").getMember("assertNotNull").getParameter(0).getMember("f") */ /* use=moduleImport("property-read-from-argument").getMember("foo").getParameter(0).getMember("f") */
-}
+testlib.foo(function(x) {
+    assertNotNull(x);
+    sink(x.f); /* use=moduleImport("testlib").getMember("foo").getParameter(0).getParameter(0).getMember("f") */
+});

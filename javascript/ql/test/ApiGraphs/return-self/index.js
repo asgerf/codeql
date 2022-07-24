@@ -1,6 +1,10 @@
+const testlib = require('testlib');
+
 export class A {
     foo() {
-        return this; /* def=moduleImport("return-self").getMember("A").getInstance().getMember("foo").getReturn() */
+        return this; /* def=moduleImport("testlib").getParameter(0).getMember("A").getInstance().getMember("foo").getReturn() */
     }
-    bar(x) { } /* use=moduleImport("return-self").getMember("A").getInstance().getMember("bar").getParameter(0) */
+    bar(x) { } /* use=moduleImport("testlib").getParameter(0).getMember("A").getInstance().getMember("bar").getParameter(0) */
 }
+
+testlib({ A });

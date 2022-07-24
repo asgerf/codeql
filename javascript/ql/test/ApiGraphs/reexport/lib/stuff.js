@@ -1,4 +1,4 @@
-function foo(x) { /* use=moduleImport("reexport").getMember("other").getMember("bar").getParameter(0) */
+function foo(x) { /* use=moduleImport("testlib").getParameter(0).getMember("other").getMember("bar").getParameter(0) */
     return x + 1;
 }
 

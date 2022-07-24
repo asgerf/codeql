@@ -1,7 +1,7 @@
-const fs = require('fs');
+const testlib = require('testlib');
 
-exports.foo = function (cb) {
+testlib.foo(function (cb) {
     if (!cb)
         cb = function () { };
-    cb(fs.readFileSync("/etc/passwd")); /* def=moduleImport("branching-flow").getMember("foo").getParameter(0).getParameter(0) */
-};
+    cb(fs.readFileSync("/etc/passwd")); /* use=moduleImport("testlib").getMember("foo").getParameter(0).getParameter(0) */
+});
