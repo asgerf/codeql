@@ -172,7 +172,7 @@ module API {
     CallNode getMaybePromisifiedCall() {
       result = this.getACall()
       or
-      result = Impl::getAPromisifiedInvocation(this, _, _)
+      result = Impl::getAPromisifiedInvocation(this, _)
     }
 
     /**
@@ -460,7 +460,7 @@ module API {
     DataFlow::Node getInducingNode() {
       this = Impl::MkUse(result) or
       this = Impl::MkDef(result) or
-      this = Impl::MkSyntheticCallbackArg(_, _, result)
+      this = Impl::MkSyntheticCallbackArg(result)
     }
 
     /**
@@ -629,8 +629,8 @@ module API {
       MkRoot() or
       MkDef(DataFlow::Node nd) { rhs(_, _, nd) } or
       MkUse(DataFlow::Node nd) { use(_, _, nd) } or
-      MkSyntheticCallbackArg(DataFlow::Node src, int bound, DataFlow::InvokeNode nd) {
-        trackUseNode(src, true, bound).flowsTo(nd.getCalleeNode())
+      MkSyntheticCallbackArg(DataFlow::CallNode call) {
+        Deep::trackNode(_, _, _, true, _).flowsTo(call.getCalleeNode())
       }
 
     class TDef = TNonModuleDef;
@@ -869,10 +869,10 @@ module API {
           ref = cls.getConstructor().getReceiver()
         )
         or
-        exists(DataFlow::InvokeNode call |
-          base = MkSyntheticCallbackArg(_, _, call) and
+        exists(DataFlow::CallNode call |
+          base = MkSyntheticCallbackArg(call) and
           lbl = Label::parameter(1) and
-          ref = awaited(call)
+          ref = Deep::getLoad(call, Promises::valueProp())
         )
         or
         decoratorDualEdge(base, lbl, ref)
@@ -1013,21 +1013,6 @@ module API {
       Deep::hasFlowTo(result, nd.getALocalSource())
     }
 
-    private DataFlow::SourceNode awaited(DataFlow::InvokeNode call, DataFlow::TypeTracker t) {
-      t.startInPromise() and
-      exists(MkSyntheticCallbackArg(_, _, call)) and
-      result = call
-      or
-      exists(DataFlow::TypeTracker t2 | result = awaited(call, t2).track(t2, t))
-    }
-
-    /**
-     * Gets a node holding the resolved value of promise `call`.
-     */
-    private DataFlow::Node awaited(DataFlow::InvokeNode call) {
-      result = awaited(call, DataFlow::TypeTracker::end())
-    }
-
     /**
      * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
      */
@@ -1051,9 +1036,10 @@ module API {
         succ = MkDef(f.getReturnNode())
       )
       or
-      exists(int bound, DataFlow::InvokeNode call |
+      exists(int bound, DataFlow::CallNode call |
+        call = getAPromisifiedInvocation(pred, bound) and
         lbl = Label::parameter(bound + call.getNumArgument()) and
-        call = getAPromisifiedInvocation(pred, bound, succ)
+        succ = MkSyntheticCallbackArg(call)
       )
     }
 
@@ -1071,10 +1057,10 @@ module API {
      * `bound` arguments have been bound.
      */
     cached
-    DataFlow::InvokeNode getAPromisifiedInvocation(TApiNode callee, int bound, TApiNode succ) {
-      exists(DataFlow::SourceNode src |
-        Impl::use(callee, src) and
-        succ = Impl::MkSyntheticCallbackArg(src, bound, result)
+    DataFlow::InvokeNode getAPromisifiedInvocation(TApiNode callee, int bound) {
+      exists(DataFlow::SourceNode cl |
+        Impl::use(callee, cl) and
+        Deep::trackNode(cl, _, _, true, bound).flowsTo(result.getCalleeNode())
       )
     }
   }
@@ -1094,7 +1080,7 @@ module API {
     InvokeNode() {
       this = callee.getReturn().asSource() or
       this = callee.getInstance().asSource() or
-      this = Impl::getAPromisifiedInvocation(callee, _, _)
+      this = Impl::getAPromisifiedInvocation(callee, _)
     }
 
     /** Gets the API node for the `i`th parameter of this invocation. */

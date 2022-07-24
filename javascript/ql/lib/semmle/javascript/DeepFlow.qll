@@ -194,6 +194,20 @@ module Deep {
     )
   }
 
+  pragma[inline]
+  DataFlow::SourceNode getLoad(DataFlow::SourceNode base, string prop) {
+    exists(DataFlow::SourceNode ref, boolean call1, boolean return1 |
+      ref = trackNode(base, call1, return1, false, 0)
+    |
+      loadStep(ref, result, prop)
+      or
+      exists(boolean call2, boolean return2 |
+        indirectLoad(ref, result, call2, return2, prop) and
+        return1.booleanAnd(call2) = false
+      )
+    )
+  }
+
   cached
   predicate hasFlowTo(DataFlow::SourceNode source, DataFlow::SourceNode dest) {
     trackNode(source, _, _, false, 0) = dest
