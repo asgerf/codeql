@@ -162,7 +162,7 @@ module Deep {
       exists(boolean return1, boolean call1, boolean return2, boolean call2 |
         storeStep(pred, obj, prop) and
         indirectLoad(trackNode(obj, call1, return1, false, 0), succ, call2, return2, prop) and
-        return1.booleanAnd(call2) = false and
+        call1.booleanAnd(return2) = false and
         hasCall = call1.booleanOr(call2) and
         hasReturn = return1.booleanOr(return2)
       )
@@ -188,7 +188,7 @@ module Deep {
       exists(boolean call1, boolean return1, boolean call2, boolean return2 |
         loadStoreStep(pred, mid, prop, midProp) and
         indirectLoad(trackNode(mid, call1, return1, false, 0), succ, call2, return2, prop) and
-        return1.booleanAnd(call2) = false and
+        call1.booleanAnd(return2) = false and
         hasCall = call1.booleanOr(call2) and
         hasReturn = return1.booleanOr(return2)
       )
@@ -204,7 +204,7 @@ module Deep {
       or
       exists(boolean call2, boolean return2 |
         indirectLoad(ref, result, call2, return2, prop) and
-        return1.booleanAnd(call2) = false
+        call1.booleanAnd(return2) = false
       )
     )
   }
