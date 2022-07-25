@@ -33,9 +33,7 @@ newtype TDataFlowNodeOrApiNode =
   TGlobalAccessPathRoot() or
   TTemplatePlaceholderTag(Templating::TemplatePlaceholderTag tag) or
   // API nodes - these must be generated at a later stage than DataFlow::Node
-  TApiSyntheticCallbackArg(DataFlow::CallNode call) {
-    Deep::trackNode(_, _, _, true, _).flowsTo(call.getCalleeNode())
-  }
+  TApiSyntheticCallbackArg(DataFlow::CallNode call) { Deep::getABoundInvocation(_, true, _) = call }
 
 /**
  * The raw data type underlying `DataFlow::Node`.

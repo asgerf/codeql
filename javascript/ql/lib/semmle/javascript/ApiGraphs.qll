@@ -758,21 +758,37 @@ module API {
      * The receiver is considered to be argument -1.
      */
     private predicate argumentPassing(TApiNode base, int i, DataFlow::Node arg) {
+      exists(DataFlow::Node use, DataFlow::SourceNode pred |
+        use(base, use) and pred = trackUseNode(use)
+      |
+        arg = pred.getAnInvocation().getArgument(i)
+        or
+        arg = pred.getACall().getReceiver() and
+        i = -1
+        or
+        exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback | pred.flowsTo(callback) |
+          pin.isPartialArgument(callback, arg, i)
+          or
+          arg = pin.getBoundReceiver(callback) and
+          i = -1
+        )
+      )
+      or
       exists(DataFlow::Node use, DataFlow::SourceNode pred, int bound |
-        use(base, use) and pred = trackUseNode(use, _, bound)
+        use(base, use) and pred = Deep::getABoundUseSite(use, _, bound) and bound > 0
       |
         arg = pred.getAnInvocation().getArgument(i - bound)
         or
         arg = pred.getACall().getReceiver() and
-        bound = 0 and
-        i = -1
+        i = -1 and
+        bound = 0
         or
         exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback | pred.flowsTo(callback) |
           pin.isPartialArgument(callback, arg, i - bound)
           or
           arg = pin.getBoundReceiver(callback) and
-          bound = 0 and
-          i = -1
+          i = -1 and
+          bound = 0
         )
       )
     }
@@ -834,7 +850,7 @@ module API {
         // property reads
         exists(DataFlow::SourceNode src, DataFlow::SourceNode pred |
           use(base, src) and
-          pred = trackUseNode(src, false, 0) and
+          pred = trackUseNode(src) and
           propertyRead(pred, lbl, ref)
         )
         or
@@ -993,19 +1009,13 @@ module API {
     private import semmle.javascript.dataflow.TypeTracking
     private import semmle.javascript.dataflow.internal.StepSummary
 
-    private DataFlow::SourceNode trackUseNode(
-      DataFlow::SourceNode nd, boolean promisified, int boundArgs
-    ) {
-      use(_, nd) and
-      result = Deep::trackNode(nd, _, _, promisified, boundArgs)
-    }
-
     /**
      * Gets a node that is inter-procedurally reachable from `nd`, which is a use of some node.
      */
     cached
     DataFlow::SourceNode trackUseNode(DataFlow::SourceNode nd) {
-      result = trackUseNode(nd, false, 0)
+      use(_, nd) and
+      Deep::hasFlowTo(nd, result)
     }
 
     /**
@@ -1058,7 +1068,7 @@ module API {
     DataFlow::InvokeNode getAPromisifiedInvocation(TApiNode callee, int bound) {
       exists(DataFlow::SourceNode cl |
         Impl::use(callee, cl) and
-        Deep::trackNode(cl, _, _, true, bound).flowsTo(result.getCalleeNode())
+        result = Deep::getABoundInvocation(cl, true, bound)
       )
     }
   }

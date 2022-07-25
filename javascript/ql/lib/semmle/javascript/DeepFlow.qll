@@ -18,14 +18,9 @@ module Deep {
     )
   }
 
-  private predicate initialState(
-    DataFlow::SourceNode node, boolean hasCall, boolean hasReturn, boolean promisified,
-    int boundArgs
-  ) {
+  private predicate initialState(DataFlow::SourceNode node, boolean hasCall, boolean hasReturn) {
     shouldTrack(node) and
     hasReturn = false and
-    promisified = false and
-    boundArgs = 0 and
     if node instanceof DataFlow::ParameterNode then hasCall = true else hasCall = false
   }
 
@@ -98,52 +93,95 @@ module Deep {
    */
   pragma[nomagic]
   cached
-  DataFlow::SourceNode trackNode(
-    DataFlow::SourceNode node, boolean hasCall, boolean hasReturn, boolean promisified,
-    int boundArgs
-  ) {
-    initialState(node, hasCall, hasReturn, promisified, boundArgs) and
+  DataFlow::SourceNode trackNode(DataFlow::SourceNode node, boolean hasCall, boolean hasReturn) {
+    initialState(node, hasCall, hasReturn) and
     result = node
     or
     exists(DataFlow::SourceNode mid |
-      mid = trackNode(node, _, hasReturn, promisified, boundArgs) and
+      mid = trackNode(node, _, hasReturn) and
       callStep(mid, result) and
       hasCall = true
     )
     or
     exists(DataFlow::SourceNode mid |
-      mid = trackNode(node, false, _, promisified, boundArgs) and
+      mid = trackNode(node, false, _) and
       returnStep(mid, result) and
       hasReturn = true and
       hasCall = false
     )
     or
-    levelStep(trackNode(node, hasCall, hasReturn, promisified, boundArgs), result)
+    levelStep(trackNode(node, hasCall, hasReturn), result)
     or
     // note: for now, mass assignment steps are simply treated as level steps
-    massAssignmentStep(trackNode(node, hasCall, hasReturn, promisified, boundArgs), result)
+    massAssignmentStep(trackNode(node, hasCall, hasReturn), result)
     or
     exists(boolean call1, boolean call2, boolean return1, boolean return2 |
-      derivedPropStep(trackNode(node, call1, return1, promisified, boundArgs), result, call2,
-        return2) and
+      derivedPropStep(trackNode(node, call1, return1), result, call2, return2) and
       call1.booleanAnd(return2) = false and
       hasCall = call1.booleanOr(call2) and
       hasReturn = return1.booleanOr(return2)
     )
-    or
-    // promisification
+  }
+
+  pragma[nomagic]
+  private predicate boundInvocationStep(
+    DataFlow::SourceNode pred, DataFlow::SourceNode succ, boolean promisified, int boundArgs
+  ) {
     exists(Promisify::PromisifyCall promisify |
-      trackNode(node, hasCall, hasReturn, false, boundArgs).flowsTo(promisify.getArgument(0)) and
+      pred = promisify.getArgument(0).getALocalSource() and
+      succ = promisify and
       promisified = true and
-      result = promisify
+      boundArgs = 0
     )
     or
-    // partial invocation
-    exists(DataFlow::PartialInvokeNode pin, DataFlow::Node pred, int predBoundArgs |
-      trackNode(node, hasCall, hasReturn, promisified, predBoundArgs).flowsTo(pred) and
-      result = pin.getBoundFunction(pred, boundArgs - predBoundArgs) and
-      boundArgs in [0 .. 10]
+    exists(DataFlow::PartialInvokeNode partial |
+      succ = partial.getBoundFunction(pred.getALocalUse(), boundArgs) and
+      promisified = false
     )
+  }
+
+  private DataFlow::SourceNode getABoundUse(
+    DataFlow::SourceNode source, boolean hasCall, boolean hasReturn, boolean promisified,
+    int boundArgs
+  ) {
+    boundInvocationStep(trackNode(source, hasCall, hasReturn), result, promisified, boundArgs)
+    or
+    exists(
+      DataFlow::SourceNode mid, boolean call1, boolean return1, boolean promisified1,
+      int boundArgs1, boolean call2, boolean return2, boolean promisified2, int boundArgs2
+    |
+      mid = getABoundUse(source, call1, return1, promisified1, boundArgs1) and
+      boundInvocationStep(trackNode(mid, call2, return2), result, promisified2, boundArgs2) and
+      promisified = promisified1.booleanOr(promisified2) and
+      boundArgs = boundArgs1 + boundArgs2 and
+      boundArgs in [0 .. 10] and
+      call1.booleanAnd(return2) = false and
+      hasCall = call1.booleanOr(call2) and
+      hasReturn = return1.booleanOr(return2)
+    )
+  }
+
+  /**
+   * Gets a source node referring to a bound version of `originalCallee`.
+   */
+  DataFlow::SourceNode getABoundUseSite(
+    DataFlow::SourceNode originalCallee, boolean promisified, int boundArgs
+  ) {
+    exists(boolean call1, boolean return1, boolean call2, boolean return2 |
+      result =
+        trackNode(getABoundUse(originalCallee, call1, return1, promisified, boundArgs), call2,
+          return2) and
+      call1.booleanAnd(return2) = false
+    )
+  }
+
+  /**
+   * Gets an invocation of `originalCallee` that has been through one or more promisification and/or argument-binding steps.
+   */
+  DataFlow::CallNode getABoundInvocation(
+    DataFlow::SourceNode originalCallee, boolean promisified, int boundArgs
+  ) {
+    result = getABoundUseSite(originalCallee, promisified, boundArgs).getACall()
   }
 
   /**
@@ -158,11 +196,11 @@ module Deep {
   ) {
     exists(DataFlow::SourceNode obj, string prop |
       storeStep(pred, obj, prop) and
-      loadStep(trackNode(obj, hasCall, hasReturn, false, 0), succ, prop)
+      loadStep(trackNode(obj, hasCall, hasReturn), succ, prop)
       or
       exists(boolean return1, boolean call1, boolean return2, boolean call2 |
         storeStep(pred, obj, prop) and
-        indirectLoad(trackNode(obj, call1, return1, false, 0), succ, call2, return2, prop) and
+        indirectLoad(trackNode(obj, call1, return1), succ, call2, return2, prop) and
         call1.booleanAnd(return2) = false and
         hasCall = call1.booleanOr(call2) and
         hasReturn = return1.booleanOr(return2)
@@ -184,11 +222,11 @@ module Deep {
   ) {
     exists(DataFlow::SourceNode mid, string midProp |
       loadStoreStep(pred, mid, prop, midProp) and
-      loadStep(trackNode(mid, hasCall, hasReturn, false, 0), succ, midProp)
+      loadStep(trackNode(mid, hasCall, hasReturn), succ, midProp)
       or
       exists(boolean call1, boolean return1, boolean call2, boolean return2 |
         loadStoreStep(pred, mid, prop, midProp) and
-        indirectLoad(trackNode(mid, call1, return1, false, 0), succ, call2, return2, prop) and
+        indirectLoad(trackNode(mid, call1, return1), succ, call2, return2, prop) and
         call1.booleanAnd(return2) = false and
         hasCall = call1.booleanOr(call2) and
         hasReturn = return1.booleanOr(return2)
@@ -199,7 +237,7 @@ module Deep {
   pragma[inline]
   DataFlow::SourceNode getLoad(DataFlow::SourceNode base, string prop) {
     exists(DataFlow::SourceNode ref, boolean call1, boolean return1 |
-      ref = trackNode(base, call1, return1, false, 0)
+      ref = trackNode(base, call1, return1)
     |
       loadStep(ref, result, prop)
       or
@@ -212,7 +250,7 @@ module Deep {
 
   cached
   predicate hasFlowTo(DataFlow::SourceNode source, DataFlow::SourceNode dest) {
-    trackNode(source, _, _, false, 0) = dest
+    trackNode(source, _, _) = dest
   }
 
   class Node extends TNode instanceof DataFlow::SourceNode {
