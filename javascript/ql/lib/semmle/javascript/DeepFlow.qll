@@ -10,6 +10,7 @@ module Deep {
     not node.getTopLevel().isExterns() and
     not node.getAstNode().isAmbient() and
     not node.getFile().getBaseName().matches("%.d.ts") and
+    // TODO: maybe don't track 'undefined' around?
     // only track synthetic return node of async/generator functions, where it represents an allocation
     not exists(Function f |
       DataFlow::functionReturnNode(node, f) and
