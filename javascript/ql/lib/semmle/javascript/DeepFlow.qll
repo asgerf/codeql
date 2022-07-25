@@ -96,6 +96,7 @@ module Deep {
    * `hasCall` and `hasReturn` indicate if the path contains calls and returns, respectively.
    */
   pragma[nomagic]
+  cached
   DataFlow::SourceNode trackNode(
     DataFlow::SourceNode node, boolean hasCall, boolean hasReturn, boolean promisified,
     int boundArgs
@@ -151,7 +152,7 @@ module Deep {
    * calls and returns, respectively.
    */
   pragma[nomagic]
-  predicate derivedPropStep(
+  private predicate derivedPropStep(
     DataFlow::SourceNode pred, DataFlow::SourceNode succ, boolean hasCall, boolean hasReturn
   ) {
     exists(DataFlow::SourceNode obj, string prop |

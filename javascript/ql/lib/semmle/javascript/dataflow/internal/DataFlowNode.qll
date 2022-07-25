@@ -40,6 +40,7 @@ newtype TDataFlowNodeOrApiNode =
 /**
  * The raw data type underlying `DataFlow::Node`.
  */
+cached
 class TNode =
   TValueNode or TSsaDefNode or TCapturedVariableNode or TPropNode or TRestPatternNode or
       TElementPatternNode or TElementNode or TReflectiveCallNode or TThisNode or

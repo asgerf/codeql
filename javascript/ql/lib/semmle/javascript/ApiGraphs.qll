@@ -643,7 +643,7 @@ module API {
      */
     cached
     predicate rhs(TApiNode base, Label::ApiLabel lbl, TDataFlowNodeOrApiNode rhs) {
-      hasSemantics(rhs) and
+      not isInExterns(rhs) and
       (
         base = MkRoot() and
         exists(EntryPoint e |
@@ -811,7 +811,7 @@ module API {
      */
     cached
     predicate use(TApiNode base, Label::ApiLabel lbl, DataFlow::Node ref) {
-      hasSemantics(ref) and
+      not isInExterns(ref) and
       (
         base = MkRoot() and
         exists(EntryPoint e |
@@ -1384,7 +1384,7 @@ module API {
 private predicate imports(DataFlow::Node imp, string m) {
   imp = DataFlow::moduleImport(m) and
   isViableExternalPackageName(m) and
-  hasSemantics(imp)
+  not isInExterns(imp)
 }
 
 /**
@@ -1396,6 +1396,5 @@ private predicate imports(DataFlow::Node imp, string m) {
 bindingset[name]
 private predicate isViableExternalPackageName(string name) { name.regexpMatch("[^./].*") }
 
-private predicate hasSemantics(TDataFlowNodeOrApiNode nd) {
-  not nd.(DataFlow::Node).getTopLevel().isExterns()
-}
+pragma[noinline]
+private predicate isInExterns(DataFlow::Node nd) { nd.getTopLevel().isExterns() }
