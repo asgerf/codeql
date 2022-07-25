@@ -127,9 +127,7 @@ module API {
      * See `asSource()` for examples.
      */
     pragma[inline]
-    DataFlow::Node getAValueReachableFromSource() {
-      Impl::trackUseNode(this.asSource()).flowsTo(result)
-    }
+    DataFlow::Node getAValueReachableFromSource() { trackUseNode(this.asSource()).flowsTo(result) }
 
     /**
      * Get a data-flow node where this value enters the current codebase.
@@ -212,7 +210,7 @@ module API {
      * This is similar to `asSink()` but additionally includes nodes that transitively reach a sink by data flow.
      * See `asSink()` for examples.
      */
-    DataFlow::Node getAValueReachingSink() { result = Impl::trackDefNode(this.asSink()) }
+    DataFlow::Node getAValueReachingSink() { result = trackDefNode(this.asSink()) }
 
     /** DEPRECATED. This predicate has been renamed to `asSink`. */
     deprecated DataFlow::Node getARhs() { result = this.asSink() }
@@ -758,24 +756,13 @@ module API {
      * The receiver is considered to be argument -1.
      */
     private predicate argumentPassing(TApiNode base, int i, DataFlow::Node arg) {
-      exists(DataFlow::Node use, DataFlow::SourceNode pred |
-        use(base, use) and pred = trackUseNode(use)
-      |
-        arg = pred.getAnInvocation().getArgument(i)
-        or
-        arg = pred.getACall().getReceiver() and
-        i = -1
-        or
-        exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback | pred.flowsTo(callback) |
-          pin.isPartialArgument(callback, arg, i)
-          or
-          arg = pin.getBoundReceiver(callback) and
-          i = -1
-        )
-      )
-      or
       exists(DataFlow::Node use, DataFlow::SourceNode pred, int bound |
-        use(base, use) and pred = Deep::getABoundUseSite(use, _, bound) and bound > 0
+        use(base, use) and
+        (
+          pred = trackUseNode(use) and bound = 0
+          or
+          pred = Deep::getABoundUseSite(use, _, bound)
+        )
       |
         arg = pred.getAnInvocation().getArgument(i - bound)
         or
@@ -1008,24 +995,6 @@ module API {
 
     private import semmle.javascript.dataflow.TypeTracking
     private import semmle.javascript.dataflow.internal.StepSummary
-
-    /**
-     * Gets a node that is inter-procedurally reachable from `nd`, which is a use of some node.
-     */
-    cached
-    DataFlow::SourceNode trackUseNode(DataFlow::SourceNode nd) {
-      use(_, nd) and
-      Deep::hasFlowTo(nd, result)
-    }
-
-    /**
-     * Gets a node that inter-procedurally flows into `nd`, which is a definition of some node.
-     */
-    cached
-    DataFlow::SourceNode trackDefNode(DataFlow::Node nd) {
-      rhs(_, nd) and
-      Deep::hasFlowTo(result, nd.getALocalSource())
-    }
 
     /**
      * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
@@ -1408,3 +1377,17 @@ private predicate isViableExternalPackageName(string name) { name.regexpMatch("[
 
 pragma[noinline]
 private predicate isInExterns(DataFlow::Node nd) { nd.getTopLevel().isExterns() }
+
+/**
+ * Gets a node that is inter-procedurally reachable from `nd`, which is a use of some node.
+ */
+pragma[inline]
+private DataFlow::SourceNode trackUseNode(DataFlow::SourceNode nd) { Deep::hasFlowTo(nd, result) }
+
+/**
+ * Gets a node that inter-procedurally flows into `nd`, which is a definition of some node.
+ */
+pragma[inline]
+private DataFlow::SourceNode trackDefNode(DataFlow::Node nd) {
+  Deep::hasFlowTo(result, nd.getALocalSource())
+}
