@@ -266,39 +266,4 @@ module Deep {
   predicate hasFlowTo(DataFlow::SourceNode source, DataFlow::SourceNode dest) {
     trackNode(source, _, _) = dest
   }
-
-  class Node extends TNode instanceof DataFlow::SourceNode {
-    string toString() { result = this.(DataFlow::SourceNode).toString() }
-
-    predicate hasLocationInfo(
-      string filepath, int startline, int startcolumn, int endline, int endcolumn
-    ) {
-      this.(DataFlow::SourceNode)
-          .hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
-    }
-
-    cached
-    DataFlow::SourceNode getAUse() { hasFlowTo(this, result) }
-
-    cached
-    DataFlow::SourceNode getASource() { hasFlowTo(result, this) }
-
-    Node getAPropertyRead(string prop) { result = this.getAUse().getAPropertyRead(prop) }
-
-    Node getAPropertyRead() { result = this.getAUse().getAPropertyRead() }
-
-    DataFlow::PropWrite getAPropertyWrite(string name) {
-      result = this.getAUse().getAPropertyWrite(name)
-    }
-
-    DataFlow::PropWrite getAPropertyWrite() { result = this.getAUse().getAPropertyWrite() }
-
-    DataFlow::MethodCallNode getAMethodCall(string name) {
-      result = this.getAUse().getAMethodCall(name)
-    }
-
-    DataFlow::MethodCallNode getAMethodCall() { result = this.getAUse().getAMethodCall() }
-
-    DataFlow::CallNode getACall() { result = this.getAUse().getACall() }
-  }
 }
