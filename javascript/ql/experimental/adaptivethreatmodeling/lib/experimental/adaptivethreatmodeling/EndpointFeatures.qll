@@ -216,10 +216,7 @@ private module AccessPaths {
         or
         exists(string callbackName, int index |
           node =
-            getNamedParameter(previousNode
-                  .getASuccessor(API::Label::parameter(index))
-                  .getMember(callbackName), paramName) and
-          index != -1 and // ignore receiver
+            getNamedParameter(previousNode.getParameter(index).getMember(callbackName), paramName) and
           if includeStructuralInfo = true
           then
             accessPath =

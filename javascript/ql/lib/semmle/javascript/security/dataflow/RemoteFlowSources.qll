@@ -79,6 +79,8 @@ class ClientSideRemoteFlowKind extends string {
   predicate isWindowName() { this = "name" }
 }
 
+private import semmle.javascript.DeepFlow // TODO: remove when proper API is in place
+
 /**
  * A specification of a remote flow source in a JSON file included in the database.
  *
@@ -117,16 +119,7 @@ private class RemoteFlowSourceAccessPath extends JsonString {
   string getSourceType() { result = sourceType }
 
   /** Gets the `i`th component of the access path specifying this remote flow source. */
-  API::Label::ApiLabel getComponent(int i) {
-    exists(string raw | raw = this.getValue().splitAt(".", i + 1) |
-      i = 0 and
-      result =
-        API::Label::entryPoint(any(ExternalRemoteFlowSourceSpecEntryPoint e | e.getName() = raw))
-      or
-      i > 0 and
-      result = API::Label::member(raw)
-    )
-  }
+  string getComponent(int i) { result = this.getValue().splitAt(".", i + 1) }
 
   /** Gets the first part of this access path. E.g. for "window.user.name" the result is "window". */
   string getRootPath() { result = this.getValue().splitAt(".", 1) }
@@ -139,32 +132,16 @@ private class RemoteFlowSourceAccessPath extends JsonString {
    *
    * As a special base case, resolving up to -1 gives the root API node.
    */
-  private API::Node resolveUpTo(int i) {
-    i = -1 and
-    result = API::root()
+  private DataFlow::SourceNode resolveUpTo(int i) {
+    i = 0 and
+    result = DataFlow::globalVarRef(this.getComponent(0))
     or
-    result = this.resolveUpTo(i - 1).getASuccessor(this.getComponent(i))
+    i > 0 and
+    result = Deep::getLoad(this.resolveUpTo(i - 1), this.getComponent(i))
   }
 
   /** Gets the API node to which this access path resolves. */
-  API::Use resolve() { result = this.resolveUpTo(this.getMaxComponentIndex()) }
-}
-
-/**
- * The global variable referenced by a `RemoteFlowSourceAccessPath`, declared as an API
- * entry point.
- */
-private class ExternalRemoteFlowSourceSpecEntryPoint extends API::EntryPoint {
-  string name;
-
-  ExternalRemoteFlowSourceSpecEntryPoint() {
-    name = any(RemoteFlowSourceAccessPath s).getRootPath() and
-    this = "ExternalRemoteFlowSourceSpec " + name
-  }
-
-  string getName() { result = name }
-
-  override DataFlow::SourceNode getASource() { result = DataFlow::globalVarRef(name) }
+  DataFlow::SourceNode resolve() { result = this.resolveUpTo(this.getMaxComponentIndex()) }
 }
 
 /**
@@ -173,7 +150,7 @@ private class ExternalRemoteFlowSourceSpecEntryPoint extends API::EntryPoint {
 private class ExternalRemoteFlowSource extends RemoteFlowSource {
   RemoteFlowSourceAccessPath ap;
 
-  ExternalRemoteFlowSource() { Stages::Taint::ref() and this = ap.resolve().asSource() }
+  ExternalRemoteFlowSource() { Stages::Taint::ref() and this = ap.resolve() }
 
   override string getSourceType() { result = ap.getSourceType() }
 }
