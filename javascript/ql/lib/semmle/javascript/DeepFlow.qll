@@ -266,4 +266,31 @@ module Deep {
   predicate hasFlowTo(DataFlow::SourceNode source, DataFlow::SourceNode dest) {
     trackNode(source, _, _) = dest
   }
+
+  cached
+  predicate argumentPassing(DataFlow::SourceNode callee, int i, DataFlow::Node arg) {
+    exists(DataFlow::SourceNode localCallee, int bound |
+      (
+        hasFlowTo(callee, localCallee) and bound = 0
+        or
+        localCallee = Deep::getABoundUseSite(callee, _, bound)
+      )
+    |
+      arg = localCallee.getAnInvocation().getArgument(i - bound)
+      or
+      arg = localCallee.getACall().getReceiver() and
+      i = -1 and
+      bound = 0
+      or
+      exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback |
+        localCallee.flowsTo(callback)
+      |
+        pin.isPartialArgument(callback, arg, i - bound)
+        or
+        arg = pin.getBoundReceiver(callback) and
+        i = -1 and
+        bound = 0
+      )
+    )
+  }
 }

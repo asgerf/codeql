@@ -756,27 +756,9 @@ module API {
      * The receiver is considered to be argument -1.
      */
     private predicate argumentPassing(TApiNode base, int i, DataFlow::Node arg) {
-      exists(DataFlow::Node use, DataFlow::SourceNode pred, int bound |
+      exists(DataFlow::Node use |
         use(base, use) and
-        (
-          pred = trackUseNode(use) and bound = 0
-          or
-          pred = Deep::getABoundUseSite(use, _, bound)
-        )
-      |
-        arg = pred.getAnInvocation().getArgument(i - bound)
-        or
-        arg = pred.getACall().getReceiver() and
-        i = -1 and
-        bound = 0
-        or
-        exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback | pred.flowsTo(callback) |
-          pin.isPartialArgument(callback, arg, i - bound)
-          or
-          arg = pin.getBoundReceiver(callback) and
-          i = -1 and
-          bound = 0
-        )
+        Deep::argumentPassing(use, i, arg)
       )
     }
 
