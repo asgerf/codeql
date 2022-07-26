@@ -348,11 +348,8 @@ module API {
      * there are multiple invocations of this API component.
      * Consider using `getAnInvocation()` if there is a need to distingiush between individual calls.
      */
-    cached
-    Node getAParameter() {
-      Stages::ApiStage::ref() and
-      result = this.getParameter(_)
-    }
+    pragma[inline]
+    Node getAParameter() { result = this.getParameter(_) }
 
     /**
      * Gets a node representing the result of the function represented by this node.
@@ -360,29 +357,38 @@ module API {
      * This predicate may have multiple results when there are multiple invocations of this API component.
      * Consider using `getACall()` if there is a need to distingiush between individual calls.
      */
-    cached
+    pragma[inline]
     Node getReturn() {
-      Stages::ApiStage::ref() and
-      result = this.getASuccessor(Label::return())
+      result = Impl::MkUse(pragma[only_bind_out](this).asSource().track().getAnInvocation())
+      or
+      result = Impl::MkDef(getPrettyReturn(pragma[only_bind_out](this).asSink().backtrack()))
     }
 
     /**
      * Gets a node representing the promised value wrapped in the `Promise` object represented by
      * this node.
      */
-    cached
+    pragma[inline]
     Node getPromised() {
-      Stages::ApiStage::ref() and
-      result = this.getASuccessor(Label::promised())
+      result =
+        Impl::MkUse(Deep::getLoad(pragma[only_bind_out](this).asSource(), Promises::valueProp()))
+      or
+      result =
+        Impl::MkDef(Deep::getStoreRhs(pragma[only_bind_out](this).asSink().backtrack(),
+            Promises::valueProp()))
     }
 
     /**
      * Gets a node representing the error wrapped in the `Promise` object represented by this node.
      */
-    cached
+    pragma[inline]
     Node getPromisedError() {
-      Stages::ApiStage::ref() and
-      result = this.getASuccessor(Label::promisedError())
+      result =
+        Impl::MkUse(Deep::getLoad(pragma[only_bind_out](this).asSource(), Promises::errorProp()))
+      or
+      result =
+        Impl::MkDef(Deep::getStoreRhs(pragma[only_bind_out](this).asSink().backtrack(),
+            Promises::errorProp()))
     }
 
     /**
@@ -1070,6 +1076,12 @@ module API {
         result = Deep::getABoundInvocation(cl, true, bound)
       )
     }
+  }
+
+  private DataFlow::Node getPrettyReturn(DataFlow::FunctionNode fun) {
+    if fun.getFunction().isAsyncOrGenerator()
+    then result = fun.getReturnNode()
+    else result = fun.getAReturn()
   }
 
   /**

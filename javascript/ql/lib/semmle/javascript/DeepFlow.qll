@@ -262,6 +262,14 @@ module Deep {
     )
   }
 
+  /**
+   * Gets a node into which the `prop` property of `base` is loaded.
+   */
+  pragma[inline]
+  DataFlow::SourceNode getStoreRhs(DataFlow::SourceNode obj, string prop) {
+    storeStep(result, obj, prop)
+  }
+
   cached
   predicate hasFlowTo(DataFlow::SourceNode source, DataFlow::SourceNode dest) {
     trackNode(source, _, _) = dest
