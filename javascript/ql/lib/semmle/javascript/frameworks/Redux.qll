@@ -197,6 +197,12 @@ module Redux {
       }
     }
 
+    private API::Node getACombineReducerOption() {
+      result = combineReducers().getParameter(0).getAMember()
+      or
+      result = getACombineReducerOption().getAMember()
+    }
+
     /**
      * An object literal flowing into a nested property in a `combineReducers` object, such as the `{ bar }` object in:
      * ```js
@@ -206,9 +212,7 @@ module Redux {
      * Although the object itself is clearly not a function, we use the object to model the corresponding reducer function created by `combineReducers`.
      */
     private class NestedCombineReducers extends DelegatingReducer, DataFlow::ObjectLiteralNode {
-      NestedCombineReducers() {
-        this = combineReducers().getParameter(0).getAMember+().getAValueReachingSink()
-      }
+      NestedCombineReducers() { this = getACombineReducerOption().getAValueReachingSink() }
 
       override DataFlow::Node getStateHandlerArg(string prop) {
         result = getAPropertyWrite(prop).getRhs()

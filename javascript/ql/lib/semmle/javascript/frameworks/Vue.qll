@@ -314,11 +314,17 @@ module Vue {
       )
     }
 
+    private API::Node getANestedOption() {
+      result = getOptions().getAMember()
+      or
+      result = getANestedOption().getAMember()
+    }
+
     /**
      * Gets a node for a function that will be invoked with `this` bound to this component.
      */
     DataFlow::FunctionNode getABoundFunction() {
-      result = getOptions().getAMember+().getAValueReachingSink()
+      result = getANestedOption().getAValueReachingSink()
       or
       result = getAsClassComponent().getAnInstanceMember()
     }
