@@ -234,17 +234,31 @@ module Deep {
     )
   }
 
+  /**
+   * Gets a node into which the `prop` property of `base` is eventually loaded through
+   * one or more load-store steps followed by a load.
+   */
+  pragma[nomagic]
+  cached
+  DataFlow::SourceNode getIndirectLoad(DataFlow::SourceNode base, string prop) {
+    // The indirectLoad relation does not include global flow from 'base' to the initial load-store,
+    // so account for that here. This relation is small enough that we can cache it cheaply.
+    exists(boolean call1, boolean return1, boolean call2, boolean return2 |
+      indirectLoad(trackNode(base, call1, return1), result, call2, return2, prop) and
+      call1.booleanAnd(return2) = false
+    )
+  }
+
+  /**
+   * Gets a node into which the `prop` property of `base` is loaded.
+   */
   pragma[inline]
   DataFlow::SourceNode getLoad(DataFlow::SourceNode base, string prop) {
-    exists(DataFlow::SourceNode ref, boolean call1, boolean return1 |
-      ref = trackNode(base, call1, return1)
-    |
-      loadStep(ref, result, prop)
-      or
-      exists(boolean call2, boolean return2 |
-        indirectLoad(ref, result, call2, return2, prop) and
-        call1.booleanAnd(return2) = false
-      )
+    pragma[only_bind_into](result) = getIndirectLoad(pragma[only_bind_out](base), prop)
+    or
+    exists(DataFlow::SourceNode mid |
+      hasFlowTo(pragma[only_bind_out](base), mid) and
+      loadStep(pragma[only_bind_out](mid), pragma[only_bind_into](result), prop)
     )
   }
 
