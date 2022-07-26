@@ -267,30 +267,51 @@ module Deep {
     trackNode(source, _, _) = dest
   }
 
+  /** Note: implies flow from `callee` to call site. */
+  private predicate argumentPassing1(DataFlow::SourceNode callee, int i, DataFlow::Node arg) {
+    arg = callee.getAnInvocation().getArgument(i)
+    or
+    exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback |
+      callee.flowsTo(callback) and
+      pin.isPartialArgument(callback, arg, i)
+    )
+  }
+
   cached
-  predicate argumentPassing(DataFlow::SourceNode callee, int i, DataFlow::Node arg) {
-    exists(DataFlow::SourceNode localCallee, int bound |
-      (
-        hasFlowTo(callee, localCallee) and bound = 0
-        or
-        localCallee = Deep::getABoundUseSite(callee, _, bound)
-      )
-    |
-      arg = localCallee.getAnInvocation().getArgument(i - bound)
-      or
-      arg = localCallee.getACall().getReceiver() and
-      i = -1 and
-      bound = 0
-      or
-      exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback |
-        localCallee.flowsTo(callback)
-      |
-        pin.isPartialArgument(callback, arg, i - bound)
-        or
-        arg = pin.getBoundReceiver(callback) and
-        i = -1 and
-        bound = 0
-      )
+  predicate argumentPassing(DataFlow::SourceNode callee, int i, TDataFlowNodeOrApiNode arg) {
+    argumentPassing1(trackNode(callee, _, _), i, arg)
+    or
+    exists(int bound | argumentPassing1(getABoundUseSite(callee, _, bound), i - bound, arg))
+    or
+    // synthesize a callback argument to calls to a promisified function
+    exists(int bound, DataFlow::CallNode call |
+      call = getABoundInvocation(callee, true, bound) and
+      i = bound + call.getNumArgument() and
+      arg = TApiSyntheticCallbackArg(call)
+    )
+  }
+
+  cached
+  predicate receiverPassing(DataFlow::SourceNode callee, DataFlow::Node arg) {
+    arg = callee.getACall().getReceiver()
+    or
+    exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback |
+      callee.flowsTo(callback) and
+      arg = pin.getBoundReceiver(callback)
+    )
+  }
+
+  /** Note: does not backtrack `callee`. Caller should do this. */
+  cached
+  predicate parameterDef(TDataFlowNodeOrApiNode callable, int i, DataFlow::SourceNode param) {
+    param = callable.(DataFlow::FunctionNode).getParameter(i)
+    or
+    param = callable.(DataFlow::ClassNode).getConstructor().getParameter(i)
+    or
+    exists(DataFlow::CallNode call |
+      callable = TApiSyntheticCallbackArg(call) and
+      i = 1 and
+      param = Deep::getLoad(call, Promises::valueProp())
     )
   }
 }

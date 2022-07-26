@@ -354,6 +354,8 @@ module SourceNode {
   module Internal {
     /** An empty class that some tests are using to enforce that SourceNode is non-recursive. */
     abstract class RecursionGuard extends DataFlow::Node { }
+
+    import Cached
   }
 }
 

@@ -127,7 +127,9 @@ module API {
      * See `asSource()` for examples.
      */
     pragma[inline]
-    DataFlow::Node getAValueReachableFromSource() { trackUseNode(this.asSource()).flowsTo(result) }
+    DataFlow::Node getAValueReachableFromSource() {
+      trackUseNode(pragma[only_bind_out](this).asSource()).flowsTo(result)
+    }
 
     /**
      * Get a data-flow node where this value enters the current codebase.
@@ -202,6 +204,7 @@ module API {
      * });
      * ```
      */
+    pragma[inline]
     DataFlow::Node asSink() { Impl::rhs(this, result) }
 
     /**
@@ -210,6 +213,7 @@ module API {
      * This is similar to `asSink()` but additionally includes nodes that transitively reach a sink by data flow.
      * See `asSink()` for examples.
      */
+    pragma[inline]
     DataFlow::Node getAValueReachingSink() { result = trackDefNode(this.asSink()) }
 
     /** DEPRECATED. This predicate has been renamed to `asSink`. */
@@ -224,32 +228,45 @@ module API {
      * For example, modules have an `exports` member representing their exports, and objects have
      * their properties as members.
      */
-    cached
+    pragma[inline]
     Node getMember(string m) {
-      Stages::ApiStage::ref() and
-      result = this.getASuccessor(Label::member(m))
+      result = Impl::MkUse(Deep::getLoad(pragma[only_bind_out](this).asSource(), m))
+      or
+      result =
+        Impl::MkDef(pragma[only_bind_out](this).asSink().backtrack().getAPropertyWrite(m).getRhs())
     }
 
     /**
      * Gets a node representing a member of this API component where the name of the member is
      * not known statically.
      */
-    cached
+    pragma[inline]
     Node getUnknownMember() {
-      Stages::ApiStage::ref() and
-      result = this.getASuccessor(Label::unknownMember())
+      exists(DataFlow::SourceNode base, DataFlow::PropRead ref |
+        base = pragma[only_bind_out](this).asSource().track() and
+        DataFlow::SourceNode::Internal::dynamicPropRef(pragma[only_bind_out](base),
+          pragma[only_bind_into](ref)) and
+        result = Impl::MkUse(ref)
+      )
+      or
+      exists(DataFlow::SourceNode base, DataFlow::PropWrite write |
+        base = pragma[only_bind_out](this).asSink().backtrack() and
+        DataFlow::SourceNode::Internal::dynamicPropRef(pragma[only_bind_out](base),
+          pragma[only_bind_into](write)) and
+        result = Impl::MkDef(write.getRhs())
+      )
     }
 
     /**
      * Gets a node representing a member of this API component where the name of the member may
      * or may not be known statically.
      */
-    cached
+    pragma[inline]
     Node getAMember() {
-      Stages::ApiStage::ref() and
-      result = this.getMember(_)
+      result = Impl::MkUse(pragma[only_bind_out](this).asSource().track().getAPropertyRead())
       or
-      result = this.getUnknownMember()
+      result =
+        Impl::MkDef(pragma[only_bind_out](this).asSink().backtrack().getAPropertyWrite().getRhs())
     }
 
     /**
@@ -263,10 +280,13 @@ module API {
      * This predicate may have multiple results when there are multiple constructor calls invoking this API component.
      * Consider using `getAnInstantiation()` if there is a need to distinguish between individual constructor calls.
      */
-    cached
+    pragma[inline]
     Node getInstance() {
-      Stages::ApiStage::ref() and
-      result = this.getASuccessor(Label::instance())
+      result = Impl::MkUse(pragma[only_bind_out](this).asSource().track().getAnInstantiation())
+      or
+      // note: the result is a use-node in both cases
+      result =
+        Impl::MkUse(Impl::getClassReceiverRef(pragma[only_bind_out](this).asSink().backtrack()))
     }
 
     /**
@@ -275,10 +295,18 @@ module API {
      * This predicate may have multiple results when there are multiple invocations of this API component.
      * Consider using `getAnInvocation()` if there is a need to distingiush between individual calls.
      */
-    cached
+    pragma[inline]
     Node getParameter(int i) {
-      Stages::ApiStage::ref() and
-      result = this.getASuccessor(Label::parameter(i))
+      exists(TDataFlowNodeOrApiNode arg |
+        Deep::argumentPassing(pragma[only_bind_out](this).asSource(), i, arg) and
+        result = Impl::MkDef(arg)
+      )
+      or
+      exists(TDataFlowNodeOrApiNode callable, DataFlow::SourceNode param |
+        pragma[only_bind_out](this) = Impl::MkDef(callable) and
+        Deep::parameterDef(pragma[only_bind_out](callable), i, param) and
+        result = Impl::MkUse(param)
+      )
     }
 
     /**
@@ -297,10 +325,20 @@ module API {
     /**
      * Gets a node representing the receiver of the function represented by this node.
      */
-    cached
+    pragma[inline]
     Node getReceiver() {
-      Stages::ApiStage::ref() and
-      result = this.getASuccessor(Label::receiver())
+      exists(DataFlow::SourceNode callee, DataFlow::Node arg |
+        callee = pragma[only_bind_out](this).asSource().track() and
+        Deep::receiverPassing(pragma[only_bind_out](callee), arg) and
+        result = Impl::MkDef(arg)
+      )
+      or
+      result =
+        Impl::MkUse(pragma[only_bind_out](this)
+              .asSink()
+              .backtrack()
+              .(DataFlow::FunctionNode)
+              .getReceiver())
     }
 
     /**
@@ -634,6 +672,13 @@ module API {
     class TNonModuleDef = MkDef;
 
     class TUse = MkUse;
+
+    cached
+    DataFlow::SourceNode getClassReceiverRef(DataFlow::ClassNode node) {
+      result = node.getAReceiverNode()
+      or
+      result = node.(DataFlow::ClassNode::FunctionStyleClass).getAPrototypeReference()
+    }
 
     /**
      * Holds if `rhs` is the right-hand side of a definition of a node that should have an
@@ -1000,6 +1045,9 @@ module API {
         lbl = Label::return() and
         succ = MkDef(f.getReturnNode())
       )
+      or
+      succ = pred.(API::Node).getReceiver() and // for tests
+      lbl = Label::receiver()
     }
 
     /**
