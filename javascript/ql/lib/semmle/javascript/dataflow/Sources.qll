@@ -9,6 +9,7 @@
 private import javascript
 private import semmle.javascript.dataflow.TypeTracking
 private import semmle.javascript.internal.CachedStages
+private import semmle.javascript.DeepFlow
 
 /**
  * A source node for local data flow, that is, a node from which local data flow is tracked.
@@ -41,11 +42,6 @@ class SourceNode extends DataFlow::Node {
   }
 
   /**
-   * Gets an API node for tracking forwards from here, that is, for determining where this node flows and what it is used for.
-   */
-  API::Node track() { result.asSource() = this }
-
-  /**
    * Holds if this node flows into `sink` in zero or more local (that is,
    * intra-procedural) steps.
    */
@@ -61,6 +57,14 @@ class SourceNode extends DataFlow::Node {
    * Gets a node into which data may flow from this node in zero or more local steps.
    */
   DataFlow::Node getALocalUse() { flowsTo(result) }
+
+  /**
+   * Gets a `SourceNode` this node can flow to interprocedurally.
+   */
+  pragma[inline]
+  DataFlow::SourceNode track() {
+    Deep::hasFlowTo(pragma[only_bind_out](this), pragma[only_bind_into](result))
+  }
 
   /**
    * Gets a reference (read or write) of property `propName` on this node.

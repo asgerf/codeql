@@ -32,9 +32,15 @@ module DataFlow {
    */
   class Node extends TNode {
     /**
-     * Gets an API node for backtracking from here, that is, for determining what can flow here.
+     * Gets a `SourceNode` that flows to this node interprocedurally.
      */
-    API::Node backtrack() { result.asSink() = this }
+    pragma[inline]
+    DataFlow::SourceNode backtrack() {
+      exists(DataFlow::SourceNode localSource |
+        localSource = pragma[only_bind_out](this).getALocalSource() and
+        Deep::hasFlowTo(pragma[only_bind_into](result), pragma[only_bind_out](localSource))
+      )
+    }
 
     /**
      * Gets a data flow node from which data may flow to this node in one local step.
