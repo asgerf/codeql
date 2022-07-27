@@ -8,7 +8,31 @@ import javascript
  * A module modeling taint steps for the [snapdragon](https://www.npmjs.com/package/snapdragon) library.
  */
 private module Snapdragon {
-  private API::Node getSetCall(API::Node base) { result = base.getMember("set").getReturn() }
+  private class SnapdragonInstance extends API::Node {
+    SnapdragonInstance() { this = API::moduleImport("snapdragon").getInstance() }
+
+    API::Node ref() { result = this or result = this.ref().getMember("set").getReturn() }
+
+    API::Node getComponent(string kind) {
+      kind = ["parse", "compile"] and
+      result = this.ref().getMember(kind + "r")
+      or
+      result = this.getComponent(kind).getMember("set").getReturn()
+    }
+
+    DataFlow::Node getInput(string kind) {
+      kind = ["parse", "compile"] and
+      result = this.ref().getMember(kind).getParameter(0).asSink()
+    }
+
+    DataFlow::SourceNode getOutput(string kind) {
+      kind = "parse" and
+      result = this.getComponent("parse").getMember("set").getParameter(1).getReceiver()
+      or
+      kind = "compile" and
+      result = this.getComponent("compile").getMember("set").getParameter(1).getParameter(0)
+    }
+  }
 
   /**
    * A taint step through the [snapdragon](https://www.npmjs.com/package/snapdragon) library.
@@ -25,30 +49,9 @@ private module Snapdragon {
    */
   private class SnapDragonStep extends DataFlow::SharedFlowStep {
     override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
-      exists(string methodName, API::CallNode set, API::CallNode call, API::Node base |
-        // the handler, registered with a call to `.set`.
-        set = getSetCall+(base.getMember(methodName + "r")).asSource() and
-        // the snapdragon instance. The API is chaining, you can also use the instance directly.
-        base = API::moduleImport("snapdragon").getInstance() and
-        methodName = ["parse", "compile"] and
-        (
-          // snapdragon.parse(..)
-          call = getSetCall*(base).getMember(methodName).getACall()
-          or
-          // snapdragon.parser.set().set().parse(..)
-          call = getSetCall*(set.getReturn()).getMember(methodName).getACall()
-        )
-      |
-        pred = call.getArgument(0) and
-        (
-          // for parsers handlers the input is the `this` pointer.
-          methodName = "parse" and
-          succ = DataFlow::thisNode(set.getCallback(1).getFunction())
-          or
-          // for compiler handlers the input is the first parameter.
-          methodName = "compile" and
-          succ = set.getParameter(1).getParameter(0).asSource()
-        )
+      exists(SnapdragonInstance inst, string kind |
+        pred = inst.getInput(kind) and
+        succ = inst.getOutput(kind)
       )
     }
   }
