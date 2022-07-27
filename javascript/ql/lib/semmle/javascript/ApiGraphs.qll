@@ -303,8 +303,7 @@ module API {
       )
       or
       exists(TDataFlowNodeOrApiNode callable, DataFlow::SourceNode param |
-        pragma[only_bind_out](this) = Impl::MkDef(callable) and
-        Deep::parameterDef(pragma[only_bind_out](callable), i, param) and
+        Deep::parameterDef(pragma[only_bind_out](this).asSink().backtrack(), i, param) and
         result = Impl::MkUse(param)
       )
     }
