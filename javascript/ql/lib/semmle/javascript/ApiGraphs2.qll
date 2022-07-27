@@ -191,8 +191,10 @@ module API2 {
       Deep::hasFlowTo(pragma[only_bind_into](result), pragma[only_bind_out](this))
     }
 
+    pragma[inline]
     DataFlow::SourceNode getAValueReachingSink() { result = this.backward() }
 
+    pragma[inline]
     DataFlow::FunctionNode getAFunction() { result = this.backward() }
 
     pragma[inline]
@@ -226,6 +228,7 @@ module API2 {
     pragma[inline]
     API2::Node getAParameter() { Deep::parameterDef(this.backward(), _, result) }
 
+    pragma[inline]
     API2::Node getLastParameter() {
       // TODO: is this the best way to do this?
       exists(DataFlow::SourceNode src | src = this.backward() |
@@ -367,6 +370,7 @@ module API2 {
     /**
      * Returns this node as a data-flow node.
      */
+    pragma[inline]
     DataFlow::Node asSink() { result = this }
 
     /** DEPRECATED. This predicate has no result for backtracking nodes, use a forward-tracking node instead (`API::Node`). */
