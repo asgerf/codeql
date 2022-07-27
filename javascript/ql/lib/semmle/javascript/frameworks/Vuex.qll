@@ -10,6 +10,7 @@ private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
  */
 module Vuex {
   /** Gets a reference to the Vuex package. */
+  pragma[nomagic]
   API::Node vuex() { result = API::moduleImport("vuex") }
 
   /**
@@ -63,7 +64,7 @@ module Vuex {
    * A call to `mapActions` or similar, which is used to generate helper functions to
    * mix into parts of a Vue component.
    */
-  private class MapHelperCall extends API::CallNode {
+  private class MapHelperCall extends DataFlow::CallNode {
     string helperName;
     string namespace;
 
@@ -89,7 +90,8 @@ module Vuex {
     string getNamespace() {
       getNumArgument() = 2 and
       result =
-        appendToNamespace(namespace, getParameter(0).getAValueReachingSink().getStringValue())
+        appendToNamespace(namespace,
+          getArgument(0).backtrack().getAValueReachingSink().getStringValue())
       or
       getNumArgument() = 1 and
       result = namespace
@@ -100,24 +102,29 @@ module Vuex {
      */
     predicate hasMapping(string localName, string storeName) {
       // mapGetters('foo')
-      getLastParameter().getAValueReachingSink().getStringValue() = localName and
+      getLastArgument().backtrack().getAValueReachingSink().getStringValue() = localName and
       storeName = getNamespace() + localName
       or
       // mapGetters(['foo', 'bar'])
-      getLastParameter().getUnknownMember().getAValueReachingSink().getStringValue() = localName and
+      getLastArgument().backtrack().getUnknownMember().getAValueReachingSink().getStringValue() =
+        localName and
       storeName = getNamespace() + localName
       or
       // mapGetters({foo: 'bar'})
       storeName =
         getNamespace() +
-          getLastParameter().getMember(localName).getAValueReachingSink().getStringValue() and
+          getLastArgument()
+              .backtrack()
+              .getMember(localName)
+              .getAValueReachingSink()
+              .getStringValue() and
       localName != "*" // ignore special API graph member named "*"
     }
 
     /** Gets the Vue component in which the generated functions are installed. */
     Vue::Component getVueComponent() {
       exists(DataFlow::ObjectLiteralNode obj |
-        obj.getASpreadProperty() = getReturn().getAValueReachableFromSource() and
+        obj.getASpreadProperty() = this.track().getAValueReachableFromSource() and
         result.getOwnOptions().getAMember().asSink() = obj
       )
       or
@@ -188,7 +195,7 @@ module Vuex {
     kind = "commit" and
     exists(MapHelperCall mapMutations |
       mapMutations.getHelperName() = "mapMutations" and
-      result = mapMutations.getLastParameter().getAMember().getParameter(0) and
+      result = mapMutations.getLastArgument().backtrack().getAMember().getParameter(0) and
       prefix = mapMutations.getNamespace()
     )
   }
@@ -280,7 +287,7 @@ module Vuex {
     or
     exists(MapHelperCall call |
       call.getHelperName() = "mapState" and
-      result = call.getLastParameter().getAMember().getParameter(0) and
+      result = call.getLastArgument().backtrack().getAMember().getParameter(0) and
       path = call.getNamespace()
     )
     or
@@ -329,7 +336,7 @@ module Vuex {
     exists(MapHelperCall call |
       call.getHelperName() = "mapState" and
       component = call.getVueComponent() and
-      result = call.getLastParameter().getMember(name).getReturn().asSink()
+      result = call.getLastArgument().backtrack().getMember(name).getReturn().asSink()
     )
   }
 
