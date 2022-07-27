@@ -8,7 +8,9 @@ module History {
    * Gets a reference to the [`history`](https://npmjs.org/package/history) library.
    */
   private API::Node history() {
-    result = [API::moduleImport("history"), DataFlow::globalVarRef("HistoryLibrary")]
+    result = API::moduleImport("history")
+    or
+    result = DataFlow::globalVarRef("HistoryLibrary")
   }
 
   /**
