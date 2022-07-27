@@ -45,7 +45,7 @@ module Vuex {
    * Gets the options object passed to a Vuex store creation or one of its modules,
    * with `namespace` bound to the namespace of the store.
    */
-  API::Node storeConfigObject(string namespace) {
+  API::SinkNode storeConfigObject(string namespace) {
     result = vuex().getMember("Store").getParameter(0) and namespace = ""
     or
     exists(string prev, string child |
@@ -273,8 +273,6 @@ module Vuex {
     result = storeConfigObject().getMember("getters").getAMember().getParameter(2) and
     path = ""
     or
-    result = storeConfigObject(path).getMember("state")
-    or
     exists(string name |
       result = getAMappedAccess("mapState", name) and
       path = name + "/"
@@ -292,9 +290,16 @@ module Vuex {
     )
   }
 
+  /**
+   * Gets an API node that is assigned to the given access path relative to the root state.
+   */
+  API::SinkNode stateRhsByAccessPath(string path) {
+    result = storeConfigObject(path).getMember("state")
+  }
+
   /** Gets a value that flows into the given access path of the state. */
   DataFlow::Node stateMutationPred(string path) {
-    result = stateRefByAccessPath(path).asSink()
+    result = stateRhsByAccessPath(path).asSink()
     or
     exists(ExtendCall call, string base, string prop |
       call.getDestinationOperand() = stateRefByAccessPath(base).getAValueReachableFromSource() and

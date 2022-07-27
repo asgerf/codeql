@@ -30,20 +30,11 @@ string getAStandardLoggerMethodName() {
  */
 private module Console {
   /**
-   * An API entrypoint for the global `console` variable.
-   */
-  private class ConsoleGlobalEntry extends API::EntryPoint {
-    ConsoleGlobalEntry() { this = "ConsoleGlobalEntry" }
-
-    override DataFlow::SourceNode getASource() { result = DataFlow::globalVarRef("console") }
-  }
-
-  /**
    * Gets a api node for the console library.
    */
   private API::Node console() {
     result = API::moduleImport("console") or
-    result = any(ConsoleGlobalEntry e).getANode()
+    result = DataFlow::globalVarRef("console")
   }
 
   /**

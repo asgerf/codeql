@@ -42,37 +42,10 @@ predicate isPackageUsed(string package) {
   any(DataFlow::SourceNode sn).hasUnderlyingType(package, _)
 }
 
-/** Holds if `global` is a global variable referenced via a the `global` package in a CSV row. */
-private predicate isRelevantGlobal(string global) {
-  exists(AccessPath path, AccessPathToken token |
-    isRelevantFullPath("global", "", path) and
-    token = path.getToken(0) and
-    token.getName() = "Member" and
-    global = token.getAnArgument()
-  )
-}
-
-/** An API graph entry point for global variables mentioned in a model. */
-private class GlobalApiEntryPoint extends API::EntryPoint {
-  string global;
-
-  GlobalApiEntryPoint() {
-    isRelevantGlobal(global) and
-    this = "GlobalApiEntryPoint:" + global
-  }
-
-  override DataFlow::SourceNode getASource() { result = DataFlow::globalVarRef(global) }
-
-  /** Gets the name of the global variable. */
-  string getGlobal() { result = global }
-}
-
 /**
  * Gets an API node referring to the given global variable (if relevant).
  */
-private API::Node getGlobalNode(string globalName) {
-  result = any(GlobalApiEntryPoint e | e.getGlobal() = globalName).getANode()
-}
+private API::Node getGlobalNode(string globalName) { result = DataFlow::globalVarRef(globalName) }
 
 /** Gets a JavaScript-specific interpretation of the `(package, type, path)` tuple after resolving the first `n` access path tokens. */
 bindingset[package, type, path]

@@ -5,33 +5,13 @@
 import javascript
 
 module Vue {
-  /** The global variable `Vue`, as an API graph entry point. */
-  private class GlobalVueEntryPoint extends API::EntryPoint {
-    GlobalVueEntryPoint() { this = "VueEntryPoint" }
-
-    override DataFlow::SourceNode getASource() { result = DataFlow::globalVarRef("Vue") }
-  }
-
-  /**
-   * A value exported from a `.vue` file.
-   *
-   * This `EntryPoint` is used by `SingleFileComponent::getOwnOptions()`.
-   */
-  private class VueExportEntryPoint extends API::EntryPoint {
-    VueExportEntryPoint() { this = "VueExportEntryPoint" }
-
-    override DataFlow::Node getASink() {
-      result = any(SingleFileComponent c).getModule().getDefaultOrBulkExport()
-    }
-  }
-
   /**
    * Gets a reference to the `Vue` object.
    */
   API::Node vueLibrary() {
     result = API::moduleImport("vue")
     or
-    result = any(GlobalVueEntryPoint e).getANode()
+    result = DataFlow::globalVarRef("Vue")
   }
 
   /**
@@ -47,7 +27,7 @@ module Vue {
     or
     result = vueLibrary().getMember("component").getReturn()
     or
-    result = any(VueFileImportEntryPoint e).getANode()
+    result = getAVueFileImport()
   }
 
   /**
@@ -106,7 +86,7 @@ module Vue {
      *
      * These options correspond to the options one would pass to `new Vue({...})` or similar.
      */
-    API::Node getDecoratorOptions() { result = decorator.(API::CallNode).getParameter(0) }
+    API::SinkNode getDecoratorOptions() { result = decorator.(API::CallNode).getParameter(0) }
   }
 
   private string memberKindVerb(DataFlow::MemberKind kind) {
@@ -168,19 +148,19 @@ module Vue {
      * Gets an API node referring to the options passed to the Vue object,
      * such as the object literal `{...}` in `new Vue{{...})` or the default export of a single-file component.
      */
-    API::Node getOwnOptions() { none() } // overridden in subclass
+    API::SinkNode getOwnOptions() { none() } // overridden in subclass
 
     /** Gets a component which is extended by this one. */
     Component getABaseComponent() {
       result.getComponentRef().getAValueReachableFromSource() =
-        getOwnOptions().getMember(["extends", "mixins"]).asSink()
+        getOwnOptions().getMember(["extends", "mixins"])
     }
 
     /**
      * Gets an API node referring to the options passed to the Vue object or one
      * of its base component.
      */
-    API::Node getOptions() {
+    API::SinkNode getOptions() {
       result = getOwnOptions()
       or
       result = getOwnOptions().getMember(["extends", "mixins"]).getAMember()
@@ -283,7 +263,7 @@ module Vue {
      * Gets the function responding to changes to the given `propName`.
      */
     DataFlow::FunctionNode getWatchHandler(string propName) {
-      exists(API::Node propWatch |
+      exists(API::SinkNode propWatch |
         propWatch = getOptions().getMember("watch").getMember(propName) and
         result = [propWatch, propWatch.getMember("handler")].getAValueReachingSink()
       )
@@ -314,7 +294,7 @@ module Vue {
       )
     }
 
-    private API::Node getANestedOption() {
+    private API::SinkNode getANestedOption() {
       result = getOptions().getAMember()
       or
       result = getANestedOption().getAMember()
@@ -378,7 +358,7 @@ module Vue {
       none()
     }
 
-    override API::Node getOwnOptions() { result = def.getParameter(0) }
+    override API::SinkNode getOwnOptions() { result = def.getParameter(0) }
 
     override Template::Element getTemplateElement() { none() }
 
@@ -424,7 +404,7 @@ module Vue {
 
     override API::Node getComponentRef() { result = extend.getReturn() }
 
-    override API::Node getOwnOptions() { result = extend.getParameter(0) }
+    override API::SinkNode getOwnOptions() { result = extend.getParameter(0) }
 
     override Template::Element getTemplateElement() { none() }
 
@@ -470,28 +450,22 @@ module Vue {
       none()
     }
 
-    override API::Node getOwnOptions() { result = def.getParameter(1) }
+    override API::SinkNode getOwnOptions() { result = def.getParameter(1) }
 
     override Template::Element getTemplateElement() { none() }
   }
 
   /**
-   * An import referring to a `.vue` file, seen as an API entry point.
+   * Gets an import referring to a `.vue` file.
    *
    * Concretely, such an import receives the Vue component generated from the .vue file,
    * not the actual exports of the script tag in the file.
-   *
-   * This entry point is used in `SingleFileComponent::getComponentRef()`.
    */
-  private class VueFileImportEntryPoint extends API::EntryPoint {
-    VueFileImportEntryPoint() { this = "VueFileImportEntryPoint" }
-
-    override DataFlow::SourceNode getASource() {
-      exists(Import imprt |
-        imprt.getImportedPath().resolve() instanceof VueFile and
-        result = imprt.getImportedModuleNode()
-      )
-    }
+  private DataFlow::SourceNode getAVueFileImport() {
+    exists(Import imprt |
+      imprt.getImportedPath().resolve() instanceof VueFile and
+      result = imprt.getImportedModuleNode()
+    )
   }
 
   /**
@@ -537,10 +511,7 @@ module Vue {
       )
     }
 
-    override API::Node getOwnOptions() {
-      // Use the entry point generated by `VueExportEntryPoint`
-      result.asSink() = getModule().getDefaultOrBulkExport()
-    }
+    override API::SinkNode getOwnOptions() { result = getModule().getDefaultOrBulkExport() }
 
     override string toString() { result = file.toString() }
   }
@@ -684,7 +655,7 @@ module Vue {
   }
 
   /** Gets an API node referring to a `RouteConfig` being passed to `vue-router`. */
-  private API::Node routeConfig() {
+  private API::SinkNode routeConfig() {
     result = API::moduleImport("vue-router").getParameter(0).getMember("routes").getAMember()
     or
     result = routeConfig().getMember("children").getAMember()

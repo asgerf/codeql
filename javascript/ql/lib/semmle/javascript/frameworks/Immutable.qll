@@ -11,21 +11,12 @@ import javascript
  */
 private module Immutable {
   /**
-   * An API entrypoint for the global `Immutable` variable.
-   */
-  private class ImmutableGlobalEntry extends API::EntryPoint {
-    ImmutableGlobalEntry() { this = "ImmutableGlobalEntry" }
-
-    override DataFlow::SourceNode getASource() { result = DataFlow::globalVarRef("Immutable") }
-  }
-
-  /**
    * Gets an import of the `Immutable` library.
    */
   API::Node immutableImport() {
     result = API::moduleImport("immutable")
     or
-    result = any(ImmutableGlobalEntry i).getANode()
+    result = DataFlow::globalVarRef("Immutable")
   }
 
   /**

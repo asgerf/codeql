@@ -11,13 +11,7 @@ private import semmle.javascript.security.dataflow.CodeInjectionCustomizations
  * Module for working with uses of the [Trusted Types API](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API).
  */
 module TrustedTypes {
-  private class TrustedTypesEntry extends API::EntryPoint {
-    TrustedTypesEntry() { this = "TrustedTypesEntry" }
-
-    override DataFlow::SourceNode getASource() { result = DataFlow::globalVarRef("trustedTypes") }
-  }
-
-  private API::Node trustedTypesObj() { result = any(TrustedTypesEntry entry).getANode() }
+  private API::Node trustedTypesObj() { result = DataFlow::globalVarRef("trustedTypes") }
 
   /** A call to `trustedTypes.createPolicy`. */
   class PolicyCreation extends API::CallNode {

@@ -197,7 +197,7 @@ module Redux {
       }
     }
 
-    private API::Node getACombineReducerOption() {
+    private API::SinkNode getACombineReducerOption() {
       result = combineReducers().getParameter(0).getAMember()
       or
       result = getACombineReducerOption().getAMember()
@@ -764,7 +764,7 @@ module Redux {
   }
 
   /** Gets an API node corresponding to a value being passed to the `dispatch` function. */
-  API::Node getADispatchedValueNode() {
+  API::SinkNode getADispatchedValueNode() {
     result instanceof DispatchedValueSink
     or
     result = getADispatchFunctionNode().getParameter(0)
@@ -1025,10 +1025,10 @@ module Redux {
      */
     abstract private class ConnectCall extends API::CallNode {
       /** Gets the API node corresponding to the `mapStateToProps` argument. */
-      abstract API::Node getMapStateToProps();
+      abstract API::SinkNode getMapStateToProps();
 
       /** Gets the API node corresponding to the `mapDispatchToProps` argument. */
-      abstract API::Node getMapDispatchToProps();
+      abstract API::SinkNode getMapDispatchToProps();
 
       /**
        * Gets a function whose first argument becomes the React component to connect.
@@ -1085,42 +1085,38 @@ module Redux {
         this = API::moduleImport("react-redux").getMember("connect").getACall()
       }
 
-      override API::Node getMapStateToProps() { result = getParameter(0) }
+      override API::SinkNode getMapStateToProps() { result = getParameter(0) }
 
-      override API::Node getMapDispatchToProps() { result = getParameter(1) }
+      override API::SinkNode getMapDispatchToProps() { result = getParameter(1) }
     }
 
     /**
-     * An API entry point corresponding to a `connect` function which we couldn't recognize exactly.
+     * Get a node corresponding to a `connect` function which we couldn't recognize exactly.
      *
      * The `connect` call is recognized based on an argument being named either `mapStateToProps` or `mapDispatchToProps`.
      * Used to catch cases where the `connect` function was not recognized by API graphs (usually because of it being
      * wrapped in another function, which API graphs won't look through).
      */
-    private class HeuristicConnectEntryPoint extends API::EntryPoint {
-      HeuristicConnectEntryPoint() { this = "react-redux-connect" }
-
-      override DataFlow::SourceNode getASource() {
-        exists(DataFlow::CallNode call |
-          call.getAnArgument().asExpr().(Identifier).getName() =
-            ["mapStateToProps", "mapDispatchToProps"] and
-          // exclude genuine calls to avoid duplication
-          not call = DataFlow::moduleMember("react-redux", "connect").getACall() and
-          result = call.getCalleeNode().getALocalSource()
-        )
-      }
+    private API::Node heuristicConnectFunction() {
+      exists(DataFlow::CallNode call |
+        call.getAnArgument().asExpr().(Identifier).getName() =
+          ["mapStateToProps", "mapDispatchToProps"] and
+        // exclude genuine calls to avoid duplication
+        not call = DataFlow::moduleMember("react-redux", "connect").getACall() and
+        result = call.getCalleeNode().getALocalSource()
+      )
     }
 
     /** A heuristic call to `connect`, recognized by it taking arguments named `mapStateToProps` and `mapDispatchToProps`. */
     private class HeuristicConnectFunction extends ConnectCall {
-      HeuristicConnectFunction() { this = any(HeuristicConnectEntryPoint e).getANode().getACall() }
+      HeuristicConnectFunction() { this = heuristicConnectFunction().getACall() }
 
-      override API::Node getMapStateToProps() {
+      override API::SinkNode getMapStateToProps() {
         result = getAParameter() and
         result.asSink().asExpr().(Identifier).getName() = "mapStateToProps"
       }
 
-      override API::Node getMapDispatchToProps() {
+      override API::SinkNode getMapDispatchToProps() {
         result = getAParameter() and
         result.asSink().asExpr().(Identifier).getName() = "mapDispatchToProps"
       }
@@ -1199,7 +1195,7 @@ module Redux {
       }
 
       /** Gets the `i`th selector callback, that is, a callback other than the result function. */
-      API::Node getSelectorFunction(int i) {
+      API::SinkNode getSelectorFunction(int i) {
         // When there are multiple callbacks, exclude the last one
         result = getParameter(i) and
         (i = 0 or i < getNumArgument() - 1)
@@ -1207,7 +1203,7 @@ module Redux {
         // Selector functions may be given as an array
         exists(DataFlow::ArrayCreationNode array |
           array.flowsTo(getArgument(0)) and
-          result.getAValueReachableFromSource() = array.getElement(i)
+          result.asSink() = array.getElement(i)
         )
       }
     }

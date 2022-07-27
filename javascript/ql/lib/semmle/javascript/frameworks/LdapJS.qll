@@ -28,7 +28,7 @@ module LdapJS {
   }
 
   /** A reference to a LDAPjs client `search` options. */
-  class SearchOptions extends API::Node {
+  class SearchOptions extends API::SinkNode {
     SearchOptions() {
       exists(ClientCall call | call.getMethodName() = "search" and this = call.getParameter(1))
     }

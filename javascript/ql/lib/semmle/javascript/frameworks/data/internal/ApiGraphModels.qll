@@ -438,7 +438,7 @@ module ModelOutput {
   /**
    * Holds if a CSV sink model contributed `sink` with the given `kind`.
    */
-  API::Node getASinkNode(string kind) {
+  API::SinkNode getASinkNode(string kind) {
     exists(string package, string type, string path |
       sinkModel(package, type, path, kind) and
       result = getNodeFromPath(package, type, path)

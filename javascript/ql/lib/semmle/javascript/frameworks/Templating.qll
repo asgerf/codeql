@@ -231,10 +231,9 @@ module Templating {
   }
 
   /** Gets an API node that may flow to `succ` through a template instantiation. */
-  private API::Node getTemplateInput(DataFlow::SourceNode succ) {
-    exists(TemplateInstantiation inst, API::Node base, string name |
-      base.asSink() = inst.getTemplateParamsNode() and
-      result = base.getMember(name) and
+  private API::SinkNode getTemplateInput(DataFlow::SourceNode succ) {
+    exists(TemplateInstantiation inst, string name |
+      result = inst.getTemplateParamsNode().backtrack().getMember(name) and
       succ =
         inst.getTemplateFile()
             .getAnImportedFile*()
@@ -320,10 +319,7 @@ module Templating {
     string getValue() {
       result = this.getStringValue()
       or
-      exists(API::Node node |
-        this = node.asSink() and
-        result = node.getAValueReachingSink().getStringValue()
-      )
+      result = this.backtrack().getAValueReachingSink().getStringValue() // TODO: can we replace this whole predicate with just backtrack().getStringValue()
     }
 
     pragma[nomagic]
@@ -646,20 +642,6 @@ module Templating {
 
     /** Gets a data flow node that refers to an object whose properties become variables in the template. */
     override DataFlow::Node getTemplateParamsNode() { result = this.getArgument(1) }
-  }
-
-  /**
-   * The `include` function, seen as an API node, so we can treat it as a template instantiation
-   * in `EjsIncludeCallInTemplate`.
-   *
-   * These API nodes are used in the `getTemplateInput` predicate.
-   */
-  private class IncludeFunctionAsEntryPoint extends API::EntryPoint {
-    IncludeFunctionAsEntryPoint() { this = "IncludeFunctionAsEntryPoint" }
-
-    override DataFlow::SourceNode getASource() {
-      result = any(TemplatePlaceholderTag tag).getInnerTopLevel().getAVariableUse("include")
-    }
   }
 
   /**

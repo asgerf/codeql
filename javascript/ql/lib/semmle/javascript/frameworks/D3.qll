@@ -5,14 +5,6 @@ private import semmle.javascript.security.dataflow.DomBasedXssCustomizations
 
 /** Provides classes and predicates modeling aspects of the `d3` library. */
 module D3 {
-  /** The global variable `d3` as an entry point for API graphs. */
-  private class D3GlobalEntry extends API::EntryPoint {
-    D3GlobalEntry() { this = "D3GlobalEntry" }
-
-    override DataFlow::SourceNode getASource() { result = DataFlow::globalVarRef("d3") }
-  }
-
-  /** Gets an API node referring to the `d3` module. */
   API::Node d3() {
     result = API::moduleImport("d3")
     or
@@ -21,7 +13,7 @@ module D3 {
     or
     result = API::moduleImport("d3-node").getInstance().getMember("d3")
     or
-    result = any(D3GlobalEntry i).getANode()
+    result = DataFlow::globalVarRef("d3")
   }
 
   /**
@@ -67,7 +59,7 @@ module D3 {
 
   private class D3XssSink extends DomBasedXss::Sink {
     D3XssSink() {
-      exists(API::Node htmlArg |
+      exists(API::SinkNode htmlArg |
         htmlArg = d3Selection().getMember("html").getParameter(0) and
         this = [htmlArg, htmlArg.getReturn()].asSink()
       )
@@ -76,7 +68,8 @@ module D3 {
 
   private class D3DomValueSource extends DOM::DomValueSource::Range {
     D3DomValueSource() {
-      this = d3Selection().getMember("each").getReceiver().asSource()
+      // FIXED: .each() did not get 'this' in callback, but the receiver of the .each() call itself
+      this = d3Selection().getMember("each").getParameter(0).getReceiver().asSource()
       or
       this = d3Selection().getMember("node").getReturn().asSource()
       or

@@ -281,8 +281,14 @@ module XML {
     }
 
     override DataFlow::Node getAResult() {
+      // FIXED: previously would treat an argument as a source
       result =
-        parser.getReturn().getMember(any(string s | s.matches("on%"))).getAParameter().asSource()
+        parser
+            .getReturn()
+            .getMember(any(string s | s.matches("on%")))
+            .getAParameter()
+            .getAParameter()
+            .asSource()
     }
   }
 

@@ -136,20 +136,11 @@ module NestJS {
     }
   }
 
-  /** API node entry point for custom implementations of `ValidationPipe` (a common pattern). */
-  private class ValidationNodeEntry extends API::EntryPoint {
-    ValidationNodeEntry() { this = "ValidationNodeEntry" }
-
-    override DataFlow::SourceNode getASource() {
-      result.(DataFlow::ClassNode).getName() = "ValidationPipe"
-    }
-  }
-
   /** Gets an API node referring to the constructor of `ValidationPipe` */
   private API::Node validationPipe() {
     result = nestjs().getMember("ValidationPipe")
     or
-    result = any(ValidationNodeEntry e).getANode()
+    result.(DataFlow::ClassNode).getName() = "ValidationPipe"
   }
 
   /**

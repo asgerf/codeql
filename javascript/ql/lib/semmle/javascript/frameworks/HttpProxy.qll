@@ -39,7 +39,7 @@ private module HttpProxy {
       this = any(CreateServerCall server).getReturn().getMember(method).getACall()
     }
 
-    private API::Node getOptionsObject() {
+    private API::SinkNode getOptionsObject() {
       exists(int optionsIndex |
         method = "web" and optionsIndex = 2
         or

@@ -278,9 +278,6 @@ module Stages {
             .getInstance()
             .getReceiver()
             .getPromisedError()
-            .getADecoratedClass()
-            .getADecoratedMember()
-            .getADecoratedParameter()
       )
     }
   }

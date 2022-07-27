@@ -19,7 +19,7 @@ deprecated module NoSQL = NoSql;
 /**
  * Gets a value that has been assigned to the "$where" property of an object that flows to `queryArg`.
  */
-private DataFlow::Node getADollarWhereProperty(API::Node queryArg) {
+private DataFlow::Node getADollarWhereProperty(API::SinkNode queryArg) {
   result = queryArg.getMember("$where").asSink()
 }
 
@@ -181,7 +181,7 @@ private module Mongoose {
     /**
      * Gets an argument that this function interprets as a query.
      */
-    abstract API::Node getQueryArgument();
+    abstract API::SinkNode getQueryArgument();
   }
 
   /**
@@ -201,7 +201,7 @@ private module Mongoose {
         MethodSignatures::returnsDocumentQuery(methodName, asArray)
       }
 
-      override API::Node getQueryArgument() {
+      override API::SinkNode getQueryArgument() {
         exists(int n |
           MethodSignatures::interpretsArgumentAsQuery(methodName, n) and
           result = this.getParameter(n)
@@ -290,7 +290,7 @@ private module Mongoose {
         MethodSignatures::returnsDocumentQuery(methodName, asArray)
       }
 
-      override API::Node getQueryArgument() {
+      override API::SinkNode getQueryArgument() {
         exists(int n |
           MethodSignatures::interpretsArgumentAsQuery(methodName, n) and
           result = this.getParameter(n)
@@ -305,7 +305,7 @@ private module Mongoose {
 
       override predicate returnsDocumentQuery(boolean asArray) { none() }
 
-      override API::Node getQueryArgument() { result = this.getParameter(2) }
+      override API::SinkNode getQueryArgument() { result = this.getParameter(2) }
     }
 
     /**
@@ -391,7 +391,7 @@ private module Mongoose {
         MethodSignatures::returnsDocumentQuery(methodName, asArray)
       }
 
-      override API::Node getQueryArgument() {
+      override API::SinkNode getQueryArgument() {
         exists(int n |
           MethodSignatures::interpretsArgumentAsQuery(methodName, n) and
           result = this.getParameter(n)

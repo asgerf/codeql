@@ -5,6 +5,20 @@ private import semmle.javascript.dataflow.TypeTracking
 private import internal.CachedStages
 private import semmle.javascript.dataflow.internal.DataFlowNode
 
+/*
+ *  API::Node is backed by SourceNode, and implements same API but only forward-tracking (represents use node)
+ *   - Exception: getParameter() returns API::SinkNode
+ *
+ *  API::BacktrackingNode is backed by SourceNode-like, and implements same API but only backward-tracking (represents def node)
+ *
+ *  API::SinkNode is backed by DataFlow::Node+, and delegated by BacktrackingNode after a getALocalSource step
+ *
+ *  Root node is removed
+ *
+ *  SourceNode.track() returns API::Node
+ *  Node.backtrack() returns getALocalSource() -> def node
+ */
+
 module Deep {
   private predicate shouldTrack(DataFlow::SourceNode node) {
     not node.getTopLevel().isExterns() and
@@ -178,6 +192,7 @@ module Deep {
   /**
    * Gets an invocation of `originalCallee` that has been through one or more promisification and/or argument-binding steps.
    */
+  cached
   DataFlow::CallNode getABoundInvocation(
     DataFlow::SourceNode originalCallee, boolean promisified, int boundArgs
   ) {
@@ -262,6 +277,23 @@ module Deep {
     )
   }
 
+  cached
+  DataFlow::SourceNode getPromised(DataFlow::SourceNode base) {
+    result = getLoad(base, Promises::valueProp())
+  }
+
+  cached
+  DataFlow::SourceNode getPromisedError(DataFlow::SourceNode base) {
+    result = getLoad(base, Promises::errorProp())
+  }
+
+  cached
+  DataFlow::SourceNode getClassReceiverRef(DataFlow::ClassNode node) {
+    result = node.getAReceiverNode()
+    or
+    result = node.(DataFlow::ClassNode::FunctionStyleClass).getAPrototypeReference()
+  }
+
   /**
    * Gets a node into which the `prop` property of `base` is loaded.
    */
@@ -321,5 +353,12 @@ module Deep {
       i = 1 and
       param = Deep::getLoad(call, Promises::valueProp())
     )
+  }
+
+  cached
+  DataFlow::Node getPrettyReturn(DataFlow::FunctionNode fun) {
+    if fun.getFunction().isAsyncOrGenerator()
+    then result = fun.getReturnNode()
+    else result = fun.getAReturn()
   }
 }

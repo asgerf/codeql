@@ -59,12 +59,10 @@ class SourceNode extends DataFlow::Node {
   DataFlow::Node getALocalUse() { flowsTo(result) }
 
   /**
-   * Gets a `SourceNode` this node can flow to interprocedurally.
+   * Gets a node for tracking forwards from here.
    */
   pragma[inline]
-  DataFlow::SourceNode track() {
-    Deep::hasFlowTo(pragma[only_bind_out](this), pragma[only_bind_into](result))
-  }
+  API::Node track() { result = this }
 
   /**
    * Gets a reference (read or write) of property `propName` on this node.
