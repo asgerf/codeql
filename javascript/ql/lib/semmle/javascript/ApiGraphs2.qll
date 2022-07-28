@@ -5,6 +5,8 @@ private import semmle.javascript.DeepFlow
 private import semmle.javascript.dataflow.internal.DataFlowNode
 
 module API2 {
+  deprecated Node root() { none() }
+
   /**
    * A class for contributing new steps for tracking uses of an API.
    */
@@ -57,6 +59,8 @@ module API2 {
   class NewNode extends InvokeNode, DataFlow::NewNode { }
 
   class Node extends TNode instanceof DataFlow::SourceNode {
+    deprecated Node getASuccessor() { none() }
+
     string toString() { result = super.toString() }
 
     predicate hasLocationInfo(
