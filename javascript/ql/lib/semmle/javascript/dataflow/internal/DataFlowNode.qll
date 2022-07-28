@@ -35,7 +35,7 @@ private module Cached {
     TGlobalAccessPathRoot() or
     TTemplatePlaceholderTag(Templating::TemplatePlaceholderTag tag) or
     // API nodes - these must be generated at a later stage than DataFlow::Node
-    TApiSyntheticCallbackArg(DataFlow::CallNode call) {
+    TApiNode_PromisifiedCallbackNode(DataFlow::CallNode call) {
       Deep::getABoundInvocation(_, true, _) = call
     }
 

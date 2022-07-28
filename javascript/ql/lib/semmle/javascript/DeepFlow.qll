@@ -334,7 +334,7 @@ module Deep {
       exists(int bound, DataFlow::CallNode call |
         call = getABoundInvocation(callee, true, bound) and
         i = bound + call.getNumArgument() and
-        arg = TApiSyntheticCallbackArg(call)
+        arg = TApiNode_PromisifiedCallbackNode(call)
       )
     }
 
@@ -358,10 +358,10 @@ module Deep {
 
     cached
     predicate promisifiedCallbackParameterDef(
-      TApiSyntheticCallbackArg callback, int i, DataFlow::SourceNode param
+      TApiNode_PromisifiedCallbackNode callback, int i, DataFlow::SourceNode param
     ) {
       exists(DataFlow::CallNode call |
-        callback = TApiSyntheticCallbackArg(call) and
+        callback = TApiNode_PromisifiedCallbackNode(call) and
         i = 1 and
         param = Deep::getLoad(call, Promises::valueProp())
       )

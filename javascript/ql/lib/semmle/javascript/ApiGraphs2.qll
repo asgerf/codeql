@@ -126,7 +126,8 @@ module API2 {
       result = pragma[only_bind_out](this.getACall()).getLastArgument()
       or
       result =
-        TApiSyntheticCallbackArg(Deep::getABoundInvocation(pragma[only_bind_out](this), true, _))
+        TApiNode_PromisifiedCallbackNode(Deep::getABoundInvocation(pragma[only_bind_out](this),
+            true, _))
     }
 
     pragma[inline]
@@ -319,13 +320,19 @@ module API2 {
   }
 
   class SinkNode extends TDataFlowNodeOrApiNode {
-    // TODO: include synth callback arg
-    string toString() { result = this.(DataFlow::Node).toString() }
+    string toString() {
+      result = this.(DataFlow::Node).toString()
+      or
+      result = this.(Internal::PromisifiedCallbackNode).toString()
+    }
 
     predicate hasLocationInfo(
       string filepath, int startline, int startcolumn, int endline, int endcolumn
     ) {
       this.(DataFlow::Node).hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+      or
+      this.(Internal::PromisifiedCallbackNode)
+          .hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
     }
 
     pragma[inline]
@@ -439,5 +446,28 @@ module API2 {
 
     /** DEPRECATED. This predicate has been renamed to `getAValueReachingSink`. */
     deprecated DataFlow::Node getAValueReachingRhs() { result = this.getAValueReachingSink() }
+  }
+
+  /** Internal classes */
+  module Internal {
+    /**
+     * An API node representing a callback passed to a promisified version of a function.
+     *
+     * At every call to a promisified function, this node represents the callback passed on to the
+     * original function. The callback parameters flow to the point where the returned promise
+     * is consumed by an `await` or similar.
+     */
+    class PromisifiedCallbackNode extends TApiNode_PromisifiedCallbackNode {
+      string toString() { result = "synthetic callback from promisification" }
+
+      predicate hasLocationInfo(
+        string filepath, int startline, int startcolumn, int endline, int endcolumn
+      ) {
+        exists(DataFlow::CallNode call |
+          this = TApiNode_PromisifiedCallbackNode(call) and
+          call.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+        )
+      }
+    }
   }
 }
