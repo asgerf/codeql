@@ -372,7 +372,7 @@ module API2 {
     API2::Node getAParameter() {
       result = this.backtrack().getAParameter()
       or
-      Deep::promisifiedCallbackParameterDef(this, 1, result)
+      Deep::promisifiedCallbackParameterDef(this, _, result)
     }
 
     pragma[inline]

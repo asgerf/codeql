@@ -360,8 +360,10 @@ module Deep {
     predicate promisifiedCallbackParameterDef(
       TApiNode_PromisifiedCallbackNode callback, int i, DataFlow::SourceNode param
     ) {
-      exists(DataFlow::CallNode call |
-        callback = TApiNode_PromisifiedCallbackNode(call) and
+      exists(DataFlow::CallNode call | callback = TApiNode_PromisifiedCallbackNode(call) |
+        i = 0 and
+        param = Deep::getLoad(call, Promises::errorProp())
+        or
         i = 1 and
         param = Deep::getLoad(call, Promises::valueProp())
       )
