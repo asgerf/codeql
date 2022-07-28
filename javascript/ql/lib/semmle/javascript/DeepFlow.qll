@@ -257,10 +257,10 @@ module Deep {
   /**
    * Gets a node into which the `prop` property of `base` is loaded.
    */
-  // FIXME: this gets the SourceNode
   pragma[inline]
-  DataFlow::SourceNode getStoreRhs(DataFlow::SourceNode obj, string prop) {
-    storeStep(result, obj, prop)
+  DataFlow::Node getStoreRhs(DataFlow::SourceNode obj, string prop) {
+    // TODO: do we need to worry about store/load edges here?
+    StepSummary::smallstep(obj, result, StoreStep(prop))
   }
 
   cached
