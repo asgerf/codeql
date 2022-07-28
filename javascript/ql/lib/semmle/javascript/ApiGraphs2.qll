@@ -358,10 +358,18 @@ module API2 {
     }
 
     pragma[inline]
-    API2::Node getAParameter() { result = this.backtrack().getAParameter() }
+    API2::Node getAParameter() {
+      result = this.backtrack().getAParameter()
+      or
+      Deep::promisifiedCallbackParameterDef(this, 1, result)
+    }
 
     pragma[inline]
-    API2::Node getLastParameter() { result = this.backtrack().getLastParameter() }
+    API2::Node getLastParameter() {
+      result = this.backtrack().getLastParameter()
+      or
+      Deep::promisifiedCallbackParameterDef(this, 1, result)
+    }
 
     pragma[inline]
     API2::Node getReceiver() { result = this.backtrack().getReceiver() }
