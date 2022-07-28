@@ -67,14 +67,15 @@ class Assertion extends Comment {
   predicate isNegative() { polarity = "MISSING: " }
 
   API::Node lookup(int i) {
-    i = 0 and
-    result = API::root()
-    or
-    result =
-      this.lookup(i - 1)
-          .getASuccessor(any(API::Label::ApiLabel label |
-              label.toString() = this.getEdgeLabel(i - 1)
-            ))
+    none() // TODO
+    // i = 0 and
+    // result = API::root()
+    // or
+    // result =
+    //   this.lookup(i - 1)
+    //       .getASuccessor(any(API::Label::ApiLabel label |
+    //           label.toString() = this.getEdgeLabel(i - 1)
+    //         ))
   }
 
   API::Node lookup() { result = this.lookup(this.getPathLength()) }
@@ -88,15 +89,15 @@ class Assertion extends Comment {
       not exists(this.lookup([i + 1 .. this.getPathLength()])) and
       prefix = nd + " has no outgoing edge labelled " + this.getEdgeLabel(i) + ";" and
       if exists(nd.getASuccessor())
-      then
-        suffix =
-          "it does have outgoing edges labelled " +
-            concat(string lbl |
-              exists(nd.getASuccessor(any(API::Label::ApiLabel label | label.toString() = lbl)))
-            |
-              lbl, ", "
-            ) + "."
-      else suffix = "it has no outgoing edges at all."
+      then suffix = "" // TODO
+      else
+        // "it does have outgoing edges labelled " +
+        //   concat(string lbl |
+        //     exists(nd.getASuccessor(any(API::Label::ApiLabel label | label.toString() = lbl)))
+        //   |
+        //     lbl, ", "
+        //   ) + "."
+        suffix = "it has no outgoing edges at all."
     |
       result = prefix + " " + suffix
     )

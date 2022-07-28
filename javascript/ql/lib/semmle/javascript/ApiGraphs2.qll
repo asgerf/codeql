@@ -59,6 +59,10 @@ module API2 {
   class NewNode extends InvokeNode, DataFlow::NewNode { }
 
   class Node extends TDataFlowNode instanceof DataFlow::SourceNode {
+    deprecated DataFlow::Node getInducingNode() { result = this }
+
+    deprecated int getDepth() { result = 0 } // TODO
+
     deprecated Node getASuccessor() { none() }
 
     string toString() { result = super.toString() }
