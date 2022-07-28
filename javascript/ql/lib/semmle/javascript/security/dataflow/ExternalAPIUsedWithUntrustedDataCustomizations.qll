@@ -139,22 +139,24 @@ module ExternalApiUsedWithUntrustedData {
   private predicate nodeIsRelevant(API::Node node) {
     mayComeFromLibrary(node) and
     not node instanceof SafeExternalApiFunction
-    or
-    nodeIsRelevant(node.getASuccessor()) and
-    not node = API::moduleImport(any(SafeExternalApiPackage p))
+    // or
+    // nodeIsRelevant(node.getASuccessor()) and
+    // not node = API::moduleImport(any(SafeExternalApiPackage p))
   }
 
   /** Holds if the edge `pred -> succ` may lead to an external API call. */
   private predicate edge(API::Node pred, API::Node succ) {
     nodeIsRelevant(succ) and
-    pred.getASuccessor() = succ
+    pred.getAMember() = succ // TODO
   }
+
+  private API::Node root() { none() }
 
   /**
    * Gets the depth of `node` from the API graph root, not including paths that go through
    * irrelevant nodes, such as a package marked as safe.
    */
-  private int getDepth(API::Node node) = shortestDistances(API::root/0, edge/2)(_, node, result)
+  private int getDepth(API::Node node) = shortestDistances(root/0, edge/2)(_, node, result)
 
   /**
    * Gets a parameter of `base` with name `name`, or a property named `name` of a destructuring parameter.
