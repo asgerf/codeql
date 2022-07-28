@@ -82,6 +82,13 @@ module Deep {
   }
 
   pragma[nomagic]
+  private predicate loadStepPlus(DataFlow::SourceNode pred, DataFlow::SourceNode succ, string prop) {
+    loadStep(pred, succ, prop)
+    or
+    classStoreEdge(pred, prop, succ)
+  }
+
+  pragma[nomagic]
   private predicate returnStep(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
     StepSummary::step(pred, succ, ReturnStep())
   }
@@ -250,7 +257,7 @@ module Deep {
     or
     exists(DataFlow::SourceNode mid |
       hasFlowTo(pragma[only_bind_out](base), mid) and
-      loadStep(pragma[only_bind_out](mid), pragma[only_bind_into](result), prop)
+      loadStepPlus(pragma[only_bind_out](mid), pragma[only_bind_into](result), prop)
     )
   }
 
@@ -260,7 +267,31 @@ module Deep {
   pragma[inline]
   DataFlow::Node getStoreRhs(DataFlow::SourceNode obj, string prop) {
     // TODO: do we need to worry about store/load edges here?
-    StepSummary::smallstep(obj, result, StoreStep(prop))
+    StepSummary::smallstep(result, obj, StoreStep(prop))
+    or
+    classStoreEdge(obj, prop, result)
+  }
+
+  private predicate classStoreEdge(DataFlow::SourceNode obj, string prop, DataFlow::Node rhs) {
+    exists(DataFlow::ClassNode cls |
+      obj = cls and
+      (
+        rhs = cls.getStaticMethod(prop)
+        or
+        rhs = getPrettyReturn(cls.getStaticMember(prop, DataFlow::MemberKind::getter()))
+        or
+        rhs = obj.getAPropertyWrite(prop).getRhs()
+      )
+      or
+      obj = cls.getConstructor().getReceiver() and
+      (
+        rhs = cls.getInstanceMethod(prop)
+        or
+        rhs = getPrettyReturn(cls.getInstanceMember(prop, DataFlow::MemberKind::getter()))
+        or
+        rhs = getClassReceiverRef(cls).getAPropertyWrite(prop).getRhs()
+      )
+    )
   }
 
   cached

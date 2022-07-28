@@ -10,13 +10,13 @@ util.inherits(MyStream, EventEmitter);
 
 MyStream.prototype.write = (data) => this.emit('data', data);
 
-function MyOtherStream() { /* use=moduleImport("testlib").getParameter(0).getMember("MyOtherStream").getInstance() */
+function MyOtherStream() { /* def=moduleImport("testlib").getParameter(0).getMember("MyOtherStream").getInstance() */
     EventEmitter.call(this);
 }
 
 util.inherits(MyOtherStream, EventEmitter);
 
-MyOtherStream.prototype.write = function (data) { /* use=moduleImport("testlib").getParameter(0).getMember("MyOtherStream").getInstance() */
+MyOtherStream.prototype.write = function (data) { /* def=moduleImport("testlib").getParameter(0).getMember("MyOtherStream").getInstance() */
     this.emit('data', data);
     return this;
 };

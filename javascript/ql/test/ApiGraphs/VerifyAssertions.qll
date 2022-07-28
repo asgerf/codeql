@@ -19,12 +19,12 @@
 
 import javascript
 
-private DataFlow::Node getNode(API::Node nd, string kind) {
+private DataFlow::Node getNode(API::GraphNode nd, string kind) {
   kind = "def" and
-  result = nd.asSink()
+  result = nd.asDefNode().asSink()
   or
   kind = "use" and
-  result = nd.getAValueReachableFromSource()
+  result = nd.asUseNode().getAValueReachableFromSource()
 }
 
 private string getLoc(DataFlow::Node nd) {
@@ -66,43 +66,44 @@ class Assertion extends Comment {
 
   predicate isNegative() { polarity = "MISSING: " }
 
-  API::Node lookup(int i) {
-    none() // TODO
-    // i = 0 and
-    // result = API::root()
-    // or
-    // result =
-    //   this.lookup(i - 1)
-    //       .getASuccessor(any(API::Label::ApiLabel label |
-    //           label.toString() = this.getEdgeLabel(i - 1)
-    //         ))
+  API::GraphNode lookup(int i) {
+    i = 0 and
+    result = API::Graph::root()
+    or
+    result =
+      this.lookup(i - 1)
+          .getASuccessor(any(API::Graph::Label::ApiLabel label |
+              label.toString() = this.getEdgeLabel(i - 1)
+            ))
   }
 
-  API::Node lookup() { result = this.lookup(this.getPathLength()) }
+  API::GraphNode lookup() { result = this.lookup(this.getPathLength()) }
 
   predicate holds() { getLoc(getNode(this.lookup(), expectedKind)) = expectedLoc }
 
   string tryExplainFailure() {
-    exists(int i, API::Node nd, string prefix, string suffix |
+    exists(int i, API::GraphNode nd, string prefix, string suffix |
       nd = this.lookup(i) and
       i < this.getPathLength() and
       not exists(this.lookup([i + 1 .. this.getPathLength()])) and
       prefix = nd + " has no outgoing edge labelled " + this.getEdgeLabel(i) + ";" and
       if exists(nd.getASuccessor())
-      then suffix = "" // TODO
-      else
-        // "it does have outgoing edges labelled " +
-        //   concat(string lbl |
-        //     exists(nd.getASuccessor(any(API::Label::ApiLabel label | label.toString() = lbl)))
-        //   |
-        //     lbl, ", "
-        //   ) + "."
-        suffix = "it has no outgoing edges at all."
+      then
+        suffix =
+          "it does have outgoing edges labelled " +
+            concat(string lbl |
+              exists(
+                nd.getASuccessor(any(API::Graph::Label::ApiLabel label | label.toString() = lbl))
+              )
+            |
+              lbl, ", "
+            ) + "."
+      else suffix = "it has no outgoing edges at all."
     |
       result = prefix + " " + suffix
     )
     or
-    exists(API::Node nd, string kind | nd = this.lookup() |
+    exists(API::GraphNode nd, string kind | nd = this.lookup() |
       exists(getNode(nd, kind)) and
       not exists(getNode(nd, expectedKind)) and
       result = "Expected " + expectedKind + " node, but found " + kind + " node."
