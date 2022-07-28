@@ -106,8 +106,9 @@ module Deep {
    * `hasCall` and `hasReturn` indicate if the path contains calls and returns, respectively.
    */
   pragma[nomagic]
-  cached
-  DataFlow::SourceNode trackNode(DataFlow::SourceNode node, boolean hasCall, boolean hasReturn) {
+  private DataFlow::SourceNode trackNode(
+    DataFlow::SourceNode node, boolean hasCall, boolean hasReturn
+  ) {
     initialState(node, hasCall, hasReturn) and
     result = node
     or
@@ -178,7 +179,8 @@ module Deep {
   /**
    * Gets a source node referring to a bound version of `originalCallee`.
    */
-  DataFlow::SourceNode getABoundUseSite(
+  pragma[nomagic]
+  private DataFlow::SourceNode getABoundUseSite(
     DataFlow::SourceNode originalCallee, boolean promisified, int boundArgs
   ) {
     exists(boolean call1, boolean return1, boolean call2, boolean return2 |
@@ -187,16 +189,6 @@ module Deep {
           return2) and
       call1.booleanAnd(return2) = false
     )
-  }
-
-  /**
-   * Gets an invocation of `originalCallee` that has been through one or more promisification and/or argument-binding steps.
-   */
-  cached
-  DataFlow::CallNode getABoundInvocation(
-    DataFlow::SourceNode originalCallee, boolean promisified, int boundArgs
-  ) {
-    result = getABoundUseSite(originalCallee, promisified, boundArgs).getACall()
   }
 
   /**
@@ -231,7 +223,7 @@ module Deep {
    * calls and returns, respectively.
    */
   pragma[nomagic]
-  predicate indirectLoad(
+  private predicate indirectLoad(
     DataFlow::SourceNode pred, DataFlow::SourceNode succ, boolean hasCall, boolean hasReturn,
     string prop
   ) {
@@ -250,21 +242,6 @@ module Deep {
   }
 
   /**
-   * Gets a node into which the `prop` property of `base` is eventually loaded through
-   * one or more load-store steps followed by a load.
-   */
-  pragma[nomagic]
-  cached
-  DataFlow::SourceNode getIndirectLoad(DataFlow::SourceNode base, string prop) {
-    // The indirectLoad relation does not include global flow from 'base' to the initial load-store,
-    // so account for that here. This relation is small enough that we can cache it cheaply.
-    exists(boolean call1, boolean return1, boolean call2, boolean return2 |
-      indirectLoad(trackNode(base, call1, return1), result, call2, return2, prop) and
-      call1.booleanAnd(return2) = false
-    )
-  }
-
-  /**
    * Gets a node into which the `prop` property of `base` is loaded.
    */
   pragma[inline]
@@ -277,88 +254,121 @@ module Deep {
     )
   }
 
-  cached
-  DataFlow::SourceNode getPromised(DataFlow::SourceNode base) {
-    result = getLoad(base, Promises::valueProp())
-  }
-
-  cached
-  DataFlow::SourceNode getPromisedError(DataFlow::SourceNode base) {
-    result = getLoad(base, Promises::errorProp())
-  }
-
-  cached
-  DataFlow::SourceNode getClassReceiverRef(DataFlow::ClassNode node) {
-    result = node.getAReceiverNode()
-    or
-    result = node.(DataFlow::ClassNode::FunctionStyleClass).getAPrototypeReference()
-  }
-
   /**
    * Gets a node into which the `prop` property of `base` is loaded.
    */
+  // FIXME: this gets the SourceNode
   pragma[inline]
   DataFlow::SourceNode getStoreRhs(DataFlow::SourceNode obj, string prop) {
     storeStep(result, obj, prop)
   }
 
   cached
-  predicate hasFlowTo(DataFlow::SourceNode source, DataFlow::SourceNode dest) {
-    trackNode(source, _, _) = dest
+  private module Cached {
+    /**
+     * Gets an invocation of `originalCallee` that has been through one or more promisification and/or argument-binding steps.
+     */
+    cached
+    DataFlow::CallNode getABoundInvocation(
+      DataFlow::SourceNode originalCallee, boolean promisified, int boundArgs
+    ) {
+      // TODO: could this be replaced/merged with FlowSteps::callsBound?
+      result = getABoundUseSite(originalCallee, promisified, boundArgs).getACall()
+    }
+
+    /**
+     * Gets a node into which the `prop` property of `base` is eventually loaded through
+     * one or more load-store steps followed by a load.
+     */
+    pragma[nomagic]
+    cached
+    DataFlow::SourceNode getIndirectLoad(DataFlow::SourceNode base, string prop) {
+      // The indirectLoad relation does not include global flow from 'base' to the initial load-store,
+      // so account for that here. This relation is small enough that we can cache it cheaply.
+      exists(boolean call1, boolean return1, boolean call2, boolean return2 |
+        indirectLoad(trackNode(base, call1, return1), result, call2, return2, prop) and
+        call1.booleanAnd(return2) = false
+      )
+    }
+
+    cached
+    DataFlow::SourceNode getPromised(DataFlow::SourceNode base) {
+      result = getLoad(base, Promises::valueProp())
+    }
+
+    cached
+    DataFlow::SourceNode getPromisedError(DataFlow::SourceNode base) {
+      result = getLoad(base, Promises::errorProp())
+    }
+
+    cached
+    DataFlow::SourceNode getClassReceiverRef(DataFlow::ClassNode node) {
+      result = node.getAReceiverNode()
+      or
+      result = node.(DataFlow::ClassNode::FunctionStyleClass).getAPrototypeReference()
+    }
+
+    cached
+    predicate hasFlowTo(DataFlow::SourceNode source, DataFlow::SourceNode dest) {
+      trackNode(source, _, _) = dest
+    }
+
+    /** Note: implies flow from `callee` to call site. */
+    private predicate argumentPassing1(DataFlow::SourceNode callee, int i, DataFlow::Node arg) {
+      arg = callee.getAnInvocation().getArgument(i)
+      or
+      exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback |
+        callee.flowsTo(callback) and
+        pin.isPartialArgument(callback, arg, i)
+      )
+    }
+
+    cached
+    predicate argumentPassing(DataFlow::SourceNode callee, int i, TDataFlowNodeOrApiNode arg) {
+      // TODO: merge with something in FlowSteps (make FlowSteps track promisification)
+      argumentPassing1(trackNode(callee, _, _), i, arg)
+      or
+      exists(int bound | argumentPassing1(getABoundUseSite(callee, _, bound), i - bound, arg))
+      or
+      // synthesize a callback argument to calls to a promisified function
+      exists(int bound, DataFlow::CallNode call |
+        call = getABoundInvocation(callee, true, bound) and
+        i = bound + call.getNumArgument() and
+        arg = TApiSyntheticCallbackArg(call)
+      )
+    }
+
+    cached
+    predicate receiverPassing(DataFlow::SourceNode callee, DataFlow::Node arg) {
+      arg = callee.getACall().getReceiver()
+      or
+      exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback |
+        callee.flowsTo(callback) and
+        arg = pin.getBoundReceiver(callback)
+      )
+    }
+
+    /** Note: does not backtrack `callee`. Caller should do this. */
+    cached
+    predicate parameterDef(TDataFlowNodeOrApiNode callable, int i, DataFlow::SourceNode param) {
+      param = callable.(DataFlow::FunctionNode).getParameter(i)
+      or
+      param = callable.(DataFlow::ClassNode).getConstructor().getParameter(i)
+      or
+      exists(DataFlow::CallNode call |
+        callable = TApiSyntheticCallbackArg(call) and
+        i = 1 and
+        param = Deep::getLoad(call, Promises::valueProp())
+      )
+    }
+
+    cached
+    DataFlow::Node getPrettyReturn(DataFlow::FunctionNode fun) {
+      if fun.getFunction().isAsyncOrGenerator()
+      then result = fun.getReturnNode()
+      else result = fun.getAReturn()
+    }
   }
 
-  /** Note: implies flow from `callee` to call site. */
-  private predicate argumentPassing1(DataFlow::SourceNode callee, int i, DataFlow::Node arg) {
-    arg = callee.getAnInvocation().getArgument(i)
-    or
-    exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback |
-      callee.flowsTo(callback) and
-      pin.isPartialArgument(callback, arg, i)
-    )
-  }
-
-  cached
-  predicate argumentPassing(DataFlow::SourceNode callee, int i, TDataFlowNodeOrApiNode arg) {
-    argumentPassing1(trackNode(callee, _, _), i, arg)
-    or
-    exists(int bound | argumentPassing1(getABoundUseSite(callee, _, bound), i - bound, arg))
-    or
-    // synthesize a callback argument to calls to a promisified function
-    exists(int bound, DataFlow::CallNode call |
-      call = getABoundInvocation(callee, true, bound) and
-      i = bound + call.getNumArgument() and
-      arg = TApiSyntheticCallbackArg(call)
-    )
-  }
-
-  cached
-  predicate receiverPassing(DataFlow::SourceNode callee, DataFlow::Node arg) {
-    arg = callee.getACall().getReceiver()
-    or
-    exists(DataFlow::PartialInvokeNode pin, DataFlow::Node callback |
-      callee.flowsTo(callback) and
-      arg = pin.getBoundReceiver(callback)
-    )
-  }
-
-  /** Note: does not backtrack `callee`. Caller should do this. */
-  cached
-  predicate parameterDef(TDataFlowNodeOrApiNode callable, int i, DataFlow::SourceNode param) {
-    param = callable.(DataFlow::FunctionNode).getParameter(i)
-    or
-    param = callable.(DataFlow::ClassNode).getConstructor().getParameter(i)
-    or
-    exists(DataFlow::CallNode call |
-      callable = TApiSyntheticCallbackArg(call) and
-      i = 1 and
-      param = Deep::getLoad(call, Promises::valueProp())
-    )
-  }
-
-  cached
-  DataFlow::Node getPrettyReturn(DataFlow::FunctionNode fun) {
-    if fun.getFunction().isAsyncOrGenerator()
-    then result = fun.getReturnNode()
-    else result = fun.getAReturn()
-  }
+  import Cached
 }
