@@ -351,7 +351,11 @@ module API2 {
     API2::Node getInstance() { result = this.backtrack().getInstance() }
 
     pragma[inline]
-    API2::Node getParameter(int i) { result = this.backtrack().getParameter(i) }
+    API2::Node getParameter(int i) {
+      result = this.backtrack().getParameter(i)
+      or
+      Deep::promisifiedCallbackParameterDef(this, i, result)
+    }
 
     pragma[inline]
     API2::Node getAParameter() { result = this.backtrack().getAParameter() }

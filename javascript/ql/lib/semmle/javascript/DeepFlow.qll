@@ -354,9 +354,14 @@ module Deep {
       param = callable.(DataFlow::FunctionNode).getParameter(i)
       or
       param = callable.(DataFlow::ClassNode).getConstructor().getParameter(i)
-      or
+    }
+
+    cached
+    predicate promisifiedCallbackParameterDef(
+      TApiSyntheticCallbackArg callback, int i, DataFlow::SourceNode param
+    ) {
       exists(DataFlow::CallNode call |
-        callable = TApiSyntheticCallbackArg(call) and
+        callback = TApiSyntheticCallbackArg(call) and
         i = 1 and
         param = Deep::getLoad(call, Promises::valueProp())
       )

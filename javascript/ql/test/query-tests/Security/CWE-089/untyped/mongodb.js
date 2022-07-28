@@ -112,3 +112,14 @@ function useQuery(queries) {
     doc.find(query);
   });
 }
+
+const connectp = require('util').promisify(MongoClient.connect);
+app.post('/documents/find', async (req, res) => {
+  const query = {};
+  query.title = req.query.title;
+  const client = await connectp('mongodb://localhost:27017/test');
+  const doc = client.collection('doc');
+
+  // NOT OK: query is tainted by user-provided object value
+  doc.find(query);
+});
