@@ -35,7 +35,7 @@ module DataFlow {
      * Gets a node for backtracking from here.
      */
     pragma[inline]
-    API::BacktrackingNode backtrack() { result = this.(API::SinkNode).backtrack() }
+    API::SinkNode backtrack() { result = this }
 
     /**
      * Gets a data flow node from which data may flow to this node in one local step.
