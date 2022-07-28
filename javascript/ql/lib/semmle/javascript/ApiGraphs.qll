@@ -661,7 +661,11 @@ module API {
 
     class TUse = MkModuleUse or MkModuleImport or MkUse;
 
-    private predicate hasSemantics(DataFlow::Node nd) { not nd.getTopLevel().isExterns() }
+    pragma[inline]
+    private predicate hasSemantics(DataFlow::Node nd) { not isInExterns(nd) }
+
+    pragma[nomagic]
+    private predicate isInExterns(DataFlow::Node nd) { nd.getTopLevel().isExterns() }
 
     /** Holds if `imp` is an import of module `m`. */
     private predicate imports(DataFlow::Node imp, string m) {
