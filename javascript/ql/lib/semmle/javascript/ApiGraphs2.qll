@@ -58,7 +58,7 @@ module API2 {
 
   class NewNode extends InvokeNode, DataFlow::NewNode { }
 
-  class Node extends TNode instanceof DataFlow::SourceNode {
+  class Node extends TDataFlowNode instanceof DataFlow::SourceNode {
     deprecated Node getASuccessor() { none() }
 
     string toString() { result = super.toString() }
@@ -180,7 +180,7 @@ module API2 {
     deprecated DataFlow::Node getAValueReachingRhs() { result = this.getAValueReachingSink() }
   }
 
-  class BacktrackingNode extends TNode instanceof DataFlow::SourceNode {
+  class BacktrackingNode extends TDataFlowNode instanceof DataFlow::SourceNode {
     // TODO: include synth callback arg
     string toString() { result = this.(DataFlow::Node).toString() }
 

@@ -30,7 +30,7 @@ module DataFlow {
   /**
    * A node in the data flow graph.
    */
-  class Node extends TNode {
+  class Node extends TDataFlowNode {
     /**
      * Gets a node for backtracking from here.
      */
