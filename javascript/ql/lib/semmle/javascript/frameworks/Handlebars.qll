@@ -10,13 +10,11 @@ module Handlebars {
    */
   class Handlebars extends DataFlow::SourceNode {
     Handlebars() {
-      this.accessesGlobal("handlebars")
-      or
-      this.accessesGlobal("Handlebars")
+      this = DataFlow::globalVarRef(["handlebars", "Handlebars"])
       or
       this = DataFlow::moduleImport("handlebars")
       or
-      this.hasUnderlyingType("Handlebars")
+      this = API::Node::ofType("Handlebars")
     }
   }
 
