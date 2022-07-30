@@ -281,7 +281,7 @@ module Vuex {
     path = ""
     or
     exists(string name |
-      result = getAMappedAccess("mapState", name) and
+      pragma[only_bind_into](result) = getAMappedAccess("mapState", name) and
       path = name + "/"
     )
     or
