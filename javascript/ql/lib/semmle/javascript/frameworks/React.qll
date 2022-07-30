@@ -164,25 +164,21 @@ abstract class ReactComponent extends AstNode {
    * `comoponentDidUpdate` method of this component.
    */
   DataFlow::SourceNode getAPreviousStateSource() {
-    exists(DataFlow::FunctionNode callback, int stateParameterIndex |
+    // setState: (prevState, props)
+    result = pragma[only_bind_out](this).getAMethodCall("setState").getCallback(0).getParameter(0)
+    or
+    exists(DataFlow::FunctionNode callback |
       // "prevState" object as callback argument
-      callback.getParameter(stateParameterIndex).flowsTo(result)
+      result = callback.getParameter(1)
     |
-      // setState: (prevState, props)
-      callback = getAMethodCall("setState").getCallback(0) and
-      stateParameterIndex = 0
+      // componentDidUpdate: (prevProps, prevState)
+      callback = getInstanceMethod("componentDidUpdate").flow()
       or
-      stateParameterIndex = 1 and
-      (
-        // componentDidUpdate: (prevProps, prevState)
-        callback = getInstanceMethod("componentDidUpdate").flow()
-        or
-        // getDerivedStateFromProps: (props, state)
-        callback = getStaticMethod("getDerivedStateFromProps").flow()
-        or
-        // getSnapshotBeforeUpdate: (prevProps, prevState)
-        callback = getInstanceMethod("getSnapshotBeforeUpdate").flow()
-      )
+      // getDerivedStateFromProps: (props, state)
+      callback = getStaticMethod("getDerivedStateFromProps").flow()
+      or
+      // getSnapshotBeforeUpdate: (prevProps, prevState)
+      callback = getInstanceMethod("getSnapshotBeforeUpdate").flow()
     )
   }
 
@@ -221,25 +217,20 @@ abstract class ReactComponent extends AstNode {
    * `comoponentDidUpdate` method of this component.
    */
   DataFlow::SourceNode getAPreviousPropsSource() {
-    exists(DataFlow::FunctionNode callback, int propsParameterIndex |
+    result = pragma[only_bind_out](this).getAMethodCall("setState").getCallback(0).getParameter(1)
+    or
+    exists(DataFlow::FunctionNode callback |
       // "prevProps" object as callback argument
-      callback.getParameter(propsParameterIndex).flowsTo(result)
+      result = callback.getParameter(0)
     |
-      // setState: (prevState, props)
-      callback = getAMethodCall("setState").getCallback(0) and
-      propsParameterIndex = 1
+      // componentDidUpdate: (prevProps, prevState)
+      callback = getInstanceMethod("componentDidUpdate").flow()
       or
-      propsParameterIndex = 0 and
-      (
-        // componentDidUpdate: (prevProps, prevState)
-        callback = getInstanceMethod("componentDidUpdate").flow()
-        or
-        // getDerivedStateFromProps: (props, state)
-        callback = getStaticMethod("getDerivedStateFromProps").flow()
-        or
-        // getSnapshotBeforeUpdate: (prevProps, prevState)
-        callback = getInstanceMethod("getSnapshotBeforeUpdate").flow()
-      )
+      // getDerivedStateFromProps: (props, state)
+      callback = getStaticMethod("getDerivedStateFromProps").flow()
+      or
+      // getSnapshotBeforeUpdate: (prevProps, prevState)
+      callback = getInstanceMethod("getSnapshotBeforeUpdate").flow()
     )
   }
 }
