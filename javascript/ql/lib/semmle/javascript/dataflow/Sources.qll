@@ -34,13 +34,7 @@ private import semmle.javascript.DeepFlow
  * import("fs")
  * ```
  */
-class SourceNode extends DataFlow::Node {
-  SourceNode() {
-    this instanceof SourceNode::Range
-    or
-    none() and this instanceof SourceNode::Internal::RecursionGuard
-  }
-
+class SourceNode extends DataFlow::Node instanceof SourceNode::Range {
   /**
    * Holds if this node flows into `sink` in zero or more local (that is,
    * intra-procedural) steps.
