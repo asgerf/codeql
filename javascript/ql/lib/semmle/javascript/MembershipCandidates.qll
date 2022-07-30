@@ -67,6 +67,7 @@ module MembershipCandidate {
      * If the polarity is `false` the test returns `true` if the
      * collection does not contain this candidate.
      */
+    pragma[nomagic]
     boolean getTestPolarity() { result = true }
   }
 
@@ -209,6 +210,7 @@ module MembershipCandidate {
   class CollectionMembershipCandidate extends MembershipCandidate::Range {
     DataFlow::MethodCallNode test;
 
+    pragma[nomagic]
     CollectionMembershipCandidate() { test.getMethodName() = "has" and this = test.getArgument(0) }
 
     override DataFlow::Node getTest() { result = test }
@@ -217,8 +219,7 @@ module MembershipCandidate {
   /**
    * A candidate that may be a property name of an object.
    */
-  class ObjectPropertyNameMembershipCandidate extends MembershipCandidate::Range,
-    DataFlow::ValueNode {
+  class ObjectPropertyNameMembershipCandidate extends MembershipCandidate::Range {
     Expr test;
     Expr membersNode;
 

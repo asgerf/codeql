@@ -1197,6 +1197,7 @@ module TaintTracking {
   class MembershipTestSanitizer extends AdditionalSanitizerGuardNode {
     MembershipCandidate candidate;
 
+    pragma[nomagic]
     MembershipTestSanitizer() { this = candidate.getTest() }
 
     override predicate sanitizes(boolean outcome, Expr e) {

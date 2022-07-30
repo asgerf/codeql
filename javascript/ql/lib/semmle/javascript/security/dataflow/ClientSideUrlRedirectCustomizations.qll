@@ -87,7 +87,7 @@ module ClientSideUrlRedirect {
   /**
    * A sink which is used to set the window location.
    */
-  class LocationSink extends Sink, DataFlow::ValueNode {
+  class LocationSink extends Sink {
     boolean xss;
 
     LocationSink() {
@@ -111,7 +111,7 @@ module ClientSideUrlRedirect {
       xss = true
       or
       // An assignment to `location`
-      exists(Assignment assgn | isLocation(assgn.getTarget()) and astNode = assgn.getRhs()) and
+      exists(Assignment assgn | isLocation(assgn.getTarget()) and this = assgn.getRhs().flow()) and
       xss = true
       or
       // An assignment to `location.href`, `location.protocol` or `location.hostname`
@@ -126,7 +126,7 @@ module ClientSideUrlRedirect {
       // A redirection using the AngularJS `$location` service
       exists(AngularJS::ServiceReference service |
         service.getName() = "$location" and
-        this.asExpr() = service.getAMethodCall("url").getArgument(0)
+        this = service.getAMethodCall("url").getArgument(0).flow()
       ) and
       xss = false
     }
