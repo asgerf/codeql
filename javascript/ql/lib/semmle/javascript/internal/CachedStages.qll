@@ -279,6 +279,10 @@ module Stages {
             .getReceiver()
             .getPromisedError()
       )
+      or
+      exists(API::Node::ofType("", ""))
+      or
+      exists(API::Node::ofType(""))
     }
   }
 

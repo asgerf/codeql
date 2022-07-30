@@ -32,8 +32,16 @@ module API2 {
   }
 
   module Node {
+    cached
     Node ofType(string packageName, string typeName) {
+      Stages::ApiStage::ref() and
       result.(DataFlow::SourceNode).hasUnderlyingType(packageName, typeName)
+    }
+
+    cached
+    Node ofType(string globalName) {
+      Stages::ApiStage::ref() and
+      result.(DataFlow::SourceNode).hasUnderlyingType(globalName)
     }
   }
 
