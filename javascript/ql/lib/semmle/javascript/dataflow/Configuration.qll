@@ -878,6 +878,20 @@ private class FlowStepThroughImport extends SharedFlowStep {
 }
 
 /**
+ * Additional flow step from `this` in a constructor to `this` in each instance member.
+ *
+ * This allows fields to propagate to the instance members.
+ */
+private class ConstructorToInstanceMemberStep extends SharedFlowStep {
+  override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
+    exists(DataFlow::ClassNode cls |
+      pred = cls.getConstructor().getReceiver() and
+      succ = cls.getAnInstanceMember().getReceiver()
+    )
+  }
+}
+
+/**
  * Holds if there is a flow step from `pred` to `succ` described by `summary`
  * under configuration `cfg`, disregarding barriers.
  *
