@@ -126,61 +126,25 @@ private module MySql {
  * Provides classes modeling the PostgreSQL packages, such as `pg` and `pg-promise`.
  */
 private module Postgres {
-  API::Node pg() {
-    result = API::moduleImport("pg")
-    or
-    result = pgpMain().getMember("pg")
-  }
-
   /** Gets a reference to the `Client` constructor in the `pg` package, for example `require('pg').Client`. */
-  API::Node newClient() { result = pg().getMember("Client") }
-
-  /** Gets a freshly created Postgres client instance. */
-  API::Node client() {
-    result = newClient().getInstance()
+  API::Node clientOrPoolConstructor() {
+    result = API::Node::ofType("pg", ["ClientStatic", "PoolStatic"])
     or
-    // pool.connect(function(err, client) { ... })
-    result = pool().getMember("connect").getParameter(0).getParameter(1)
-    or
-    // await pool.connect()
-    result = pool().getMember("connect").getReturn().getPromised()
-    or
-    result = pgpConnection().getMember("client")
-    or
-    exists(API::CallNode call |
-      call = pool().getMember("on").getACall() and
-      call.getArgument(0).getStringValue() = ["connect", "acquire"] and
-      result = call.getParameter(1).getParameter(0)
-    )
-    or
-    result = client().getMember("on").getReturn()
-    or
-    result = API::Node::ofType("pg", ["Client", "PoolClient"])
-  }
-
-  /** Gets a constructor that when invoked constructs a new connection pool. */
-  API::Node newPool() {
-    // new require('pg').Pool()
-    result = pg().getMember("Pool")
-    or
-    // new require('pg-pool')
     result = API::moduleImport("pg-pool")
   }
 
-  /** Gets an API node that refers to a connection pool. */
-  API::Node pool() {
-    result = newPool().getInstance()
+  /** Gets a freshly created Postgres client instance. */
+  API::Node clientOrPool() {
+    result = API::Node::ofType("pg", ["Client", "PoolClient", "Pool"])
     or
     result = pgpDatabase().getMember("$pool")
     or
-    result = pool().getMember("on").getReturn()
-    or
-    result = API::Node::ofType("pg", "Pool")
+    result = pgpConnection().getMember("client")
   }
 
   /** A call to the Postgres `query` method. */
   private class QueryCall extends DatabaseAccess, DataFlow::MethodCallNode {
-    QueryCall() { this = [client(), pool()].getMember("query").getACall() }
+    QueryCall() { this = clientOrPool().getMember(["execute", "query"]).getACall() }
 
     override DataFlow::Node getAResult() {
       this.getNumArgument() = 2 and
@@ -210,7 +174,7 @@ private module Postgres {
 
     Credentials() {
       exists(string prop |
-        this = [newClient(), newPool()].getParameter(0).getMember(prop).asSink().asExpr()
+        this = clientOrPoolConstructor().getParameter(0).getMember(prop).asSink().asExpr()
         or
         this = pgPromise().getParameter(0).getMember(prop).asSink().asExpr()
       |
