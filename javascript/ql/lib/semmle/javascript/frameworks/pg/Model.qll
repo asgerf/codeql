@@ -10,11 +10,65 @@ private class Types extends ModelInput::TypeModelCsv {
         "pg-pool;;pg-pool;;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
         "pg-pool;;pg-pool;Static;Instance", //
         "pg-pool;Static;pg-pool;;", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise/pg-subset;;Member[Client].Instance", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise/pg-subset;pg.IClient;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;;Argument[0].Member[connect,disconnect].Argument[0]", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;;Argument[0].Member[error].Argument[1].Member[client]", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;;Argument[0].Member[query,task,transact].Argument[0].Member[client]", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;;Argument[0].Member[receive].Argument[2].Member[client]", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;IMain;Argument[0].Member[Client].Instance", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;IMain;ReturnValue.Member[$cn].Member[Client].Instance", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;IMain;ReturnValue.Member[$config].Member[options].Member[connect,disconnect].Argument[0]", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;IMain;ReturnValue.Member[$config].Member[options].Member[error].Argument[1].Member[client]", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;IMain;ReturnValue.Member[$config].Member[options].Member[query,task,transact].Argument[0].Member[client]", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;IMain;ReturnValue.Member[$config].Member[options].Member[receive].Argument[2].Member[client]", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;IMain;ReturnValue.Member[connect].Argument[0].Member[onLost].Argument[1].Member[client]", //
+        "pg-promise/pg-subset;pg.IClient;pg-promise;IMain;ReturnValue.Member[connect].ReturnValue.Awaited.Member[client]", //
+        "pg-promise/pg-subset;pg.IConnection;pg-promise/pg-subset;pg.IClient;Member[connection]", //
+        "pg-promise/pg-subset;pg.IConnection;pg-promise/pg-subset;pg.IConnection;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
+        "pg-promise/pg-subset;pg.IPool;pg-promise/pg-subset;pg.IPool;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
+        "pg-promise/pg-subset;pg.IPool;pg-promise;IDatabase;Member[$pool]", //
+        "pg-promise;IBaseProtocol;pg-promise/typescript/pg-promise;IBaseProtocol;", //
+        "pg-promise;IBaseProtocol;pg-promise;IConnected;", //
+        "pg-promise;IBaseProtocol;pg-promise;IDatabase;", //
+        "pg-promise;IBaseProtocol;pg-promise;ITask;", //
+        "pg-promise;IConnected;pg-promise/typescript/pg-promise;IConnected;", //
+        "pg-promise;IConnected;pg-promise;IDatabase;Member[connect].ReturnValue.Awaited", //
+        "pg-promise;IDatabase;pg-promise/typescript/pg-promise;IDatabase;", //
+        "pg-promise;IDatabase;pg-promise;IInitOptions;Member[extend].Argument[0]", //
+        "pg-promise;IDatabase;pg-promise;IMain;ReturnValue", //
+        "pg-promise;IInitOptions;pg-promise/typescript/pg-promise;IInitOptions;", //
+        "pg-promise;IInitOptions;pg-promise;;Argument[0]", //
+        "pg-promise;IInitOptions;pg-promise;ILibConfig;Member[options]", //
+        "pg-promise;ILibConfig;pg-promise/typescript/pg-promise;ILibConfig;", //
+        "pg-promise;ILibConfig;pg-promise;IDatabase;Member[$config]", //
+        "pg-promise;IMain;pg-promise/typescript/pg-promise;IMain;", //
+        "pg-promise;IMain;pg-promise;;ReturnValue", //
+        "pg-promise;IMain;pg-promise;ILibConfig;Member[pgp]", //
+        "pg-promise;ITask;pg-promise/typescript/pg-promise;ITask;", //
+        "pg-promise;ITask;pg-promise;IBaseProtocol;Member[task,taskIf,tx,txIf].Argument[1].Argument[0]", //
+        "pg-promise;ITask;pg-promise;IBaseProtocol;Member[task,taskIf,tx,txIf].WithArity[1].Argument[0].Argument[0]", //
+        "pg-promise;ITask;pg-promise;IBaseProtocol;Member[taskIf].WithArity[2].Argument[0].Member[cnd].Argument[0]", //
+        "pg-promise;ITask;pg-promise;IBaseProtocol;Member[txIf].WithArity[2].Argument[0].Member[cnd,reusable].Argument[0]", //
+        "pg;Client;pg-pool;Static;Argument[0].Member[Client].Instance", //
+        "pg;Client;pg-pool;Static;Argument[1].Instance", //
+        "pg;Client;pg-pool;Static;Instance.Member[Client].Instance", //
+        "pg;Client;pg-pool;Static;Instance.Member[addListener,on,once,prependListener,prependOnceListener].WithArity[2].WithStringArgument[0=acquire,0=connect,0=remove].Argument[1].Argument[0]", //
+        "pg;Client;pg-pool;Static;Instance.Member[addListener,on,once,prependListener,prependOnceListener].WithArity[2].WithStringArgument[0=error].Argument[1].Argument[1]", //
+        "pg;Client;pg-pool;Static;Instance.Member[connect].Argument[0].Argument[1]", //
+        "pg;Client;pg-pool;Static;Instance.Member[connect].WithArity[0].ReturnValue.Awaited", //
+        "pg;Client;pg-promise/pg-subset;pg.IClient;", //
         "pg;Client;pg;Client;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
         "pg;Client;pg;ClientStatic;Instance", //
-        "pg;Client;pg;Events;Member[on].Argument[1].Argument[1]", //
+        "pg;Client;pg;Events;Member[addListener,on,once,prependListener,prependOnceListener].Argument[1].Argument[1]", //
+        "pg;ClientBase;pg;Client;", //
+        "pg;ClientBase;pg;ClientBase;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
+        "pg;ClientBase;pg;ClientBaseStatic;Instance", //
+        "pg;ClientBase;pg;PoolClient;", //
+        "pg;ClientBaseStatic;pg;;Member[ClientBase]", //
         "pg;ClientStatic;pg;;Member[Client]", //
         "pg;Connection;pg-cursor;;Member[submit].Argument[0]", //
+        "pg;Connection;pg-promise/pg-subset;pg.IConnection;", //
         "pg;Connection;pg;Connection;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
         "pg;Connection;pg;ConnectionStatic;Instance", //
         "pg;Connection;pg;Query;Member[submit].Argument[0]", //
@@ -24,21 +78,26 @@ private class Types extends ModelInput::TypeModelCsv {
         "pg;Events;pg;EventsStatic;Instance", //
         "pg;EventsStatic;pg;;Member[Events]", //
         "pg;Pool;pg-pool;;", //
+        "pg;Pool;pg-promise/pg-subset;pg.IPool;", //
         "pg;Pool;pg;Pool;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
         "pg;Pool;pg;PoolStatic;Instance", //
+        "pg;PoolClient;pg-pool;;Member[addListener,on,once,prependListener,prependOnceListener].WithArity[2].WithStringArgument[0=acquire,0=connect,0=remove].Argument[1].Argument[0]", //
+        "pg;PoolClient;pg-pool;;Member[addListener,on,once,prependListener,prependOnceListener].WithArity[2].WithStringArgument[0=error].Argument[1].Argument[1]", //
         "pg;PoolClient;pg-pool;;Member[connect].Argument[0].Argument[1]", //
         "pg;PoolClient;pg-pool;;Member[connect].WithArity[0].ReturnValue.Awaited", //
-        "pg;PoolClient;pg-pool;;Member[on].WithArity[2].WithStringArgument[0=acquire,0=connect,0=remove].Argument[1].Argument[0]", //
-        "pg;PoolClient;pg-pool;;Member[on].WithArity[2].WithStringArgument[0=error].Argument[1].Argument[1]", //
+        "pg;PoolClient;pg;Pool;Member[addListener,on,once,prependListener,prependOnceListener].WithArity[2].WithStringArgument[0=acquire,0=connect,0=remove].Argument[1].Argument[0]", //
+        "pg;PoolClient;pg;Pool;Member[addListener,on,once,prependListener,prependOnceListener].WithArity[2].WithStringArgument[0=error].Argument[1].Argument[1]", //
         "pg;PoolClient;pg;Pool;Member[connect].Argument[0].Argument[1]", //
         "pg;PoolClient;pg;Pool;Member[connect].WithArity[0].ReturnValue.Awaited", //
-        "pg;PoolClient;pg;Pool;Member[on].WithArity[2].WithStringArgument[0=acquire,0=connect,0=remove].Argument[1].Argument[0]", //
-        "pg;PoolClient;pg;Pool;Member[on].WithArity[2].WithStringArgument[0=error].Argument[1].Argument[1]", //
         "pg;PoolClient;pg;PoolClient;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
         "pg;PoolStatic;pg;;Member[Pool]", //
         "pg;Query;pg;Query;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
         "pg;Query;pg;QueryStatic;Instance", //
         "pg;QueryStatic;pg;;Member[Query]", //
+        "pg;Submittable;pg;ClientBase;Member[query].WithArity[1].Argument[0]", //
+        "pg;Submittable;pg;ClientBase;Member[query].WithArity[1].ReturnValue", //
+        "pg;Submittable;pg;Pool;Member[query].WithArity[1].Argument[0]", //
+        "pg;Submittable;pg;Pool;Member[query].WithArity[1].ReturnValue", //
         "pg;Submittable;pg;Query;", //
       ]
   }
