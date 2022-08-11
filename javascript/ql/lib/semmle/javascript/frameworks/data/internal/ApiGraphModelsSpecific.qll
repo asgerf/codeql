@@ -163,6 +163,16 @@ predicate invocationMatchesExtraCallSiteFilter(API::InvokeNode invoke, AccessPat
   token.getName() = "Call" and
   invoke instanceof API::CallNode and
   invoke instanceof DataFlow::CallNode // Workaround compiler bug
+  or
+  token.getName() = "WithStringArgument" and
+  exists(string operand, string argIndex, string stringValue |
+    operand = token.getAnArgument() and
+    argIndex = operand.splitAt("=", 0) and
+    stringValue = operand.splitAt("=", 1) and
+    invoke
+        .getArgument(AccessPath::parseIntWithArity(argIndex, invoke.getNumArgument()))
+        .getStringValue() = stringValue
+  )
 }
 
 /**
