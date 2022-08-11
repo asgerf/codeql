@@ -134,13 +134,7 @@ private module Postgres {
   }
 
   /** Gets a freshly created Postgres client instance. */
-  API::Node clientOrPool() {
-    result = API::Node::ofType("pg", ["Client", "PoolClient", "Pool"])
-    or
-    result = pgpDatabase().getMember("$pool")
-    or
-    result = pgpConnection().getMember("client")
-  }
+  API::Node clientOrPool() { result = API::Node::ofType("pg", ["Client", "PoolClient", "Pool"]) }
 
   /** A call to the Postgres `query` method. */
   private class QueryCall extends DatabaseAccess, DataFlow::MethodCallNode {
@@ -190,46 +184,8 @@ private module Postgres {
   /** Gets a node referring to the `pg-promise` library (which is not itself a Promise). */
   API::Node pgPromise() { result = API::moduleImport("pg-promise") }
 
-  /** Gets an initialized `pg-promise` library. */
-  API::Node pgpMain() {
-    result = pgPromise().getReturn()
-    or
-    result = API::Node::ofType("pg-promise", "IMain")
-  }
-
-  /** Gets a database from `pg-promise`. */
-  API::Node pgpDatabase() {
-    result = pgpMain().getReturn()
-    or
-    result = API::Node::ofType("pg-promise", "IDatabase")
-  }
-
-  /** Gets a connection created from a `pg-promise` database. */
-  API::Node pgpConnection() {
-    result = pgpDatabase().getMember("connect").getReturn().getPromised()
-    or
-    result = API::Node::ofType("pg-promise", "IConnected")
-  }
-
-  /** Gets a `pg-promise` task object. */
-  API::Node pgpTask() {
-    exists(API::Node taskMethod |
-      taskMethod = pgpObject().getMember(["task", "taskIf", "tx", "txIf"])
-    |
-      result = taskMethod.getParameter([0, 1]).getParameter(0)
-      or
-      result = taskMethod.getParameter(0).getMember("cnd").getParameter(0)
-    )
-    or
-    result = API::Node::ofType("pg-promise", "ITask")
-  }
-
   /** Gets a `pg-promise` object which supports querying (database, connection, or task). */
-  API::Node pgpObject() {
-    result = [pgpDatabase(), pgpConnection(), pgpTask()]
-    or
-    result = API::Node::ofType("pg-promise", "IBaseProtocol")
-  }
+  API::Node pgpObject() { result = API::Node::ofType("pg-promise", "IBaseProtocol") }
 
   private string pgpQueryMethodName() {
     result =
