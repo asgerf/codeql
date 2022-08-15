@@ -37,49 +37,13 @@ private module MySql {
   /** Gets the package name `mysql` or `mysql2`. */
   API::Node mysql() { result = API::moduleImport(moduleName()) }
 
-  /** Gets a reference to `mysql.createConnection`. */
-  API::Node createConnection() {
-    result = mysql().getMember(["createConnection", "createConnectionPromise"])
-  }
-
-  /** Gets a reference to `mysql.createPool`. */
-  API::Node createPool() { result = mysql().getMember(["createPool", "createPoolCluster"]) }
-
-  /** Gets a node that contains a MySQL pool created using `mysql.createPool()`. */
-  API::Node pool() {
-    result = createPool().getReturn()
-    or
-    result = pool().getMember("on").getReturn()
-    or
-    result = API::Node::ofType(moduleName(), ["Pool", "PoolCluster"])
-  }
-
-  /** Gets a data flow node that contains a freshly created MySQL connection instance. */
-  API::Node connection() {
-    result = createConnection().getReturn()
-    or
-    result = createConnection().getReturn().getPromised()
-    or
-    result = pool().getMember("getConnection").getParameter(0).getParameter(1)
-    or
-    result = pool().getMember("getConnection").getPromised()
-    or
-    exists(API::CallNode call |
-      call = pool().getMember("on").getACall() and
-      call.getArgument(0).getStringValue() = ["connection", "acquire", "release"] and
-      result = call.getParameter(1).getParameter(0)
-    )
-    or
-    result = API::Node::ofType(moduleName(), ["Connection", "PoolConnection"])
+  private API::Node connectionOrPool() {
+    result = API::Node::ofType(moduleName(), ["Connection", "Pool"])
   }
 
   /** A call to the MySql `query` method. */
   private class QueryCall extends DatabaseAccess, DataFlow::MethodCallNode {
-    QueryCall() {
-      exists(API::Node recv | recv = pool() or recv = connection() |
-        this = recv.getMember(["query", "execute"]).getACall()
-      )
-    }
+    QueryCall() { this = connectionOrPool().getMember(["query", "execute"]).getACall() }
 
     override DataFlow::Node getAResult() { result = this.getCallback(_).getParameter(1) }
 
@@ -96,10 +60,14 @@ private module MySql {
   /** A call to the `escape` or `escapeId` method that performs SQL sanitization. */
   class EscapingSanitizer extends SQL::SqlSanitizer, MethodCallExpr {
     EscapingSanitizer() {
-      this = [mysql(), pool(), connection()].getMember(["escape", "escapeId"]).getACall().asExpr() and
+      this = [mysql(), connectionOrPool()].getMember(["escape", "escapeId"]).getACall().asExpr() and
       input = this.getArgument(0) and
       output = this
     }
+  }
+
+  private API::Node connectionOptions() {
+    result = API::Node::ofType(moduleName(), "ConnectionOptions")
   }
 
   /** An expression that is passed as user name or password to `mysql.createConnection`. */
@@ -107,9 +75,8 @@ private module MySql {
     string kind;
 
     Credentials() {
-      exists(API::Node callee, string prop |
-        callee in [createConnection(), createPool()] and
-        this = callee.getParameter(0).getMember(prop).asSink().asExpr() and
+      exists(string prop |
+        this = connectionOptions().getMember(prop).asSink().asExpr() and
         (
           prop = "user" and kind = "user name"
           or
