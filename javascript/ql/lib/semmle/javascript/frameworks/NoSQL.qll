@@ -27,55 +27,33 @@ private DataFlow::Node getADollarWhereProperty(API::Node queryArg) {
  * Provides classes modeling the MongoDB library.
  */
 private module MongoDB {
-  /**
-   * Gets an access to `mongodb.MongoClient` or a database.
-   *
-   * In Mongo version 2.x, a client and a database handle were the same concept, but in 3.x
-   * they were separated. To handle everything with a single model, we treat them as the same here.
-   */
-  private API::Node getAMongoClientOrDatabase() {
-    result = API::moduleImport("mongodb").getMember("MongoClient")
-    or
-    result = getAMongoClientOrDatabase().getMember("db").getReturn()
-    or
-    result = getAMongoClientOrDatabase().getMember("connect").getLastParameter().getParameter(1)
-  }
-
   /** Gets a data flow node referring to a MongoDB collection. */
-  private API::Node getACollection() {
-    // A collection resulting from calling `Db.collection(...)`.
-    exists(API::Node collection |
-      collection = getAMongoClientOrDatabase().getMember("collection").getReturn()
-    |
-      result = collection
-      or
-      result = collection.getParameter(1).getParameter(0)
-    )
-    or
-    // note that this also covers `mongoose` models since they are subtypes of `mongodb.Collection`
-    result = API::Node::ofType("mongodb", "Collection")
+  private API::Node collection() { result = API::Node::ofType("mongodb", "Collection") }
+
+  private class OldMongoDbAdapter extends ModelInput::TypeModelCsv {
+    override predicate row(string row) {
+      // In Mongo version 2.x, a client and a database handle were the same concept, but in 3.x
+      // they were separated. To handle everything with a single model, we treat them as the same here.
+      row = "mongodb;Db;mongodb;MongoClient;"
+    }
   }
 
   /** A call to a MongoDB query method. */
   private class QueryCall extends DatabaseAccess, API::CallNode {
-    int queryArgIdx;
+    API::Node sink;
 
     QueryCall() {
-      exists(string method |
-        CollectionMethodSignatures::interpretsArgumentAsQuery(method, queryArgIdx) and
-        this = getACollection().getMember(method).getACall()
-      )
+      sink = ModelOutput::getASinkNode("mongodb.sink") and
+      sink.asSink() = [this.getAnArgument(), this.getOptionArgument(_, _)]
     }
 
-    override DataFlow::Node getAQueryArgument() { result = this.getArgument(queryArgIdx) }
+    override DataFlow::Node getAQueryArgument() { result = sink.asSink() }
 
     override DataFlow::Node getAResult() {
       PromiseFlow::loadStep(this.getALocalUse(), result, Promises::valueProp())
     }
 
-    DataFlow::Node getACodeOperator() {
-      result = getADollarWhereProperty(this.getParameter(queryArgIdx))
-    }
+    DataFlow::Node getACodeOperator() { result = sink.getMember("$where").asSink() }
   }
 
   /**
@@ -91,6 +69,8 @@ private module MongoDB {
 
   /**
    * Provides signatures for the Collection methods.
+   *
+   * NOTE: not currently used by the mongodb model itself, only the other models in this file
    */
   module CollectionMethodSignatures {
     /**
