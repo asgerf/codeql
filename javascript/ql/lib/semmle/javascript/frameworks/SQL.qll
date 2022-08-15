@@ -274,31 +274,13 @@ private module MsSql {
   /** Gets a reference to the `mssql` module. */
   API::Node mssql() { result = API::moduleImport("mssql") }
 
-  /** Gets a node referring to an instance of the given class. */
-  API::Node mssqlClass(string name) {
-    result = mssql().getMember(name).getInstance()
-    or
-    result = API::Node::ofType("mssql", name)
+  /** Gets an API node corresponding to a type with a `query` or `batch` method. */
+  API::Node queryable() {
+    result = API::Node::ofType("mssql", ["Request", "ConnectionPool"]) or result = mssql()
   }
 
-  /** Gets an API node referring to a Request object. */
-  API::Node request() {
-    result = mssqlClass("Request")
-    or
-    result = request().getMember(["input", "replaceInput", "output", "replaceOutput"]).getReturn()
-    or
-    result = [transaction(), pool()].getMember("request").getReturn()
-  }
-
-  /** Gets an API node referring to a Transaction object. */
-  API::Node transaction() {
-    result = mssqlClass("Transaction")
-    or
-    result = pool().getMember("transaction").getReturn()
-  }
-
-  /** Gets a API node referring to a ConnectionPool object. */
-  API::Node pool() { result = mssqlClass("ConnectionPool") }
+  /** Gets an API node referring to a configuration object. */
+  API::Node config() { result = API::Node::ofType("mssql", "config") }
 
   /** A tagged template evaluated as a query. */
   private class QueryTemplateExpr extends DatabaseAccess, DataFlow::ValueNode, DataFlow::SourceNode {
@@ -320,7 +302,7 @@ private module MsSql {
 
   /** A call to a MsSql query method. */
   private class QueryCall extends DatabaseAccess, DataFlow::MethodCallNode {
-    QueryCall() { this = [mssql(), request()].getMember(["query", "batch"]).getACall() }
+    QueryCall() { this = queryable().getMember(["query", "batch"]).getACall() }
 
     override DataFlow::Node getAResult() {
       result = this.getCallback(1).getParameter(1)
@@ -354,13 +336,8 @@ private module MsSql {
     string kind;
 
     Credentials() {
-      exists(API::Node callee, string prop |
-        (
-          callee = mssql().getMember("connect")
-          or
-          callee = mssql().getMember("ConnectionPool")
-        ) and
-        this = callee.getParameter(0).getMember(prop).asSink().asExpr() and
+      exists(string prop |
+        this = config().getMember(prop).asSink().asExpr() and
         (
           prop = "user" and kind = "user name"
           or
