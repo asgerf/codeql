@@ -244,35 +244,13 @@ private module Postgres {
  * Provides classes modeling the `sqlite3` package.
  */
 private module Sqlite {
-  /** Gets a reference to the `sqlite3` module. */
-  API::Node sqlite() {
-    result = API::moduleImport("sqlite3")
-    or
-    result = sqlite().getMember("verbose").getReturn()
-  }
-
   /** Gets an expression that constructs or returns a Sqlite database instance. */
-  API::Node database() {
-    // new require('sqlite3').Database()
-    result = sqlite().getMember("Database").getInstance()
-    or
-    // chained call
-    result = getAChainingQueryCall()
-    or
-    result = API::Node::ofType("sqlite3", "Database")
-  }
-
-  /** Gets a call to a query method on a Sqlite database instance that returns the same instance. */
-  private API::Node getAChainingQueryCall() {
-    result = database().getMember(["all", "each", "exec", "get", "run"]).getReturn()
-  }
+  API::Node database() { result = API::Node::ofType("sqlite3", "Database") }
 
   /** A call to a Sqlite query method. */
   private class QueryCall extends DatabaseAccess, DataFlow::MethodCallNode {
     QueryCall() {
-      this = getAChainingQueryCall().asSource()
-      or
-      this = database().getMember("prepare").getACall()
+      this = database().getMember(["all", "each", "exec", "get", "prepare", "run"]).getACall()
     }
 
     override DataFlow::Node getAResult() {
