@@ -363,25 +363,6 @@ private module Sequelize {
 }
 
 private module SpannerCsv {
-  class SpannerTypes extends ModelInput::TypeModelCsv {
-    override predicate row(string row) {
-      // package1; type1; package2; type2; path
-      row =
-        [
-          "@google-cloud/spanner;~SpannerObject;@google-cloud/spanner;Database;",
-          "@google-cloud/spanner;~SpannerObject;@google-cloud/spanner;Snapshot;",
-          "@google-cloud/spanner;~SpannerObject;@google-cloud/spanner;Transaction;",
-          "@google-cloud/spanner;~SpannerObject;@google-cloud/spanner;v1.SpannerClient;",
-          "@google-cloud/spanner;~SqlExecutorDirect;@google-cloud/spanner;BatchTransaction;Member[createQueryPartitions]",
-          "@google-cloud/spanner;~SqlExecutorDirect;@google-cloud/spanner;Database;Member[run,runPartitionedUpdate,runStream]",
-          "@google-cloud/spanner;~SqlExecutorDirect;@google-cloud/spanner;PartitionedDml;Member[runUpdate]",
-          "@google-cloud/spanner;~SqlExecutorDirect;@google-cloud/spanner;Snapshot;Member[run,runStream]",
-          "@google-cloud/spanner;~SqlExecutorDirect;@google-cloud/spanner;Transaction;Member[run,runStream,runUpdate]",
-          "@google-cloud/spanner;~SqlExecutorDirect;@google-cloud/spanner;v1.SpannerClient;Member[executeSql,executeStreamingSql,partitionQuery]",
-        ]
-    }
-  }
-
   class SpannerSinks extends ModelInput::SinkModelCsv {
     override predicate row(string row) {
       // package; type; path; kind
