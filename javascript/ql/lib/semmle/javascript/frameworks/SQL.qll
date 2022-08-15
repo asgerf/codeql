@@ -354,34 +354,7 @@ private module MsSql {
  * Provides classes modeling the `sequelize` package.
  */
 private module Sequelize {
-  class SequelizeModel extends ModelInput::TypeModelCsv {
-    override predicate row(string row) {
-      // package1;type1;package2;type2;path
-      row =
-        [
-          "sequelize;;sequelize-typescript;;", //
-          "sequelize;Sequelize;sequelize;default;", //
-          "sequelize;Sequelize;sequelize;;Instance",
-          "sequelize;Sequelize;sequelize;;Member[Sequelize].Instance",
-        ]
-    }
-  }
-
-  class SequelizeSink extends ModelInput::SinkModelCsv {
-    override predicate row(string row) {
-      row =
-        [
-          "sequelize;Sequelize;Member[query].Argument[0];sql-injection",
-          "sequelize;Sequelize;Member[query].Argument[0].Member[query];sql-injection",
-          "sequelize;;Member[literal,asIs].Argument[0];sql-injection",
-          "sequelize;;Argument[1];credentials[user name]",
-          "sequelize;;Argument[2];credentials[password]",
-          "sequelize;;Argument[0..].Member[username];credentials[user name]",
-          "sequelize;;Argument[0..].Member[password];credentials[password]"
-        ]
-    }
-  }
-
+  // Note: the sinks are specified directly in the MaD model
   class SequelizeSource extends ModelInput::SourceModelCsv {
     override predicate row(string row) {
       row = "sequelize;Sequelize;Member[query].ReturnValue.Awaited;database-access-result"
