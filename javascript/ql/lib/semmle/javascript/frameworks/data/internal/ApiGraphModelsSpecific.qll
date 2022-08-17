@@ -94,6 +94,10 @@ API::Node getExtraNodeFromPath(string package, string type, AccessPath path, int
   // Access instance of a type based on type annotations
   n = 0 and
   result = API::Node::ofType(getAPackageAlias(package), type)
+  or
+  // use summary steps of kind "type"
+  n = path.getNumToken() and
+  summaryStep(getNodeFromPath(package, type, path), result, "type")
 }
 
 /**
