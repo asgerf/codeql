@@ -1,6 +1,5 @@
 private import minimongo.Model
 private import mongodb.Model
-private import mongoose.Model
 private import mssql.Model
 private import mysql.Model
 private import mysql2.Model

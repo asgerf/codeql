@@ -24,12 +24,9 @@ private DataFlow::Node getADollarWhereProperty(API::Node queryArg) {
 }
 
 /**
- * Provides classes modeling the MongoDB library.
+ * Provides classes modeling the `mongodb` and `mongoose` libraries.
  */
 private module MongoDB {
-  /** Gets a data flow node referring to a MongoDB collection. */
-  private API::Node collection() { result = API::Node::ofType("mongodb", "Collection") }
-
   private class OldMongoDbAdapter extends ModelInput::TypeModelCsv {
     override predicate row(string row) {
       // In Mongo version 2.x, a client and a database handle were the same concept, but in 3.x
@@ -62,9 +59,32 @@ private module MongoDB {
   class Query extends NoSql::Query {
     QueryCall qc;
 
-    Query() { this = qc.getAQueryArgument().asExpr() }
+    Query() { this = ModelOutput::getASinkNode("mongodb.sink").asSink().asExpr() }
 
     override DataFlow::Node getACodeOperator() { result = qc.getACodeOperator() }
+  }
+
+  private API::Node credentialsObject() {
+    result = API::Node::ofType("mongodb", "Auth")
+    or
+    result = API::Node::ofType("mongoose", "ConnectOptions")
+  }
+
+  /**
+   * An expression passed to `mongodb` or `mongoose` to supply credentials.
+   */
+  class Credentials extends CredentialsExpr {
+    string kind;
+
+    Credentials() {
+      exists(string prop | this = credentialsObject().getMember(prop).asSink().asExpr() |
+        prop = "user" and kind = "user name"
+        or
+        prop = "pass" and kind = "password"
+      )
+    }
+
+    override string getCredentialsKind() { result = kind }
   }
 
   /**
@@ -124,432 +144,6 @@ private module MongoDB {
         or
         name = "updateOne" and n = 1
       )
-    }
-  }
-}
-
-/**
- * Provides classes modeling the Mongoose library.
- */
-private module Mongoose {
-  /**
-   * Gets an import of Mongoose.
-   */
-  API::Node getAMongooseInstance() { result = API::moduleImport("mongoose") }
-
-  /**
-   * Gets a reference to `mongoose.createConnection`.
-   */
-  API::Node createConnection() { result = getAMongooseInstance().getMember("createConnection") }
-
-  /**
-   * A Mongoose function.
-   */
-  abstract private class MongooseFunction extends API::Node {
-    /**
-     * Gets the API-graph node for the result from this function (if the function returns a `Query`).
-     */
-    abstract API::Node getQueryReturn();
-
-    /**
-     * Holds if this function returns a `Query` that evaluates to one or
-     * more Documents (`asArray` is false if it evaluates to a single
-     * Document).
-     */
-    abstract predicate returnsDocumentQuery(boolean asArray);
-
-    /**
-     * Gets an argument that this function interprets as a query.
-     */
-    abstract API::Node getQueryArgument();
-  }
-
-  /**
-   * Provides classes modeling the Mongoose Model class
-   */
-  module Model {
-    private class ModelFunction extends MongooseFunction {
-      string methodName;
-
-      ModelFunction() { this = getModelObject().getMember(methodName) }
-
-      override API::Node getQueryReturn() {
-        MethodSignatures::returnsQuery(methodName) and result = this.getReturn()
-      }
-
-      override predicate returnsDocumentQuery(boolean asArray) {
-        MethodSignatures::returnsDocumentQuery(methodName, asArray)
-      }
-
-      override API::Node getQueryArgument() {
-        exists(int n |
-          MethodSignatures::interpretsArgumentAsQuery(methodName, n) and
-          result = this.getParameter(n)
-        )
-      }
-    }
-
-    /**
-     * Gets a API-graph node referring to a Mongoose Model object.
-     */
-    private API::Node getModelObject() {
-      result = getAMongooseInstance().getMember("model").getReturn()
-      or
-      exists(API::Node conn | conn = createConnection().getReturn() |
-        result = conn.getMember("model").getReturn() or
-        result = conn.getMember("models").getAMember()
-      )
-      or
-      result = API::Node::ofType("mongoose", "Model")
-    }
-
-    /**
-     * Provides signatures for the Model methods.
-     */
-    module MethodSignatures {
-      /**
-       * Holds if Model method `name` interprets parameter `n` as a query.
-       */
-      predicate interpretsArgumentAsQuery(string name, int n) {
-        // implement lots of the MongoDB collection interface
-        MongoDB::CollectionMethodSignatures::interpretsArgumentAsQuery(name, n)
-        or
-        name = "find" + ["ById", "One"] + "AndUpdate" and n = 1
-        or
-        name in ["delete" + ["Many", "One"], "geoSearch", "remove", "replaceOne", "where"] and
-        n = 0
-        or
-        name in [
-            "find" + ["", "ById", "One"],
-            "find" + ["ById", "One"] + "And" + ["Delete", "Remove", "Update"],
-            "update" + ["", "Many", "One"]
-          ] and
-        n = 0
-      }
-
-      /**
-       * Holds if Model method `name` returns a Query.
-       */
-      predicate returnsQuery(string name) {
-        name =
-          [
-            "$where", "count", "findOne", "findOneAndDelete", "findOneAndRemove",
-            "findOneAndReplace", "findOneAndUpdate", "geosearch", "remove", "replaceOne", "update",
-            "updateMany", "countDocuments", "updateOne", "where", "deleteMany", "deleteOne", "find",
-            "findById", "findByIdAndDelete", "findByIdAndRemove", "findByIdAndUpdate"
-          ]
-      }
-
-      /**
-       * Holds if Document method `name` returns a query that results in
-       * one or more documents, the documents are wrapped in an array
-       * if `asArray` is true.
-       */
-      predicate returnsDocumentQuery(string name, boolean asArray) {
-        asArray = false and name = "findOne"
-        or
-        asArray = true and name = "find"
-      }
-    }
-  }
-
-  /**
-   * Provides classes modeling the Mongoose Query class
-   */
-  module Query {
-    private class QueryFunction extends MongooseFunction {
-      string methodName;
-
-      QueryFunction() { this = getAMongooseQuery().getMember(methodName) }
-
-      override API::Node getQueryReturn() {
-        MethodSignatures::returnsQuery(methodName) and result = this.getReturn()
-      }
-
-      override predicate returnsDocumentQuery(boolean asArray) {
-        MethodSignatures::returnsDocumentQuery(methodName, asArray)
-      }
-
-      override API::Node getQueryArgument() {
-        exists(int n |
-          MethodSignatures::interpretsArgumentAsQuery(methodName, n) and
-          result = this.getParameter(n)
-        )
-      }
-    }
-
-    private class NewQueryFunction extends MongooseFunction {
-      NewQueryFunction() { this = getAMongooseInstance().getMember("Query") }
-
-      override API::Node getQueryReturn() { result = this.getInstance() }
-
-      override predicate returnsDocumentQuery(boolean asArray) { none() }
-
-      override API::Node getQueryArgument() { result = this.getParameter(2) }
-    }
-
-    /**
-     * Gets a data flow node referring to a Mongoose query object.
-     */
-    API::Node getAMongooseQuery() {
-      result = any(MongooseFunction f).getQueryReturn()
-      or
-      result = API::Node::ofType("mongoose", "Query")
-      or
-      result =
-        getAMongooseQuery()
-            .getMember(any(string name | MethodSignatures::returnsQuery(name)))
-            .getReturn()
-    }
-
-    /**
-     * Provides signatures for the Query methods.
-     */
-    module MethodSignatures {
-      /**
-       * Holds if Query method `name` interprets parameter `n` as a query.
-       */
-      predicate interpretsArgumentAsQuery(string name, int n) {
-        n = 0 and
-        name =
-          [
-            "and", "count", "findOneAndReplace", "findOneAndUpdate", "merge", "nor", "or", "remove",
-            "replaceOne", "setQuery", "setUpdate", "update", "countDocuments", "updateMany",
-            "updateOne", "where", "deleteMany", "deleteOne", "elemMatch", "find", "findOne",
-            "findOneAndDelete", "findOneAndRemove"
-          ]
-        or
-        n = 1 and
-        name = ["distinct", "findOneAndUpdate", "update", "updateMany", "updateOne"]
-      }
-
-      /**
-       * Holds if Query method `name` returns a Query.
-       */
-      predicate returnsQuery(string name) {
-        name =
-          [
-            "$where", "J", "comment", "count", "countDocuments", "distinct", "elemMatch", "equals",
-            "error", "estimatedDocumentCount", "exists", "explain", "all", "find", "findById",
-            "findOne", "findOneAndRemove", "findOneAndUpdate", "geometry", "get", "gt", "gte",
-            "hint", "and", "in", "intersects", "lean", "limit", "lt", "lte", "map", "map",
-            "maxDistance", "maxTimeMS", "batchsize", "maxscan", "mod", "ne", "near", "nearSphere",
-            "nin", "or", "orFail", "polygon", "populate", "box", "read", "readConcern", "regexp",
-            "remove", "select", "session", "set", "setOptions", "setQuery", "setUpdate", "center",
-            "size", "skip", "slaveOk", "slice", "snapshot", "sort", "update", "w", "where",
-            "within", "centerSphere", "wtimeout", "circle", "collation"
-          ]
-      }
-
-      /**
-       * Holds if Query method `name` returns a query that results in
-       * one or more documents, the documents are wrapped in an array
-       * if `asArray` is true.
-       */
-      predicate returnsDocumentQuery(string name, boolean asArray) {
-        asArray = false and name = "findOne"
-        or
-        asArray = true and name = "find"
-      }
-    }
-  }
-
-  /**
-   * Provides classes modeling the Mongoose Document class
-   */
-  module Document {
-    private class DocumentFunction extends MongooseFunction {
-      string methodName;
-
-      DocumentFunction() { this = getAMongooseDocument().getMember(methodName) }
-
-      override API::Node getQueryReturn() {
-        MethodSignatures::returnsQuery(methodName) and result = this.getReturn()
-      }
-
-      override predicate returnsDocumentQuery(boolean asArray) {
-        MethodSignatures::returnsDocumentQuery(methodName, asArray)
-      }
-
-      override API::Node getQueryArgument() {
-        exists(int n |
-          MethodSignatures::interpretsArgumentAsQuery(methodName, n) and
-          result = this.getParameter(n)
-        )
-      }
-    }
-
-    /**
-     * A Mongoose Document that is retrieved from the backing database.
-     */
-    class RetrievedDocument extends API::Node {
-      RetrievedDocument() {
-        exists(boolean asArray, API::Node param |
-          exists(MongooseFunction func |
-            func.returnsDocumentQuery(asArray) and
-            param = func.getLastParameter().getParameter(1)
-          )
-          or
-          exists(API::Node f |
-            f = Query::getAMongooseQuery().getMember("then") and
-            param = f.getParameter(0).getParameter(0)
-            or
-            f = Query::getAMongooseQuery().getMember("exec") and
-            param = f.getParameter(0).getParameter(1)
-          |
-            exists(DataFlow::MethodCallNode pred |
-              // limitation: look at the previous method call
-              Query::MethodSignatures::returnsDocumentQuery(pred.getMethodName(), asArray) and
-              pred.getAMethodCall() = f.getACall()
-            )
-          )
-        |
-          asArray = false and this = param
-          or
-          asArray = true and
-          // limitation: look for direct accesses
-          this = param.getUnknownMember()
-        )
-      }
-    }
-
-    /**
-     * Gets a data flow node referring to a Mongoose Document object.
-     */
-    private API::Node getAMongooseDocument() {
-      result instanceof RetrievedDocument
-      or
-      result = API::Node::ofType("mongoose", "Document")
-      or
-      result =
-        getAMongooseDocument()
-            .getMember(any(string name | MethodSignatures::returnsDocument(name)))
-            .getReturn()
-    }
-
-    private module MethodSignatures {
-      /**
-       * Holds if Document method `name` returns a Query.
-       */
-      predicate returnsQuery(string name) {
-        // Documents are subtypes of Models
-        Model::MethodSignatures::returnsQuery(name) or
-        name = "replaceOne" or
-        name = "update" or
-        name = "updateOne"
-      }
-
-      /**
-       * Holds if Document method `name` interprets parameter `n` as a query.
-       */
-      predicate interpretsArgumentAsQuery(string name, int n) {
-        // Documents are subtypes of Models
-        Model::MethodSignatures::interpretsArgumentAsQuery(name, n)
-        or
-        n = 0 and
-        (
-          name = "replaceOne" or
-          name = "update" or
-          name = "updateOne"
-        )
-      }
-
-      /**
-       * Holds if Document method `name` returns a query that results in
-       * one or more documents, the documents are wrapped in an array
-       * if `asArray` is true.
-       */
-      predicate returnsDocumentQuery(string name, boolean asArray) {
-        // Documents are subtypes of Models
-        Model::MethodSignatures::returnsDocumentQuery(name, asArray)
-      }
-
-      /**
-       * Holds if Document method `name` returns a Document.
-       */
-      predicate returnsDocument(string name) {
-        name = ["depopulate", "init", "populate", "overwrite"]
-      }
-    }
-  }
-
-  /**
-   * An expression passed to `mongoose.createConnection` to supply credentials.
-   */
-  class Credentials extends CredentialsExpr {
-    string kind;
-
-    Credentials() {
-      exists(string prop |
-        this = createConnection().getParameter(3).getMember(prop).asSink().asExpr()
-      |
-        prop = "user" and kind = "user name"
-        or
-        prop = "pass" and kind = "password"
-      )
-    }
-
-    override string getCredentialsKind() { result = kind }
-  }
-
-  /**
-   * An expression that is interpreted as a (part of a) MongoDB query.
-   */
-  class MongoDBQueryPart extends NoSql::Query {
-    MongooseFunction f;
-
-    MongoDBQueryPart() { this = f.getQueryArgument().asSink().asExpr() }
-
-    override DataFlow::Node getACodeOperator() {
-      result = getADollarWhereProperty(f.getQueryArgument())
-    }
-  }
-
-  /**
-   * An evaluation of a MongoDB query.
-   */
-  class ShorthandQueryEvaluation extends DatabaseAccess, DataFlow::InvokeNode {
-    MongooseFunction f;
-
-    ShorthandQueryEvaluation() {
-      this = f.getACall() and
-      // shorthand for execution: provide a callback
-      exists(f.getQueryReturn()) and
-      exists(this.getCallback(this.getNumArgument() - 1))
-    }
-
-    override DataFlow::Node getAQueryArgument() {
-      // NB: the complete information is not easily accessible for deeply chained calls
-      f.getQueryArgument().asSink() = result
-    }
-
-    override DataFlow::Node getAResult() {
-      result = this.getCallback(this.getNumArgument() - 1).getParameter(1)
-    }
-  }
-
-  class ExplicitQueryEvaluation extends DatabaseAccess, DataFlow::CallNode {
-    string member;
-
-    ExplicitQueryEvaluation() {
-      // explicit execution using a Query method call
-      member = ["exec", "then", "catch"] and
-      Query::getAMongooseQuery().getMember(member).getACall() = this
-    }
-
-    private int resultParamIndex() {
-      member = "then" and result = 0
-      or
-      member = "exec" and result = 1
-    }
-
-    override DataFlow::Node getAResult() {
-      result = this.getCallback(_).getParameter(this.resultParamIndex())
-    }
-
-    override DataFlow::Node getAQueryArgument() {
-      // NB: the complete information is not easily accessible for deeply chained calls
-      none()
     }
   }
 }
