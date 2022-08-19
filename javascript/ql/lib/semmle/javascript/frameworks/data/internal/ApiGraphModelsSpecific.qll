@@ -108,6 +108,9 @@ API::Node getExtraSuccessorFromNode(API::Node node, AccessPathToken token) {
   token.getName() = "Member" and
   result = node.getMember(token.getAnArgument())
   or
+  token.getName() = "AnyMember" and
+  result = node.getAMember()
+  or
   token.getName() = "Instance" and
   result = node.getInstance()
   or
