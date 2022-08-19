@@ -149,63 +149,6 @@ private module MongoDB {
 }
 
 /**
- * Provides classes modeling the Minimongo library.
- */
-private module Minimongo {
-  /**
-   * Provides signatures for the Collection methods.
-   */
-  module CollectionMethodSignatures {
-    /**
-     * Holds if Collection method `name` interprets parameter `queryArgIdx` as a query.
-     */
-    predicate interpretsArgumentAsQuery(string name, int queryArgIdx) {
-      // implements most of the MongoDB interface
-      MongoDB::CollectionMethodSignatures::interpretsArgumentAsQuery(name, queryArgIdx)
-    }
-  }
-
-  /** A call to a Minimongo query method. */
-  private class QueryCall extends DatabaseAccess, API::CallNode {
-    int queryArgIdx;
-
-    QueryCall() {
-      exists(string m |
-        this =
-          API::moduleImport("minimongo")
-              .getAMember()
-              .getReturn()
-              .getAMember()
-              .getMember(m)
-              .getACall() and
-        CollectionMethodSignatures::interpretsArgumentAsQuery(m, queryArgIdx)
-      )
-    }
-
-    override DataFlow::Node getAQueryArgument() { result = this.getArgument(queryArgIdx) }
-
-    override DataFlow::Node getAResult() {
-      PromiseFlow::loadStep(this.getALocalUse(), result, Promises::valueProp())
-    }
-
-    DataFlow::Node getACodeOperator() {
-      result = getADollarWhereProperty(this.getParameter(queryArgIdx))
-    }
-  }
-
-  /**
-   * An expression that is interpreted as a Minimongo query.
-   */
-  class Query extends NoSql::Query {
-    QueryCall qc;
-
-    Query() { this = qc.getAQueryArgument().asExpr() }
-
-    override DataFlow::Node getACodeOperator() { result = qc.getACodeOperator() }
-  }
-}
-
-/**
  * Provides classes modeling the MarsDB library.
  */
 private module MarsDB {
