@@ -242,8 +242,9 @@ bindingset[name]
 predicate isExtraValidTokenNameInIdentifyingAccessPath(string name) {
   name =
     [
-      "Member", "Instance", "Awaited", "ArrayElement", "Element", "MapValue", "NewCall", "Call",
-      "DecoratedClass", "DecoratedMember", "DecoratedParameter"
+      "Member", "AnyMember", "Instance", "Awaited", "ArrayElement", "Element", "MapValue",
+      "NewCall", "Call", "DecoratedClass", "DecoratedMember", "DecoratedParameter",
+      "WithStringArgument"
     ]
 }
 
@@ -254,7 +255,7 @@ predicate isExtraValidTokenNameInIdentifyingAccessPath(string name) {
 predicate isExtraValidNoArgumentTokenInIdentifyingAccessPath(string name) {
   name =
     [
-      "Instance", "Awaited", "ArrayElement", "Element", "MapValue", "NewCall", "Call",
+      "AnyMember", "Instance", "Awaited", "ArrayElement", "Element", "MapValue", "NewCall", "Call",
       "DecoratedClass", "DecoratedMember", "DecoratedParameter"
     ]
 }
@@ -267,4 +268,8 @@ bindingset[name, argument]
 predicate isExtraValidTokenArgumentInIdentifyingAccessPath(string name, string argument) {
   name = ["Member"] and
   exists(argument)
+  or
+  name = "WithStringArgument" and
+  exists(argument.indexOf("=")) and
+  exists(AccessPath::parseIntWithArity(argument.splitAt("=", 0), 10))
 }
