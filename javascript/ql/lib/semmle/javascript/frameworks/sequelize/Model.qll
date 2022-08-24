@@ -61,14 +61,16 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize-typescript;HasAssociationStatic;sequelize-typescript/associations/has/has-association;HasAssociationStatic;", //
         "sequelize-typescript;HasAssociationStatic;sequelize-typescript;;Member[HasAssociation]", //
         "sequelize-typescript;Model;sequelize-typescript/model/model/model;Model;", //
+        "sequelize-typescript;Model;sequelize-typescript/model/table/table;;Member[Table].Argument[0].TypeVar[sequelize-typescript.TableOptions.0]", //
+        "sequelize-typescript;Model;sequelize-typescript;;Member[Table].Argument[0].TypeVar[sequelize-typescript.TableOptions.0]", //
         "sequelize-typescript;Model;sequelize-typescript;Model;Member[$add,$has,$remove,$set].Argument[1]", //
         "sequelize-typescript;Model;sequelize-typescript;Model;Member[$add,$has,$remove,$set].Argument[1].ArrayElement", //
         "sequelize-typescript;Model;sequelize-typescript;Model;Member[$create,reload].ReturnValue.Awaited", //
         "sequelize-typescript;Model;sequelize-typescript;ModelStatic~;Instance", //
-        "sequelize-typescript;Model;sequelize-typescript;ModelStatic~;Member[initialize].ReturnValue.Instance", //
+        "sequelize-typescript;Model;sequelize-typescript;ModelStatic~;Member[initialize].ReturnValue.TypeVar[sequelize-typescript.ModelStatic.0]", //
         "sequelize-typescript;Model;sequelize-typescript;ModelType;Instance", //
         "sequelize-typescript;Model;sequelize-typescript;Sequelize;Member[getRepository].Argument[0].Instance", //
-        "sequelize-typescript;Model;sequelize-typescript;Sequelize;Member[getRepository].ReturnValue.Instance", //
+        "sequelize-typescript;Model;sequelize-typescript;Sequelize;Member[getRepository].ReturnValue.TypeVar[sequelize-typescript.Repository.0]", //
         "sequelize-typescript;ModelClassGetter;sequelize-typescript/associations/belongs-to-many/belongs-to-many;;Member[BelongsToMany].Argument[0,1]", //
         "sequelize-typescript;ModelClassGetter;sequelize-typescript/associations/belongs-to/belongs-to;;Member[BelongsTo].Argument[0]", //
         "sequelize-typescript;ModelClassGetter;sequelize-typescript/associations/foreign-key/foreign-key-meta;ForeignKeyMeta;Member[relatedClassGetter]", //
@@ -101,6 +103,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize-typescript;ModelStatic~;sequelize-typescript/model/model/model;ModelStatic~;", //
         "sequelize-typescript;ModelStatic~;sequelize-typescript/model/shared/model-not-initialized-error;ModelNotInitializedErrorStatic;Argument[0]", //
         "sequelize-typescript;ModelStatic~;sequelize-typescript;;Member[Model]", //
+        "sequelize-typescript;ModelStatic~;sequelize-typescript;Repository;TypeVar[sequelize-typescript/shared/types.NonAbstract.0]", //
         "sequelize-typescript;ModelType;sequelize-typescript/associations/foreign-key/foreign-key-service;;Member[getForeignKeyOptions].Argument[0,1]", //
         "sequelize-typescript;ModelType;sequelize-typescript/model/model/model;ModelType;", //
         "sequelize-typescript;ModelType;sequelize-typescript;BaseAssociation;Member[getAssociatedClass].ReturnValue", //
@@ -121,6 +124,11 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize-typescript;ScopesOptions;sequelize-typescript/scopes/scope-options;ScopesOptions;", //
         "sequelize-typescript;ScopesOptions;sequelize-typescript/scopes/scope-service;;Member[resolveScope].Argument[2]", //
         "sequelize-typescript;ScopesOptions;sequelize-typescript;;Member[resolveScope].Argument[2]", //
+        "sequelize-typescript;ScopesOptions;sequelize-typescript;ScopesOptionsGetter;ReturnValue.AnyMember", //
+        "sequelize-typescript;ScopesOptionsGetter;sequelize-typescript/scopes/scope-options;ScopesOptionsGetter;", //
+        "sequelize-typescript;ScopesOptionsGetter;sequelize-typescript/scopes/scopes;;Member[Scopes].Argument[0]", //
+        "sequelize-typescript;ScopesOptionsGetter;sequelize-typescript;;Member[Scopes].Argument[0]", //
+        "sequelize-typescript;ScopesOptionsGetter;sequelize-typescript;ScopeOptionsGetters;Member[getScopes]", //
         "sequelize-typescript;Sequelize;sequelize-typescript/sequelize/sequelize/sequelize;Sequelize;", //
         "sequelize-typescript;Sequelize;sequelize-typescript;BaseAssociation;Member[getSequelizeOptions].Argument[1]", //
         "sequelize-typescript;Sequelize;sequelize-typescript;BelongsToManyAssociation;Member[getSequelizeOptions].Argument[1]", //
@@ -134,9 +142,10 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize-typescript;SequelizeOptions;sequelize-typescript;;Member[prepareOptions].ReturnValue", //
         "sequelize-typescript;SequelizeOptions;sequelize-typescript;Sequelize;Member[options]", //
         "sequelize-typescript;SequelizeOptions;sequelize-typescript;SequelizeStatic;Argument[3]", //
-        "sequelize-typescript;SequelizeOptions;sequelize-typescript;SequelizeStatic;WithArity[0..1].Argument[0]", //
-        "sequelize-typescript;SequelizeOptions;sequelize-typescript;SequelizeStatic;WithArity[1..2].Argument[1]", //
-        "sequelize-typescript;SequelizeOptions;sequelize-typescript;SequelizeStatic;WithArity[2..3].Argument[2]", //
+        "sequelize-typescript;SequelizeOptions;sequelize-typescript;SequelizeStatic;WithArity[0].Argument[0]", //
+        "sequelize-typescript;SequelizeOptions;sequelize-typescript;SequelizeStatic;WithArity[1].Argument[0,1]", //
+        "sequelize-typescript;SequelizeOptions;sequelize-typescript;SequelizeStatic;WithArity[2].Argument[1,2]", //
+        "sequelize-typescript;SequelizeOptions;sequelize-typescript;SequelizeStatic;WithArity[3].Argument[2]", //
         "sequelize-typescript;SequelizeStatic;sequelize-typescript/sequelize/sequelize/sequelize;;Member[Sequelize]", //
         "sequelize-typescript;SequelizeStatic;sequelize-typescript/sequelize/sequelize/sequelize;SequelizeStatic;", //
         "sequelize-typescript;SequelizeStatic;sequelize-typescript;;Member[Sequelize]", //
@@ -144,6 +153,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize;AnyFindOptions;sequelize;BelongsToManyAddAssociationsMixin;Argument[1]", //
         "sequelize;AnyFindOptions;sequelize;BelongsToManySetAssociationsMixin;Argument[1]", //
         "sequelize;AnyFindOptions;sequelize;DefineOptions;Member[defaultScope]", //
+        "sequelize;AnyFindOptions;sequelize;DefineScopeOptions;AnyMember", //
         "sequelize;AnyFindOptions;sequelize;HasManySetAssociationsMixin;Argument[1]", //
         "sequelize;AnyFindOptions;sequelize;Instance;Member[reload].Argument[0]", //
         "sequelize;AnyFindOptions;sequelize;Model;Member[addScope].Argument[1]", //
@@ -160,10 +170,15 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize;CreateOptions;sequelize;HasManyCreateAssociationMixin;Argument[1]", //
         "sequelize;CreateOptions;sequelize;HasOneCreateAssociationMixin;Argument[1]", //
         "sequelize;CreateOptions;sequelize;Model;Member[create].Argument[1]", //
+        "sequelize;DefineAttributeColumnOptions;sequelize;DefineAttributes;AnyMember", //
         "sequelize;DefineAttributeColumnOptions;sequelize;QueryInterface;Member[addColumn,changeColumn].Argument[2]", //
         "sequelize;DefineAttributeColumnReferencesOptions;sequelize;DefineAttributeColumnOptions;Member[references]", //
+        "sequelize;DefineAttributes;sequelize;Hooks;Member[beforeDefine].Argument[1].Argument[0]", //
+        "sequelize;DefineAttributes;sequelize;Hooks;Member[beforeDefine].WithArity[1].Argument[0].Argument[0]", //
+        "sequelize;DefineAttributes;sequelize;QueryInterface;Member[createTable].Argument[1]", //
         "sequelize;DefineOptions;sequelize;Options;Member[define]", //
         "sequelize;DefineOptions;sequelize;Sequelize;Member[define].Argument[2]", //
+        "sequelize;DefineScopeOptions;sequelize;DefineOptions;Member[scopes]", //
         "sequelize;FindCreateFindOptions;sequelize;Model;Member[findCreateFind].Argument[0]", //
         "sequelize;FindOptions;sequelize-typescript;AssociationCountOptions;", //
         "sequelize;FindOptions;sequelize-typescript;AssociationGetOptions;", //
@@ -175,6 +190,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize;FindOptions;sequelize;FindCreateFindOptions;", //
         "sequelize;FindOptions;sequelize;FindOrInitializeOptions;", //
         "sequelize;FindOptions;sequelize;Model;Member[all,find,findAll,findAndCount,findAndCountAll,findOne].Argument[0]", //
+        "sequelize;FindOptions;sequelize;Model;Member[findById,findByPk,findByPrimary].Argument[1].TypeVar[sequelize.Omit.0]", //
         "sequelize;FindOptionsOrderArray;sequelize;FindOptions;Member[order]", //
         "sequelize;FindOptionsOrderArray;sequelize;FindOptions;Member[order].ArrayElement", //
         "sequelize;FindOrInitializeOptions;sequelize;Model;Member[findOrBuild,findOrCreate,findOrInitialize].Argument[0]", //
@@ -199,7 +215,11 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize;Instance;sequelize;Instance;Member[equalsOneOf].Argument[0].ArrayElement", //
         "sequelize;Instance;sequelize;Instance;Member[equals].Argument[0]", //
         "sequelize;Instance;sequelize;Instance;Member[set,setAttributes].ReturnValue", //
-        "sequelize;Instance;sequelize;Model;Member[Instance].ReturnValue", //
+        "sequelize;Instance;sequelize;Model;Member[Instance,build].ReturnValue", //
+        "sequelize;Instance;sequelize;Model;Member[all,bulkCreate,findAll].ReturnValue.Awaited.ArrayElement", //
+        "sequelize;Instance;sequelize;Model;Member[bulkBuild].ReturnValue.ArrayElement", //
+        "sequelize;Instance;sequelize;Model;Member[create,find,findById,findByPk,findByPrimary,findOne].ReturnValue.Awaited", //
+        "sequelize;Instance;sequelize;Model;Member[findAndCount,findAndCountAll].ReturnValue.Awaited.Member[rows].ArrayElement", //
         "sequelize;Instance;sequelize;QueryInterface;Member[delete,increment,insert,update].Argument[0]", //
         "sequelize;Instance;sequelize;QueryOptions;Member[instance]", //
         "sequelize;Instance;sequelize;SequelizeStaticAndInstance;Member[Instance]", //
@@ -222,6 +242,8 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize;Model;sequelize;Instance;Member[Model]", //
         "sequelize;Model;sequelize;Model;Member[schema,scope,unscoped].ReturnValue", //
         "sequelize;Model;sequelize;Model;Member[sync].ReturnValue.Awaited", //
+        "sequelize;Model;sequelize;Models;AnyMember", //
+        "sequelize;Model;sequelize;ModelsHashInterface;AnyMember", //
         "sequelize;Model;sequelize;QueryInterface;Member[bulkDelete,rawSelect,upsert].Argument[3]", //
         "sequelize;Model;sequelize;QueryInterface;Member[select].Argument[0]", //
         "sequelize;Model;sequelize;QueryOptions;Member[model]", //
@@ -231,12 +253,14 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize;Model;sequelize;ThroughOptions;Member[model]", //
         "sequelize;Model;sequelize;Utils;Member[mapOptionFieldNames].Argument[1]", //
         "sequelize;Model;sequelize;Utils;Member[mapValueFieldNames].Argument[2]", //
+        "sequelize;Models;sequelize;Model;Member[associate].Argument[0]", //
+        "sequelize;ModelsHashInterface;sequelize;Sequelize;Member[models]", //
         "sequelize;Options;sequelize-typescript;SequelizeOptions;", //
         "sequelize;Options;sequelize;Sequelize;Member[options]", //
         "sequelize;Options;sequelize;SequelizeStatic;Argument[3]", //
-        "sequelize;Options;sequelize;SequelizeStatic;WithArity[1..2].Argument[1]", //
-        "sequelize;Options;sequelize;SequelizeStatic;WithArity[1].Argument[0]", //
-        "sequelize;Options;sequelize;SequelizeStatic;WithArity[2..3].Argument[2]", //
+        "sequelize;Options;sequelize;SequelizeStatic;WithArity[1].Argument[0,1]", //
+        "sequelize;Options;sequelize;SequelizeStatic;WithArity[2].Argument[1,2]", //
+        "sequelize;Options;sequelize;SequelizeStatic;WithArity[3].Argument[2]", //
         "sequelize;QueryInterface;sequelize;Sequelize;Member[getQueryInterface].ReturnValue", //
         "sequelize;QueryOptions;sequelize;Options;Member[query]", //
         "sequelize;QueryOptions;sequelize;QueryInterface;Member[bulkDelete,bulkInsert,createTable,select,setAutocommit,setIsolationLevel].Argument[2]", //
@@ -263,6 +287,29 @@ private class Types extends ModelInput::TypeModelCsv {
         "sequelize;SequelizeStaticAndInstance;sequelize;SequelizeStatic;", //
         "sequelize;ThroughOptions;sequelize;AssociationOptionsBelongsToMany;Member[through]", //
         "sequelize;Utils;sequelize;SequelizeStaticAndInstance;Member[Utils]", //
+      ]
+  }
+}
+
+private class Summaries extends ModelInput::SummaryModelCsv {
+  override predicate row(string row) {
+    row =
+      [
+        "sequelize-typescript;Model;;;Member[reload].ReturnValue.Awaited;type", //
+        "sequelize;Instance;;;Member[decrement,increment,reload,save,update,updateAttributes].ReturnValue.Awaited;type", //
+        "sequelize;Instance;;;Member[set,setAttributes].ReturnValue;type", //
+        "sequelize;Model;;;Member[schema,scope,unscoped].ReturnValue;type", //
+        "sequelize;Model;;;Member[sync].ReturnValue.Awaited;type", //
+      ]
+  }
+}
+
+private class TypeVariables extends ModelInput::TypeVariableModelCsv {
+  override predicate row(string row) {
+    row =
+      [
+        "sequelize-typescript.ModelStatic.0;Instance", //
+        "sequelize-typescript.Repository.0;Instance", //
       ]
   }
 }
