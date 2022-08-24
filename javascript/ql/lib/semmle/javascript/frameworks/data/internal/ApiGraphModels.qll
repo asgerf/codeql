@@ -417,6 +417,13 @@ private API::Node getNodeFromSubPath(API::Node base, AccessPath subPath, int n) 
     n = 0
   )
   or
+  exists(string package, string type |
+    base = ModelOutput::getATypeNode(package, type) and
+    receiverStepModel(package, type, subPath) and
+    result = base and
+    n = 0
+  )
+  or
   result = getSuccessorFromNode(getNodeFromSubPath(base, subPath, n - 1), subPath.getToken(n - 1))
   or
   result =
@@ -447,6 +454,20 @@ private API::Node getNodeFromSubPath(API::Node base, AccessPath subPath) {
 /** Gets the node identified by the given `(package, type, path)` tuple. */
 API::Node getNodeFromPath(string package, string type, AccessPath path) {
   result = getNodeFromPath(package, type, path, path.getNumToken())
+}
+
+pragma[nomagic]
+private predicate receiverStepModel(string package, string type, AccessPath path) {
+  summaryModel(package, type, "", "", path, "type")
+}
+
+pragma[nomagic]
+private predicate receiverStep(API::Node pred, API::Node succ) {
+  exists(string package, string type, AccessPath path |
+    receiverStepModel(package, type, path) and
+    pred = ModelOutput::getATypeNode(package, type) and
+    succ = getNodeFromSubPath(pred, path)
+  )
 }
 
 /**
@@ -553,6 +574,7 @@ module ModelOutput {
    * Holds if `node` is seen as an instance of `(package,type)` due to a type definition
    * contributed by a CSV model.
    */
+  pragma[nomagic]
   API::Node getATypeNode(string package, string type) {
     exists(string package2, string type2, AccessPath path |
       typeModel(package, type, package2, type2, path) and
