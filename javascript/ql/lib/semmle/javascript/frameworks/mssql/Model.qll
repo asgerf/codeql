@@ -10,13 +10,13 @@ private class Types extends ModelInput::TypeModelCsv {
         "mssql;ConnectionPool;mssql;;Member[pool]", //
         "mssql;ConnectionPool;mssql;ConnectionPool;Member[connect].WithArity[0].ReturnValue.Awaited", //
         "mssql;ConnectionPool;mssql;ConnectionPoolStatic;Instance", //
-        "mssql;ConnectionPool;mssql;PreparedStatementStatic;WithArity[0..1].Argument[0]", //
-        "mssql;ConnectionPool;mssql;RequestStatic;WithArity[0..1].Argument[0]", //
+        "mssql;ConnectionPool;mssql;PreparedStatementStatic;WithArity[0,1].Argument[0]", //
+        "mssql;ConnectionPool;mssql;RequestStatic;WithArity[0,1].Argument[0]", //
         "mssql;ConnectionPool;mssql;TransactionStatic;Argument[0]", //
         "mssql;ConnectionPoolStatic;mssql/msnodesqlv8;;Member[ConnectionPool]", //
         "mssql;ConnectionPoolStatic;mssql;;Member[ConnectionPool]", //
         "mssql;PreparedStatement;mssql;PreparedStatement;Member[input,output].ReturnValue", //
-        "mssql;PreparedStatement;mssql;PreparedStatement;Member[prepare].WithArity[0..2].ReturnValue", //
+        "mssql;PreparedStatement;mssql;PreparedStatement;Member[prepare].WithArity[0,1,2].ReturnValue", //
         "mssql;PreparedStatement;mssql;PreparedStatement;Member[unprepare].WithArity[1].ReturnValue", //
         "mssql;PreparedStatement;mssql;PreparedStatementStatic;Instance", //
         "mssql;PreparedStatement;mssql;Request;Member[pstatement]", //
@@ -36,15 +36,15 @@ private class Types extends ModelInput::TypeModelCsv {
         "mssql;Transaction;mssql;PreparedStatementStatic;WithArity[1].Argument[0]", //
         "mssql;Transaction;mssql;Request;Member[transaction]", //
         "mssql;Transaction;mssql;RequestStatic;WithArity[1].Argument[0]", //
-        "mssql;Transaction;mssql;Transaction;Member[begin].WithArity[0..1].ReturnValue.Awaited", //
-        "mssql;Transaction;mssql;Transaction;Member[begin].WithArity[0..2].ReturnValue", //
+        "mssql;Transaction;mssql;Transaction;Member[begin].WithArity[0,1,2].ReturnValue", //
+        "mssql;Transaction;mssql;Transaction;Member[begin].WithArity[0,1].ReturnValue.Awaited", //
         "mssql;Transaction;mssql;TransactionStatic;Instance", //
         "mssql;TransactionStatic;mssql/msnodesqlv8;;Member[Transaction]", //
         "mssql;TransactionStatic;mssql;;Member[Transaction]", //
         "mssql;config;mssql/msnodesqlv8;;Member[connect].Argument[0]", //
         "mssql;config;mssql;;Member[connect].Argument[0]", //
         "mssql;config;mssql;ConnectionPoolStatic;Member[parseConnectionString].ReturnValue", //
-        "mssql;config;mssql;ConnectionPoolStatic;WithArity[1..2].Argument[0]", //
+        "mssql;config;mssql;ConnectionPoolStatic;WithArity[1,2].Argument[0]", //
       ]
   }
 }

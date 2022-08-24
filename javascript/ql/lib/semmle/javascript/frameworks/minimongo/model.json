@@ -96,6 +96,7 @@
             "minimongo;MinimongoLocalDb;minimongo/lib/types;MinimongoLocalDb;",
             "minimongo;MinimongoLocalDb;minimongo;MinimongoDb;Member[localDb]"
         ],
-        "summaries": []
+        "summaries": [],
+        "typeVariables": []
     }
 }

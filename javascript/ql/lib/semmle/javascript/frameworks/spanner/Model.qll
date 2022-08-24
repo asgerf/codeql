@@ -5,7 +5,7 @@ private class Types extends ModelInput::TypeModelCsv {
     row =
       [
         "@google-cloud/spanner/batch-transaction;BatchTransaction;@google-cloud/spanner/batch-transaction;BatchTransactionStatic;Instance", //
-        "@google-cloud/spanner/batch-transaction;BatchTransaction;@google-cloud/spanner/database;CreateBatchTransactionCallback;Argument[1]", //
+        "@google-cloud/spanner/batch-transaction;BatchTransaction;@google-cloud/spanner/database;CreateBatchTransactionCallback;TypeVar[@google-cloud/spanner/common.ResourceCallback.0]", //
         "@google-cloud/spanner/batch-transaction;BatchTransaction;@google-cloud/spanner;Database;Member[batchTransaction].ReturnValue", //
         "@google-cloud/spanner/batch-transaction;BatchTransactionStatic;@google-cloud/spanner/batch-transaction;;Member[BatchTransaction]", //
         "@google-cloud/spanner/batch-transaction;TransactionIdentifier;@google-cloud/spanner/batch-transaction;BatchTransaction;Member[identifier].ReturnValue", //
@@ -19,7 +19,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "@google-cloud/spanner/database;DatabaseCallback;@google-cloud/spanner;Database;Member[get].WithArity[1].Argument[0]", //
         "@google-cloud/spanner/database;GetSessionsCallback;@google-cloud/spanner;Database;Member[getSessions].Argument[1]", //
         "@google-cloud/spanner/database;GetSessionsCallback;@google-cloud/spanner;Database;Member[getSessions].WithArity[1].Argument[0]", //
-        "@google-cloud/spanner/database;GetSessionsResponse;@google-cloud/spanner;Database;Member[getSessions].WithArity[0..1].ReturnValue.Awaited", //
+        "@google-cloud/spanner/database;GetSessionsResponse;@google-cloud/spanner;Database;Member[getSessions].WithArity[0,1].ReturnValue.Awaited", //
         "@google-cloud/spanner/database;GetSnapshotCallback;@google-cloud/spanner;Database;Member[getSnapshot].Argument[1]", //
         "@google-cloud/spanner/database;GetSnapshotCallback;@google-cloud/spanner;Database;Member[getSnapshot].WithArity[1].Argument[0]", //
         "@google-cloud/spanner/database;GetTransactionCallback;@google-cloud/spanner;Database;Member[getTransaction].Argument[0]", //
@@ -29,11 +29,11 @@ private class Types extends ModelInput::TypeModelCsv {
         "@google-cloud/spanner/database;SessionPoolConstructor;@google-cloud/spanner;Instance;Member[database].Argument[1]", //
         "@google-cloud/spanner/instance;CreateDatabaseCallback;@google-cloud/spanner;Instance;Member[createDatabase].Argument[2]", //
         "@google-cloud/spanner/instance;CreateDatabaseCallback;@google-cloud/spanner;Instance;Member[createDatabase].WithArity[2].Argument[1]", //
-        "@google-cloud/spanner/instance;CreateDatabaseOptions;@google-cloud/spanner;Instance;Member[createDatabase].WithArity[1..2,3].Argument[1]", //
+        "@google-cloud/spanner/instance;CreateDatabaseOptions;@google-cloud/spanner;Instance;Member[createDatabase].WithArity[1,2,3].Argument[1]", //
         "@google-cloud/spanner/instance;CreateInstanceCallback;@google-cloud/spanner;Spanner;Member[createInstance].Argument[2]", //
         "@google-cloud/spanner/instance;GetDatabasesCallback;@google-cloud/spanner;Instance;Member[getDatabases].Argument[1]", //
         "@google-cloud/spanner/instance;GetDatabasesCallback;@google-cloud/spanner;Instance;Member[getDatabases].WithArity[1].Argument[0]", //
-        "@google-cloud/spanner/instance;GetDatabasesResponse;@google-cloud/spanner;Instance;Member[getDatabases].WithArity[0..1].ReturnValue.Awaited", //
+        "@google-cloud/spanner/instance;GetDatabasesResponse;@google-cloud/spanner;Instance;Member[getDatabases].WithArity[0,1].ReturnValue.Awaited", //
         "@google-cloud/spanner/instance;GetInstanceCallback;@google-cloud/spanner;Instance;Member[get].Argument[1]", //
         "@google-cloud/spanner/instance;GetInstanceCallback;@google-cloud/spanner;Instance;Member[get].WithArity[1].Argument[0]", //
         "@google-cloud/spanner/session-pool;GetReadSessionCallback;@google-cloud/spanner/session-pool;SessionPoolInterface;Member[getReadSession].Argument[0]", //
@@ -73,10 +73,12 @@ private class Types extends ModelInput::TypeModelCsv {
         "@google-cloud/spanner;BackupStatic;@google-cloud/spanner;;Member[Backup]", //
         "@google-cloud/spanner;BatchTransaction;@google-cloud/spanner/batch-transaction;BatchTransaction;", //
         "@google-cloud/spanner;Database;@google-cloud/spanner/database;Database;", //
-        "@google-cloud/spanner;Database;@google-cloud/spanner/database;DatabaseCallback;Argument[1]", //
-        "@google-cloud/spanner;Database;@google-cloud/spanner/database;RestoreDatabaseCallback;Argument[1]", //
+        "@google-cloud/spanner;Database;@google-cloud/spanner/database;DatabaseCallback;TypeVar[@google-cloud/spanner/common.ResourceCallback.0]", //
+        "@google-cloud/spanner;Database;@google-cloud/spanner/database;RestoreDatabaseCallback;TypeVar[@google-cloud/spanner/common.LongRunningCallback.0]", //
         "@google-cloud/spanner;Database;@google-cloud/spanner/database;SessionPoolConstructor;Argument[0]", //
-        "@google-cloud/spanner;Database;@google-cloud/spanner/instance;CreateDatabaseCallback;Argument[1]", //
+        "@google-cloud/spanner;Database;@google-cloud/spanner/instance;CreateDatabaseCallback;TypeVar[@google-cloud/spanner/common.LongRunningCallback.0]", //
+        "@google-cloud/spanner;Database;@google-cloud/spanner/instance;GetDatabasesCallback;TypeVar[@google-cloud/spanner/common.RequestCallback.0]", //
+        "@google-cloud/spanner;Database;@google-cloud/spanner/instance;GetDatabasesResponse;TypeVar[@google-cloud/spanner/common.PagedResponse.0]", //
         "@google-cloud/spanner;Database;@google-cloud/spanner;DatabaseStatic;Instance", //
         "@google-cloud/spanner;Database;@google-cloud/spanner;Instance;Member[database].ReturnValue", //
         "@google-cloud/spanner;Database;@google-cloud/spanner;SessionPool;Member[database]", //
@@ -91,13 +93,14 @@ private class Types extends ModelInput::TypeModelCsv {
         "@google-cloud/spanner;GetInstancesCallback;@google-cloud/spanner;Spanner;Member[getInstances].Argument[1]", //
         "@google-cloud/spanner;GetInstancesCallback;@google-cloud/spanner;Spanner;Member[getInstances].WithArity[1].Argument[0]", //
         "@google-cloud/spanner;GetInstancesResponse;@google-cloud/spanner/build/src;GetInstancesResponse;", //
-        "@google-cloud/spanner;GetInstancesResponse;@google-cloud/spanner;Spanner;Member[getInstances].WithArity[0..1].ReturnValue.Awaited", //
-        "@google-cloud/spanner;Instance;@google-cloud/spanner/instance;CreateInstanceCallback;Argument[1]", //
-        "@google-cloud/spanner;Instance;@google-cloud/spanner/instance;GetInstanceCallback;Argument[1]", //
+        "@google-cloud/spanner;GetInstancesResponse;@google-cloud/spanner;Spanner;Member[getInstances].WithArity[0,1].ReturnValue.Awaited", //
+        "@google-cloud/spanner;Instance;@google-cloud/spanner/instance;CreateInstanceCallback;TypeVar[@google-cloud/spanner/common.LongRunningCallback.0]", //
+        "@google-cloud/spanner;Instance;@google-cloud/spanner/instance;GetInstanceCallback;TypeVar[@google-cloud/spanner/common.ResourceCallback.0]", //
         "@google-cloud/spanner;Instance;@google-cloud/spanner/instance;Instance;", //
         "@google-cloud/spanner;Instance;@google-cloud/spanner;BackupStatic;Argument[0]", //
         "@google-cloud/spanner;Instance;@google-cloud/spanner;DatabaseStatic;Argument[0]", //
-        "@google-cloud/spanner;Instance;@google-cloud/spanner;GetInstancesCallback;Argument[1].ArrayElement", //
+        "@google-cloud/spanner;Instance;@google-cloud/spanner;GetInstancesCallback;TypeVar[@google-cloud/spanner/common.PagedCallback.0]", //
+        "@google-cloud/spanner;Instance;@google-cloud/spanner;GetInstancesResponse;TypeVar[@google-cloud/spanner/common.PagedResponse.0]", //
         "@google-cloud/spanner;Instance;@google-cloud/spanner;InstanceStatic;Instance", //
         "@google-cloud/spanner;Instance;@google-cloud/spanner;Spanner;Member[instance].ReturnValue", //
         "@google-cloud/spanner;InstanceStatic;@google-cloud/spanner/instance;;Member[Instance]", //
@@ -110,9 +113,12 @@ private class Types extends ModelInput::TypeModelCsv {
         "@google-cloud/spanner;PartitionedDmlStatic;@google-cloud/spanner/transaction;PartitionedDmlStatic;", //
         "@google-cloud/spanner;PartitionedDmlStatic;@google-cloud/spanner;;Member[PartitionedDml]", //
         "@google-cloud/spanner;Session;@google-cloud/spanner/batch-transaction;TransactionIdentifier;Member[session]", //
-        "@google-cloud/spanner;Session;@google-cloud/spanner/database;BatchCreateSessionsCallback;Argument[1].ArrayElement", //
-        "@google-cloud/spanner;Session;@google-cloud/spanner/database;CreateSessionCallback;Argument[1]", //
-        "@google-cloud/spanner;Session;@google-cloud/spanner/session-pool;GetReadSessionCallback;Argument[1]", //
+        "@google-cloud/spanner;Session;@google-cloud/spanner/database;BatchCreateSessionsCallback;TypeVar[@google-cloud/spanner/common.ResourceCallback.0].ArrayElement", //
+        "@google-cloud/spanner;Session;@google-cloud/spanner/database;CreateSessionCallback;TypeVar[@google-cloud/spanner/common.ResourceCallback.0]", //
+        "@google-cloud/spanner;Session;@google-cloud/spanner/database;GetSessionsCallback;TypeVar[@google-cloud/spanner/common.RequestCallback.0]", //
+        "@google-cloud/spanner;Session;@google-cloud/spanner/database;GetSessionsResponse;TypeVar[@google-cloud/spanner/common.PagedResponse.0]", //
+        "@google-cloud/spanner;Session;@google-cloud/spanner/database;PoolRequestCallback;TypeVar[@google-cloud/spanner/common.RequestCallback.0]", //
+        "@google-cloud/spanner;Session;@google-cloud/spanner/session-pool;GetReadSessionCallback;TypeVar[@google-cloud/spanner/common.NormalCallback.0]", //
         "@google-cloud/spanner;Session;@google-cloud/spanner/session-pool;GetWriteSessionCallback;Argument[1]", //
         "@google-cloud/spanner;Session;@google-cloud/spanner/session-pool;SessionPoolInterface;Member[release].Argument[0]", //
         "@google-cloud/spanner;Session;@google-cloud/spanner/session;Session;", //
@@ -142,7 +148,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "@google-cloud/spanner;SessionStatic;@google-cloud/spanner/session;SessionStatic;", //
         "@google-cloud/spanner;SessionStatic;@google-cloud/spanner;;Member[Session]", //
         "@google-cloud/spanner;Snapshot;@google-cloud/spanner/batch-transaction;BatchTransaction;", //
-        "@google-cloud/spanner;Snapshot;@google-cloud/spanner/database;GetSnapshotCallback;Argument[1]", //
+        "@google-cloud/spanner;Snapshot;@google-cloud/spanner/database;GetSnapshotCallback;TypeVar[@google-cloud/spanner/common.NormalCallback.0]", //
         "@google-cloud/spanner;Snapshot;@google-cloud/spanner/transaction;Dml;", //
         "@google-cloud/spanner;Snapshot;@google-cloud/spanner/transaction;Snapshot;", //
         "@google-cloud/spanner;Snapshot;@google-cloud/spanner;Session;Member[snapshot].ReturnValue", //
@@ -153,19 +159,19 @@ private class Types extends ModelInput::TypeModelCsv {
         "@google-cloud/spanner;Spanner;@google-cloud/spanner;InstanceStatic;Argument[0]", //
         "@google-cloud/spanner;Spanner;@google-cloud/spanner;SpannerStatic;Instance", //
         "@google-cloud/spanner;SpannerStatic;@google-cloud/spanner;;Member[Spanner]", //
-        "@google-cloud/spanner;Table;@google-cloud/spanner/table;CreateTableCallback;Argument[1]", //
+        "@google-cloud/spanner;Table;@google-cloud/spanner/table;CreateTableCallback;TypeVar[@google-cloud/spanner/common.LongRunningCallback.0]", //
         "@google-cloud/spanner;Table;@google-cloud/spanner/table;Table;", //
         "@google-cloud/spanner;Table;@google-cloud/spanner;Database;Member[table].ReturnValue", //
         "@google-cloud/spanner;Table;@google-cloud/spanner;TableStatic;Instance", //
         "@google-cloud/spanner;TableStatic;@google-cloud/spanner/table;;Member[Table]", //
         "@google-cloud/spanner;TableStatic;@google-cloud/spanner/table;TableStatic;", //
         "@google-cloud/spanner;TableStatic;@google-cloud/spanner;;Member[Table]", //
-        "@google-cloud/spanner;Transaction;@google-cloud/spanner/database;GetTransactionCallback;Argument[1]", //
+        "@google-cloud/spanner;Transaction;@google-cloud/spanner/database;GetTransactionCallback;TypeVar[@google-cloud/spanner/common.NormalCallback.0]", //
         "@google-cloud/spanner;Transaction;@google-cloud/spanner/session-pool;GetWriteSessionCallback;Argument[2]", //
         "@google-cloud/spanner;Transaction;@google-cloud/spanner/transaction-runner;AsyncRunTransactionCallback;Argument[0]", //
         "@google-cloud/spanner;Transaction;@google-cloud/spanner/transaction-runner;AsyncTransactionRunner;Member[_run].Argument[0]", //
         "@google-cloud/spanner;Transaction;@google-cloud/spanner/transaction-runner;AsyncTransactionRunnerStatic;Argument[1]", //
-        "@google-cloud/spanner;Transaction;@google-cloud/spanner/transaction-runner;RunTransactionCallback;Argument[1]", //
+        "@google-cloud/spanner;Transaction;@google-cloud/spanner/transaction-runner;RunTransactionCallback;TypeVar[@google-cloud/spanner/common.NormalCallback.0]", //
         "@google-cloud/spanner;Transaction;@google-cloud/spanner/transaction-runner;Runner;Member[_run].Argument[0]", //
         "@google-cloud/spanner;Transaction;@google-cloud/spanner/transaction-runner;Runner;Member[getTransaction].ReturnValue.Awaited", //
         "@google-cloud/spanner;Transaction;@google-cloud/spanner/transaction-runner;Runner;Member[transaction]", //
@@ -194,6 +200,19 @@ private class Types extends ModelInput::TypeModelCsv {
         "@google-cloud/spanner;~SqlExecutorDirect;@google-cloud/spanner;Snapshot;Member[run,runStream]", //
         "@google-cloud/spanner;~SqlExecutorDirect;@google-cloud/spanner;Transaction;Member[run,runStream,runUpdate]", //
         "@google-cloud/spanner;~SqlExecutorDirect;@google-cloud/spanner;v1.SpannerClient;Member[executeSql,executeStreamingSql,partitionQuery]", //
+      ]
+  }
+}
+
+private class TypeVariables extends ModelInput::TypeVariableModelCsv {
+  override predicate row(string row) {
+    row =
+      [
+        "@google-cloud/spanner/common.LongRunningCallback.0;Argument[1]", //
+        "@google-cloud/spanner/common.NormalCallback.0;Argument[1]", //
+        "@google-cloud/spanner/common.PagedCallback.0;Argument[1].ArrayElement", //
+        "@google-cloud/spanner/common.RequestCallback.0;TypeVar[@google-cloud/spanner/common.NormalCallback.0,@google-cloud/spanner/common.PagedCallback.0]", //
+        "@google-cloud/spanner/common.ResourceCallback.0;Argument[1]", //
       ]
   }
 }
