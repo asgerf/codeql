@@ -126,6 +126,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;ClientSession;mongodb;WithTransactionCallback;Argument[0]", //
         "mongodb;ClientSession;mongoose;mongodb.ClientSession;", //
         "mongodb;ClientSessionEvents;mongodb/mongodb;ClientSessionEvents;", //
+        "mongodb;ClientSessionEvents;mongodb;ClientSession;TypeVar[mongodb.TypedEventEmitter.0]", //
         "mongodb;ClientSessionEvents;mongoose;mongodb.ClientSessionEvents;", //
         "mongodb;ClientSessionOptions;mongodb/mongodb;ClientSessionOptions;", //
         "mongodb;ClientSessionOptions;mongodb;MongoClient;Member[startSession].Argument[0]", //
@@ -139,11 +140,16 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;CollStatsOptions;mongoose;mongodb.CollStatsOptions;", //
         "mongodb;Collection;mongodb/mongodb;Collection;", //
         "mongodb;Collection;mongodb;ChangeStream;Member[parent]", //
+        "mongodb;Collection;mongodb;Collection;Member[rename].Argument[1,2].TypeVar[mongodb.Callback.0]", //
         "mongodb;Collection;mongodb;Collection;Member[rename].WithArity[1,2].ReturnValue.Awaited", //
         "mongodb;Collection;mongodb;CollectionStatic;Instance", //
         "mongodb;Collection;mongodb;Db;Member[collection].ReturnValue", //
+        "mongodb;Collection;mongodb;Db;Member[collections].Argument[0,1].TypeVar[mongodb.Callback.0].ArrayElement", //
         "mongodb;Collection;mongodb;Db;Member[collections].WithArity[0,1].ReturnValue.Awaited.ArrayElement", //
+        "mongodb;Collection;mongodb;Db;Member[createCollection].Argument[2].TypeVar[mongodb.Callback.0]", //
         "mongodb;Collection;mongodb;Db;Member[createCollection].WithArity[1,2].ReturnValue.Awaited", //
+        "mongodb;Collection;mongodb;Db;Member[createCollection].WithArity[2].Argument[1].TypeVar[mongodb.Callback.0]", //
+        "mongodb;Collection;mongodb;Db;Member[renameCollection].Argument[2,3].TypeVar[mongodb.Callback.0]", //
         "mongodb;Collection;mongodb;Db;Member[renameCollection].WithArity[2,3].ReturnValue.Awaited", //
         "mongodb;Collection;mongodb;GridFSBucketWriteStream;Member[chunks,files]", //
         "mongodb;Collection;mongodb;ListIndexesCursor;Member[parent]", //
@@ -339,12 +345,15 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;MongoClient;mongodb;AutoEncryptionOptions;Member[keyVaultClient]", //
         "mongodb;MongoClient;mongodb;ChangeStream;Member[parent]", //
         "mongodb;MongoClient;mongodb;DbStatic;Argument[0]", //
+        "mongodb;MongoClient;mongodb;MongoClient;Member[connect].Argument[0].TypeVar[mongodb.Callback.0]", //
         "mongodb;MongoClient;mongodb;MongoClient;Member[connect].WithArity[0].ReturnValue.Awaited", //
         "mongodb;MongoClient;mongodb;MongoClientEvents;Member[open].Argument[0]", //
         "mongodb;MongoClient;mongodb;MongoClientStatic;Instance", //
+        "mongodb;MongoClient;mongodb;MongoClientStatic;Member[connect].Argument[1,2].TypeVar[mongodb.Callback.0]", //
         "mongodb;MongoClient;mongodb;MongoClientStatic;Member[connect].WithArity[1,2].ReturnValue.Awaited", //
         "mongodb;MongoClient;mongoose;mongodb.MongoClient;", //
         "mongodb;MongoClientEvents;mongodb/mongodb;MongoClientEvents;", //
+        "mongodb;MongoClientEvents;mongodb;MongoClient;TypeVar[mongodb.TypedEventEmitter.0]", //
         "mongodb;MongoClientEvents;mongoose;mongodb.MongoClientEvents;", //
         "mongodb;MongoClientOptions;mongodb/mongodb;MongoClientOptions;", //
         "mongodb;MongoClientOptions;mongodb;MongoClientStatic;Argument[1]", //
@@ -364,7 +373,6 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;OrderedBulkOperation;mongodb/mongodb;OrderedBulkOperation;", //
         "mongodb;OrderedBulkOperation;mongodb;Collection;Member[initializeOrderedBulkOp].ReturnValue", //
         "mongodb;OrderedBulkOperation;mongodb;OrderedBulkOperation;Member[addToOperationsList].ReturnValue", //
-        "mongodb;OrderedBulkOperation;mongodb;OrderedBulkOperation;TypeVar[mongodb.BulkOperationBase.-1]", //
         "mongodb;OrderedBulkOperation;mongodb;OrderedBulkOperationStatic;Instance", //
         "mongodb;OrderedBulkOperation;mongoose;mongodb.OrderedBulkOperation;", //
         "mongodb;OrderedBulkOperationStatic;mongodb/mongodb;OrderedBulkOperationStatic;", //
@@ -416,7 +424,6 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;UnorderedBulkOperation;mongodb/mongodb;UnorderedBulkOperation;", //
         "mongodb;UnorderedBulkOperation;mongodb;Collection;Member[initializeUnorderedBulkOp].ReturnValue", //
         "mongodb;UnorderedBulkOperation;mongodb;UnorderedBulkOperation;Member[addToOperationsList].ReturnValue", //
-        "mongodb;UnorderedBulkOperation;mongodb;UnorderedBulkOperation;TypeVar[mongodb.BulkOperationBase.-1]", //
         "mongodb;UnorderedBulkOperation;mongodb;UnorderedBulkOperationStatic;Instance", //
         "mongodb;UnorderedBulkOperation;mongoose;mongodb.UnorderedBulkOperation;", //
         "mongodb;UnorderedBulkOperationStatic;mongodb/mongodb;UnorderedBulkOperationStatic;", //
@@ -441,6 +448,9 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongodb;WithTransactionCallback;mongodb/mongodb;WithTransactionCallback;", //
         "mongodb;WithTransactionCallback;mongodb;ClientSession;Member[withTransaction].Argument[0]", //
         "mongodb;WithTransactionCallback;mongoose;mongodb.WithTransactionCallback;", //
+        "mongoose/inferschematype;ResolvePathType;mongoose/inferschematype;ObtainDocumentPathType;", //
+        "mongoose/inferschematype;ResolvePathType;mongoose/inferschematype;ResolvePathType;TypeVar[mongoose.IfEquals.3].ArrayElement", //
+        "mongoose/inferschematype;ResolvePathType;mongoose/inferschematype;ResolvePathType;TypeVar[mongoose.IfEquals.3].TypeVar[mongoose.Types.DocumentArray.0]", //
         "mongoose;;mongoose;;Member[mongoose]", //
         "mongoose;AcceptsDiscriminator;mongoose;Model;", //
         "mongoose;AcceptsDiscriminator;mongoose;Schema.Types.Array;", //
@@ -449,9 +459,16 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;Aggregate;mongoose;Aggregate;Member[addCursorFlag,addFields,allowDiskUse,append,collation,count,facet,graphLookup,group,hint,limit,lookup,match,model,near,option,project,read,readConcern,redact,replaceRoot,sample,search,session,skip,sort,sortByCount,unionWith,unwind].ReturnValue", //
         "mongoose;Aggregate;mongoose;AggregateStatic;Instance", //
         "mongoose;Aggregate;mongoose;Model;Member[aggregate].ReturnValue", //
+        "mongoose;Aggregate;mongoose;Schema;Member[post].Argument[2].TypeVar[mongoose.ErrorHandlingMiddlewareFunction.0,mongoose.PostMiddlewareFunction.0]", //
+        "mongoose;Aggregate;mongoose;Schema;Member[post].Argument[2].TypeVar[mongoose.PostMiddlewareFunction.1].ArrayElement.TypeVar[mongoose.AggregateExtract.0]", //
+        "mongoose;Aggregate;mongoose;Schema;Member[post].WithArity[2].WithStringArgument[0=aggregate].Argument[1].TypeVar[mongoose.ErrorHandlingMiddlewareFunction.0,mongoose.PostMiddlewareFunction.0]", //
+        "mongoose;Aggregate;mongoose;Schema;Member[post].WithArity[2].WithStringArgument[0=aggregate].Argument[1].TypeVar[mongoose.PostMiddlewareFunction.1].ArrayElement.TypeVar[mongoose.AggregateExtract.0]", //
+        "mongoose;Aggregate;mongoose;Schema;Member[pre].Argument[2].TypeVar[mongoose.PreMiddlewareFunction.0]", //
+        "mongoose;Aggregate;mongoose;Schema;Member[pre].WithArity[2].WithStringArgument[0=aggregate].Argument[1].TypeVar[mongoose.PreMiddlewareFunction.0]", //
         "mongoose;AggregateStatic;mongoose;;Member[Aggregate]", //
         "mongoose;BooleanSchemaDefinition;mongoose;SchemaDefinitionWithBuiltInClass;", //
         "mongoose;BooleanSchemaDefinition;mongoose;SchemaTypeOptions;Member[type]", //
+        "mongoose;BooleanSchemaDefinition;mongoose;SchemaTypeOptions;Member[type].TypeVar[mongoose.AnyArray.0]", //
         "mongoose;Collection;mongoose;;Member[Collection]", //
         "mongoose;Collection;mongoose;Collection;Instance", //
         "mongoose;Collection;mongoose;Connection;Member[collection].ReturnValue", //
@@ -465,14 +482,18 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;ConnectOptions;mongoose;Connection;Member[openUri].WithArity[1,2,3].Argument[1]", //
         "mongoose;Connection;mongoose;;Member[connection]", //
         "mongoose;Connection;mongoose;;Member[connections].ArrayElement", //
+        "mongoose;Connection;mongoose;;Member[createConnection].Argument[2].TypeVar[mongoose.Callback.0]", //
         "mongoose;Connection;mongoose;;Member[createConnection].WithArity[0,1,2].ReturnValue", //
+        "mongoose;Connection;mongoose;;Member[createConnection].WithArity[2].Argument[1].TypeVar[mongoose.Callback.0]", //
         "mongoose;Connection;mongoose;Collection;Argument[1]", //
         "mongoose;Connection;mongoose;CollectionBase;Member[conn]", //
         "mongoose;Connection;mongoose;CompileModelOptions;Member[connection]", //
         "mongoose;Connection;mongoose;Connection;Member[asPromise].ReturnValue.Awaited", //
         "mongoose;Connection;mongoose;Connection;Member[deleteModel,plugin,setClient,useDb].ReturnValue", //
+        "mongoose;Connection;mongoose;Connection;Member[openUri].Argument[2].TypeVar[mongoose.Callback.0]", //
         "mongoose;Connection;mongoose;Connection;Member[openUri].WithArity[1,2].ReturnValue.Awaited", //
         "mongoose;Connection;mongoose;Connection;Member[openUri].WithArity[2,3].ReturnValue", //
+        "mongoose;Connection;mongoose;Connection;Member[openUri].WithArity[2].Argument[1].TypeVar[mongoose.Callback.0]", //
         "mongoose;Connection;mongoose;ConnectionStatic;Instance", //
         "mongoose;Connection;mongoose;Document;Member[db]", //
         "mongoose;Connection;mongoose;Model;Member[db]", //
@@ -486,11 +507,19 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;Document;mongoose;Document;Member[$inc,$parent,$set,depopulate,increment,init,overwrite,set].ReturnValue", //
         "mongoose;Document;mongoose;Document;Member[delete,deleteOne].WithArity[0,1].ReturnValue.TypeVar[mongoose.QueryWithHelpers.1]", //
         "mongoose;Document;mongoose;Document;Member[equals].Argument[0]", //
+        "mongoose;Document;mongoose;Document;Member[getChanges].ReturnValue.TypeVar[mongoose.UpdateQuery.0]", //
+        "mongoose;Document;mongoose;Document;Member[init].Argument[2].TypeVar[mongoose.Callback.0]", //
+        "mongoose;Document;mongoose;Document;Member[populate].Argument[1,5].TypeVar[mongoose.Callback.0].TypeVar[mongoose.MergeType.0]", //
+        "mongoose;Document;mongoose;Document;Member[populate].WithArity[1,2,3,4,5].ReturnValue.Awaited.TypeVar[mongoose.MergeType.0]", //
         "mongoose;Document;mongoose;Document;Member[remove,save].WithArity[0,1].ReturnValue.Awaited", //
         "mongoose;Document;mongoose;Document;Member[replaceOne,update,updateOne].ReturnValue.TypeVar[mongoose.Query.1]", //
+        "mongoose;Document;mongoose;Document;Member[save].Argument[1].TypeVar[mongoose.Callback.0]", //
+        "mongoose;Document;mongoose;Document;Member[save].WithArity[1].Argument[0].TypeVar[mongoose.Callback.0]", //
+        "mongoose;Document;mongoose;Document;Member[update,updateOne].Argument[0].TypeVar[mongoose.UpdateQuery.0]", //
         "mongoose;Document;mongoose;DocumentStatic;Instance", //
         "mongoose;Document;mongoose;Error.VersionErrorStatic;Argument[0]", //
         "mongoose;Document;mongoose;HydratedDocument;", //
+        "mongoose;Document;mongoose;HydratedDocument;TypeVar[mongoose.Document.2,mongoose.Require_id.0]", //
         "mongoose;Document;mongoose;Model;Member[bulkSave].Argument[0].ArrayElement", //
         "mongoose;Document;mongoose;SchemaType;Member[cast].Argument[1]", //
         "mongoose;Document;mongoose;TVirtualPathFN;Argument[2]", //
@@ -501,31 +530,49 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;Error.CastErrorStatic;mongoose;;Member[Error].Member[CastError]", //
         "mongoose;Error.SyncIndexesErrorStatic;mongoose;;Member[Error].Member[SyncIndexesError]", //
         "mongoose;Error.VersionErrorStatic;mongoose;;Member[Error].Member[VersionError]", //
-        "mongoose;HydratedDocument;mongoose;HydratedDocument;ArrayElement", //
         "mongoose;HydratedDocument;mongoose;Model;Instance", //
         "mongoose;HydratedDocument;mongoose;Model;Member[$where,count,countDocuments,deleteMany,deleteOne,distinct,estimatedDocumentCount,find,geoSearch,remove,replaceOne,update,updateMany,updateOne,where].ReturnValue.TypeVar[mongoose.QueryWithHelpers.1]", //
         "mongoose;HydratedDocument;mongoose;Model;Member[$where,find,geoSearch,where].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0].ArrayElement", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[create,insertMany].WithArity[2].Argument[1].TypeVar[mongoose.Callback.0].ArrayElement", //
         "mongoose;HydratedDocument;mongoose;Model;Member[create].WithArity[0..,1,2].ReturnValue.Awaited.ArrayElement", //
         "mongoose;HydratedDocument;mongoose;Model;Member[create].WithArity[1].ReturnValue.Awaited", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[create].WithArity[2].Argument[1].TypeVar[mongoose.Callback.0]", //
         "mongoose;HydratedDocument;mongoose;Model;Member[exists].WithArity[1,2].ReturnValue.TypeVar[mongoose.QueryWithHelpers.1]", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[find,insertMany].WithArity[3].Argument[2].TypeVar[mongoose.Callback.0].ArrayElement", //
         "mongoose;HydratedDocument;mongoose;Model;Member[findById,findByIdAndDelete,findByIdAndRemove,findOne,findOneAndDelete,findOneAndRemove].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0,mongoose.QueryWithHelpers.1]", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[findById,findOne].Argument[3].TypeVar[mongoose.Callback.0]", //
         "mongoose;HydratedDocument;mongoose;Model;Member[findByIdAndDelete,findByIdAndRemove,findOneAndDelete,findOneAndRemove].Argument[2].Argument[1]", //
         "mongoose;HydratedDocument;mongoose;Model;Member[findByIdAndUpdate,findOneAndReplace,findOneAndUpdate].WithArity[0,1,2,3,4].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0,mongoose.QueryWithHelpers.1]", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[findByIdAndUpdate,findOneAndReplace,findOneAndUpdate].WithArity[3,4].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0].TypeVar[mongoose.ModifyResult.0]", //
         "mongoose;HydratedDocument;mongoose;Model;Member[findByIdAndUpdate].WithArity[0,1,2,4].Argument[3].Argument[1]", //
         "mongoose;HydratedDocument;mongoose;Model;Member[findByIdAndUpdate].WithArity[3].Argument[2,3].Argument[1]", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[findById].WithArity[1,2,3].Argument[2].TypeVar[mongoose.Callback.0]", //
         "mongoose;HydratedDocument;mongoose;Model;Member[findOneAndReplace].WithArity[0,1,2,3,4].Argument[3].Argument[1]", //
         "mongoose;HydratedDocument;mongoose;Model;Member[findOneAndUpdate].WithArity[3,4].Argument[3].Argument[1]", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[findOne].WithArity[0,1,2].Argument[1,2].TypeVar[mongoose.Callback.0]", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[findOne].WithArity[3].Argument[2].TypeVar[mongoose.Callback.0]", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[find].Argument[3].TypeVar[mongoose.Callback.0].ArrayElement", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[find].WithArity[0].Argument[0].TypeVar[mongoose.Callback.0].ArrayElement", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[find].WithArity[1].Argument[0,1,2].TypeVar[mongoose.Callback.0].ArrayElement", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[find].WithArity[2].Argument[1,2].TypeVar[mongoose.Callback.0].ArrayElement", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[geoSearch].Argument[2].TypeVar[mongoose.Callback.0].ArrayElement", //
         "mongoose;HydratedDocument;mongoose;Model;Member[hydrate].ReturnValue", //
         "mongoose;HydratedDocument;mongoose;Model;Member[init].ReturnValue.Awaited", //
         "mongoose;HydratedDocument;mongoose;Model;Member[insertMany].WithArity[1,2].ReturnValue.Awaited.ArrayElement", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[populate].WithArity[2,3].Argument[2].TypeVar[mongoose.Callback.0]", //
+        "mongoose;HydratedDocument;mongoose;Model;Member[populate].WithArity[2,3].Argument[2].TypeVar[mongoose.Callback.0].ArrayElement", //
         "mongoose;HydratedDocument;mongoose;Model;Member[populate].WithArity[2,3].ReturnValue.Awaited", //
         "mongoose;HydratedDocument;mongoose;Model;Member[populate].WithArity[2,3].ReturnValue.Awaited.ArrayElement", //
+        "mongoose;HydratedDocument;mongoose;Schema;Member[post].Argument[2].TypeVar[mongoose.ErrorHandlingMiddlewareFunction.0,mongoose.PostMiddlewareFunction.0,mongoose.PostMiddlewareFunction.1]", //
+        "mongoose;HydratedDocument;mongoose;Schema;Member[post].WithArity[2].Argument[1].TypeVar[mongoose.ErrorHandlingMiddlewareFunction.0,mongoose.PostMiddlewareFunction.0,mongoose.PostMiddlewareFunction.1]", //
+        "mongoose;HydratedDocument;mongoose;Schema;Member[pre].Argument[2].TypeVar[mongoose.PreMiddlewareFunction.0,mongoose.PreSaveMiddlewareFunction.0]", //
+        "mongoose;HydratedDocument;mongoose;Schema;Member[pre].WithArity[2].Argument[1].TypeVar[mongoose.PreMiddlewareFunction.0]", //
+        "mongoose;HydratedDocument;mongoose;Schema;Member[pre].WithArity[2].WithStringArgument[0=save].Argument[1].TypeVar[mongoose.PreSaveMiddlewareFunction.0]", //
         "mongoose;HydratedDocument;mongoose;Schema;Member[virtual,virtualpath].ReturnValue.TypeVar[mongoose.VirtualType.0]", //
         "mongoose;HydratedDocument;mongoose;Schema;Member[virtual].Argument[1].TypeVar[mongoose.VirtualTypeOptions.0]", //
         "mongoose;HydratedDocument;mongoose;TVirtualPathFN;Argument[1].TypeVar[mongoose.VirtualType.0]", //
         "mongoose;HydratedDocument;mongoose;VirtualPathFunctions;Member[options].TypeVar[mongoose.VirtualTypeOptions.0]", //
         "mongoose;InsertManyOptions;mongoose;Model;Member[insertMany].WithArity[2,3].Argument[1]", //
-        "mongoose;MixedSchemaTypeOptions;mongoose;MixedSchemaTypeOptions;TypeVar[mongoose.SchemaTypeOptions.-1]", //
         "mongoose;MixedSchemaTypeOptions;mongoose;SchemaDefinitionProperty;", //
         "mongoose;Model;mongoose;;Member[Model]", //
         "mongoose;Model;mongoose;;Member[model].ReturnValue", //
@@ -549,10 +596,16 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;Model;mongoose;SchemaTypeOptions;Member[ref]", //
         "mongoose;Model;mongoose;SchemaTypeOptions;Member[ref].ReturnValue", //
         "mongoose;Models;mongoose;;Member[models]", //
+        "mongoose;MongooseQueryOptions;mongoose;Query;Member[_mongooseOptions]", //
+        "mongoose;MongooseQueryOptions;mongoose;Query;Member[mongooseOptions].Argument[0]", //
+        "mongoose;MongooseQueryOptions;mongoose;Query;Member[mongooseOptions].ReturnValue", //
         "mongoose;NumberSchemaDefinition;mongoose;SchemaDefinitionWithBuiltInClass;", //
         "mongoose;NumberSchemaDefinition;mongoose;SchemaTypeOptions;Member[type]", //
+        "mongoose;NumberSchemaDefinition;mongoose;SchemaTypeOptions;Member[type].TypeVar[mongoose.AnyArray.0]", //
         "mongoose;ObjectId;mongoose;AcceptsDiscriminator;Member[discriminator].Argument[2]", //
+        "mongoose;ObjectId;mongoose;SchemaTypeOptions;Member[type].TypeVar[mongoose.AnyArray.0].TypeVar[mongoose.SchemaTypeOptions.0]", //
         "mongoose;ObjectIdSchemaDefinition;mongoose;SchemaTypeOptions;Member[type]", //
+        "mongoose;ObjectIdSchemaDefinition;mongoose;SchemaTypeOptions;Member[type].TypeVar[mongoose.AnyArray.0]", //
         "mongoose;PluginFunction;mongoose;Schema;Member[plugin].Argument[0]", //
         "mongoose;PopulateOption;mongoose;InsertManyOptions;", //
         "mongoose;PopulateOption;mongoose;QueryOptions;", //
@@ -568,11 +621,18 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;PopulateOptions;mongoose;Query;Member[populate].WithArity[1].Argument[0]", //
         "mongoose;PopulateOptions;mongoose;Query;Member[populate].WithArity[1].Argument[0].ArrayElement", //
         "mongoose;Query;mongoose;Document;Member[replaceOne,update,updateOne].ReturnValue", //
+        "mongoose;Query;mongoose;HydratedDocument;TypeVar[mongoose.Document.2,mongoose.Require_id.0]", //
         "mongoose;Query;mongoose;Query;Member[all,allowDiskUse,and,batchSize,box,circle,clone,collation,comment,elemMatch,equals,exists,explain,geometry,gt,gte,hint,in,intersects,j,limit,lt,lte,maxDistance,maxScan,maxTimeMS,merge,mod,ne,near,nin,nor,or,polygon,read,readConcern,regex,remove,select,session,set,setOptions,size,skip,slice,snapshot,sort,tailable,w,where,within,wtimeout].ReturnValue", //
         "mongoose;Query;mongoose;Query;Member[error].WithArity[1].ReturnValue", //
         "mongoose;Query;mongoose;Query;Member[merge].Argument[0]", //
         "mongoose;Query;mongoose;QueryStatic;Instance", //
         "mongoose;Query;mongoose;QueryWithHelpers;", //
+        "mongoose;Query;mongoose;Schema;Member[post].Argument[2].TypeVar[mongoose.ErrorHandlingMiddlewareFunction.0,mongoose.PostMiddlewareFunction.0]", //
+        "mongoose;Query;mongoose;Schema;Member[post].Argument[2].TypeVar[mongoose.PostMiddlewareFunction.1].TypeVar[mongoose.QueryResultType.0]", //
+        "mongoose;Query;mongoose;Schema;Member[post].WithArity[2].Argument[1].TypeVar[mongoose.ErrorHandlingMiddlewareFunction.0,mongoose.PostMiddlewareFunction.0]", //
+        "mongoose;Query;mongoose;Schema;Member[post].WithArity[2].Argument[1].TypeVar[mongoose.PostMiddlewareFunction.1].TypeVar[mongoose.QueryResultType.0]", //
+        "mongoose;Query;mongoose;Schema;Member[pre].Argument[2].TypeVar[mongoose.PreMiddlewareFunction.0]", //
+        "mongoose;Query;mongoose;Schema;Member[pre].WithArity[2].Argument[1].TypeVar[mongoose.PreMiddlewareFunction.0]", //
         "mongoose;QueryOptions;mongoose;Document;Member[delete,deleteOne,remove].WithArity[0,1,2].Argument[0]", //
         "mongoose;QueryOptions;mongoose;Document;Member[replaceOne,update,updateOne].Argument[1]", //
         "mongoose;QueryOptions;mongoose;Model;Member[countDocuments,findByIdAndDelete,findByIdAndRemove,findOneAndDelete,findOneAndRemove].Argument[1]", //
@@ -584,6 +644,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;QueryOptions;mongoose;PopulateOptions;Member[options]", //
         "mongoose;QueryOptions;mongoose;Query;Member[countDocuments,findByIdAndDelete,findOneAndDelete,findOneAndRemove].Argument[1]", //
         "mongoose;QueryOptions;mongoose;Query;Member[cursor,estimatedDocumentCount,setOptions].Argument[0]", //
+        "mongoose;QueryOptions;mongoose;Query;Member[cursor].ReturnValue.TypeVar[mongoose.Cursor.1]", //
         "mongoose;QueryOptions;mongoose;Query;Member[deleteMany,deleteOne].WithArity[0,1,2,3].Argument[1]", //
         "mongoose;QueryOptions;mongoose;Query;Member[findByIdAndUpdate,findOne,findOneAndUpdate].WithArity[0,1,2,3,4].Argument[2]", //
         "mongoose;QueryOptions;mongoose;Query;Member[find].WithArity[1,2,3,4].Argument[2]", //
@@ -599,70 +660,62 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;QueryWithHelpers;mongoose;Query;Member[findByIdAndUpdate,findOneAndUpdate].WithArity[0,1,2,3,4].ReturnValue", //
         "mongoose;QueryWithHelpers;mongoose;Query;Member[toConstructor].ReturnValue.Instance", //
         "mongoose;Schema.Types.Array;mongoose;Schema.Types.Array;Member[enum].ReturnValue", //
-        "mongoose;Schema.Types.Array;mongoose;Schema.Types.Array;TypeVar[mongoose.AcceptsDiscriminator.-1,mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.Array;mongoose;Schema.Types.ArrayStatic;Instance", //
         "mongoose;Schema.Types.ArrayStatic;mongoose;;Member[Schema].Member[Types].Member[Array]", //
-        "mongoose;Schema.Types.Boolean;mongoose;Schema.Types.Boolean;TypeVar[mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.Boolean;mongoose;Schema.Types.BooleanStatic;Instance", //
         "mongoose;Schema.Types.BooleanStatic;mongoose;;Member[Schema].Member[Types].Member[Boolean]", //
         "mongoose;Schema.Types.BooleanStatic;mongoose;BooleanSchemaDefinition;", //
         "mongoose;Schema.Types.Buffer;mongoose;Schema.Types.Buffer;Member[subtype].ReturnValue", //
-        "mongoose;Schema.Types.Buffer;mongoose;Schema.Types.Buffer;TypeVar[mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.Buffer;mongoose;Schema.Types.BufferStatic;Instance", //
         "mongoose;Schema.Types.BufferStatic;mongoose;;Member[Schema].Member[Types].Member[Buffer]", //
         "mongoose;Schema.Types.BufferStatic;mongoose;RefType;", //
         "mongoose;Schema.Types.Date;mongoose;Date;", //
         "mongoose;Schema.Types.Date;mongoose;Schema.Types.Date;Member[expires,max,min].ReturnValue", //
-        "mongoose;Schema.Types.Date;mongoose;Schema.Types.Date;TypeVar[mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.Date;mongoose;Schema.Types.DateStatic;Instance", //
         "mongoose;Schema.Types.DateStatic;mongoose;;Member[Schema].Member[Types].Member[Date]", //
         "mongoose;Schema.Types.DateStatic;mongoose;DateSchemaDefinition;", //
         "mongoose;Schema.Types.Decimal128;mongoose;Decimal128;", //
-        "mongoose;Schema.Types.Decimal128;mongoose;Schema.Types.Decimal128;TypeVar[mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.Decimal128;mongoose;Schema.Types.Decimal128Static;Instance", //
         "mongoose;Schema.Types.Decimal128Static;mongoose;;Member[Schema].Member[Types].Member[Decimal128]", //
-        "mongoose;Schema.Types.DocumentArray;mongoose;Schema.Types.DocumentArray;TypeVar[mongoose.AcceptsDiscriminator.-1,mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.DocumentArray;mongoose;Schema.Types.DocumentArrayStatic;Instance", //
         "mongoose;Schema.Types.DocumentArrayStatic;mongoose;;Member[Schema].Member[Types].Member[DocumentArray]", //
-        "mongoose;Schema.Types.Map;mongoose;Schema.Types.Map;TypeVar[mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.Map;mongoose;Schema.Types.MapStatic;Instance", //
         "mongoose;Schema.Types.MapStatic;mongoose;;Member[Schema].Member[Types].Member[Map]", //
         "mongoose;Schema.Types.Mixed;mongoose;Mixed;", //
-        "mongoose;Schema.Types.Mixed;mongoose;Schema.Types.Mixed;TypeVar[mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.Mixed;mongoose;Schema.Types.MixedStatic;Instance", //
         "mongoose;Schema.Types.MixedStatic;mongoose;;Member[Schema].Member[Types].Member[Mixed]", //
         "mongoose;Schema.Types.MixedStatic;mongoose;MixedSchemaTypeOptions;Member[type]", //
         "mongoose;Schema.Types.MixedStatic;mongoose;SchemaDefinitionProperty;", //
         "mongoose;Schema.Types.Number;mongoose;Number;", //
         "mongoose;Schema.Types.Number;mongoose;Schema.Types.Number;Member[enum,max,min].ReturnValue", //
-        "mongoose;Schema.Types.Number;mongoose;Schema.Types.Number;TypeVar[mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.Number;mongoose;Schema.Types.NumberStatic;Instance", //
         "mongoose;Schema.Types.NumberStatic;mongoose;;Member[Schema].Member[Types].Member[Number]", //
         "mongoose;Schema.Types.NumberStatic;mongoose;NumberSchemaDefinition;", //
         "mongoose;Schema.Types.NumberStatic;mongoose;RefType;", //
         "mongoose;Schema.Types.ObjectId;mongoose;ObjectId;", //
         "mongoose;Schema.Types.ObjectId;mongoose;Schema.Types.ObjectId;Member[auto].ReturnValue", //
-        "mongoose;Schema.Types.ObjectId;mongoose;Schema.Types.ObjectId;TypeVar[mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.ObjectId;mongoose;Schema.Types.ObjectIdStatic;Instance", //
         "mongoose;Schema.Types.ObjectIdStatic;mongoose;;Member[Schema].Member[Types].Member[ObjectId]", //
         "mongoose;Schema.Types.ObjectIdStatic;mongoose;ObjectIdSchemaDefinition;", //
         "mongoose;Schema.Types.ObjectIdStatic;mongoose;RefType;", //
         "mongoose;Schema.Types.String;mongoose;Schema.Types.String;Member[enum,lowercase,match,maxlength,minlength,trim,uppercase].ReturnValue", //
-        "mongoose;Schema.Types.String;mongoose;Schema.Types.String;TypeVar[mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.String;mongoose;Schema.Types.StringStatic;Instance", //
         "mongoose;Schema.Types.StringStatic;mongoose;;Member[Schema].Member[Types].Member[String]", //
         "mongoose;Schema.Types.StringStatic;mongoose;RefType;", //
         "mongoose;Schema.Types.StringStatic;mongoose;StringSchemaDefinition;", //
-        "mongoose;Schema.Types.Subdocument;mongoose;Schema.Types.Subdocument;TypeVar[mongoose.AcceptsDiscriminator.-1,mongoose.SchemaType.-1]", //
         "mongoose;Schema.Types.Subdocument;mongoose;Schema.Types.SubdocumentStatic;Instance", //
         "mongoose;Schema.Types.SubdocumentStatic;mongoose;;Member[Schema].Member[Types].Member[Subdocument]", //
         "mongoose;Schema.Types.SubdocumentStatic;mongoose;Schema.Types.DocumentArray;Member[caster]", //
         "mongoose;Schema;mongoose;;Member[model].Argument[1]", //
-        "mongoose;Schema;mongoose;;Member[model].ReturnValue.TypeVar[mongoose.Model.4]", //
+        "mongoose;Schema;mongoose;;Member[model].ReturnValue.TypeVar[mongoose.Model.0].TypeVar[mongoose.InferSchemaType.0]", //
+        "mongoose;Schema;mongoose;;Member[model].ReturnValue.TypeVar[mongoose.Model.1,mongoose.Model.2].TypeVar[mongoose.ObtainSchemaGeneric.0]", //
+        "mongoose;Schema;mongoose;;Member[model].ReturnValue.TypeVar[mongoose.Model.4,mongoose.ObtainSchemaGeneric.0]", //
         "mongoose;Schema;mongoose;;Member[plugin].Argument[0].Argument[0]", //
         "mongoose;Schema;mongoose;AcceptsDiscriminator;Member[discriminator].Argument[1]", //
         "mongoose;Schema;mongoose;Connection;Member[model].WithArity[1,2,3,4].Argument[1]", //
-        "mongoose;Schema;mongoose;Connection;Member[model].WithArity[1,2,3,4].ReturnValue.TypeVar[mongoose.Model.4]", //
+        "mongoose;Schema;mongoose;Connection;Member[model].WithArity[1,2,3,4].ReturnValue.TypeVar[mongoose.Model.0].TypeVar[mongoose.InferSchemaType.0]", //
+        "mongoose;Schema;mongoose;Connection;Member[model].WithArity[1,2,3,4].ReturnValue.TypeVar[mongoose.Model.1,mongoose.Model.2].TypeVar[mongoose.ObtainSchemaGeneric.0]", //
+        "mongoose;Schema;mongoose;Connection;Member[model].WithArity[1,2,3,4].ReturnValue.TypeVar[mongoose.Model.4,mongoose.ObtainSchemaGeneric.0]", //
         "mongoose;Schema;mongoose;Connection;Member[plugin].Argument[0].Argument[0]", //
         "mongoose;Schema;mongoose;DiscriminatorSchema;", //
         "mongoose;Schema;mongoose;Document;Member[schema]", //
@@ -684,15 +737,19 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;Schema;mongoose;SchemaStatic;Instance", //
         "mongoose;Schema;mongoose;SchemaType;Member[schema]", //
         "mongoose;Schema;mongoose;SchemaTypeOptions;Member[type]", //
+        "mongoose;Schema;mongoose;SchemaTypeOptions;Member[type].TypeVar[mongoose.AnyArray.0]", //
         "mongoose;SchemaDefinition;mongoose;Schema;Member[add].Argument[0]", //
         "mongoose;SchemaDefinition;mongoose;Schema;Member[obj]", //
         "mongoose;SchemaDefinition;mongoose;SchemaDefinitionProperty;", //
         "mongoose;SchemaDefinition;mongoose;SchemaDefinitionProperty;ArrayElement", //
         "mongoose;SchemaDefinition;mongoose;SchemaStatic;Argument[0]", //
         "mongoose;SchemaDefinition;mongoose;SchemaTypeOptions;Member[type]", //
+        "mongoose;SchemaDefinition;mongoose;SchemaTypeOptions;Member[type].TypeVar[mongoose.AnyArray.0]", //
         "mongoose;SchemaDefinitionProperty;mongoose;SchemaDefinition;AnyMember", //
         "mongoose;SchemaDefinitionProperty;mongoose;SchemaTypeOptions;Member[of]", //
         "mongoose;SchemaDefinitionWithBuiltInClass;mongoose;SchemaDefinitionProperty;", //
+        "mongoose;SchemaOptions;mongoose;Schema;Member[pick].Argument[1]", //
+        "mongoose;SchemaOptions;mongoose;SchemaStatic;Argument[1]", //
         "mongoose;SchemaStatic;mongoose;;Member[Schema]", //
         "mongoose;SchemaType;mongoose;Error.CastErrorStatic;Argument[4]", //
         "mongoose;SchemaType;mongoose;Error.SyncIndexesErrorStatic;Argument[4]", //
@@ -720,6 +777,7 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;SchemaTypeOptions;mongoose;SchemaType;Member[OptionsConstructor]", //
         "mongoose;SchemaTypeOptions;mongoose;SchemaTypeOptions;Member[get].Argument[1]", //
         "mongoose;SchemaTypeOptions;mongoose;SchemaTypeOptions;Member[set].Argument[2]", //
+        "mongoose;SchemaTypeOptions;mongoose;SchemaTypeOptions;Member[type].TypeVar[mongoose.AnyArray.0]", //
         "mongoose;SchemaTypeOptions;mongoose;SchemaTypeOptionsStatic;Instance", //
         "mongoose;SchemaTypeOptionsStatic;mongoose;;Member[SchemaTypeOptions]", //
         "mongoose;SchemaTypeStatic;mongoose;;Member[SchemaType]", //
@@ -727,16 +785,17 @@ private class Types extends ModelInput::TypeModelCsv {
         "mongoose;SchemaTypeStatic;mongoose;SchemaTypeOptions;Member[type]", //
         "mongoose;StringSchemaDefinition;mongoose;SchemaDefinitionWithBuiltInClass;", //
         "mongoose;StringSchemaDefinition;mongoose;SchemaTypeOptions;Member[type]", //
+        "mongoose;StringSchemaDefinition;mongoose;SchemaTypeOptions;Member[type].TypeVar[mongoose.AnyArray.0]", //
         "mongoose;TVirtualPathFN;mongoose;VirtualPathFunctions;Member[get,set]", //
-        "mongoose;Types.ArraySubdocument;mongoose;Types.ArraySubdocument;TypeVar[mongoose.Types.Subdocument.-1]", //
         "mongoose;Types.ArraySubdocument;mongoose;Types.ArraySubdocumentStatic;Instance", //
         "mongoose;Types.ArraySubdocumentStatic;mongoose;;Member[Types].Member[ArraySubdocument]", //
+        "mongoose;Types.DocumentArray;mongoose/inferschematype;ResolvePathType;TypeVar[mongoose.IfEquals.3]", //
         "mongoose;Types.DocumentArray;mongoose;Types.ArraySubdocument;Member[parentArray].ReturnValue", //
         "mongoose;Types.DocumentArray;mongoose;Types.DocumentArrayStatic;Instance", //
         "mongoose;Types.DocumentArrayStatic;mongoose;;Member[Types].Member[DocumentArray]", //
         "mongoose;Types.Subdocument;mongoose;Types.ArraySubdocument;", //
         "mongoose;Types.Subdocument;mongoose;Types.DocumentArray;Member[create,id].ReturnValue", //
-        "mongoose;Types.Subdocument;mongoose;Types.Subdocument;TypeVar[mongoose.Document.-1]", //
+        "mongoose;Types.Subdocument;mongoose;Types.DocumentArray;TypeVar[mongoose.Types.Array.0]", //
         "mongoose;Types.Subdocument;mongoose;Types.SubdocumentStatic;Instance", //
         "mongoose;Types.SubdocumentStatic;mongoose;;Member[Types].Member[Subdocument]", //
         "mongoose;VirtualType;mongoose;Schema;Member[virtual,virtualpath].ReturnValue", //
@@ -755,25 +814,46 @@ private class Summaries extends ModelInput::SummaryModelCsv {
   override predicate row(string row) {
     row =
       [
-        "mongodb;BulkOperationBase;Member[addToOperationsList,raw];Argument[this];ReturnValue;type", //
-        "mongodb;FindCursor;Member[addQueryModifier,allowDiskUse,collation,comment,filter,hint,limit,max,maxAwaitTimeMS,maxTimeMS,min,returnKey,showRecordId,skip,sort];Argument[this];ReturnValue;type", //
-        "mongodb;FindOperators;Member[arrayFilters,collation,upsert];Argument[this];ReturnValue;type", //
-        "mongodb;GridFSBucketWriteStream;Member[end];Argument[this];ReturnValue;type", //
-        "mongodb;OrderedBulkOperation;Member[addToOperationsList];Argument[this];ReturnValue;type", //
-        "mongodb;UnorderedBulkOperation;Member[addToOperationsList];Argument[this];ReturnValue;type", //
-        "mongoose;Aggregate;Member[addCursorFlag,addFields,allowDiskUse,append,collation,count,facet,graphLookup,group,hint,limit,lookup,match,model,near,option,project,read,readConcern,redact,replaceRoot,sample,search,session,skip,sort,sortByCount,unionWith,unwind];Argument[this];ReturnValue;type", //
-        "mongoose;Connection;Member[deleteModel,setClient];Argument[this];ReturnValue;type", //
-        "mongoose;Document;Member[$inc,$set,depopulate,increment,init,overwrite,set];Argument[this];ReturnValue;type", //
-        "mongoose;Query;Member[all,allowDiskUse,and,batchSize,box,circle,clone,collation,comment,elemMatch,equals,error,exists,explain,geometry,gt,gte,hint,in,intersects,j,limit,lt,lte,maxDistance,maxScan,maxTimeMS,merge,mod,ne,near,nin,nor,or,polygon,read,readConcern,regex,select,session,set,setOptions,size,skip,slice,snapshot,sort,tailable,w,where,within,wtimeout];Argument[this];ReturnValue;type", //
-        "mongoose;Schema.Types.Array;Member[enum];Argument[this];ReturnValue;type", //
-        "mongoose;Schema.Types.Buffer;Member[subtype];Argument[this];ReturnValue;type", //
-        "mongoose;Schema.Types.Date;Member[expires,max,min];Argument[this];ReturnValue;type", //
-        "mongoose;Schema.Types.Number;Member[enum,max,min];Argument[this];ReturnValue;type", //
-        "mongoose;Schema.Types.ObjectId;Member[auto];Argument[this];ReturnValue;type", //
-        "mongoose;Schema.Types.String;Member[enum,lowercase,match,maxlength,minlength,trim,uppercase];Argument[this];ReturnValue;type", //
-        "mongoose;Schema;Member[add,clearIndexes,eachPath,index,loadClass,method,path,plugin,post,pre,queue,remove,set,static];Argument[this];ReturnValue;type", //
-        "mongoose;SchemaType;Member[get,immutable,index,ref,required,select,set,sparse,text,transform,unique,validate];Argument[this];ReturnValue;type", //
-        "mongoose;VirtualType;Member[get,set];Argument[this];ReturnValue;type", //
+        "mongodb;AbstractCursor;;;Member[addCursorFlag,batchSize,maxTimeMS,withReadConcern,withReadPreference].ReturnValue;type", //
+        "mongodb;BulkOperationBase;;;Member[addToOperationsList,raw].ReturnValue;type", //
+        "mongodb;FindCursor;;;Member[addQueryModifier,allowDiskUse,collation,comment,filter,hint,limit,max,maxAwaitTimeMS,maxTimeMS,min,returnKey,showRecordId,skip,sort].ReturnValue;type", //
+        "mongodb;FindOperators;;;Member[arrayFilters,collation,upsert].ReturnValue;type", //
+        "mongodb;GridFSBucketWriteStream;;;Member[end].ReturnValue;type", //
+        "mongodb;MongoClient;;;Member[connect].Argument[0].TypeVar[mongodb.Callback.0];type", //
+        "mongodb;MongoClient;;;Member[connect].WithArity[0].ReturnValue.Awaited;type", //
+        "mongodb;OrderedBulkOperation;;;Member[addToOperationsList].ReturnValue;type", //
+        "mongodb;TypedEventEmitter;;;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue;type", //
+        "mongodb;UnorderedBulkOperation;;;Member[addToOperationsList].ReturnValue;type", //
+        "mongoose;Aggregate;;;Member[addCursorFlag,addFields,allowDiskUse,append,collation,count,facet,graphLookup,group,hint,limit,lookup,match,model,near,option,project,read,readConcern,redact,replaceRoot,sample,search,session,skip,sort,sortByCount,unionWith,unwind].ReturnValue;type", //
+        "mongoose;Connection;;;Member[asPromise].ReturnValue.Awaited;type", //
+        "mongoose;Connection;;;Member[deleteModel,setClient].ReturnValue;type", //
+        "mongoose;Cursor;;;Member[addCursorFlag].ReturnValue;type", //
+        "mongoose;Document;;;Member[$inc,$set,depopulate,increment,init,overwrite,set].ReturnValue;type", //
+        "mongoose;Document;;;Member[delete,deleteOne].WithArity[0,1].ReturnValue.TypeVar[mongoose.QueryWithHelpers.1];type", //
+        "mongoose;Document;;;Member[getChanges].ReturnValue.TypeVar[mongoose.UpdateQuery.0];type", //
+        "mongoose;Document;;;Member[init].Argument[2].TypeVar[mongoose.Callback.0];type", //
+        "mongoose;Document;;;Member[populate].Argument[1,5].TypeVar[mongoose.Callback.0].TypeVar[mongoose.MergeType.0];type", //
+        "mongoose;Document;;;Member[populate].WithArity[1,2,3,4,5].ReturnValue.Awaited.TypeVar[mongoose.MergeType.0];type", //
+        "mongoose;Document;;;Member[remove,save].WithArity[0,1].ReturnValue.Awaited;type", //
+        "mongoose;Document;;;Member[replaceOne,update,updateOne].ReturnValue.TypeVar[mongoose.Query.1];type", //
+        "mongoose;Document;;;Member[save].Argument[1].TypeVar[mongoose.Callback.0];type", //
+        "mongoose;Document;;;Member[save].WithArity[1].Argument[0].TypeVar[mongoose.Callback.0];type", //
+        "mongoose;Document;;;Member[update,updateOne].Argument[0].TypeVar[mongoose.UpdateQuery.0];type", //
+        "mongoose;Query;;;Member[all,allowDiskUse,and,batchSize,box,circle,clone,collation,comment,elemMatch,equals,exists,explain,geometry,gt,gte,hint,in,intersects,j,limit,lt,lte,maxDistance,maxScan,maxTimeMS,merge,mod,ne,near,nin,nor,or,polygon,read,readConcern,regex,select,session,set,setOptions,size,skip,slice,snapshot,sort,tailable,w,where,within,wtimeout].ReturnValue;type", //
+        "mongoose;Query;;;Member[error].WithArity[1].ReturnValue;type", //
+        "mongoose;Schema.Types.Array;;;Member[enum].ReturnValue;type", //
+        "mongoose;Schema.Types.Buffer;;;Member[subtype].ReturnValue;type", //
+        "mongoose;Schema.Types.Date;;;Member[expires,max,min].ReturnValue;type", //
+        "mongoose;Schema.Types.Number;;;Member[enum,max,min].ReturnValue;type", //
+        "mongoose;Schema.Types.ObjectId;;;Member[auto].ReturnValue;type", //
+        "mongoose;Schema.Types.String;;;Member[enum,lowercase,match,maxlength,minlength,trim,uppercase].ReturnValue;type", //
+        "mongoose;Schema;;;Member[add,clearIndexes,clone,eachPath,index,loadClass,method,path,pick,plugin,post,pre,queue,remove,set,static].ReturnValue;type", //
+        "mongoose;SchemaType;;;Member[get,immutable,index,ref,required,select,set,sparse,text,transform,unique,validate].ReturnValue;type", //
+        "mongoose;SchemaTypeOptions;;;Member[get].Argument[1];type", //
+        "mongoose;SchemaTypeOptions;;;Member[set].Argument[2];type", //
+        "mongoose;SessionOperation;;;Member[session].ReturnValue;type", //
+        "mongoose;Types.Array;;;Member[pull,remove,set].ReturnValue;type", //
+        "mongoose;VirtualType;;;Member[get,set].ReturnValue;type", //
       ]
   }
 }
@@ -782,35 +862,9 @@ private class TypeVariables extends ModelInput::TypeVariableModelCsv {
   override predicate row(string row) {
     row =
       [
-        "mongodb.AbstractCursor.-1;Member[addCursorFlag,batchSize,maxTimeMS,withReadConcern,withReadPreference].ReturnValue", //
-        "mongodb.AbstractCursor.-1;TypeVar[mongodb.TypedEventEmitter.-1]", //
-        "mongodb.BulkOperationBase.-1;Member[addToOperationsList,raw].ReturnValue", //
         "mongodb.Callback.0;Argument[1]", //
-        "mongodb.ChangeStream.-1;TypeVar[mongodb.TypedEventEmitter.-1]", //
-        "mongodb.ClientSession.-1;TypeVar[mongodb.TypedEventEmitter.-1]", //
-        "mongodb.FindCursor.-1;Member[addQueryModifier,allowDiskUse,collation,comment,filter,hint,limit,max,maxAwaitTimeMS,maxTimeMS,min,returnKey,showRecordId,skip,sort].ReturnValue", //
-        "mongodb.FindCursor.-1;TypeVar[mongodb.AbstractCursor.-1]", //
-        "mongodb.FindOperators.-1;Member[arrayFilters,collation,upsert].ReturnValue", //
-        "mongodb.GridFSBucket.-1;TypeVar[mongodb.TypedEventEmitter.-1]", //
-        "mongodb.GridFSBucketWriteStream.-1;Member[end].ReturnValue", //
-        "mongodb.GridFSBucketWriteStream.-1;TypeVar[global.NodeJS.WritableStream.-1,stream.Writable.-1]", //
-        "mongodb.ListCollectionsCursor.-1;TypeVar[mongodb.AbstractCursor.-1]", //
-        "mongodb.ListIndexesCursor.-1;TypeVar[mongodb.AbstractCursor.-1]", //
-        "mongodb.MongoClient.-1;Member[connect].Argument[0].TypeVar[mongodb.Callback.0]", //
-        "mongodb.MongoClient.-1;Member[connect].WithArity[0].ReturnValue.Awaited", //
-        "mongodb.MongoClient.-1;TypeVar[mongodb.TypedEventEmitter.-1]", //
-        "mongodb.OrderedBulkOperation.-1;Member[addToOperationsList].ReturnValue", //
-        "mongodb.OrderedBulkOperation.-1;TypeVar[mongodb.BulkOperationBase.-1]", //
-        "mongodb.TypedEventEmitter.-1;Member[addListener,off,on,once,prependListener,prependOnceListener,removeAllListeners,removeListener,setMaxListeners].ReturnValue", //
-        "mongodb.TypedEventEmitter.-1;TypeVar[events..-1]", //
-        "mongodb.UnorderedBulkOperation.-1;Member[addToOperationsList].ReturnValue", //
-        "mongodb.UnorderedBulkOperation.-1;TypeVar[mongodb.BulkOperationBase.-1]", //
-        "mongoose.Aggregate.-1;Member[addCursorFlag,addFields,allowDiskUse,append,collation,count,facet,graphLookup,group,hint,limit,lookup,match,model,near,option,project,read,readConcern,redact,replaceRoot,sample,search,session,skip,sort,sortByCount,unionWith,unwind].ReturnValue", //
-        "mongoose.Aggregate.-1;TypeVar[mongoose.SessionOperation.-1]", //
+        "mongoose.AnyArray.0;ArrayElement", //
         "mongoose.Callback.0;Argument[1]", //
-        "mongoose.Connection.-1;Member[asPromise].ReturnValue.Awaited", //
-        "mongoose.Connection.-1;Member[deleteModel,setClient].ReturnValue", //
-        "mongoose.Connection.-1;TypeVar[events..-1,mongoose.SessionStarter.-1]", //
         "mongoose.Cursor.0;Member[eachAsync].WithArity[1,2,3].Argument[0].Argument[0]", //
         "mongoose.Cursor.0;Member[eachAsync].WithArity[2,3].Argument[0].Argument[0].ArrayElement", //
         "mongoose.Cursor.0;Member[map].Argument[0].Argument[0]", //
@@ -818,44 +872,114 @@ private class TypeVariables extends ModelInput::TypeVariableModelCsv {
         "mongoose.Cursor.0;Member[next].WithArity[0].ReturnValue.Awaited", //
         "mongoose.Cursor.1;Member[map].ReturnValue.TypeVar[mongoose.Cursor.1]", //
         "mongoose.Cursor.1;Member[options]", //
+        "mongoose.DefaultType.0;TypeVar[mongoose.ExtractMongooseArray.0]", //
         "mongoose.DiscriminatorSchema.1;TypeVar[mongoose.Schema.1]", //
         "mongoose.DiscriminatorSchema.1;TypeVar[mongoose.Schema.1].TypeVar[mongoose.DiscriminatorModel.1]", //
-        "mongoose.Document.-1;Member[$inc,$set,depopulate,increment,init,overwrite,set].ReturnValue", //
-        "mongoose.Document.-1;Member[delete,deleteOne].WithArity[0,1].ReturnValue.TypeVar[mongoose.QueryWithHelpers.1]", //
-        "mongoose.Document.-1;Member[getChanges].ReturnValue.TypeVar[mongoose.UpdateQuery.0]", //
-        "mongoose.Document.-1;Member[init].Argument[2].TypeVar[mongoose.Callback.0]", //
-        "mongoose.Document.-1;Member[populate].Argument[1,5].TypeVar[mongoose.Callback.0].TypeVar[mongoose.MergeType.0]", //
-        "mongoose.Document.-1;Member[populate].WithArity[1,2,3,4,5].ReturnValue.Awaited.TypeVar[mongoose.MergeType.0]", //
-        "mongoose.Document.-1;Member[remove,save].WithArity[0,1].ReturnValue.Awaited", //
-        "mongoose.Document.-1;Member[replaceOne,update,updateOne].ReturnValue.TypeVar[mongoose.Query.1]", //
-        "mongoose.Document.-1;Member[save].Argument[1].TypeVar[mongoose.Callback.0]", //
-        "mongoose.Document.-1;Member[save].WithArity[1].Argument[0].TypeVar[mongoose.Callback.0]", //
-        "mongoose.Document.-1;Member[update,updateOne].Argument[0].TypeVar[mongoose.UpdateQuery.0]", //
+        "mongoose.Document.0;Member[_id]", //
+        "mongoose.Document.0;Member[equals].Argument[0].TypeVar[mongoose.Document.0]", //
+        "mongoose.Document.2;Member[toJSON].WithArity[0,1].ReturnValue.TypeVar[mongoose.FlattenMaps.0].TypeVar[mongoose.LeanDocument.0]", //
+        "mongoose.Document.2;Member[toJSON].WithArity[1].ReturnValue.TypeVar[mongoose.LeanDocument.0]", //
+        "mongoose.Document.2;Member[toObject].ReturnValue.TypeVar[mongoose.Require_id.0].TypeVar[mongoose.LeanDocument.0]", //
+        "mongoose.ExtractMongooseArray.0;", //
+        "mongoose.ExtractMongooseArray.0;TypeVar[mongoose.AnyArray.0].TypeVar[mongoose.Unpacked.0]", //
         "mongoose.FilterQuery.0;TypeVar[mongoose._FilterQuery.0]", //
+        "mongoose.HydratedDocument.1;", //
         "mongoose.HydratedDocument.2;", //
         "mongoose.IfAny.1;", //
         "mongoose.IfAny.2;", //
         "mongoose.IfEquals.2;", //
-        "mongoose.LeanDocument.0;TypeVar[global.Omit.0].TypeVar[mongoose._LeanDocument.0]", //
+        "mongoose.IfEquals.3;", //
+        "mongoose.InferSchemaType.0;TypeVar[mongoose.ObtainSchemaGeneric.0]", //
         "mongoose.LeanDocumentOrArray.0;", //
         "mongoose.LeanDocumentOrArray.0;TypeVar[mongoose.LeanDocument.0]", //
         "mongoose.LeanDocumentOrArrayWithRawType.0;", //
-        "mongoose.MergeType.0;TypeVar[global.Omit.0]", //
-        "mongoose.MixedSchemaTypeOptions.-1;TypeVar[mongoose.SchemaTypeOptions.-1]", //
+        "mongoose.LeanDocumentOrArrayWithRawType.1;ArrayElement.TypeVar[mongoose.LeanDocument.0]", //
+        "mongoose.LeanDocumentOrArrayWithRawType.1;TypeVar[mongoose.LeanDocument.0]", //
+        "mongoose.LegacyAsyncValidateFn.0;Argument[0]", //
+        "mongoose.MapReduceOptions.0;Member[reduce].Argument[1].ArrayElement", //
+        "mongoose.MergeType.1;", //
+        "mongoose.Model.0;Argument[0]", //
+        "mongoose.Model.0;Member[$where,count,countDocuments,deleteMany,deleteOne,distinct,estimatedDocumentCount,find,findById,findByIdAndDelete,findByIdAndRemove,findOne,findOneAndDelete,findOneAndRemove,geoSearch,remove,replaceOne,update,updateMany,updateOne,where].ReturnValue.TypeVar[mongoose.QueryWithHelpers.3]", //
+        "mongoose.Model.0;Member[castObject].ReturnValue", //
+        "mongoose.Model.0;Member[countDocuments,findByIdAndDelete,findByIdAndRemove,findOneAndDelete,findOneAndRemove].Argument[1].TypeVar[mongoose.QueryOptions.0]", //
+        "mongoose.Model.0;Member[countDocuments].WithArity[1,2,3].Argument[0].TypeVar[mongoose.FilterQuery.0]", //
+        "mongoose.Model.0;Member[count].WithArity[1,2].Argument[0].TypeVar[mongoose.FilterQuery.0]", //
+        "mongoose.Model.0;Member[create].WithArity[0..,1,2].Argument[0].ArrayElement", //
+        "mongoose.Model.0;Member[create].WithArity[0..,1,2].Argument[0].ArrayElement.TypeVar[mongoose.AnyKeys.0]", //
+        "mongoose.Model.0;Member[create].WithArity[1,2].Argument[0]", //
+        "mongoose.Model.0;Member[create].WithArity[1,2].Argument[0].TypeVar[mongoose.AnyKeys.0]", //
+        "mongoose.Model.0;Member[deleteMany,deleteOne].WithArity[0,1,2,3].Argument[0].TypeVar[mongoose.FilterQuery.0]", //
+        "mongoose.Model.0;Member[deleteMany,deleteOne].WithArity[0,1,2,3].Argument[1].TypeVar[mongoose.QueryOptions.0]", //
+        "mongoose.Model.0;Member[distinct].Argument[1].TypeVar[mongoose.FilterQuery.0]", //
+        "mongoose.Model.0;Member[estimatedDocumentCount].Argument[0].TypeVar[mongoose.QueryOptions.0]", //
+        "mongoose.Model.0;Member[exists,findOne,findOneAndDelete,findOneAndRemove,findOneAndReplace,findOneAndUpdate,geoSearch,replaceOne,update,updateMany,updateOne].Argument[0].TypeVar[mongoose.FilterQuery.0]", //
+        "mongoose.Model.0;Member[exists].Argument[1].TypeVar[mongoose.Callback.0].Member[_id].TypeVar[mongoose.InferId.0]", //
+        "mongoose.Model.0;Member[exists].WithArity[1,2].ReturnValue.TypeVar[mongoose.QueryWithHelpers.3]", //
+        "mongoose.Model.0;Member[exists].WithArity[1].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0].Member[_id].TypeVar[mongoose.InferId.0]", //
+        "mongoose.Model.0;Member[find,findById].WithArity[1,2,3,4].Argument[2].TypeVar[mongoose.QueryOptions.0]", //
+        "mongoose.Model.0;Member[findByIdAndUpdate,findOne,findOneAndReplace,findOneAndUpdate].WithArity[0,1,2,3,4].Argument[2].TypeVar[mongoose.QueryOptions.0]", //
+        "mongoose.Model.0;Member[findByIdAndUpdate,findOneAndReplace,findOneAndUpdate].WithArity[0,1,2,3,4].ReturnValue.TypeVar[mongoose.QueryWithHelpers.3]", //
+        "mongoose.Model.0;Member[findByIdAndUpdate,findOneAndUpdate,update,updateMany,updateOne].Argument[1].TypeVar[mongoose.UpdateQuery.0]", //
+        "mongoose.Model.0;Member[findById].Argument[1].TypeVar[mongoose.ProjectionType.0]", //
+        "mongoose.Model.0;Member[findOneAndReplace,replaceOne].Argument[1]", //
+        "mongoose.Model.0;Member[findOneAndUpdate].WithArity[0,1,2,3,4].Argument[3].Argument[1]", //
+        "mongoose.Model.0;Member[findOne].WithArity[0,1,2,3,4].Argument[1].TypeVar[mongoose.ProjectionType.0]", //
+        "mongoose.Model.0;Member[find].WithArity[1,2,3,4].Argument[0].TypeVar[mongoose.FilterQuery.0]", //
+        "mongoose.Model.0;Member[find].WithArity[1,2,3,4].Argument[1].TypeVar[mongoose.ProjectionType.0]", //
+        "mongoose.Model.0;Member[insertMany].WithArity[1,2,3].Argument[0]", //
+        "mongoose.Model.0;Member[insertMany].WithArity[1,2,3].Argument[0].ArrayElement", //
+        "mongoose.Model.0;Member[insertMany].WithArity[2].ReturnValue.Awaited.ArrayElement.TypeVar[mongoose.MergeType.0].TypeVar[mongoose.MergeType.0,mongoose.MergeType.1]", //
+        "mongoose.Model.0;Member[insertMany].WithArity[2].ReturnValue.Awaited.ArrayElement.TypeVar[mongoose.MergeType.1].TypeVar[mongoose.RequireOnlyTypedId.0]", //
+        "mongoose.Model.0;Member[insertMany].WithArity[3].Argument[2].TypeVar[mongoose.Callback.0].ArrayElement.TypeVar[mongoose.MergeType.0].TypeVar[mongoose.MergeType.0,mongoose.MergeType.1]", //
+        "mongoose.Model.0;Member[insertMany].WithArity[3].Argument[2].TypeVar[mongoose.Callback.0].ArrayElement.TypeVar[mongoose.MergeType.1].TypeVar[mongoose.RequireOnlyTypedId.0]", //
+        "mongoose.Model.0;Member[mapReduce].Argument[0].TypeVar[mongoose.MapReduceOptions.0]", //
+        "mongoose.Model.0;Member[replaceOne,update,updateMany,updateOne].Argument[2].TypeVar[mongoose.QueryOptions.0]", //
+        "mongoose.Model.0;Member[schema].TypeVar[mongoose.Schema.0]", //
+        "mongoose.Model.1;Member[$where,count,countDocuments,deleteMany,deleteOne,distinct,estimatedDocumentCount,find,findById,findByIdAndDelete,findByIdAndRemove,findOne,findOneAndDelete,findOneAndRemove,geoSearch,remove,replaceOne,update,updateMany,updateOne,where].ReturnValue.TypeVar[mongoose.QueryWithHelpers.2]", //
+        "mongoose.Model.1;Member[exists].WithArity[1,2].ReturnValue.TypeVar[mongoose.QueryWithHelpers.2]", //
+        "mongoose.Model.1;Member[findByIdAndUpdate,findOneAndReplace,findOneAndUpdate].WithArity[0,1,2,3,4].ReturnValue.TypeVar[mongoose.QueryWithHelpers.2]", //
+        "mongoose.Model.2;Instance.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[$where,count,countDocuments,deleteMany,deleteOne,distinct,estimatedDocumentCount,find,geoSearch,remove,replaceOne,update,updateMany,updateOne,where].ReturnValue.TypeVar[mongoose.QueryWithHelpers.1].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[$where,find,geoSearch,where].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0].ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[create,insertMany].WithArity[2].Argument[1].TypeVar[mongoose.Callback.0].ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[create].WithArity[0..,1,2].ReturnValue.Awaited.ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[create].WithArity[1].ReturnValue.Awaited.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[create].WithArity[2].Argument[1].TypeVar[mongoose.Callback.0].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[exists].WithArity[1,2].ReturnValue.TypeVar[mongoose.QueryWithHelpers.1].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[find,insertMany].WithArity[3].Argument[2].TypeVar[mongoose.Callback.0].ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findById,findByIdAndDelete,findByIdAndRemove,findOne,findOneAndDelete,findOneAndRemove].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0,mongoose.QueryWithHelpers.1].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findById,findOne].Argument[3].TypeVar[mongoose.Callback.0].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findByIdAndDelete,findByIdAndRemove,findOneAndDelete,findOneAndRemove].Argument[2].Argument[1].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findByIdAndUpdate,findOneAndReplace,findOneAndUpdate].WithArity[0,1,2,3,4].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0,mongoose.QueryWithHelpers.1].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findByIdAndUpdate,findOneAndReplace,findOneAndUpdate].WithArity[3,4].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0].TypeVar[mongoose.ModifyResult.0].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findByIdAndUpdate].WithArity[0,1,2,4].Argument[3].Argument[1].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findByIdAndUpdate].WithArity[3].Argument[2,3].Argument[1].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findById].WithArity[1,2,3].Argument[2].TypeVar[mongoose.Callback.0].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findOneAndReplace].WithArity[0,1,2,3,4].Argument[3].Argument[1].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findOneAndUpdate].WithArity[3,4].Argument[3].Argument[1].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findOne].WithArity[0,1,2].Argument[1,2].TypeVar[mongoose.Callback.0].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[findOne].WithArity[3].Argument[2].TypeVar[mongoose.Callback.0].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[find].Argument[3].TypeVar[mongoose.Callback.0].ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[find].WithArity[0].Argument[0].TypeVar[mongoose.Callback.0].ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[find].WithArity[1].Argument[0,1,2].TypeVar[mongoose.Callback.0].ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[find].WithArity[2].Argument[1,2].TypeVar[mongoose.Callback.0].ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[geoSearch].Argument[2].TypeVar[mongoose.Callback.0].ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[hydrate].ReturnValue.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[init].ReturnValue.Awaited.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[insertMany].WithArity[1,2].ReturnValue.Awaited.ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[populate].WithArity[2,3].Argument[2].TypeVar[mongoose.Callback.0].ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[populate].WithArity[2,3].Argument[2].TypeVar[mongoose.Callback.0].TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[populate].WithArity[2,3].ReturnValue.Awaited.ArrayElement.TypeVar[mongoose.HydratedDocument.1]", //
+        "mongoose.Model.2;Member[populate].WithArity[2,3].ReturnValue.Awaited.TypeVar[mongoose.HydratedDocument.1]", //
         "mongoose.Model.4;Instance.TypeVar[mongoose.HydratedDocument.2].TypeVar[mongoose.IfEquals.2].TypeVar[mongoose.ObtainSchemaGeneric.0]", //
         "mongoose.Model.4;Instance.TypeVar[mongoose.ObtainSchemaGeneric.0]", //
         "mongoose.ModifyResult.0;Member[value].TypeVar[mongoose.Require_id.0]", //
-        "mongoose.MongooseQueryOptions.0;TypeVar[global.Pick.0].TypeVar[mongoose.QueryOptions.0]", //
         "mongoose.PluginFunction.1;Argument[0].TypeVar[mongoose.Schema.1]", //
         "mongoose.PostMiddlewareFunction.1;Argument[0]", //
-        "mongoose.Query.-1;Member[all,allowDiskUse,and,batchSize,box,circle,clone,collation,comment,elemMatch,equals,exists,explain,geometry,gt,gte,hint,in,intersects,j,limit,lt,lte,maxDistance,maxScan,maxTimeMS,merge,mod,ne,near,nin,nor,or,polygon,read,readConcern,regex,select,session,set,setOptions,size,skip,slice,snapshot,sort,tailable,w,where,within,wtimeout].ReturnValue", //
-        "mongoose.Query.-1;Member[error].WithArity[1].ReturnValue", //
-        "mongoose.Query.-1;TypeVar[mongoose.SessionOperation.-1]", //
         "mongoose.Query.0;Member[exec].Argument[0].TypeVar[mongoose.Callback.0]", //
         "mongoose.Query.0;Member[exec].WithArity[0].ReturnValue.Awaited", //
         "mongoose.Query.0;Member[lean].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0].TypeVar[mongoose.LeanDocumentOrArray.0,mongoose.LeanDocumentOrArrayWithRawType.0]", //
         "mongoose.Query.0;Member[orFail].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0]", //
-        "mongoose.Query.0;Member[orFail].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0].TypeVar[global.NonNullable.0]", //
         "mongoose.Query.0;Member[populate].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0].TypeVar[mongoose.UnpackedIntersection.0]", //
         "mongoose.Query.0;Member[then,transform].Argument[0].Argument[0]", //
         "mongoose.Query.0;Member[toConstructor].ReturnValue.Instance.TypeVar[mongoose.QueryWithHelpers.0]", //
@@ -906,46 +1030,63 @@ private class TypeVariables extends ModelInput::TypeVariableModelCsv {
         "mongoose.Query.1;Member[replaceOne].Argument[1]", //
         "mongoose.Query.1;Member[setUpdate].Argument[0].TypeVar[mongoose.UpdateQuery.0]", //
         "mongoose.Query.1;Member[toConstructor].ReturnValue.Instance.TypeVar[mongoose.QueryWithHelpers.1]", //
+        "mongoose.Query.2;Member[$where,count,countDocuments,deleteMany,deleteOne,distinct,estimatedDocumentCount,find,findByIdAndDelete,findOne,findOneAndDelete,findOneAndRemove,lean,orFail,populate,replaceOne,transform,update,updateMany,updateOne].ReturnValue.TypeVar[mongoose.QueryWithHelpers.2]", //
+        "mongoose.Query.2;Member[cast].Argument[0].TypeVar[mongoose.Model.1]", //
+        "mongoose.Query.2;Member[findByIdAndUpdate,findOneAndUpdate].WithArity[0,1,2,3,4].ReturnValue.TypeVar[mongoose.QueryWithHelpers.2]", //
+        "mongoose.Query.2;Member[populate].Argument[2].TypeVar[mongoose.Model.1]", //
+        "mongoose.Query.2;Member[remove].ReturnValue.TypeVar[mongoose.Query.2]", //
+        "mongoose.Query.2;Member[toConstructor].ReturnValue.Instance.TypeVar[mongoose.QueryWithHelpers.2]", //
+        "mongoose.Query.3;Member[$where,count,countDocuments,deleteMany,deleteOne,distinct,estimatedDocumentCount,find,findByIdAndDelete,findOne,findOneAndDelete,findOneAndRemove,lean,orFail,replaceOne,transform,update,updateMany,updateOne].ReturnValue.TypeVar[mongoose.QueryWithHelpers.3]", //
+        "mongoose.Query.3;Member[findByIdAndUpdate,findOneAndUpdate].WithArity[0,1,2,3,4].ReturnValue.TypeVar[mongoose.QueryWithHelpers.3]", //
+        "mongoose.Query.3;Member[lean].ReturnValue.TypeVar[mongoose.QueryWithHelpers.0].TypeVar[mongoose.LeanDocumentOrArrayWithRawType.1].TypeVar[mongoose.Require_id.0]", //
+        "mongoose.Query.3;Member[populate].ReturnValue.TypeVar[mongoose.QueryWithHelpers.3].TypeVar[mongoose.UnpackedIntersection.0]", //
+        "mongoose.Query.3;Member[remove].ReturnValue.TypeVar[mongoose.Query.3]", //
+        "mongoose.Query.3;Member[toConstructor].ReturnValue.Instance.TypeVar[mongoose.QueryWithHelpers.3]", //
         "mongoose.QueryOptions.0;Member[projection].TypeVar[mongoose.ProjectionType.0]", //
         "mongoose.QueryWithHelpers.0;TypeVar[mongoose.Query.0]", //
         "mongoose.QueryWithHelpers.1;TypeVar[mongoose.Query.1]", //
+        "mongoose.QueryWithHelpers.2;", //
+        "mongoose.QueryWithHelpers.2;TypeVar[mongoose.Query.2]", //
+        "mongoose.QueryWithHelpers.3;TypeVar[mongoose.Query.3]", //
         "mongoose.Require_id.0;", //
         "mongoose.Require_id.0;TypeVar[mongoose.IfAny.1,mongoose.IfAny.2]", //
         "mongoose.RootQuerySelector.0;Member[$and,$nor,$or].ArrayElement.TypeVar[mongoose.FilterQuery.0]", //
-        "mongoose.Schema.-1;Member[add,clearIndexes,clone,eachPath,index,loadClass,method,path,pick,plugin,post,pre,queue,remove,set,static].ReturnValue", //
-        "mongoose.Schema.-1;TypeVar[events..-1]", //
         "mongoose.Schema.0;Member[add].Argument[0].TypeVar[mongoose.SchemaDefinition.0].TypeVar[mongoose.SchemaDefinitionType.0]", //
         "mongoose.Schema.0;Member[obj].TypeVar[mongoose.SchemaDefinition.0].TypeVar[mongoose.SchemaDefinitionType.0]", //
         "mongoose.Schema.1;Member[discriminator].ReturnValue.TypeVar[mongoose.DiscriminatorSchema.1]", //
         "mongoose.Schema.1;Member[plugin].Argument[0].TypeVar[mongoose.PluginFunction.1]", //
         "mongoose.Schema.1;Member[post].Argument[2].TypeVar[mongoose.ErrorHandlingMiddlewareFunction.0,mongoose.PostMiddlewareFunction.0,mongoose.PostMiddlewareFunction.1]", //
         "mongoose.Schema.1;Member[post].WithArity[2].WithStringArgument[0=insertMany].Argument[1].TypeVar[mongoose.ErrorHandlingMiddlewareFunction.0,mongoose.PostMiddlewareFunction.0,mongoose.PostMiddlewareFunction.1]", //
-        "mongoose.Schema.Types.Date.-1;Member[expires,max,min].ReturnValue", //
-        "mongoose.Schema.Types.Date.-1;TypeVar[mongoose.SchemaType.-1]", //
-        "mongoose.Schema.Types.Decimal128.-1;TypeVar[mongoose.SchemaType.-1]", //
-        "mongoose.Schema.Types.Mixed.-1;TypeVar[mongoose.SchemaType.-1]", //
-        "mongoose.Schema.Types.Number.-1;Member[enum,max,min].ReturnValue", //
-        "mongoose.Schema.Types.Number.-1;TypeVar[mongoose.SchemaType.-1]", //
-        "mongoose.Schema.Types.ObjectId.-1;Member[auto].ReturnValue", //
-        "mongoose.Schema.Types.ObjectId.-1;TypeVar[mongoose.SchemaType.-1]", //
         "mongoose.SchemaDefinitionType.0;", //
-        "mongoose.SchemaDefinitionType.0;TypeVar[global.Omit.0]", //
-        "mongoose.SchemaType.-1;Member[get,immutable,index,ref,required,select,set,sparse,text,transform,unique,validate].ReturnValue", //
-        "mongoose.SchemaTypeOptions.-1;Member[get].Argument[1]", //
-        "mongoose.SchemaTypeOptions.-1;Member[set].Argument[2]", //
-        "mongoose.SessionOperation.-1;Member[session].ReturnValue", //
-        "mongoose.Types.Array.-1;Member[pull,remove,set].ReturnValue", //
-        "mongoose.Types.DocumentArray.-1;TypeVar[mongoose.Types.Array.-1]", //
-        "mongoose.Types.Subdocument.-1;TypeVar[mongoose.Document.-1]", //
+        "mongoose.SchemaTypeOptions.0;Member[default].ReturnValue.TypeVar[mongoose.DefaultType.0]", //
+        "mongoose.SchemaTypeOptions.0;Member[default].TypeVar[mongoose.DefaultType.0]", //
+        "mongoose.SchemaTypeOptions.0;Member[get].ReturnValue", //
+        "mongoose.SchemaTypeOptions.0;Member[set].Argument[1]", //
+        "mongoose.SchemaTypeOptions.0;Member[transform].Argument[0]", //
+        "mongoose.SchemaTypeOptions.0;Member[type]", //
+        "mongoose.SchemaTypeOptions.0;Member[type].TypeVar[mongoose.AnyArray.0].TypeVar[mongoose.SchemaDefinition.0,mongoose.SchemaTypeOptions.0].TypeVar[mongoose.Unpacked.0]", //
+        "mongoose.SchemaTypeOptions.0;Member[type].TypeVar[mongoose.SchemaDefinition.0]", //
+        "mongoose.SchemaTypeOptions.0;Member[validate].TypeVar[mongoose.AnyArray.0].TypeVar[mongoose.SchemaValidator.0]", //
+        "mongoose.SchemaTypeOptions.0;Member[validate].TypeVar[mongoose.SchemaValidator.0]", //
+        "mongoose.SchemaValidator.0;ArrayElement.TypeVar[mongoose.ValidateOpts.0]", //
+        "mongoose.SchemaValidator.0;TypeVar[mongoose.ValidateOpts.0]", //
+        "mongoose.Types.Array.0;Member[$pop,$shift,shift].ReturnValue", //
+        "mongoose.Types.Array.0;Member[set].Argument[1]", //
+        "mongoose.Types.DocumentArray.0;Member[create,id].ReturnValue", //
+        "mongoose.Types.DocumentArray.0;Member[create,id].ReturnValue.TypeVar[mongoose.Types.Subdocument.0].TypeVar[mongoose.InferId.0]", //
+        "mongoose.Types.DocumentArray.0;Member[push].Argument[0].ArrayElement.TypeVar[mongoose.AnyKeys.0]", //
+        "mongoose.Types.DocumentArray.0;TypeVar[mongoose.Types.Array.0]", //
+        "mongoose.Types.DocumentArray.0;TypeVar[mongoose.Types.Array.0].TypeVar[mongoose.Types.Subdocument.0].TypeVar[mongoose.InferId.0]", //
+        "mongoose.Types.Subdocument.0;TypeVar[mongoose.Document.0]", //
+        "mongoose.Unpacked.0;", //
         "mongoose.UnpackedIntersection.0;", //
-        "mongoose.UnpackedIntersection.0;TypeVar[global.Omit.0]", //
         "mongoose.UpdateQuery.0;TypeVar[mongoose._UpdateQuery.0].TypeVar[mongoose._UpdateQueryDef.0]", //
-        "mongoose.VirtualType.-1;Member[get,set].ReturnValue", //
+        "mongoose.ValidateFn.0;Argument[0]", //
+        "mongoose.ValidateOpts.0;Member[validator].TypeVar[mongoose.AsyncValidateFn.0,mongoose.LegacyAsyncValidateFn.0,mongoose.ValidateFn.0]", //
         "mongoose.VirtualType.0;Member[get,set].Argument[0].Argument[1].TypeVar[mongoose.VirtualType.0]", //
         "mongoose.VirtualType.0;Member[get,set].Argument[0].Argument[2]", //
         "mongoose.VirtualTypeOptions.0;Member[foreignField,localField].Argument[0]", //
         "mongoose._FilterQuery.0;TypeVar[mongoose.RootQuerySelector.0]", //
-        "mongoose._UpdateQuery.0;Member[$addToSet].TypeVar[mongoose.Mutable.0].TypeVar[~2358.0]", //
         "mongoose._UpdateQuery.0;Member[$currentDate,$inc,$max,$min,$mul,$pop,$pull,$pullAll,$push,$set,$setOnInsert,$unset].TypeVar[mongoose.AnyKeys.0]", //
       ]
   }
