@@ -220,11 +220,6 @@ private module MarsDB {
         ]
     }
   }
-
-  predicate test(API::Node node) {
-    node = API::moduleImport("marsdb").getMember("Collection").getInstance() and
-    node = ModelOutput::getATypeNode("mongoose", "Query")
-  }
 }
 
 /**
