@@ -86,66 +86,6 @@ private module MongoDB {
 
     override string getCredentialsKind() { result = kind }
   }
-
-  /**
-   * Provides signatures for the Collection methods.
-   *
-   * NOTE: not currently used by the mongodb model itself, only the other models in this file
-   */
-  module CollectionMethodSignatures {
-    /**
-     * Holds if Collection method `name` interprets parameter `n` as a query.
-     */
-    predicate interpretsArgumentAsQuery(string name, int n) {
-      // FilterQuery
-      (
-        name = "aggregate" and n = 0
-        or
-        name = "count" and n = 0
-        or
-        name = "countDocuments" and n = 0
-        or
-        name = "deleteMany" and n = 0
-        or
-        name = "deleteOne" and n = 0
-        or
-        name = "distinct" and n = 1
-        or
-        name = "find" and n = 0
-        or
-        name = "findOne" and n = 0
-        or
-        name = "findOneAndDelete" and n = 0
-        or
-        name = "findOneAndRemove" and n = 0
-        or
-        name = "findOneAndReplace" and n = 0
-        or
-        name = "findOneAndUpdate" and n = 0
-        or
-        name = "remove" and n = 0
-        or
-        name = "replaceOne" and n = 0
-        or
-        name = "update" and n = 0
-        or
-        name = "updateMany" and n = 0
-        or
-        name = "updateOne" and n = 0
-      )
-      or
-      // UpdateQuery
-      (
-        name = "findOneAndUpdate" and n = 1
-        or
-        name = "update" and n = 1
-        or
-        name = "updateMany" and n = 1
-        or
-        name = "updateOne" and n = 1
-      )
-    }
-  }
 }
 
 /**
