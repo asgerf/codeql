@@ -836,7 +836,6 @@
             "mongoose;VirtualTypeStatic;mongoose;;Member[VirtualType]"
         ],
         "summaries": [
-            "mongodb;AbstractCursor;;;Member[addCursorFlag,batchSize,maxTimeMS,withReadConcern,withReadPreference].ReturnValue;type",
             "mongodb;BulkOperationBase;;;Member[addToOperationsList,raw].ReturnValue;type",
             "mongodb;FindCursor;;;Member[addQueryModifier,allowDiskUse,collation,comment,filter,hint,limit,max,maxAwaitTimeMS,maxTimeMS,min,returnKey,showRecordId,skip,sort].ReturnValue;type",
             "mongodb;FindOperators;;;Member[arrayFilters,collation,upsert].ReturnValue;type",
@@ -873,7 +872,6 @@
             "mongoose;SchemaType;;;Member[get,immutable,index,ref,required,select,set,sparse,text,transform,unique,validate].ReturnValue;type",
             "mongoose;SchemaTypeOptions;;;Member[get].Argument[1];type",
             "mongoose;SchemaTypeOptions;;;Member[set].Argument[2];type",
-            "mongoose;SessionOperation;;;Member[session].ReturnValue;type",
             "mongoose;Types.Array;;;Member[pull,remove,set].ReturnValue;type",
             "mongoose;VirtualType;;;Member[get,set].ReturnValue;type"
         ],
