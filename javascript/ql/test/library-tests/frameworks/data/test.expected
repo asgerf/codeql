@@ -1,4 +1,6 @@
 consistencyIssue
+| library-tests/frameworks/data/test.js:225 | expected an alert, but found none | NOT OK |  |
+| library-tests/frameworks/data/test.js:226 | expected an alert, but found none | NOT OK |  |
 taintFlow
 | paramDecorator.ts:6:54:6:54 | x | paramDecorator.ts:7:10:7:10 | x |
 | test.js:5:30:5:37 | source() | test.js:5:8:5:38 | testlib ... urce()) |
@@ -59,6 +61,8 @@ taintFlow
 | test.js:217:45:217:52 | source() | test.js:217:45:217:52 | source() |
 | test.js:219:39:219:46 | source() | test.js:219:39:219:46 | source() |
 | test.js:220:50:220:57 | source() | test.js:220:50:220:57 | source() |
+| test.js:224:59:224:66 | source() | test.js:224:59:224:66 | source() |
+| test.js:227:59:227:66 | source() | test.js:227:59:227:66 | source() |
 isSink
 | test.js:54:18:54:25 | source() | test-sink |
 | test.js:55:22:55:29 | source() | test-sink |
@@ -122,6 +126,8 @@ isSink
 | test.js:217:45:217:52 | source() | test-sink |
 | test.js:219:39:219:46 | source() | test-sink |
 | test.js:220:50:220:57 | source() | test-sink |
+| test.js:224:59:224:66 | source() | test-sink |
+| test.js:227:59:227:66 | source() | test-sink |
 syntaxErrors
 | Member[foo |
 | Member[foo] .Member[bar] |
