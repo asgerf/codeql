@@ -669,7 +669,7 @@ module API {
       exists(TypeBackTracker tb |
         result = mid.track(tmid, t) and
         pragma[only_bind_into](result) = useCandRev(pragma[only_bind_into](tb)) and
-        pragma[only_bind_out](t) = pragma[only_bind_into](tb).getACompatibleTypeTracker()
+        pragma[only_bind_out](t) = tb.getACompatibleTypeTracker()
       )
     }
 
