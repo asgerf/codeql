@@ -17,6 +17,8 @@ private module Cached {
     LoadStoreStep(TypeTrackerContent load, TypeTrackerContent store) {
       basicLoadStoreStep(_, _, load, store)
     } or
+    WithContent(ContentFilter filter) { basicWithContentStep(_, _, filter) } or
+    WithoutContent(ContentFilter filter) { basicWithoutContentStep(_, _, filter) } or
     JumpStep()
 
   pragma[nomagic]
@@ -38,6 +40,14 @@ private module Cached {
       or
       step = JumpStep() and
       result = MkTypeTracker(false, currentContents)
+      or
+      exists(ContentFilter filter | result = tt |
+        step = WithContent(filter) and
+        currentContents = filter.getAMatchingContent()
+        or
+        step = WithoutContent(filter) and
+        not currentContents = filter.getAMatchingContent()
+      )
     )
     or
     exists(TypeTrackerContent storeContents, boolean hasCall |
@@ -83,6 +93,14 @@ private module Cached {
       or
       step = JumpStep() and
       result = MkTypeBackTracker(false, content)
+      or
+      exists(ContentFilter filter | result = tbt |
+        step = WithContent(filter) and
+        content = filter.getAMatchingContent()
+        or
+        step = WithoutContent(filter) and
+        not content = filter.getAMatchingContent()
+      )
     )
     or
     exists(TypeTrackerContent loadContents, boolean hasReturn |
@@ -177,6 +195,14 @@ private predicate smallstepNoCall(Node nodeFrom, TypeTrackingNode nodeTo, StepSu
   exists(TypeTrackerContent loadContent, TypeTrackerContent storeContent |
     StepSummary::localSourceLoadStoreStep(nodeFrom, nodeTo, loadContent, storeContent) and
     summary = LoadStoreStep(loadContent, storeContent)
+  )
+  or
+  exists(ContentFilter filter |
+    basicWithContentStep(nodeFrom, nodeTo, filter) and
+    summary = WithContent(filter)
+    or
+    basicWithoutContentStep(nodeFrom, nodeTo, filter) and
+    summary = WithoutContent(filter)
   )
 }
 
