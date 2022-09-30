@@ -175,7 +175,7 @@ private predicate smallstepNoCall(Node nodeFrom, TypeTrackingNode nodeTo, StepSu
   )
   or
   exists(TypeTrackerContent loadContent, TypeTrackerContent storeContent |
-    basicLoadStoreStep(nodeFrom, nodeTo, loadContent, storeContent) and
+    StepSummary::localSourceLoadStoreStep(nodeFrom, nodeTo, loadContent, storeContent) and
     summary = LoadStoreStep(loadContent, storeContent)
   )
 }
@@ -248,6 +248,18 @@ module StepSummary {
    */
   predicate localSourceStoreStep(Node nodeFrom, TypeTrackingNode nodeTo, TypeTrackerContent content) {
     exists(Node obj | nodeTo.flowsTo(obj) and basicStoreStep(nodeFrom, obj, content))
+  }
+
+  /**
+   * Holds if `loadContent` is loaded from `nodeFrom` and written to `storeContent` of `nodeTo`.
+   */
+  predicate localSourceLoadStoreStep(
+    Node nodeFrom, TypeTrackingNode nodeTo, TypeTrackerContent loadContent,
+    TypeTrackerContent storeContent
+  ) {
+    exists(Node obj |
+      nodeTo.flowsTo(obj) and basicLoadStoreStep(nodeFrom, obj, loadContent, storeContent)
+    )
   }
 }
 
