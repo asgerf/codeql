@@ -431,6 +431,16 @@ nodes
 | jquery.js:34:5:34:25 | '<b>' + ...  '</b>' |
 | jquery.js:34:5:34:25 | '<b>' + ...  '</b>' |
 | jquery.js:34:13:34:16 | hash |
+| json-stringify.jsx:4:18:4:27 | props.data |
+| json-stringify.jsx:4:18:4:27 | props.data |
+| json-stringify.jsx:7:82:7:101 | JSON.stringify(data) |
+| json-stringify.jsx:7:82:7:101 | JSON.stringify(data) |
+| json-stringify.jsx:7:82:7:101 | JSON.stringify(data) |
+| json-stringify.jsx:7:97:7:100 | data |
+| json-stringify.jsx:7:97:7:100 | data |
+| json-stringify.jsx:10:28:10:38 | window.name |
+| json-stringify.jsx:10:28:10:38 | window.name |
+| json-stringify.jsx:10:28:10:38 | window.name |
 | jwt-server.js:7:9:7:35 | taint |
 | jwt-server.js:7:9:7:35 | taint |
 | jwt-server.js:7:17:7:35 | req.param("wobble") |
@@ -1559,6 +1569,16 @@ edges
 | jquery.js:28:5:28:26 | window. ... .search | jquery.js:28:5:28:43 | window. ... ?', '') |
 | jquery.js:34:13:34:16 | hash | jquery.js:34:5:34:25 | '<b>' + ...  '</b>' |
 | jquery.js:34:13:34:16 | hash | jquery.js:34:5:34:25 | '<b>' + ...  '</b>' |
+| json-stringify.jsx:4:18:4:27 | props.data | json-stringify.jsx:7:97:7:100 | data |
+| json-stringify.jsx:4:18:4:27 | props.data | json-stringify.jsx:7:97:7:100 | data |
+| json-stringify.jsx:7:97:7:100 | data | json-stringify.jsx:7:82:7:101 | JSON.stringify(data) |
+| json-stringify.jsx:7:97:7:100 | data | json-stringify.jsx:7:82:7:101 | JSON.stringify(data) |
+| json-stringify.jsx:7:97:7:100 | data | json-stringify.jsx:7:82:7:101 | JSON.stringify(data) |
+| json-stringify.jsx:7:97:7:100 | data | json-stringify.jsx:7:82:7:101 | JSON.stringify(data) |
+| json-stringify.jsx:10:28:10:38 | window.name | json-stringify.jsx:4:18:4:27 | props.data |
+| json-stringify.jsx:10:28:10:38 | window.name | json-stringify.jsx:4:18:4:27 | props.data |
+| json-stringify.jsx:10:28:10:38 | window.name | json-stringify.jsx:4:18:4:27 | props.data |
+| json-stringify.jsx:10:28:10:38 | window.name | json-stringify.jsx:4:18:4:27 | props.data |
 | jwt-server.js:7:9:7:35 | taint | jwt-server.js:9:16:9:20 | taint |
 | jwt-server.js:7:9:7:35 | taint | jwt-server.js:9:16:9:20 | taint |
 | jwt-server.js:7:17:7:35 | req.param("wobble") | jwt-server.js:7:9:7:35 | taint |

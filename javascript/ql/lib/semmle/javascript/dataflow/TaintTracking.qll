@@ -723,6 +723,19 @@ module TaintTracking {
     }
   }
 
+  private class JsonStringifyLoadStep extends DataFlow::SharedFlowStep {
+    override predicate loadStep(DataFlow::Node pred, DataFlow::Node succ, string prop) {
+      exists(JsonStringifyCall call |
+        pred = call.getArgument(0) and
+        succ = call.getArgument(0) and
+        exists(DataFlow::PropWrite write |
+          prop = write.getPropertyName() and
+          not write.getRhs() instanceof DataFlow::FunctionNode
+        )
+      )
+    }
+  }
+
   /**
    * A taint propagating data flow edge arising from JSON parsing.
    */
