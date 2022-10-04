@@ -118,6 +118,47 @@ predicate levelStep(Node nodeFrom, Node nodeTo) {
   summarizedLocalStep(nodeFrom, nodeTo)
   or
   TypeTrackingStep::step(nodeFrom, nodeTo)
+  or
+  localFieldStep(nodeFrom, nodeTo)
+}
+
+pragma[nomagic]
+MethodBase getAMethod(ModuleBase mod, boolean instance) {
+  not mod instanceof SingletonClass and
+  result = mod.getAMethod() and
+  if result instanceof SingletonMethod then instance = false else instance = true
+  or
+  exists(SingletonClass cls |
+    cls.getValue().(SelfVariableAccess).getCfgScope() = mod and
+    result = cls.getAMethod().(Method) and
+    instance = false
+  )
+}
+
+pragma[nomagic]
+private Node fieldPredecessor(ModuleBase mod, boolean instance, string field) {
+  exists(InstanceVariableWriteAccess access, AssignExpr assign |
+    access.getReceiver().getCfgScope() = getAMethod(mod, instance) and
+    field = access.getVariable().getName() and
+    assign.getLeftOperand() = access and
+    result.asExpr().getExpr() = assign.getRightOperand()
+  )
+}
+
+pragma[nomagic]
+private Node fieldSuccessor(ModuleBase mod, boolean instance, string field) {
+  exists(InstanceVariableReadAccess access |
+    access.getReceiver().getCfgScope() = getAMethod(mod, instance) and
+    result.asExpr().getExpr() = access and
+    field = access.getVariable().getName()
+  )
+}
+
+private predicate localFieldStep(Node pred, Node succ) {
+  exists(ModuleBase mod, boolean instance, string field |
+    pred = fieldPredecessor(mod, instance, field) and
+    succ = fieldSuccessor(mod, instance, field)
+  )
 }
 
 pragma[noinline]
