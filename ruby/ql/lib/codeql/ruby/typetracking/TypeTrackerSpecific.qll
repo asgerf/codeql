@@ -129,6 +129,38 @@ private MethodBase getAMethod(ModuleBase mod, boolean instance) {
   )
 }
 
+private predicate hasOwnAttributeModifier(ModuleBase mod, string modifierName, string symbolName) {
+  exists(MethodCall call |
+    call.getReceiver().(SelfVariableAccess).getVariable().getDeclaringScope() = mod and
+    call.getMethodName() = modifierName and
+    modifierName = ["attr_reader", "attr_writer", "attr_accessor"] and
+    symbolName = call.getArgument(0).getConstantValue().getSymbol()
+  )
+}
+
+private predicate hasAttributeModifier(
+  ModuleBase mod, boolean instance, string modifierName, string symbolName
+) {
+  instance = true and
+  hasOwnAttributeModifier(mod, modifierName, symbolName)
+  or
+  instance = false and
+  exists(SingletonClass cls |
+    hasOwnAttributeModifier(cls, modifierName, symbolName) and
+    cls.getValue().(SelfVariableAccess).getVariable().getDeclaringScope() = mod
+  )
+}
+
+pragma[nomagic]
+private predicate hasAttributeReader(ModuleBase mod, boolean instance, string fieldName) {
+  hasAttributeModifier(mod, instance, ["attr_reader", "attr_accessor"], fieldName)
+}
+
+pragma[nomagic]
+private predicate hasAttributeWriter(ModuleBase mod, boolean instance, string fieldName) {
+  hasAttributeModifier(mod, instance, ["attr_writer", "attr_accessor"], fieldName)
+}
+
 /**
  * Gets a value flowing into `field` in `mod`, with `instance` indicating if it's
  * a field on an instance of `mod` (as opposed to the module object itself).
@@ -140,6 +172,14 @@ private Node fieldPredecessor(ModuleBase mod, boolean instance, string field) {
     field = access.getVariable().getName() and
     assign.getLeftOperand() = access and
     result.asExpr().getExpr() = assign.getRightOperand()
+  )
+  or
+  exists(SetterMethodCall call |
+    call.getReceiver().(SelfVariableAccess).getVariable().getDeclaringScope() =
+      getAMethod(mod, instance) and
+    hasAttributeWriter(mod, instance, field) and
+    call.getTargetName() = field and
+    result.asExpr().getExpr() = call
   )
 }
 
@@ -153,6 +193,15 @@ private Node fieldSuccessor(ModuleBase mod, boolean instance, string field) {
     access.getReceiver().getVariable().getDeclaringScope() = getAMethod(mod, instance) and
     result.asExpr().getExpr() = access and
     field = access.getVariable().getName()
+  )
+  or
+  exists(MethodCall call |
+    call.getReceiver().(SelfVariableAccess).getVariable().getDeclaringScope() =
+      getAMethod(mod, instance) and
+    hasAttributeReader(mod, instance, field) and
+    call.getMethodName() = field and
+    call.getNumberOfArguments() = 0 and
+    result.asExpr().getExpr() = call
   )
 }
 
