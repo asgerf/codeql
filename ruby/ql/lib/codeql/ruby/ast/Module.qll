@@ -32,6 +32,11 @@ class Module extends TModule {
     this = TResolved(result)
     or
     exists(Namespace n | this = TUnresolved(n) and result = "...::" + n.toString())
+    or
+    exists(Toplevel top |
+      this = TToplevelModule(top) and
+      result = "top-level of " + top.getFile()
+    )
   }
 
   /**
@@ -57,6 +62,11 @@ class Module extends TModule {
           weight, count(n.getAStmt()) desc, loc.getFile().getAbsolutePath(), loc.getStartLine(),
           loc.getStartColumn()
       )
+    or
+    exists(Toplevel top |
+      this = TToplevelModule(top) and
+      result = top.getLocation()
+    )
   }
 }
 
@@ -173,7 +183,7 @@ class Toplevel extends ModuleBase, TToplevel {
     pred = "getBeginBlock" and result = this.getBeginBlock(_)
   }
 
-  final override Module getModule() { result = TResolved("Object") }
+  final override Module getModule() { result = TToplevelModule(this) }
 
   final override string toString() { result = g.getLocation().getFile().getBaseName() }
 }

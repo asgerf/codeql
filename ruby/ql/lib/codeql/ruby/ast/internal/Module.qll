@@ -18,7 +18,8 @@ private module Cached {
       or
       qName = namespaceDeclaration(_)
     } or
-    TUnresolved(Namespace n) { not exists(namespaceDeclaration(n)) }
+    TUnresolved(Namespace n) { not exists(namespaceDeclaration(n)) } or
+    TToplevelModule(Toplevel top)
 
   cached
   string namespaceDeclaration(Namespace n) {
@@ -73,6 +74,8 @@ private module Cached {
 
   cached
   Module getAnIncludedModule(Module m) {
+    m = TToplevelModule(_) and result = TResolved("Object")
+    or
     m = TResolved("Object") and result = TResolved("Kernel")
     or
     exists(IncludeOrPrependCall c |
@@ -533,17 +536,9 @@ private TMethodOrExpr lookupMethodOrConst0(Module m, string name) {
   )
 }
 
-private AstNode getNode(TMethodOrExpr e) { e = TMethod(result) or e = TExpr(result) }
-
 private TMethodOrExpr lookupMethodOrConst(Module m, string name) {
   result = lookupMethodOrConst0(m, name)
   or
   not exists(lookupMethodOrConst0(m, name)) and
-  result = lookupMethodOrConst(m.getSuperClass(), name) and
-  // For now, we restrict the scope of top-level declarations to their file.
-  // This may remove some plausible targets, but also removes a lot of
-  // implausible targets
-  if getNode(result).getEnclosingModule() instanceof Toplevel
-  then getNode(result).getFile() = m.getADeclaration().getFile()
-  else any()
+  result = lookupMethodOrConst(m.getSuperClass(), name)
 }

@@ -223,11 +223,10 @@ private predicate selfInMethod(SelfVariable self, MethodBase method, Module m) {
   )
 }
 
-/** Holds if `self` belongs to the top-level. */
+/** Holds if `self` belongs to the top-level and `m` is the associated module. */
 pragma[nomagic]
 private predicate selfInToplevel(SelfVariable self, Module m) {
-  self.getDeclaringScope() instanceof Toplevel and
-  m = TResolved("Object")
+  m = TToplevelModule(self.getDeclaringScope())
 }
 
 /**

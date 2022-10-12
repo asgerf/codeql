@@ -29,6 +29,8 @@
 #-----|  -> Object
 
 calls.rb:
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/calls.rb
+
 #   21| M
 
 #   43| C
@@ -108,6 +110,8 @@ calls.rb:
 hello.rb:
 #    1| EnglishWords
 
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/hello.rb
+
 #   11| Greeting
 #-----|  -> Object
 
@@ -115,6 +119,8 @@ hello.rb:
 #-----|  -> Greeting
 
 instance_fields.rb:
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/instance_fields.rb
+
 #   11| A_target
 #-----|  -> Object
 
@@ -123,6 +129,8 @@ instance_fields.rb:
 
 modules.rb:
 #    1| Empty
+
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/modules.rb
 
 #    4| Foo
 
@@ -195,9 +203,13 @@ modules_rec.rb:
 #    1| B::A
 #-----|  -> Object
 
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/modules_rec.rb
+
 private.rb:
 #    1| E
 #-----|  -> Object
+
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/private.rb
 
 #   62| F
 
@@ -208,5 +220,7 @@ private.rb:
 #-----|  -> PrivateOverride1
 
 toplevel_self_singleton.rb:
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_self_singleton.rb
+
 #    2| A::B
 #-----|  -> Object

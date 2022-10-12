@@ -502,7 +502,7 @@ private module Cached {
     else any()
     or
     read.hasGlobalScope() and
-    result = lookupConst(TResolved("Object"), read.getName())
+    result = lookupConst(TToplevelModule(read.getEnclosingToplevel()), read.getName())
     or
     result = lookupConst(resolveConstantReadAccess(read.getScopeExpr()), read.getName())
   }
