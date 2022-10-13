@@ -1,4 +1,6 @@
 private import codeql.ruby.AST
+private import codeql.ruby.ast.internal.Literal
+private import codeql.ruby.ast.internal.PathResolution
 
 // Names of built-in modules and classes
 private string builtin() {
@@ -81,6 +83,11 @@ private module Cached {
     exists(IncludeOrPrependCall c |
       c.getMethodName() = "include" and
       result = getACludedModule(c, m)
+    )
+    or
+    exists(RequireCall c |
+      m = TToplevelModule(c.getEnclosingToplevel()) and
+      result = TToplevelModule(c.getImportedToplevel())
     )
   }
 
@@ -441,6 +448,43 @@ private module ResolveImpl {
         not exists(this.getReceiver())
       )
     }
+  }
+
+  private predicate pathNeedsResolution(string path, Container baseFolder) {
+    exists(RequireCall call |
+      call.getBaseFolder() = baseFolder and
+      call.getRawPath() = path
+    )
+  }
+
+  private module RequirePathResolver = PathResolver<pathNeedsResolution/2>;
+
+  class RequireCall extends MethodCall {
+    RequireCall() {
+      this.getMethodName() = ["require", "require_relative"] and
+      this.getReceiver().(SelfVariableAccess).getVariable().getDeclaringScope() instanceof Toplevel
+    }
+
+    /** Gets the imported path. */
+    string getRawPath() {
+      // Since import resolution depends on this predicate, avoid depending on constant propagation here
+      result = this.getArgument(0).(StringlikeLiteralImpl).getStringValue()
+    }
+
+    Container getBaseFolder() {
+      this.getMethodName() = "require_relative" and
+      result = this.getFile().getParentContainer()
+      or
+      // For 'require' with a relative path, the base folder is the current working directory.
+      // Make a best guess and just use the directory containing the file.
+      this.getMethodName() = "require" and
+      this.getRawPath().matches(".%") and
+      result = this.getFile().getParentContainer()
+    }
+
+    Container resolve() { result = RequirePathResolver::resolve(this.getRawPath()) }
+
+    Toplevel getImportedToplevel() { result.getFile() = this.resolve() }
   }
 
   pragma[nomagic]
