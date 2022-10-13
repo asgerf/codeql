@@ -84,11 +84,6 @@ private module Cached {
       c.getMethodName() = "include" and
       result = getACludedModule(c, m)
     )
-    or
-    exists(RequireCall c |
-      m = TToplevelModule(c.getEnclosingToplevel()) and
-      result = TToplevelModule(c.getImportedToplevel())
-    )
   }
 
   cached
@@ -96,6 +91,14 @@ private module Cached {
     exists(IncludeOrPrependCall c |
       c.getMethodName() = "prepend" and
       result = getACludedModule(c, m)
+    )
+  }
+
+  cached
+  Module getARequiredModule(Module m) {
+    exists(RequireCall c |
+      m = TToplevelModule(c.getEnclosingToplevel()) and
+      result = TToplevelModule(c.getImportedToplevel())
     )
   }
 
@@ -547,7 +550,8 @@ private ModuleBase enclosingModule(AstNode node) {
 private Module getAncestors(Module m) {
   result = m or
   result = getAncestors(m.getAnIncludedModule()) or
-  result = getAncestors(m.getAPrependedModule())
+  result = getAncestors(m.getAPrependedModule()) or
+  result = getAncestors(m.getARequiredModule())
 }
 
 private newtype TMethodOrExpr =
@@ -576,7 +580,7 @@ private TMethodOrExpr lookupMethodOrConst0(Module m, string name) {
     result = getMethodOrConst(m, pragma[only_bind_into](name))
     or
     not exists(getMethodOrConst(m, name)) and
-    result = lookupMethodOrConst0(m.getAnIncludedModule(), name)
+    result = lookupMethodOrConst0([m.getAnIncludedModule(), m.getARequiredModule()], name)
   )
 }
 

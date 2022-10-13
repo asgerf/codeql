@@ -237,7 +237,7 @@ private.rb:
 toplevel_importer.rb:
 #    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_importer.rb
 #-----| include -> Object
-#-----| include -> top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_lib.rb
+#-----| require -> top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_lib.rb
 
 toplevel_lib.rb:
 #    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_lib.rb

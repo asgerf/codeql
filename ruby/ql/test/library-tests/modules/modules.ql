@@ -11,6 +11,8 @@ query Module getAPrependedModule(Module m) { result = m.getAPrependedModule() }
 
 query Module getAnIncludedModule(Module m) { result = m.getAnIncludedModule() }
 
+query Module getARequiredModule(Module m) { result = m.getARequiredModule() }
+
 query predicate resolveConstantReadAccess(ConstantReadAccess a, string s) {
   Internal::TResolved(s) = Internal::resolveConstantReadAccess(a)
 }

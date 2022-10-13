@@ -29,6 +29,8 @@ Module getATarget(Module source, string value) {
   result = source.getAPrependedModule() and value = "prepend"
   or
   result = source.getAnIncludedModule() and value = "include"
+  or
+  result = source.getARequiredModule() and value = "require"
 }
 
 query predicate edges(Module source, Module target, string key, string value) {

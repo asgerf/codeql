@@ -200,7 +200,7 @@ private predicate instanceMethodCall(CfgNodes::ExprNodes::CallCfgNode call, Modu
     tp.getSuperClass+() = m
     or
     exact = false and
-    tp.getAnIncludedModule+() = m
+    tp.getARequiredModule+() = m
   )
 }
 

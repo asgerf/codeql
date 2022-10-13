@@ -23,6 +23,9 @@ class Module extends TModule {
   /** Gets an `include`d module. */
   Module getAnIncludedModule() { result = getAnIncludedModule(this) }
 
+  /** Gets a `require`d or `require_relative`d module. */
+  Module getARequiredModule() { result = getARequiredModule(this) }
+
   /** Holds if this module is a class. */
   pragma[noinline]
   predicate isClass() { this.getADeclaration() instanceof ClassDeclaration }

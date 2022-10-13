@@ -242,10 +242,11 @@ getAnIncludedModule
 | modules_rec.rb:1:1:11:26 | top-level of modules_rec.rb | calls.rb:115:1:118:3 | Object |
 | private.rb:1:1:105:40 | top-level of private.rb | calls.rb:115:1:118:3 | Object |
 | toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | calls.rb:115:1:118:3 | Object |
-| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb |
 | toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb | calls.rb:115:1:118:3 | Object |
 | toplevel_not_used.rb:1:1:4:46 | top-level of toplevel_not_used.rb | calls.rb:115:1:118:3 | Object |
 | toplevel_self_singleton.rb:1:1:12:4 | top-level of toplevel_self_singleton.rb | calls.rb:115:1:118:3 | Object |
+getARequiredModule
+| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb |
 resolveConstantReadAccess
 | calls.rb:36:1:36:1 | M | M |
 | calls.rb:37:1:37:1 | M | M |
