@@ -475,7 +475,7 @@ private module ResolveImpl {
       this.getMethodName() = "require_relative" and
       result = this.getFile().getParentContainer()
       or
-      // For 'require' with a relative path, the base folder is the current working directory.
+      // For 'require' with a relative path, the base folder is derived from the $LOAD_PATH.
       // Make a best guess and just use the directory containing the file.
       this.getMethodName() = "require" and
       this.getRawPath().matches(".%") and
