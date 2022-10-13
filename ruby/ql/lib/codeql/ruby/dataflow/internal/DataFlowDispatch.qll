@@ -198,6 +198,9 @@ private predicate instanceMethodCall(CfgNodes::ExprNodes::CallCfgNode call, Modu
     // When we don't know the exact type, it could be any sub class
     exact = false and
     tp.getSuperClass+() = m
+    or
+    exact = false and
+    tp.getAnIncludedModule+() = m
   )
 }
 
@@ -342,14 +345,7 @@ private module Cached {
           result = lookupMethod(tp, method) and
           (
             if result.(Method).isPrivate()
-            then
-              call.getReceiver().getExpr() instanceof SelfVariableAccess and
-              // For now, we restrict the scope of top-level declarations to their file.
-              // This may remove some plausible targets, but also removes a lot of
-              // implausible targets
-              if result.getEnclosingModule() instanceof Toplevel
-              then result.getFile() = call.getFile()
-              else any()
+            then call.getReceiver().getExpr() instanceof SelfVariableAccess
             else any()
           ) and
           if result.(Method).isProtected()
@@ -567,16 +563,15 @@ private predicate isInstance(DataFlow::Node n, Module tp, boolean exact) {
   or
   // `self` reference in method or top-level (but not in module or singleton method,
   // where instance methods cannot be called; only singleton methods)
+  exact = false and
   n =
     any(SsaSelfDefinitionNode self |
       exists(MethodBase m |
         selfInMethod(self.getVariable(), m, tp) and
-        not m instanceof SingletonMethod and
-        if m.getEnclosingModule() instanceof Toplevel then exact = true else exact = false
+        not m instanceof SingletonMethod
       )
       or
-      selfInToplevel(self.getVariable(), tp) and
-      exact = true
+      selfInToplevel(self.getVariable(), tp)
     )
   or
   // `in C => c then c.foo`

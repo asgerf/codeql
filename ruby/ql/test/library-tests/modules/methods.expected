@@ -73,6 +73,9 @@ getMethod
 | private.rb:82:1:94:3 | PrivateOverride1 | m1 | private.rb:83:11:85:5 | m1 |
 | private.rb:82:1:94:3 | PrivateOverride1 | m2 | private.rb:87:11:89:5 | m2 |
 | private.rb:96:1:102:3 | PrivateOverride2 | m1 | private.rb:97:11:101:5 | m1 |
+| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | method_from_importer | toplevel_importer.rb:1:1:2:3 | method_from_importer |
+| toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb | method_from_lib | toplevel_lib.rb:1:1:2:3 | method_from_lib |
+| toplevel_not_used.rb:1:1:4:46 | top-level of toplevel_not_used.rb | method_from_lib | toplevel_not_used.rb:1:1:2:3 | method_from_lib |
 lookupMethod
 | calls.rb:1:1:550:40 | top-level of calls.rb | add_singleton | calls.rb:367:1:371:3 | add_singleton |
 | calls.rb:1:1:550:40 | top-level of calls.rb | call_block | calls.rb:81:1:83:3 | call_block |
@@ -269,6 +272,16 @@ lookupMethod
 | private.rb:96:1:102:3 | PrivateOverride2 | m2 | private.rb:87:11:89:5 | m2 |
 | private.rb:96:1:102:3 | PrivateOverride2 | new | calls.rb:117:5:117:16 | new |
 | private.rb:96:1:102:3 | PrivateOverride2 | puts | calls.rb:102:5:102:30 | puts |
+| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | method_from_importer | toplevel_importer.rb:1:1:2:3 | method_from_importer |
+| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | method_from_lib | toplevel_lib.rb:1:1:2:3 | method_from_lib |
+| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | new | calls.rb:117:5:117:16 | new |
+| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | puts | calls.rb:102:5:102:30 | puts |
+| toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb | method_from_lib | toplevel_lib.rb:1:1:2:3 | method_from_lib |
+| toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb | new | calls.rb:117:5:117:16 | new |
+| toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb | puts | calls.rb:102:5:102:30 | puts |
+| toplevel_not_used.rb:1:1:4:46 | top-level of toplevel_not_used.rb | method_from_lib | toplevel_not_used.rb:1:1:2:3 | method_from_lib |
+| toplevel_not_used.rb:1:1:4:46 | top-level of toplevel_not_used.rb | new | calls.rb:117:5:117:16 | new |
+| toplevel_not_used.rb:1:1:4:46 | top-level of toplevel_not_used.rb | puts | calls.rb:102:5:102:30 | puts |
 | toplevel_self_singleton.rb:1:1:12:4 | top-level of toplevel_self_singleton.rb | new | calls.rb:117:5:117:16 | new |
 | toplevel_self_singleton.rb:1:1:12:4 | top-level of toplevel_self_singleton.rb | puts | calls.rb:102:5:102:30 | puts |
 | toplevel_self_singleton.rb:2:5:5:7 | A::B | new | calls.rb:117:5:117:16 | new |

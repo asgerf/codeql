@@ -193,6 +193,7 @@ getTarget
 | calls.rb:498:1:498:32 | call to singleton | calls.rb:485:5:487:7 | singleton |
 | calls.rb:505:1:505:32 | call to singleton | calls.rb:485:5:487:7 | singleton |
 | calls.rb:511:1:511:13 | call to singleton | calls.rb:485:5:487:7 | singleton |
+| calls.rb:515:9:515:42 | call to puts | calls.rb:102:5:102:30 | puts |
 | calls.rb:520:5:520:35 | call to include | calls.rb:108:5:110:7 | include |
 | calls.rb:523:9:523:35 | call to puts | calls.rb:102:5:102:30 | puts |
 | calls.rb:527:9:527:11 | call to foo | calls.rb:514:15:516:7 | foo |
@@ -263,6 +264,8 @@ getTarget
 | private.rb:104:1:104:20 | call to new | calls.rb:117:5:117:16 | new |
 | private.rb:104:1:104:28 | call to call_m1 | private.rb:91:3:93:5 | call_m1 |
 | private.rb:105:1:105:20 | call to new | calls.rb:117:5:117:16 | new |
+| toplevel_importer.rb:6:1:6:15 | call to method_from_lib | toplevel_lib.rb:1:1:2:3 | method_from_lib |
+| toplevel_lib.rb:4:1:4:20 | call to method_from_importer | toplevel_importer.rb:1:1:2:3 | method_from_importer |
 unresolvedCall
 | calls.rb:26:9:26:18 | call to instance_m |
 | calls.rb:29:5:29:14 | call to instance_m |
@@ -324,7 +327,6 @@ unresolvedCall
 | calls.rb:508:1:508:13 | call to singleton |
 | calls.rb:509:1:509:32 | call to extend |
 | calls.rb:514:5:516:7 | call to protected |
-| calls.rb:515:9:515:42 | call to puts |
 | calls.rb:522:5:524:7 | call to protected |
 | calls.rb:534:1:534:24 | call to foo |
 | calls.rb:535:1:535:24 | call to bar |
@@ -347,6 +349,8 @@ unresolvedCall
 | private.rb:57:1:57:14 | call to private4 |
 | private.rb:100:7:100:29 | call to m1 |
 | private.rb:105:1:105:23 | call to m1 |
+| toplevel_importer.rb:4:1:4:31 | call to require_relative |
+| toplevel_not_used.rb:4:1:4:20 | call to method_from_importer |
 | toplevel_self_singleton.rb:8:1:12:3 | call to do_something |
 | toplevel_self_singleton.rb:10:9:10:27 | call to ab_singleton_method |
 privateMethod
@@ -379,6 +383,9 @@ privateMethod
 | private.rb:83:11:85:5 | m1 |
 | private.rb:87:11:89:5 | m2 |
 | private.rb:97:11:101:5 | m1 |
+| toplevel_importer.rb:1:1:2:3 | method_from_importer |
+| toplevel_lib.rb:1:1:2:3 | method_from_lib |
+| toplevel_not_used.rb:1:1:2:3 | method_from_lib |
 | toplevel_self_singleton.rb:9:5:11:7 | method_in_block |
 publicMethod
 | calls.rb:7:1:9:3 | bar |

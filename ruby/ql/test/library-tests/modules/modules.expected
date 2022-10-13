@@ -83,6 +83,9 @@ getModule
 | private.rb:62:1:80:3 | F |
 | private.rb:82:1:94:3 | PrivateOverride1 |
 | private.rb:96:1:102:3 | PrivateOverride2 |
+| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb |
+| toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb |
+| toplevel_not_used.rb:1:1:4:46 | top-level of toplevel_not_used.rb |
 | toplevel_self_singleton.rb:1:1:12:4 | top-level of toplevel_self_singleton.rb |
 | toplevel_self_singleton.rb:2:5:5:7 | A::B |
 getADeclaration
@@ -166,6 +169,9 @@ getADeclaration
 | private.rb:62:1:80:3 | F | private.rb:62:1:80:3 | F |
 | private.rb:82:1:94:3 | PrivateOverride1 | private.rb:82:1:94:3 | PrivateOverride1 |
 | private.rb:96:1:102:3 | PrivateOverride2 | private.rb:96:1:102:3 | PrivateOverride2 |
+| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | toplevel_importer.rb:1:1:6:53 | toplevel_importer.rb |
+| toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb | toplevel_lib.rb:1:1:4:57 | toplevel_lib.rb |
+| toplevel_not_used.rb:1:1:4:46 | top-level of toplevel_not_used.rb | toplevel_not_used.rb:1:1:4:46 | toplevel_not_used.rb |
 | toplevel_self_singleton.rb:1:1:12:4 | top-level of toplevel_self_singleton.rb | toplevel_self_singleton.rb:1:1:12:4 | toplevel_self_singleton.rb |
 | toplevel_self_singleton.rb:2:5:5:7 | A::B | modules_rec.rb:4:1:5:3 | B |
 | toplevel_self_singleton.rb:2:5:5:7 | A::B | toplevel_self_singleton.rb:2:5:5:7 | B |
@@ -235,6 +241,10 @@ getAnIncludedModule
 | modules.rb:95:1:99:3 | IncludeTest2 | modules.rb:63:1:81:3 | Test |
 | modules_rec.rb:1:1:11:26 | top-level of modules_rec.rb | calls.rb:115:1:118:3 | Object |
 | private.rb:1:1:105:40 | top-level of private.rb | calls.rb:115:1:118:3 | Object |
+| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | calls.rb:115:1:118:3 | Object |
+| toplevel_importer.rb:1:1:6:53 | top-level of toplevel_importer.rb | toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb |
+| toplevel_lib.rb:1:1:4:57 | top-level of toplevel_lib.rb | calls.rb:115:1:118:3 | Object |
+| toplevel_not_used.rb:1:1:4:46 | top-level of toplevel_not_used.rb | calls.rb:115:1:118:3 | Object |
 | toplevel_self_singleton.rb:1:1:12:4 | top-level of toplevel_self_singleton.rb | calls.rb:115:1:118:3 | Object |
 resolveConstantReadAccess
 | calls.rb:36:1:36:1 | M | M |
@@ -1664,6 +1674,19 @@ enclosingModule
 | private.rb:105:1:105:16 | PrivateOverride2 | private.rb:1:1:105:40 | private.rb |
 | private.rb:105:1:105:20 | call to new | private.rb:1:1:105:40 | private.rb |
 | private.rb:105:1:105:23 | call to m1 | private.rb:1:1:105:40 | private.rb |
+| toplevel_importer.rb:1:1:2:3 | method_from_importer | toplevel_importer.rb:1:1:6:53 | toplevel_importer.rb |
+| toplevel_importer.rb:4:1:4:31 | call to require_relative | toplevel_importer.rb:1:1:6:53 | toplevel_importer.rb |
+| toplevel_importer.rb:4:1:4:31 | self | toplevel_importer.rb:1:1:6:53 | toplevel_importer.rb |
+| toplevel_importer.rb:4:18:4:31 | "toplevel_lib" | toplevel_importer.rb:1:1:6:53 | toplevel_importer.rb |
+| toplevel_importer.rb:4:19:4:30 | toplevel_lib | toplevel_importer.rb:1:1:6:53 | toplevel_importer.rb |
+| toplevel_importer.rb:6:1:6:15 | call to method_from_lib | toplevel_importer.rb:1:1:6:53 | toplevel_importer.rb |
+| toplevel_importer.rb:6:1:6:15 | self | toplevel_importer.rb:1:1:6:53 | toplevel_importer.rb |
+| toplevel_lib.rb:1:1:2:3 | method_from_lib | toplevel_lib.rb:1:1:4:57 | toplevel_lib.rb |
+| toplevel_lib.rb:4:1:4:20 | call to method_from_importer | toplevel_lib.rb:1:1:4:57 | toplevel_lib.rb |
+| toplevel_lib.rb:4:1:4:20 | self | toplevel_lib.rb:1:1:4:57 | toplevel_lib.rb |
+| toplevel_not_used.rb:1:1:2:3 | method_from_lib | toplevel_not_used.rb:1:1:4:46 | toplevel_not_used.rb |
+| toplevel_not_used.rb:4:1:4:20 | call to method_from_importer | toplevel_not_used.rb:1:1:4:46 | toplevel_not_used.rb |
+| toplevel_not_used.rb:4:1:4:20 | self | toplevel_not_used.rb:1:1:4:46 | toplevel_not_used.rb |
 | toplevel_self_singleton.rb:1:1:6:3 | A | toplevel_self_singleton.rb:1:1:12:4 | toplevel_self_singleton.rb |
 | toplevel_self_singleton.rb:2:5:5:7 | B | toplevel_self_singleton.rb:1:1:6:3 | A |
 | toplevel_self_singleton.rb:3:9:4:11 | ab_singleton_method | toplevel_self_singleton.rb:2:5:5:7 | B |

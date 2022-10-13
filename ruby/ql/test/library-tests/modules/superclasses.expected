@@ -219,6 +219,15 @@ private.rb:
 #   96| PrivateOverride2
 #-----|  -> PrivateOverride1
 
+toplevel_importer.rb:
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_importer.rb
+
+toplevel_lib.rb:
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_lib.rb
+
+toplevel_not_used.rb:
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_not_used.rb
+
 toplevel_self_singleton.rb:
 #    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_self_singleton.rb
 

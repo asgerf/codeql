@@ -234,6 +234,19 @@ private.rb:
 #   96| PrivateOverride2
 #-----| super -> PrivateOverride1
 
+toplevel_importer.rb:
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_importer.rb
+#-----| include -> Object
+#-----| include -> top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_lib.rb
+
+toplevel_lib.rb:
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_lib.rb
+#-----| include -> Object
+
+toplevel_not_used.rb:
+#    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_not_used.rb
+#-----| include -> Object
+
 toplevel_self_singleton.rb:
 #    1| top-level of /Users/asger/git/code/ql/ruby/ql/test/library-tests/modules/toplevel_self_singleton.rb
 #-----| include -> Object
