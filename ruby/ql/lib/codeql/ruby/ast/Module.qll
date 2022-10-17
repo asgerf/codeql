@@ -136,6 +136,14 @@ class ModuleBase extends BodyStmt, Scope, TModuleBase {
 
   /** Gets the representation of the run-time value of this module or class. */
   Module getModule() { none() }
+
+  /** Gets the nearest enclosing `Namespace` or `Toplevel`, possibly this module itself. */
+  Namespace getNamespaceOrToplevel() {
+    result = this
+    or
+    not this instanceof Namespace and
+    result = this.getEnclosingModule().getNamespaceOrToplevel()
+  }
 }
 
 /**
