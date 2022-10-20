@@ -381,6 +381,8 @@ private module Cached {
     or
     // Needed for stores in type tracking
     TypeTrackerSpecific::storeStepIntoSourceNode(_, n, _)
+    or
+    n.asExpr().getExpr() instanceof Namespace
   }
 
   cached
