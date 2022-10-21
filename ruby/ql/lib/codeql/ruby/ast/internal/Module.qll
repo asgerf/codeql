@@ -22,7 +22,7 @@ private module Cached {
       or
       qName = namespaceDeclaration(_)
     } or
-    TUnresolved(Namespace n) { not exists(namespaceDeclaration(n)) }
+    TUnresolved(Namespace n, string relativePath) { relativePath = unresolvedConstantAccess(n, _) }
 
   cached
   string namespaceDeclaration(Namespace n) {
@@ -36,6 +36,18 @@ private module Cached {
       TResolved(container) = resolveConstantReadAccess(n.getScopeExpr()) and
       result = scopeAppend(container, n.getName())
     )
+  }
+
+  cached
+  string unresolvedConstantAccess(Namespace ns, ConstantAccess access) {
+    not exists(access.getScopeExpr()) and
+    not access.hasGlobalScope() and
+    not exists(resolveConstant(access)) and
+    not exists(resolveConstantWrite(access)) and
+    ns = access.getEnclosingModule().getNamespaceOrToplevel() and
+    result = access.getName()
+    or
+    result = scopeAppend(unresolvedConstantAccess(ns, access.getScopeExpr()), access.getName())
   }
 
   cached
@@ -100,8 +112,10 @@ private module Cached {
    * Resolve class or module read access to a qualified module name.
    */
   cached
-  TResolved resolveConstantReadAccess(ConstantReadAccess r) {
-    exists(string qname | qname = resolveConstant(r) and result = TResolved(qname))
+  TModule resolveConstantReadAccess(ConstantReadAccess r) {
+    result = TResolved(resolveConstant(r))
+    or
+    exists(Namespace n | result = TUnresolved(n, unresolvedConstantAccess(n, r)))
   }
 
   pragma[nomagic]

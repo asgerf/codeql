@@ -31,7 +31,10 @@ class Module extends TModule {
   string toString() {
     this = TResolved(result)
     or
-    exists(Namespace n | this = TUnresolved(n) and result = "...::" + n.toString())
+    exists(Namespace n, string path |
+      this = TUnresolved(n, path) and
+      result = "(" + n.getName() + "?)::" + path
+    )
   }
 
   /**
@@ -43,7 +46,17 @@ class Module extends TModule {
 
   /** Gets the location of this module. */
   Location getLocation() {
-    exists(Namespace n | this = TUnresolved(n) and result = n.getLocation())
+    result =
+      min(Namespace n, ConstantAccess access, string relativePath, Location loc, int weight |
+        this = TUnresolved(n, relativePath) and
+        relativePath = unresolvedConstantAccess(n, access) and
+        loc = access.getLocation() and
+        if exists(loc.getFile().getRelativePath()) then weight = 0 else weight = 1
+      |
+        loc
+        order by
+          weight, loc.getFile().getAbsolutePath(), loc.getStartLine(), loc.getStartColumn()
+      )
     or
     result =
       min(Namespace n, string qName, Location loc, int weight |
@@ -256,7 +269,7 @@ class Namespace extends ModuleBase, ConstantWriteAccess, TNamespace {
   final override Module getModule() {
     result = any(string qName | qName = namespaceDeclaration(this) | TResolved(qName))
     or
-    result = TUnresolved(this)
+    exists(Namespace n | result = TUnresolved(n, unresolvedConstantAccess(n, this)))
   }
 
   override AstNode getAChild(string pred) {
