@@ -6,12 +6,19 @@ private import codeql.ruby.typetracking.TypeTracker
 private import codeql.ruby.dataflow.SSA
 private import FlowSummaryImpl as FlowSummaryImpl
 private import SsaImpl as SsaImpl
+private import codeql.ruby.ApiGraphs
 
 /**
  * An element, viewed as a node in a data flow graph. Either an expression
  * (`ExprNode`) or a parameter (`ParameterNode`).
  */
 class Node extends TNode {
+  /**
+   * Gets an API node for reasoning about what values may flow here.
+   */
+  pragma[inline]
+  API::Node backtrack() { result = API::Internal::getDef(this) }
+
   /** Gets the expression corresponding to this node, if any. */
   CfgNodes::ExprCfgNode asExpr() { result = this.(ExprNode).getExprNode() }
 
@@ -212,6 +219,12 @@ class LocalSourceNode extends Node {
   predicate flowsTo(Node nodeTo) { hasLocalSource(nodeTo, this) }
 
   /**
+   * Gets an API node for reasoning about where this value may flow.
+   */
+  pragma[inline]
+  API::Node track() { pragma[only_bind_into](result) = API::Internal::getUse(this) }
+
+  /**
    * Gets a node that this node may flow to using one heap and/or interprocedural step.
    *
    * See `TypeTracker` for more details about how to use this.
@@ -234,11 +247,19 @@ class LocalSourceNode extends Node {
   pragma[inline]
   Node getALocalUse() { hasLocalSource(result, this) }
 
+  /** Gets a method call where this node flows to the receiver using local flow steps. */
+  CallNode getALocalMethodCall() { Cached::hasMethodCall(this, result, _) }
+
+  /** Gets a call to a method named `name`, where this node flows to the receiver using local flow steps. */
+  CallNode getALocalMethodCall(string name) { Cached::hasMethodCall(this, result, name) }
+
   /** Gets a method call where this node flows to the receiver. */
-  CallNode getAMethodCall() { Cached::hasMethodCall(this, result, _) }
+  pragma[inline]
+  CallNode getAMethodCall() { result = this.track().getAMethodCall(_) }
 
   /** Gets a call to a method named `name`, where this node flows to the receiver. */
-  CallNode getAMethodCall(string name) { Cached::hasMethodCall(this, result, name) }
+  pragma[inline]
+  CallNode getAMethodCall(string name) { result = this.track().getAMethodCall(name) }
 
   /** Gets a call `obj.name` with no arguments, where this node flows to `obj`. */
   CallNode getAnAttributeRead(string name) {
@@ -909,6 +930,19 @@ class ModuleNode instanceof Module {
   ParameterNode getAnInstanceSelf() {
     // Make sure to include the 'self' in overridden instance methods
     result = this.getAnAncestor().getAnOwnInstanceSelf()
+  }
+
+  /**
+   * Gets a `self` parameter or `new` call that refers to or creates an instance of this module or class.
+   *
+   * This looks upwards in the hierarchy, but not downwards.
+   * As such, `self` parameters from inherited methods are included, but `new` calls are only
+   * included when they specifically target this class.
+   */
+  LocalSourceNode getAnInstance() {
+    result = this.getAnInstanceSelf()
+    or
+    result = this.getAnImmediateReference().getAMethodCall("new")
   }
 
   private InstanceVariableAccess getAnOwnInstanceVariableAccess(string name) {

@@ -13,6 +13,7 @@ private import codeql.ruby.typetracking.TypeTrackerSpecific as TypeTrackerSpecif
 private import codeql.ruby.controlflow.CfgNodes
 private import codeql.ruby.dataflow.internal.DataFlowPrivate as DataFlowPrivate
 private import codeql.ruby.dataflow.internal.DataFlowDispatch as DataFlowDispatch
+private import codeql.ruby.typetracking.internal.UniversalTypeTrackingSpecific
 
 /**
  * Provides classes and predicates for working with APIs used in a database.
@@ -100,7 +101,7 @@ module API {
     pragma[inline]
     DataFlow::Node getAValueReachableFromSource() {
       exists(DataFlow::LocalSourceNode src | Impl::use(this, src) |
-        Impl::trackUseNode(src).flowsTo(result)
+        UniversalTypeTracking::trackNode(src).flowsTo(result)
       )
     }
 
@@ -150,7 +151,9 @@ module API {
      * This is similar to `asSink()` but additionally includes nodes that transitively reach a sink by data flow.
      * See `asSink()` for examples.
      */
-    DataFlow::Node getAValueReachingSink() { result = Impl::trackDefNode(this.asSink()) }
+    DataFlow::Node getAValueReachingSink() {
+      result = UniversalTypeTracking::backtrackNode(this.asSink().getALocalSource())
+    }
 
     /** DEPRECATED. This predicate has been renamed to `getAValueReachableFromSource()`. */
     deprecated DataFlow::Node getAUse() { result = this.getAValueReachableFromSource() }
@@ -446,6 +449,15 @@ module API {
   Node getTopLevelMember(string m) { result = root().getMember(m) }
 
   /**
+   * INTERNAL USE ONLY.
+   */
+  module Internal {
+    predicate getUse = Impl::getUse/1;
+
+    predicate getDef = Impl::getDef/1;
+  }
+
+  /**
    * Provides the actual implementation of API graphs, cached for performance.
    *
    * Ideally, we'd like nodes to correspond to (global) access paths, with edge labels
@@ -474,11 +486,17 @@ module API {
       /** The root of the API graph. */
       MkRoot() or
       /** The method accessed at `call`, synthetically treated as a separate object. */
-      MkMethodAccessNode(DataFlow::CallNode call) { isUse(call) } or
+      MkMethodAccessNode(DataFlow::CallNode call) or
       /** A use of an API member at the node `nd`. */
-      MkUse(DataFlow::Node nd) { isUse(nd) } or
+      MkUse(DataFlow::LocalSourceNode nd) or
       /** A value that escapes into an external library at the node `nd` */
-      MkDef(DataFlow::Node nd) { isDef(nd) }
+      MkDef(DataFlow::Node nd)
+
+    cached
+    API::Node getUse(DataFlow::LocalSourceNode node) { result = MkUse(node) }
+
+    cached
+    API::Node getDef(DataFlow::Node node) { result = MkDef(node) }
 
     private string resolveTopLevel(ConstantReadAccess read) {
       result = read.getModule().getQualifiedName() and
@@ -539,24 +557,6 @@ module API {
       )
     }
 
-    pragma[nomagic]
-    private predicate isUse(DataFlow::Node nd) {
-      useRoot(_, nd)
-      or
-      exists(DataFlow::Node node |
-        useCandFwd().flowsTo(node) and
-        useStep(_, node, nd)
-      )
-      or
-      useCandFwd().flowsTo(nd.(DataFlow::CallNode).getReceiver())
-      or
-      parameterStep(_, defCand(), nd)
-      or
-      nd = any(EntryPoint entry).getASource()
-      or
-      nd = any(EntryPoint entry).getACall()
-    }
-
     /**
      * Holds if `ref` is a use of node `nd`.
      */
@@ -568,40 +568,6 @@ module API {
      */
     cached
     predicate def(TApiNode nd, DataFlow::Node rhs) { nd = MkDef(rhs) }
-
-    /** Gets a node reachable from a use-node. */
-    private DataFlow::LocalSourceNode useCandFwd(TypeTracker t) {
-      t.start() and
-      isUse(result)
-      or
-      exists(TypeTracker t2 | result = useCandFwd(t2).track(t2, t))
-    }
-
-    /** Gets a node reachable from a use-node. */
-    private DataFlow::LocalSourceNode useCandFwd() { result = useCandFwd(TypeTracker::end()) }
-
-    private predicate isDef(DataFlow::Node rhs) {
-      // If a call node is relevant as a use-node, treat its arguments as def-nodes
-      argumentStep(_, useCandFwd(), rhs)
-      or
-      defStep(_, trackDefNode(_), rhs)
-      or
-      rhs = any(EntryPoint entry).getASink()
-    }
-
-    /** Gets a data flow node that flows to the RHS of a def-node. */
-    private DataFlow::LocalSourceNode defCand(TypeBackTracker t) {
-      t.start() and
-      exists(DataFlow::Node rhs |
-        isDef(rhs) and
-        result = rhs.getALocalSource()
-      )
-      or
-      exists(TypeBackTracker t2 | result = defCand(t2).backtrack(t2, t))
-    }
-
-    /** Gets a data flow node that flows to the RHS of a def-node. */
-    private DataFlow::LocalSourceNode defCand() { result = defCand(TypeBackTracker::end()) }
 
     /**
      * Holds if there should be a `lbl`-edge from the given call to an argument.
@@ -630,81 +596,30 @@ module API {
     }
 
     /**
-     * Gets a data-flow node to which `src`, which is a use of an API-graph node, flows.
-     *
-     * The flow from `src` to the returned node may be inter-procedural.
-     */
-    private DataFlow::LocalSourceNode trackUseNode(DataFlow::LocalSourceNode src, TypeTracker t) {
-      result = src and
-      isUse(src) and
-      t.start()
-      or
-      exists(TypeTracker t2 |
-        result = trackUseNode(src, t2).track(t2, t) and
-        not result instanceof DataFlowPrivate::SelfParameterNode
-      )
-    }
-
-    /**
-     * Gets a data-flow node to which `src`, which is a use of an API-graph node, flows.
-     *
-     * The flow from `src` to the returned node may be inter-procedural.
-     */
-    cached
-    DataFlow::LocalSourceNode trackUseNode(DataFlow::LocalSourceNode src) {
-      result = trackUseNode(src, TypeTracker::end())
-    }
-
-    /** Gets a data flow node reaching the RHS of the given def node. */
-    private DataFlow::LocalSourceNode trackDefNode(DataFlow::Node rhs, TypeBackTracker t) {
-      t.start() and
-      isDef(rhs) and
-      result = rhs.getALocalSource()
-      or
-      exists(TypeBackTracker t2, DataFlow::LocalSourceNode mid |
-        mid = trackDefNode(rhs, t2) and
-        not mid instanceof DataFlowPrivate::SelfParameterNode and
-        result = mid.backtrack(t2, t)
-      )
-    }
-
-    /** Gets a data flow node reaching the RHS of the given def node. */
-    cached
-    DataFlow::LocalSourceNode trackDefNode(DataFlow::Node rhs) {
-      result = trackDefNode(rhs, TypeBackTracker::end())
-    }
-
-    pragma[nomagic]
-    private predicate useNodeReachesReceiver(DataFlow::Node use, DataFlow::CallNode call) {
-      trackUseNode(use).flowsTo(call.getReceiver())
-    }
-
-    /**
      * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
      */
     cached
     predicate edge(TApiNode pred, Label::ApiLabel lbl, TApiNode succ) {
       /* Every node that is a use of an API component is itself added to the API graph. */
       exists(DataFlow::LocalSourceNode ref | succ = MkUse(ref) |
-        pred = MkRoot() and
-        useRoot(lbl, ref)
+        useRoot(lbl, pragma[only_bind_into](ref)) and
+        pred = MkRoot()
         or
-        exists(DataFlow::Node node, DataFlow::Node src |
-          pred = MkUse(src) and
-          trackUseNode(src).flowsTo(node) and
-          useStep(lbl, node, ref)
+        exists(DataFlow::Node node |
+          useStep(lbl, pragma[only_bind_into](node), ref) and
+          pred = MkUse(UniversalTypeTracking::backtrackNode(node.getALocalSource()))
         )
         or
         exists(DataFlow::Node callback |
-          pred = MkDef(callback) and
-          parameterStep(lbl, trackDefNode(callback), ref)
+          parameterStep(lbl, pragma[only_bind_into](callback), ref) and
+          pred = MkDef(UniversalTypeTracking::trackNode(callback).getALocalUse())
         )
       )
       or
-      exists(DataFlow::Node predNode, DataFlow::Node succNode |
-        def(pred, predNode) and
-        def(succ, succNode) and
-        defStep(lbl, trackDefNode(predNode), succNode)
+      exists(DataFlow::Node predDef, DataFlow::Node succNode |
+        defStep(lbl, pragma[only_bind_into](predDef), pragma[only_bind_into](succNode)) and
+        def(pred, UniversalTypeTracking::trackNode(predDef).getALocalUse()) and
+        def(succ, succNode)
       )
       or
       // `pred` is a use of class A
@@ -720,10 +635,10 @@ module API {
       or
       exists(DataFlow::CallNode call |
         // from receiver to method call node
-        exists(DataFlow::Node receiver |
-          pred = MkUse(receiver) and
-          useNodeReachesReceiver(receiver, call) and
-          lbl = Label::method(call.getMethodName()) and
+        exists(DataFlow::LocalSourceNode receiver, string name |
+          call = receiver.getALocalMethodCall(name) and
+          lbl = Label::method(name) and
+          pred = MkUse(UniversalTypeTracking::backtrackNode(receiver)) and
           succ = MkMethodAccessNode(call)
         )
         or

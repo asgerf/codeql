@@ -137,6 +137,12 @@ private module Config {
     )
   }
 
+  DataFlow::LocalSourceNode config() {
+    result = configSource()
+    or
+    result = config().getAMethodCall()
+  }
+
   /**
    * Gets a reference to the ActionController config object.
    */
@@ -165,7 +171,7 @@ private module Settings {
     Setting() {
       // exclude some test configuration
       not isInTestConfiguration(this.getLocation()) and
-      this = Config::configSource().getAMethodCall+()
+      this = Config::config().getAMethodCall()
     }
   }
 

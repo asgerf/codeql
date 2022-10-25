@@ -579,7 +579,7 @@ private module ParamsSummaries {
   private DataFlow::LocalSourceNode paramsInstance() {
     result.asExpr().getExpr() instanceof Rails::ParamsCall
     or
-    result = paramsInstance().getAMethodCall(paramsMethodReturningParamsInstance())
+    result = paramsInstance().track().getAMethodCall(paramsMethodReturningParamsInstance())
   }
 
   /**
@@ -621,7 +621,8 @@ private module ParamsSummaries {
     MethodsReturningParamsInstanceSummary() { this = "ActionController::Parameters#<various>" }
 
     override MethodCall getACall() {
-      result = paramsInstance().getAMethodCall(methodReturnsTaintFromSelf()).asExpr().getExpr()
+      result =
+        paramsInstance().track().getAMethodCall(methodReturnsTaintFromSelf()).asExpr().getExpr()
     }
 
     override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
