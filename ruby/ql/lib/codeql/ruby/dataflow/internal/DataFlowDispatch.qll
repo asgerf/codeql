@@ -965,7 +965,8 @@ private DataFlow::Node trackSingletonMethodOnInstanceRec(
     paramReturnFlow(mid, result, summary)
     or
     localFlowStep(mid, result, summary)
-  )
+  ) and
+  not result instanceof SelfParameterNode
 }
 
 pragma[nomagic]
