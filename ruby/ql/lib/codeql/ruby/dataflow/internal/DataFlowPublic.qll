@@ -204,6 +204,8 @@ private predicate hasLocalSource(Node sink, Node source) {
     or
     // Explicitly include the SSA param input step as type-tracking omits this step.
     LocalFlow::localFlowSsaParamInput(mid, sink)
+    or
+    LocalFlow::localFlowSsaParamCaptureInput(mid, sink)
   )
 }
 
