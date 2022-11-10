@@ -463,7 +463,7 @@ private module Cached {
     or
     exists(Module cls, string method |
       superCall(call, cls, method) and
-      result = lookupMethod(cls.getAnImmediateAncestor+(), method)
+      result = lookupMethod(cls.getAnImmediateAncestor(), method)
     )
     or
     result = yieldCall(call)
