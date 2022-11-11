@@ -6,6 +6,7 @@ private import python
 private import semmle.python.dataflow.new.internal.DataFlowPublic as DataFlowPublic
 private import semmle.python.dataflow.new.internal.DataFlowPrivate as DataFlowPrivate
 import semmle.python.internal.CachedStages
+private import UniversalTypeTrackingSpecific
 
 class Node = DataFlowPublic::Node;
 

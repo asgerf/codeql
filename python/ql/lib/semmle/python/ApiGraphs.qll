@@ -10,6 +10,7 @@
 private import python as PY
 import semmle.python.dataflow.new.DataFlow
 private import semmle.python.internal.CachedStages
+private import semmle.python.dataflow.new.internal.UniversalTypeTrackingSpecific
 
 /**
  * Provides classes and predicates for working with the API boundary between the current
@@ -925,21 +926,6 @@ module API {
     }
 
     /**
-     * Gets a data-flow node to which `src`, which is a use of an API-graph node, flows.
-     *
-     * The flow from `src` to that node may be inter-procedural.
-     */
-    private DataFlow::TypeTrackingNode trackUseNode(
-      DataFlow::LocalSourceNode src, DataFlow::TypeTracker t
-    ) {
-      t.start() and
-      use(_, src) and
-      result = src
-      or
-      exists(DataFlow::TypeTracker t2 | result = trackUseNode(src, t2).track(t2, t))
-    }
-
-    /**
      * Holds if `arg` is passed as an argument to a use of `base`.
      *
      * `lbl` is represents which parameter of the function was passed. Either a numbered parameter, or a keyword parameter.
@@ -967,15 +953,7 @@ module API {
      */
     cached
     DataFlow::LocalSourceNode trackDefNode(DataFlow::Node nd) {
-      result = trackDefNode(nd, DataFlow::TypeBackTracker::end())
-    }
-
-    private DataFlow::LocalSourceNode trackDefNode(DataFlow::Node nd, DataFlow::TypeBackTracker t) {
-      t.start() and
-      rhs(_, nd) and
-      result = nd.getALocalSource()
-      or
-      exists(DataFlow::TypeBackTracker t2 | result = trackDefNode(nd, t2).backtrack(t2, t))
+      result = UniversalTypeTracking::backtrackNode(nd.getALocalSource())
     }
 
     /**
@@ -986,7 +964,7 @@ module API {
     cached
     DataFlow::LocalSourceNode trackUseNode(DataFlow::LocalSourceNode src) {
       Stages::TypeTracking::ref() and
-      result = trackUseNode(src, DataFlow::TypeTracker::end()) and
+      result = UniversalTypeTracking::trackNode(src) and
       result instanceof DataFlow::ExprNode
     }
 

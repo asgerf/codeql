@@ -53,9 +53,12 @@ class LocalSourceNode extends Node {
     this = any(ModuleVariableNode mvn).getARead()
   }
 
-  /** Holds if this `LocalSourceNode` can flow to `nodeTo` in one or more local flow steps. */
+  /** Holds if this `LocalSourceNode` can flow to `nodeTo` in zero or more local flow steps. */
   pragma[inline]
   predicate flowsTo(Node nodeTo) { Cached::hasLocalSource(nodeTo, this) }
+
+  /** Gets a data flow node that this node can flow to in zero or more local flow steps. */
+  Node getALocalUse() { this.flowsTo(result) }
 
   /**
    * Gets a reference (read or write) of attribute `attrName` on this node.
