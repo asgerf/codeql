@@ -573,5 +573,9 @@
   "IncompleteMultiCharacterSanitization JS/Ruby": [
     "javascript/ql/lib/semmle/javascript/security/IncompleteMultiCharacterSanitizationQuery.qll",
     "ruby/ql/lib/codeql/ruby/security/IncompleteMultiCharacterSanitizationQuery.qll"
+  ],
+  "Universal type-tracking": [
+    "ruby/ql/lib/codeql/ruby/typetracking/internal/UniversalTypeTrackingImpl.qll",
+    "python/ql/lib/semmle/python/dataflow/new/internal/UniversalTypeTrackingImpl.qll"
   ]
 }
