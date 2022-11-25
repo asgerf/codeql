@@ -17,6 +17,16 @@ module UniversalTypeTrackingForRuby implements UniversalTypeTrackingSig {
 
   class ContentFilter = TT::ContentFilter;
 
+  private newtype TTransformation = MkEmptyTransformation()
+
+  class Transformation extends TTransformation {
+    Transformation append(Transformation other) { other = this and result = this }
+
+    string toString() { result = "no transformation" }
+
+    predicate isEmpty() { any() }
+  }
+
   private predicate isLargeContentSet(Content cs) { strictcount(cs.getAReadContent()) > 10 }
 
   Content getLoadKey(Content loadSet) {
@@ -84,6 +94,8 @@ module UniversalTypeTrackingForRuby implements UniversalTypeTrackingSig {
   predicate returnStep(Node pred, Node succ) { TT::returnStep(pred.getALocalUse(), succ) }
 
   predicate jumpStep(Node pred, Node succ) { TT::jumpStep(pred.getALocalUse(), succ) }
+
+  predicate transformStep(Node pred, Node succ, Transformation transform) { none() }
 
   predicate isParameterLike(Node node) {
     node instanceof DataFlow::ParameterNode

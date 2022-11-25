@@ -28,6 +28,30 @@ signature module UniversalTypeTrackingSig {
   }
 
   /**
+   * Summary of value-transforming steps.
+   *
+   * This can be used to support partial invocation, and will usually include
+   * the number of positional parameters that have been bound by partial calls.
+   */
+  class Transformation {
+    /**
+     * Gets the transformation representing this one followed by `other`, if any.
+     */
+    Transformation append(Transformation other);
+
+    /** Gets a string representation of this partial call state. */
+    string toString();
+
+    /**
+     * Holds if this is the empty transformation, that is, an ordinary value-transforming step.
+     *
+     * This transformation value must exist, but should not be used in `transformStep` since it
+     * is effectively a `levelStep`.
+     */
+    predicate isEmpty();
+  }
+
+  /**
    * Holds if `pred` is stored in the `key` content of `succ`.
    */
   predicate storeStep(Node pred, Node succ, Content key);
@@ -71,6 +95,11 @@ signature module UniversalTypeTrackingSig {
    * Holds if `pred -> succ` is a jump step.
    */
   predicate jumpStep(Node pred, Node succ);
+
+  /**
+   * Holds if the value in `pred` is transformed according to `transform` and flows to `succ`.
+   */
+  predicate transformStep(Node pred, Node succ, Transformation transform);
 
   /**
    * Holds if `node` is a parameter and so should not be tracked out of returns.
@@ -136,7 +165,7 @@ module UniversalTypeTrackingGen<UniversalTypeTrackingSig S> {
 
     /** Holds if `content` is permitted by this filter. */
     pragma[nomagic]
-    predicate permitsContents(Content content) {
+    predicate permitsContent(Content content) {
       content = getAStoreKey() and
       (
         exists(ContentFilter filter |
@@ -149,43 +178,64 @@ module UniversalTypeTrackingGen<UniversalTypeTrackingSig S> {
   }
 
   private newtype TSummary =
-    MkSummary(boolean hasReturn, boolean hasCall, SummaryFilter filter) {
+    MkSummary(boolean hasReturn, boolean hasCall, SummaryFilter filter, Transformation transform) {
       hasReturn = [true, false] and
-      hasCall = [true, false]
+      hasCall = [true, false] and
+      (
+        // Transformations and content filters are mutually exclusive
+        transform.isEmpty()
+        or
+        filter.isEmpty()
+      )
     }
 
   /** A summary of the steps needed to propagate a value somewhere. */
   class Summary extends TSummary {
     /** Gets the `return` bit. */
-    boolean getReturn() { this = MkSummary(result, _, _) }
+    boolean getReturn() { this = MkSummary(result, _, _, _) }
 
     /** Gets the `call` bit. */
-    boolean getCall() { this = MkSummary(_, result, _) }
+    boolean getCall() { this = MkSummary(_, result, _, _) }
 
     /** Gets the summary of the content filters seen on the path. */
-    SummaryFilter getFilter() { this = MkSummary(_, _, result) }
+    SummaryFilter getFilter() { this = MkSummary(_, _, result, _) }
+
+    /** Gets the summary of the transformations seen on this path. */
+    Transformation getTransformation() { this = MkSummary(_, _, _, result) }
 
     /** Gets this summary with a call step appended. */
     pragma[nomagic]
-    Summary appendCall() { result = MkSummary(this.getReturn(), true, this.getFilter()) }
+    Summary appendCall() {
+      result = MkSummary(this.getReturn(), true, this.getFilter(), this.getTransformation())
+    }
 
     /** Gets this summary with a return step appended. */
     pragma[nomagic]
     Summary appendReturn() {
       this.getCall() = false and
-      result = MkSummary(true, false, this.getFilter())
+      result = MkSummary(true, false, this.getFilter(), _)
     }
 
     /** Gets this summary with a jump step appended. */
     pragma[nomagic]
-    Summary appendJump() { result = MkSummary(this.getReturn(), false, this.getFilter()) }
+    Summary appendJump() {
+      result = MkSummary(this.getReturn(), false, this.getFilter(), this.getTransformation())
+    }
 
     /** Gets this summary with a negative content filter appended. */
     pragma[nomagic]
     Summary appendWithoutContent(ContentFilter filter) {
       result =
         MkSummary(this.getReturn(), this.getCall(),
-          this.getFilter().append(MkNegativeFilter(filter)))
+          this.getFilter().append(MkNegativeFilter(filter)), this.getTransformation())
+    }
+
+    /** Gets this summary with a transformation appended. */
+    pragma[nomagic]
+    Summary appendTransformation(Transformation transform) {
+      result =
+        MkSummary(this.getReturn(), this.getCall(), this.getFilter(),
+          this.getTransformation().append(transform))
     }
 
     /** Gets this summary with the other summary appended. */
@@ -193,41 +243,57 @@ module UniversalTypeTrackingGen<UniversalTypeTrackingSig S> {
     Summary append(Summary other) {
       this.getCall().booleanAnd(other.getReturn()) = false and
       result =
-        MkSummary(this.getReturn().booleanOr(other.getReturn()),
-          this.getCall().booleanOr(other.getCall()), this.getFilter().append(other.getFilter()))
+        MkSummary(this.getReturn().booleanOr(other.getReturn()), //
+          this.getCall().booleanOr(other.getCall()), //
+          this.getFilter().append(other.getFilter()), //
+          this.getTransformation().append(other.getTransformation()))
     }
 
     /** Holds if this summary permits flow of the given `content`. */
     pragma[nomagic]
-    predicate permitsContent(Content content) { this.getFilter().permitsContents(content) }
+    predicate permitsContent(Content content) {
+      this.getFilter().permitsContent(content) and
+      this.getTransformation().isEmpty()
+    }
 
     /** Gets this summary without any content filter. */
     pragma[nomagic]
-    Summary withoutFilter() { result = MkSummary(this.getReturn(), this.getCall(), MkNoFilter()) }
+    Summary withoutFilter() {
+      result = MkSummary(this.getReturn(), this.getCall(), MkNoFilter(), this.getTransformation())
+    }
 
     /** Gets this summary without a filter, but only if it it currently permits `content`. */
     pragma[nomagic]
     Summary popContent(Content content) {
-      this.getFilter().permitsContents(content) and
+      this.permitsContent(content) and
       result = this.withoutFilter()
     }
 
-    private string getLevelString() {
-      this = MkSummary(false, false, _) and result = "level"
+    private string getToStringPart(int i) {
+      i = 0 and
+      this.getReturn() = true and
+      result = "return"
       or
-      this = MkSummary(true, false, _) and result = "return"
+      i = 1 and
+      this.getCall() = true and
+      result = "call"
       or
-      this = MkSummary(false, true, _) and result = "call"
+      i = 2 and
+      not this.getFilter() = MkNoFilter() and
+      result = this.getFilter().toString()
       or
-      this = MkSummary(true, true, _) and result = "return,call"
-    }
-
-    private string getFilterString() {
-      if this.getFilter() = MkNoFilter() then result = "" else result = " " + this.getFilter()
+      i = 3 and
+      not this.getTransformation().isEmpty() and
+      result = this.getTransformation().toString()
     }
 
     /** Gets a string representation of this summary. */
-    string toString() { result = this.getLevelString() + this.getFilterString() }
+    string toString() {
+      result = strictconcat(int i | | this.getToStringPart(i) order by i, ", ")
+      or
+      not exists(this.getToStringPart(_)) and
+      result = "empty"
+    }
   }
 
   /**
@@ -275,6 +341,11 @@ module UniversalTypeTrackingGen<UniversalTypeTrackingSig S> {
         withoutContentStep(mid, result, filter) and
         summary = prevSummary.appendWithoutContent(filter)
       )
+      or
+      exists(Transformation transform |
+        transformStep(mid, result, transform) and
+        summary = prevSummary.appendTransformation(transform)
+      )
     )
     or
     exists(Summary prev, Summary next |
@@ -288,7 +359,7 @@ module UniversalTypeTrackingGen<UniversalTypeTrackingSig S> {
    */
   pragma[nomagic]
   private Node trackNodeStep(Node node, Summary prev, Summary next) {
-    // These are mutually recursive, so we can't use `pragma[noopt]` here without
+    // This join is doubly recursive, so we can't use `pragma[noopt]` here without
     // scanning one of the `#prev` relations (which is expensive).
     // We also can't do the .append() here due to a bad outlining performed by the optimizer.
     exists(Node mid |
