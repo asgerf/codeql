@@ -8,6 +8,7 @@
 import javascript
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 private import internal.CachedStages
+private import semmle.javascript.dataflow.internal.UniversalTypeTrackingSpecific
 
 /**
  * Provides classes and predicates for working with the API boundary between the current
@@ -608,7 +609,7 @@ module API {
     predicate step(DataFlow::SourceNode pred, DataFlow::SourceNode succ) { none() }
   }
 
-  private module AdditionalUseStep {
+  module AdditionalUseStep {
     pragma[nomagic]
     predicate step(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
       any(AdditionalUseStep st).step(pred, succ)
@@ -674,8 +675,12 @@ module API {
       MkAsyncFuncResult(DataFlow::FunctionNode f) {
         f = trackDefNode(_) and f.getFunction().isAsync() and hasSemantics(f)
       } or
-      MkDef(DataFlow::Node nd) { rhs(_, _, nd) } or
-      MkUse(DataFlow::Node nd) { use(_, _, nd) } or
+      MkDef(DataFlow::Node nd) { hasSemantics(nd) } or
+      MkUse(DataFlow::Node nd) {
+        use(_, _, nd)
+        or
+        nd instanceof DataFlow::SourceNode and hasSemantics(nd)
+      } or
       /** A use of a TypeScript type. */
       MkTypeUse(string moduleName, string exportName) {
         any(TypeAnnotation n).hasQualifiedName(moduleName, exportName)
@@ -1062,64 +1067,49 @@ module API {
     }
 
     private import semmle.javascript.dataflow.TypeTracking
-
-    /**
-     * Gets a data-flow node to which `nd`, which is a use of an API-graph node, flows.
-     *
-     * The flow from `nd` to that node may be inter-procedural, and is further described by three
-     * flags:
-     *
-     *   - `promisified`: if true `true`, the flow goes through a promisification;
-     *   - `boundArgs`: for function values, tracks how many arguments have been bound throughout
-     *     the flow. To ensure termination, we somewhat arbitrarily constrain the number of bound
-     *     arguments to be at most ten.
-     *   - `prop`: if non-empty, the flow is only guaranteed to preserve the value of this property,
-     *     and not necessarily the entire object.
-     */
-    private DataFlow::SourceNode trackUseNode(
-      DataFlow::SourceNode nd, boolean promisified, int boundArgs, string prop,
-      DataFlow::TypeTracker t
-    ) {
-      t.start() and
-      use(_, nd) and
-      result = nd and
-      promisified = false and
-      boundArgs = 0 and
-      prop = ""
-      or
-      exists(Promisify::PromisifyCall promisify |
-        trackUseNode(nd, false, boundArgs, prop, t.continue()).flowsTo(promisify.getArgument(0)) and
-        promisified = true and
-        prop = "" and
-        result = promisify
-      )
-      or
-      exists(DataFlow::PartialInvokeNode pin, DataFlow::Node pred, int predBoundArgs |
-        trackUseNode(nd, promisified, predBoundArgs, prop, t.continue()).flowsTo(pred) and
-        prop = "" and
-        result = pin.getBoundFunction(pred, boundArgs - predBoundArgs) and
-        boundArgs in [0 .. 10]
-      )
-      or
-      exists(DataFlow::SourceNode mid |
-        mid = trackUseNode(nd, promisified, boundArgs, prop, t) and
-        AdditionalUseStep::step(pragma[only_bind_out](mid), result)
-      )
-      or
-      exists(DataFlow::Node pred, string preprop |
-        trackUseNode(nd, promisified, boundArgs, preprop, t.continue()).flowsTo(pred) and
-        promisified = false and
-        boundArgs = 0 and
-        SharedTypeTrackingStep::loadStoreStep(pred, result, prop)
-      |
-        prop = preprop
-        or
-        preprop = ""
-      )
-      or
-      t = useStep(nd, promisified, boundArgs, prop, result)
-    }
-
+    // private DataFlow::SourceNode trackUseNode(
+    //   DataFlow::SourceNode nd, boolean promisified, int boundArgs, string prop,
+    //   DataFlow::TypeTracker t
+    // ) {
+    //   t.start() and
+    //   use(_, nd) and
+    //   result = nd and
+    //   promisified = false and
+    //   boundArgs = 0 and
+    //   prop = ""
+    //   or
+    //   exists(Promisify::PromisifyCall promisify |
+    //     trackUseNode(nd, false, boundArgs, prop, t.continue()).flowsTo(promisify.getArgument(0)) and
+    //     promisified = true and
+    //     prop = "" and
+    //     result = promisify
+    //   )
+    //   or
+    //   exists(DataFlow::PartialInvokeNode pin, DataFlow::Node pred, int predBoundArgs |
+    //     trackUseNode(nd, promisified, predBoundArgs, prop, t.continue()).flowsTo(pred) and
+    //     prop = "" and
+    //     result = pin.getBoundFunction(pred, boundArgs - predBoundArgs) and
+    //     boundArgs in [0 .. 10]
+    //   )
+    //   or
+    //   exists(DataFlow::SourceNode mid |
+    //     mid = trackUseNode(nd, promisified, boundArgs, prop, t) and
+    //     AdditionalUseStep::step(pragma[only_bind_out](mid), result)
+    //   )
+    //   or
+    //   exists(DataFlow::Node pred, string preprop |
+    //     trackUseNode(nd, promisified, boundArgs, preprop, t.continue()).flowsTo(pred) and
+    //     promisified = false and
+    //     boundArgs = 0 and
+    //     SharedTypeTrackingStep::loadStoreStep(pred, result, prop)
+    //   |
+    //     prop = preprop
+    //     or
+    //     preprop = ""
+    //   )
+    //   or
+    //   t = useStep(nd, promisified, boundArgs, prop, result)
+    // }
     private import semmle.javascript.dataflow.internal.StepSummary
 
     /**
@@ -1129,21 +1119,24 @@ module API {
      *
      * This predicate exists solely to enforce a better join order in `trackUseNode` above.
      */
-    pragma[noopt]
-    private DataFlow::TypeTracker useStep(
-      DataFlow::Node nd, boolean promisified, int boundArgs, string prop, DataFlow::Node res
-    ) {
-      exists(DataFlow::TypeTracker t, StepSummary summary, DataFlow::SourceNode prev |
-        prev = trackUseNode(nd, promisified, boundArgs, prop, t) and
-        StepSummary::step(prev, res, summary) and
-        result = t.append(summary)
-      )
-    }
-
+    // pragma[noopt]
+    // private DataFlow::TypeTracker useStep(
+    //   DataFlow::Node nd, boolean promisified, int boundArgs, string prop, DataFlow::Node res
+    // ) {
+    //   exists(DataFlow::TypeTracker t, StepSummary summary, DataFlow::SourceNode prev |
+    //     prev = trackUseNode(nd, promisified, boundArgs, prop, t) and
+    //     StepSummary::step(prev, res, summary) and
+    //     result = t.append(summary)
+    //   )
+    // }
     private DataFlow::SourceNode trackUseNode(
       DataFlow::SourceNode nd, boolean promisified, int boundArgs, string prop
     ) {
-      result = trackUseNode(nd, promisified, boundArgs, prop, DataFlow::TypeTracker::end())
+      result =
+        UniversalTypeTracking::trackNodeWithTransformation(nd,
+          UniversalTypeTrackingForJavaScript::getTransformation(boundArgs, promisified)) and
+      prop = ""
+      // result = trackUseNode(nd, promisified, boundArgs, prop, DataFlow::TypeTracker::end())
     }
 
     /**
@@ -1151,58 +1144,51 @@ module API {
      */
     cached
     DataFlow::SourceNode trackUseNode(DataFlow::SourceNode nd) {
-      result = trackUseNode(nd, false, 0, "")
+      result = UniversalTypeTracking::trackNode(nd)
+      // result = trackUseNode(nd, false, 0, "")
     }
 
-    private DataFlow::SourceNode trackDefNode(DataFlow::Node nd, DataFlow::TypeBackTracker t) {
-      t.start() and
-      rhs(_, nd) and
-      result = nd.getALocalSource()
-      or
-      // additional backwards step from `require('m')` to `exports` or `module.exports` in m
-      exists(Import imp | imp.getImportedModuleNode() = trackDefNode(nd, t.continue()) |
-        result = DataFlow::exportsVarNode(imp.getImportedModule())
-        or
-        result = DataFlow::moduleVarNode(imp.getImportedModule()).getAPropertyRead("exports")
-      )
-      or
-      exists(ObjectExpr obj |
-        obj = trackDefNode(nd, t.continue()).asExpr() and
-        result =
-          obj.getAProperty()
-              .(SpreadProperty)
-              .getInit()
-              .(SpreadElement)
-              .getOperand()
-              .flow()
-              .getALocalSource()
-      )
-      or
-      t = defStep(nd, result)
-    }
-
-    /**
-     * Holds if `nd`, which is a def of an API-graph node, can be reached in zero or more potentially
-     * inter-procedural steps from some intermediate node, and `prev` flows into that intermediate node
-     * in one step. The entire flow is described by the resulting `TypeTracker`.
-     *
-     * This predicate exists solely to enforce a better join order in `trackDefNode` above.
-     */
-    pragma[noopt]
-    private DataFlow::TypeBackTracker defStep(DataFlow::Node nd, DataFlow::SourceNode prev) {
-      exists(DataFlow::TypeBackTracker t, StepSummary summary, DataFlow::Node next |
-        next = trackDefNode(nd, t) and
-        StepSummary::step(prev, next, summary) and
-        result = t.prepend(summary)
-      )
-    }
-
+    // private DataFlow::SourceNode trackDefNode(DataFlow::Node nd, DataFlow::TypeBackTracker t) {
+    //   t.start() and
+    //   rhs(_, nd) and
+    //   result = nd.getALocalSource()
+    //   or
+    //   // additional backwards step from `require('m')` to `exports` or `module.exports` in m
+    //   exists(Import imp | imp.getImportedModuleNode() = trackDefNode(nd, t.continue()) |
+    //     result = DataFlow::exportsVarNode(imp.getImportedModule())
+    //     or
+    //     result = DataFlow::moduleVarNode(imp.getImportedModule()).getAPropertyRead("exports")
+    //   )
+    //   or
+    //   exists(ObjectExpr obj |
+    //     obj = trackDefNode(nd, t.continue()).asExpr() and
+    //     result =
+    //       obj.getAProperty()
+    //           .(SpreadProperty)
+    //           .getInit()
+    //           .(SpreadElement)
+    //           .getOperand()
+    //           .flow()
+    //           .getALocalSource()
+    //   )
+    //   or
+    //   t = defStep(nd, result)
+    // }
+    // pragma[noopt]
+    // private DataFlow::TypeBackTracker defStep(DataFlow::Node nd, DataFlow::SourceNode prev) {
+    //   exists(DataFlow::TypeBackTracker t, StepSummary summary, DataFlow::Node next |
+    //     next = trackDefNode(nd, t) and
+    //     StepSummary::step(prev, next, summary) and
+    //     result = t.prepend(summary)
+    //   )
+    // }
     /**
      * Gets a node that inter-procedurally flows into `nd`, which is a definition of some node.
      */
     cached
     DataFlow::SourceNode trackDefNode(DataFlow::Node nd) {
-      result = trackDefNode(nd, DataFlow::TypeBackTracker::end())
+      result = UniversalTypeTracking::backtrackNode(nd)
+      // result = trackDefNode(nd, DataFlow::TypeBackTracker::end())
     }
 
     private DataFlow::SourceNode awaited(DataFlow::InvokeNode call, DataFlow::TypeTracker t) {
@@ -1218,6 +1204,10 @@ module API {
      */
     private DataFlow::Node awaited(DataFlow::InvokeNode call) {
       result = awaited(call, DataFlow::TypeTracker::end())
+    }
+
+    private int numEdges() {
+      result = count(TApiNode p, Label::ApiLabel lbl, TApiNode succ | edge(p, lbl, succ))
     }
 
     /**
