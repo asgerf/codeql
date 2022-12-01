@@ -520,6 +520,17 @@ private module Cached {
     TKnownIntegerElementContentApprox() or
     TKnownElementContentApprox(string approx) { approx = approxKnownElementIndex(_) } or
     TNonElementContentApprox(Content c) { not c instanceof Content::ElementContent }
+
+  cached
+  newtype TConstantLookupScope =
+    /** Look up in a qualified constant name `base::`. */
+    MkQualifiedLookup(ConstantAccess base) or
+    /** Look up in the ancestors of `mod`. */
+    MkAncestorLookup(Module mod) or
+    /** Look up in a module syntactically nested in a declaration of `mod`. */
+    MkNestedLookup(Module scope) or
+    /** Pseudo-scope for accesses that are known to resolve to `mod`. */
+    MkExactLookup(Module mod)
 }
 
 class TElementContent = TKnownElementContent or TUnknownElementContent;
@@ -1485,3 +1496,41 @@ class AdditionalJumpStep extends Unit {
  * Argument `arg` is part of a path from a source to a sink, and `p` is the target parameter.
  */
 int getAdditionalFlowIntoCallNodeTerm(ArgumentNode arg, ParameterNode p) { none() }
+
+class ConstantLookupScope extends TConstantLookupScope {
+  string toString() {
+    exists(ConstantAccess access |
+      this = MkQualifiedLookup(access) and result = "MkQualifiedAccess(" + access.toString() + ")"
+    )
+    or
+    exists(Module mod |
+      this = MkAncestorLookup(mod) and
+      result = "MkAncestorLookup(" + mod + ")"
+    )
+    or
+    exists(Module scope |
+      this = MkNestedLookup(scope) and
+      result = "MkNestedLookup(" + scope + ")"
+    )
+    or
+    exists(Module mod | this = MkExactLookup(mod) and result = "MkExactLookup(" + mod + ")")
+  }
+
+  Location getLocation() {
+    exists(ConstantAccess access |
+      this = MkQualifiedLookup(access) and result = access.getLocation()
+    )
+    or
+    exists(Module mod |
+      this = MkAncestorLookup(mod) and
+      result = mod.getLocation()
+    )
+    or
+    exists(Module scope |
+      this = MkNestedLookup(scope) and
+      result = scope.getLocation()
+    )
+    or
+    exists(Module mod | this = MkExactLookup(mod) and result = mod.getLocation())
+  }
+}
