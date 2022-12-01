@@ -352,34 +352,6 @@ private module Cached {
     )
   }
 
-  /**
-   * A place in which a named constant can be looked up during constant lookup.
-   */
-  cached
-  newtype TConstLookupScope =
-    /** Look up in a qualified constant name `base::`. */
-    MkQualifiedLookup(ConstantAccess base) or
-    /** Look up in the ancestors of `mod`. */
-    MkAncestorLookup(Module mod) or
-    /** Look up in a module syntactically nested in a declaration of `mod`. */
-    MkNestedLookup(Module mod) or
-    /** Pseudo-scope for accesses that are known to resolve to `mod`. */
-    MkExactLookup(Module mod)
-
-  /**
-   * Gets a `LocalSourceNode` to represent the constant read or written by `access`.
-   */
-  cached
-  LocalSourceNode getConstantAccessNode(ConstantAccess access) {
-    // Namespaces don't evaluate to the constant being accessed, they return the value of their last statement.
-    // Use the definition of 'self' in the namespace as the representative in this case.
-    result.(SsaDefinitionNode).getDefinition().(Ssa::SelfDefinition).getSourceVariable() =
-      access.(Namespace).getModuleSelfVariable()
-    or
-    not access instanceof Namespace and
-    result.asExpr().getExpr() = access
-  }
-
   cached
   predicate forceCachingInSameStage() { any() }
 
