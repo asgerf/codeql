@@ -1145,12 +1145,14 @@ class ConstRef extends LocalSourceNode {
    * Holds if this might refer to a top-level constant.
    */
   predicate isPossiblyGlobal() {
-    exists(Module mod |
-      not exists(mod.getParentModule()) and
+    exists(Module mod | not exists(mod.getParentModule()) |
       mod.getAnImmediateReference() = access
+      or
+      this.asModule() = mod // needed to recognize 'self' SSA variable
     )
     or
     not exists(Module mod | mod.getAnImmediateReference() = access) and
+    not exists(asModule()) and
     not exists(access.getScopeExpr())
   }
 
