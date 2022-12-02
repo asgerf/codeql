@@ -505,7 +505,7 @@ private module Cached {
    * A place in which a named constant can be looked up during constant lookup.
    */
   cached
-  newtype TConstLookupScope =
+  newtype TConstantLookupScope =
     /** Look up in a qualified constant name `base::`. */
     MkQualifiedLookup(ConstantAccess base) or
     /** Look up in the ancestors of `mod`. */
@@ -527,6 +527,46 @@ private module Cached {
     or
     not access instanceof Namespace and
     result.asExpr().getExpr() = access
+  }
+}
+
+/**
+ * A place in which a named constant can be looked up during constant lookup.
+ */
+class ConstantLookupScope extends TConstantLookupScope {
+  /** Gets a string representation of this constant lookup scope. */
+  string toString() {
+    exists(ConstantAccess base |
+      this = MkQualifiedLookup(base) and
+      result = "MkQualifiedLookup(" + base + ")"
+    )
+    or
+    exists(Module mod |
+      this = MkAncestorLookup(mod) and
+      result = "MkAncestorLookup(" + mod + ")"
+      or
+      this = MkNestedLookup(mod) and
+      result = "MkNestedLookup(" + mod + ")"
+      or
+      this = MkExactLookup(mod) and
+      result = "MkExactLookup(" + mod + ")"
+    )
+  }
+
+  /** Gets a location representing this constant lookup scope. */
+  Location getLocation() {
+    exists(ConstantAccess base |
+      this = MkQualifiedLookup(base) and
+      result = base.getLocation()
+    )
+    or
+    exists(Module mod | result = mod.getLocation() |
+      this = MkAncestorLookup(mod)
+      or
+      this = MkNestedLookup(mod)
+      or
+      this = MkExactLookup(mod)
+    )
   }
 }
 

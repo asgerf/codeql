@@ -1183,7 +1183,7 @@ class ConstRef extends LocalSourceNode {
    * Gets a scope in which a constant lookup may access the contents of the module referenced by this constant.
    */
   cached
-  private TConstLookupScope getATargetScope() {
+  private ConstantLookupScope getATargetScope() {
     forceCachingInSameStage() and
     result = MkAncestorLookup(this.getAncestryTarget().getAnImmediateDescendent*())
     or
@@ -1201,7 +1201,7 @@ class ConstRef extends LocalSourceNode {
    * Top-levels are not included, since this is only needed for nested constant lookup, and unqualified constants
    * at the top-level are handled by `DataFlow::getConstant`, never `ConstRef.getConstant`.
    */
-  private TConstLookupScope getLookupScope() {
+  private ConstantLookupScope getLookupScope() {
     result = MkQualifiedLookup(access.getScopeExpr())
     or
     not exists(this.getExactTarget()) and
@@ -1218,7 +1218,7 @@ class ConstRef extends LocalSourceNode {
    * Holds if this can reference a constant named `name` from `scope`.
    */
   cached
-  private predicate accesses(TConstLookupScope scope, string name) {
+  private predicate accesses(ConstantLookupScope scope, string name) {
     forceCachingInSameStage() and
     scope = this.getLookupScope() and
     name = this.getName()
@@ -1255,7 +1255,7 @@ class ConstRef extends LocalSourceNode {
    */
   pragma[inline]
   ConstRef getConstant(string name) {
-    exists(TConstLookupScope scope |
+    exists(ConstantLookupScope scope |
       pragma[only_bind_into](scope) = pragma[only_bind_out](this).getATargetScope() and
       result.accesses(pragma[only_bind_out](scope), name)
     )
