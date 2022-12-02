@@ -170,12 +170,9 @@ module API {
     DataFlow::CallNode getAMethodCall(string method) { result = this.getReturn(method).asSource() }
 
     /**
-     * Gets a node representing member `m` of this API component.
+     * Gets a node representing constant member `m` of this API component.
      *
-     * For example, a member can be:
-     *
-     * - A submodule of a module
-     * - An attribute of an object
+     * For example, the expression `x::M` is an access to the member named `M` of `x`.
      */
     bindingset[m]
     bindingset[result]
