@@ -31,8 +31,8 @@ module ActiveStorage {
     override predicate row(string row) {
       row =
         [
-          "ActiveStorage::Filename!;Method[new];Argument[0];ReturnValue;taint",
-          "ActiveStorage::Filename;Method[sanitized];Argument[self];ReturnValue;taint",
+          "ActiveStorage::Filename.static;Method[new];Argument[0];ReturnValue;taint",
+          "ActiveStorage::Filename.instance;Method[sanitized];Argument[self];ReturnValue;taint",
         ]
     }
   }
@@ -46,15 +46,15 @@ module ActiveStorage {
       row =
         [
           // ActiveStorage::Blob.create_and_upload! : Blob
-          "ActiveStorage::Blob;ActiveStorage::Blob!;Method[create_and_upload!].ReturnValue",
+          "ActiveStorage::Blob.instance;ActiveStorage::Blob.static;Method[create_and_upload!].ReturnValue",
           // ActiveStorage::Blob.create_before_direct_upload! : Blob
-          "ActiveStorage::Blob;ActiveStorage::Blob!;Method[create_before_direct_upload!].ReturnValue",
+          "ActiveStorage::Blob.instance;ActiveStorage::Blob.static;Method[create_before_direct_upload!].ReturnValue",
           // ActiveStorage::Blob.compose(blobs : [Blob]) : Blob
-          "ActiveStorage::Blob;ActiveStorage::Blob!;Method[compose].ReturnValue",
+          "ActiveStorage::Blob.instance;ActiveStorage::Blob.static;Method[compose].ReturnValue",
           // gives error: Invalid name 'Element' in access path
-          // "ActiveStorage::Blob;ActiveStorage::Blob!;Method[compose].Argument[0].Element[any]",
+          // "ActiveStorage::Blob.instance;ActiveStorage::Blob.static;Method[compose].Argument[0].Element[any]",
           // ActiveStorage::Blob.find_signed(!) : Blob
-          "ActiveStorage::Blob;ActiveStorage::Blob!;Method[find_signed,find_signed!].ReturnValue",
+          "ActiveStorage::Blob.instance;ActiveStorage::Blob.static;Method[find_signed,find_signed!].ReturnValue",
         ]
     }
   }

@@ -55,7 +55,7 @@ predicate isTypeUsed(string rawType) {
 bindingset[rawType]
 private predicate parseType(string rawType, string consts, string suffix) {
   exists(string regexp |
-    regexp = "([^!]+)(!|)" and
+    regexp = "([^.]+)(\\..*|)" and
     consts = rawType.regexpCapture(regexp, 1) and
     suffix = rawType.regexpCapture(regexp, 2)
   )
@@ -67,8 +67,11 @@ private predicate parseType(string rawType, string consts, string suffix) {
  */
 bindingset[otherType]
 predicate hasImplicitTypeModel(string type, string otherType) {
-  // A::B! can be used to obtain A::B
-  parseType(otherType, type, _)
+  // A::B.static can be used to obtain A::B.instance
+  exists(string const |
+    parseType(otherType, const, ".static") and
+    type = const + ".instance"
+  )
 }
 
 private predicate parseRelevantType(string rawType, string consts, string suffix) {
@@ -115,14 +118,14 @@ API::Node getExtraNodeFromType(string type) {
     parseRelevantType(type, consts, suffix) and
     constRef = getConstantFromConstPath(consts)
   |
-    suffix = "!" and
+    suffix = ".static" and
     (
       result.asSource() = constRef
       or
       result.asSource() = constRef.getADescendentModule().getAnOwnModuleSelf()
     )
     or
-    suffix = "" and
+    suffix = ".instance" and
     (
       result.asSource() = constRef.getAMethodCall("new")
       or

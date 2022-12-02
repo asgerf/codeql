@@ -350,7 +350,7 @@ module ActiveSupport {
     override predicate row(string row) {
       // type1;type2;path
       // Pathname#existence : Pathname
-      row = "Pathname;Pathname;Method[existence].ReturnValue"
+      row = "Pathname.instance;Pathname.instance;Method[existence].ReturnValue"
     }
   }
 
@@ -358,7 +358,7 @@ module ActiveSupport {
   private class PathnameTaintSummary extends ModelInput::SummaryModelCsv {
     override predicate row(string row) {
       // Pathname#existence
-      row = "Pathname;Method[existence];Argument[self];ReturnValue;taint"
+      row = "Pathname.instance;Method[existence];Argument[self];ReturnValue;taint"
     }
   }
 
@@ -376,12 +376,12 @@ module ActiveSupport {
       row =
         [
           // SafeBuffer.new(x) does not sanitize x
-          "ActionView::SafeBuffer!;Method[new];Argument[0];ReturnValue;taint",
+          "ActionView::SafeBuffer.static;Method[new];Argument[0];ReturnValue;taint",
           // SafeBuffer#safe_concat(x) does not sanitize x
-          "ActionView::SafeBuffer;Method[safe_concat];Argument[0];ReturnValue;taint",
-          "ActionView::SafeBuffer;Method[safe_concat];Argument[0];Argument[self];taint",
+          "ActionView::SafeBuffer.instance;Method[safe_concat];Argument[0];ReturnValue;taint",
+          "ActionView::SafeBuffer.instance;Method[safe_concat];Argument[0];Argument[self];taint",
           // These methods preserve taint in self
-          "ActionView::SafeBuffer;Method[concat,insert,prepend,to_s,to_param];Argument[self];ReturnValue;taint",
+          "ActionView::SafeBuffer.instance;Method[concat,insert,prepend,to_s,to_param];Argument[self];ReturnValue;taint",
         ]
     }
   }
@@ -392,8 +392,8 @@ module ActiveSupport {
       override predicate row(string row) {
         row =
           [
-            "ActiveSupport::JSON!;Method[encode,dump];Argument[0];ReturnValue;taint",
-            "ActiveSupport::JSON!;Method[decode,load];Argument[0];ReturnValue;taint",
+            "ActiveSupport::JSON.static;Method[encode,dump];Argument[0];ReturnValue;taint",
+            "ActiveSupport::JSON.static;Method[decode,load];Argument[0];ReturnValue;taint",
           ]
       }
     }

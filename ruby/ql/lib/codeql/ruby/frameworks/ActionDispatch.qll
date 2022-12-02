@@ -27,15 +27,15 @@ module ActionDispatch {
           // Mime[type] : Mime::Type (omitted)
           // Method names with brackets like [] cannot be represented in MaD.
           // Mime.fetch(type) : Mime::Type
-          "Mime::Type;Mime!;Method[fetch].ReturnValue",
+          "Mime::Type.instance;Mime.static;Method[fetch].ReturnValue",
           // Mime::Type.lookup(str) : Mime::Type
-          "Mime::Type;Mime::Type!;Method[lookup].ReturnValue",
+          "Mime::Type.instance;Mime::Type.static;Method[lookup].ReturnValue",
           // Mime::Type.lookup_by_extension(str) : Mime::Type
-          "Mime::Type;Mime::Type!;Method[lookup_by_extension].ReturnValue",
+          "Mime::Type.instance;Mime::Type.static;Method[lookup_by_extension].ReturnValue",
           // Mime::Type.register(str) : Mime::Type
-          "Mime::Type;Mime::Type!;Method[register].ReturnValue",
+          "Mime::Type.instance;Mime::Type.static;Method[register].ReturnValue",
           // Mime::Type.register_alias(str) : Mime::Type
-          "Mime::Type;Mime::Type!;Method[register_alias].ReturnValue",
+          "Mime::Type.instance;Mime::Type.static;Method[register_alias].ReturnValue",
         ]
     }
   }

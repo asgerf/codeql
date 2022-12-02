@@ -14,8 +14,8 @@ module Json {
     override predicate row(string row) {
       row =
         [
-          "JSON!;Method[parse,parse!,load,restore];Argument[0];ReturnValue;taint",
-          "JSON!;Method[generate,fast_generate,pretty_generate,dump,unparse,fast_unparse];Argument[0];ReturnValue;taint",
+          "JSON.static;Method[parse,parse!,load,restore];Argument[0];ReturnValue;taint",
+          "JSON.static;Method[generate,fast_generate,pretty_generate,dump,unparse,fast_unparse];Argument[0];ReturnValue;taint",
         ]
     }
   }
