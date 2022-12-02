@@ -176,13 +176,18 @@ module API {
      */
     bindingset[m]
     bindingset[result]
-    Node getMember(string m) { result = this.getASuccessor(Label::member(m)) }
+    Node getMember(string m) {
+      exists(API::Node epsilonSucc |
+        Impl::epsilonMemberEdge(this, epsilonSucc) and
+        result = epsilonSucc.getASuccessor(Label::member(m))
+      )
+    }
 
     /**
      * Gets a node representing a member of this API component where the name of the member may
      * or may not be known statically.
      */
-    Node getAMember() { result = this.getASuccessor(Label::member(_)) }
+    Node getAMember() { result = this.getMember(_) }
 
     /**
      * Gets a node representing an instance of this API component, that is, an object whose
@@ -475,7 +480,9 @@ module API {
       /** A use of an API member at the node `nd`. */
       MkUse(DataFlow::Node nd) { isUse(nd) } or
       /** A value that escapes into an external library at the node `nd` */
-      MkDef(DataFlow::Node nd) { isDef(nd) }
+      MkDef(DataFlow::Node nd) { isDef(nd) } or
+      /** Pseudo-node used as join pivot when resolving constant accesses. */
+      MkConstantLookupScope(DataFlowPrivate::ConstantLookupScope scope)
 
     private string resolveTopLevel(ConstantReadAccess read) {
       result = read.getModule().getQualifiedName() and
@@ -488,15 +495,9 @@ module API {
      */
     pragma[nomagic]
     private predicate useRoot(Label::ApiLabel lbl, DataFlow::Node ref) {
-      exists(string name, ConstantReadAccess read |
-        read = ref.asExpr().getExpr() and
-        lbl = Label::member(read.getName())
-      |
-        name = resolveTopLevel(read)
-        or
-        name = read.getName() and
-        not exists(resolveTopLevel(read)) and
-        not exists(read.getScopeExpr())
+      exists(string name |
+        lbl = Label::member(name) and
+        ref = DataFlow::getConstant(name)
       )
     }
 
@@ -505,10 +506,7 @@ module API {
      * from a use node that flows to `node`.
      */
     private predicate useStep(Label::ApiLabel lbl, DataFlow::Node node, DataFlow::Node ref) {
-      // // Referring to an attribute on a node that is a use of `base`:
-      // pred = `Rails` part of `Rails::Whatever`
-      // lbl = `Whatever`
-      // ref = `Rails::Whatever`
+      // x -> x::M
       exists(ExprNodes::ConstantAccessCfgNode c, ConstantReadAccess read |
         not exists(resolveTopLevel(read)) and
         node.asExpr() = c.getScopeExpr() and
@@ -677,6 +675,32 @@ module API {
     }
 
     /**
+     * An epsilon edge, that is, an unlabelled edge that can be followed without consuming a label.
+     *
+     * Currently we only use epsilon edges for `getMember` edges.
+     */
+    cached
+    predicate epsilonMemberEdge(TApiNode pred, TApiNode succ) {
+      // Geneated edges ancestor expressions to affected constant lookup scopes.
+      exists(DataFlow::ConstRef constant |
+        pred = MkUse(constant) and
+        succ = MkConstantLookupScope(DataFlowPrivate::getATargetScopeFromConstRef(constant))
+      )
+      or
+      // In the rare event that a general expression `e` flows interprocdedurally to a scoped access `e::M`,
+      // ensure that the edge `e -> e` is generated. A member edge will go straight from `e` to `e::M`.
+      exists(DataFlow::Node node |
+        trackUseNode(node).getALocalUse().asExpr().getExpr() = any(ConstantAccess a).getScopeExpr() and
+        pred = MkUse(node) and
+        succ = pred
+      )
+      or
+      // For the same reason as above, generate a root -> root edge.
+      pred = MkRoot() and
+      succ = pred
+    }
+
+    /**
      * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
      */
     cached
@@ -713,6 +737,14 @@ module API {
         b.asExpr().getExpr().(ConstantReadAccess).getAQualifiedName() = c.getAQualifiedName() and
         pragma[only_bind_into](c).getSuperclassExpr() = a.asExpr().getExpr() and
         lbl = Label::subclass()
+      )
+      or
+      // Edge from a constant lookup scope to a constant access that may look up constants in that scope
+      exists(DataFlow::ConstRef constant, DataFlowPrivate::ConstantLookupScope scope, string name |
+        DataFlowPrivate::constRefAccesses(constant, scope, name) and
+        use(pred, pragma[only_bind_out](constant)) and
+        succ = MkConstantLookupScope(pragma[only_bind_out](scope)) and
+        lbl = Label::member(pragma[only_bind_out](name))
       )
       or
       exists(DataFlow::CallNode call |
