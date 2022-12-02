@@ -528,6 +528,85 @@ private module Cached {
     not access instanceof Namespace and
     result.asExpr().getExpr() = access
   }
+
+  /**
+   * Gets a module for which this constant is the reference to an ancestor module.
+   *
+   * For example, `M` is the ancestry target of `C` in the following examples:
+   * ```rb
+   * class M < C {}
+   *
+   * module M
+   *   include C
+   * end
+   *
+   * module M
+   *   prepend C
+   * end
+   * ```
+   */
+  private ModuleNode getAncestryTargetFromConstRef(ConstRef const) {
+    result.getAnAncestorExpr() = const
+  }
+
+  /**
+   * Gets the known target module of `const`.
+   *
+   * We resolve these differently to prune out infeasible constant lookups.
+   */
+  private Module getExactTargetFromConstRef(ConstRef const) {
+    result.getAnImmediateReference() = const.asConstantAccess()
+  }
+
+  /**
+   * Gets a scope in which a constant lookup may access the contents of the module referenced by `const`.
+   */
+  cached
+  ConstantLookupScope getATargetScopeFromConstRef(ConstRef const) {
+    result = MkAncestorLookup(getAncestryTargetFromConstRef(const).getAnImmediateDescendent*())
+    or
+    const.asConstantAccess() = any(ConstantAccess ac).getScopeExpr() and
+    result = MkQualifiedLookup(const.asConstantAccess())
+    or
+    result = MkNestedLookup(getAncestryTargetFromConstRef(const))
+    or
+    result = MkExactLookup(const.asConstantAccess().(Namespace).getModule())
+  }
+
+  /**
+   * Gets the scope expression of `const` or its immediately enclosing `Namespace` (skipping over singleton classes).
+   *
+   * Top-levels are not included, since this is only needed for nested constant lookup, and unqualified constants
+   * at the top-level are handled by `DataFlow::getConstant`, never `ConstRef.getConstant`.
+   */
+  private ConstantLookupScope getLookupScopeFromConstRef(ConstRef const) {
+    exists(ConstantAccess access | access = const.asConstantAccess() |
+      result = MkQualifiedLookup(access.getScopeExpr())
+      or
+      not exists(getExactTargetFromConstRef(const)) and
+      not exists(access.getScopeExpr()) and
+      not access.hasGlobalScope() and
+      (
+        result = MkAncestorLookup(access.getEnclosingModule().getNamespaceOrToplevel().getModule())
+        or
+        result = MkNestedLookup(access.getEnclosingModule().getEnclosingModule*().getModule())
+      )
+    )
+  }
+
+  /**
+   * Holds if `const` can reference a constant named `name` from `scope`.
+   */
+  cached
+  predicate constRefAccesses(ConstRef const, ConstantLookupScope scope, string name) {
+    scope = getLookupScopeFromConstRef(const) and
+    name = const.getName()
+    or
+    exists(Module mod |
+      getExactTargetFromConstRef(const) = mod.getNestedModule(name) and
+      scope = MkExactLookup(mod)
+    )
+  }
 }
 
 /**
