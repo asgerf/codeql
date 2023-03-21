@@ -408,10 +408,11 @@ private Cryptography::BlockMode getBlockModeFromCipherName(string blockCipherNam
 private predicate cipherInstantiationGeneric(
   DataFlow::CallNode call, OpenSslCipher cipher, CipherMode cipherMode
 ) {
-  exists(string cipherName | cipher.matchesName(cipherName) |
+  exists(string cipherName |
     // `OpenSSL::Cipher.new('<cipherName>')`
-    call = cipherApi().getAnInstantiation() and
-    cipherName = getStringArgument(call, 0) and
+    pragma[only_bind_into](call) = cipherApi().getAnInstantiation() and
+    pragma[only_bind_into](cipherName) = getStringArgument(call, 0) and
+    cipher.matchesName(cipherName) and
     if cipher.getAlgorithm().isStreamCipher()
     then cipherMode = TStreamCipher()
     else cipherMode.isBlockMode(getBlockModeFromCipherName(cipherName))
