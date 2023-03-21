@@ -36,8 +36,9 @@ class SensitiveCall extends SensitiveNode instanceof DataFlow::CallNode {
     or
     // This is particularly to pick up methods with an argument like "password", which
     // may indicate a lookup.
-    exists(string s | super.getArgument(_).asExpr().getConstantValue().isStringlikeValue(s) |
-      nameIndicatesSensitiveData(s, classification)
+    exists(string name |
+      pragma[only_bind_into](name) = super.getArgument(_).getConstantValue().getStringlikeValue() and
+      nameIndicatesSensitiveData(name, classification)
     )
   }
 
