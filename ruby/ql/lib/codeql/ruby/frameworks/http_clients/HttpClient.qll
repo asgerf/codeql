@@ -4,9 +4,16 @@
 
 private import codeql.ruby.AST
 private import codeql.ruby.Concepts
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.DataFlow
 private import codeql.ruby.dataflow.internal.DataFlowImplForHttpClientLibraries as DataFlowImplForHttpClientLibraries
+
+private DataFlow::LocalSourceNode httpConnection() {
+  // One-off requests
+  result = DataFlow::getConstant("HTTPClient")
+  or
+  // Connection re-use
+  result = DataFlow::getConstant("HTTPClient").getAMethodCall("new")
+}
 
 /**
  * A call that makes an HTTP request using `HTTPClient`.
@@ -16,23 +23,16 @@ private import codeql.ruby.dataflow.internal.DataFlowImplForHttpClientLibraries 
  * ```
  */
 class HttpClientRequest extends Http::Client::Request::Range, DataFlow::CallNode {
-  API::Node requestNode;
-  API::Node connectionNode;
-  string method;
+  DataFlow::LocalSourceNode connectionNode;
 
   HttpClientRequest() {
-    connectionNode =
-      [
-        // One-off requests
-        API::getTopLevelMember("HTTPClient"),
-        // Connection re-use
-        API::getTopLevelMember("HTTPClient").getInstance()
-      ] and
-    requestNode = connectionNode.getReturn(method) and
-    this = requestNode.asSource() and
-    method in [
-        "get", "head", "delete", "options", "post", "put", "trace", "get_content", "post_content"
-      ]
+    connectionNode = httpConnection() and
+    this =
+      connectionNode
+          .getAMethodCall([
+              "get", "head", "delete", "options", "post", "put", "trace", "get_content",
+              "post_content"
+            ])
   }
 
   override DataFlow::Node getAUrlPart() { result = this.getArgument(0) }
@@ -41,10 +41,10 @@ class HttpClientRequest extends Http::Client::Request::Range, DataFlow::CallNode
     // The `get_content` and `post_content` methods return the response body as
     // a string. The other methods return a `HTTPClient::Message` object which
     // has various methods that return the response body.
-    method in ["get_content", "post_content"] and result = this
+    this.getMethodName() in ["get_content", "post_content"] and result = this
     or
-    not method in ["get_content", "put_content"] and
-    result = requestNode.getAMethodCall(["body", "http_body", "content", "dump"])
+    not this.getMethodName() in ["get_content", "put_content"] and
+    result = this.getAMethodCall(["body", "http_body", "content", "dump"])
   }
 
   /** Gets the value that controls certificate validation, if any. */
@@ -53,12 +53,7 @@ class HttpClientRequest extends Http::Client::Request::Range, DataFlow::CallNode
     // `c.ssl_config.verify_mode = OpenSSL::SSL::VERIFY_NONE`
     // on an HTTPClient connection object `c`.
     result =
-      connectionNode
-          .getReturn("ssl_config")
-          .getReturn("verify_mode=")
-          .asSource()
-          .(DataFlow::CallNode)
-          .getArgument(0)
+      connectionNode.getAMethodCall("ssl_config").getAMethodCall("verify_mode=").getArgument(0)
   }
 
   cached
@@ -81,7 +76,7 @@ private class HttpClientDisablesCertificateValidationConfiguration extends DataF
   }
 
   override predicate isSource(DataFlow::Node source) {
-    source = API::getTopLevelMember("OpenSSL").getMember("SSL").getMember("VERIFY_NONE").asSource()
+    source = DataFlow::getConstant("OpenSSL").getConstant("SSL").getConstant("VERIFY_NONE")
   }
 
   override predicate isSink(DataFlow::Node sink) {
