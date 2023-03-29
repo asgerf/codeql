@@ -405,6 +405,26 @@ private module Cached {
     result = viableLibraryCallable(call)
   }
 
+  pragma[nomagic]
+  private DataFlow::LocalSourceNode trackBlock(Block block, TypeTracker t) {
+    t.start() and result.asExpr().getExpr() = block
+    or
+    exists(TypeTracker t2, StepSummary summary |
+      result = trackBlockRec(block, t2, summary) and t = t2.append(summary)
+    )
+  }
+
+  pragma[nomagic]
+  private DataFlow::LocalSourceNode trackBlockRec(Block block, TypeTracker t, StepSummary summary) {
+    StepSummary::step(trackBlock(block, t), result, summary)
+  }
+
+  pragma[nomagic]
+  cached
+  DataFlow::LocalSourceNode trackBlock(Block block) {
+    result = trackBlock(block, TypeTracker::end())
+  }
+
   cached
   newtype TArgumentPosition =
     TSelfArgumentPosition() or
@@ -693,25 +713,6 @@ private CfgScope getTargetInstance(RelevantCall call, string method) {
     then result = lookupMethod(call.getExpr().getEnclosingModule().getModule(), method, exact)
     else any()
   )
-}
-
-pragma[nomagic]
-private DataFlow::LocalSourceNode trackBlock(Block block, TypeTracker t) {
-  t.start() and result.asExpr().getExpr() = block
-  or
-  exists(TypeTracker t2, StepSummary summary |
-    result = trackBlockRec(block, t2, summary) and t = t2.append(summary)
-  )
-}
-
-pragma[nomagic]
-private DataFlow::LocalSourceNode trackBlockRec(Block block, TypeTracker t, StepSummary summary) {
-  StepSummary::step(trackBlock(block, t), result, summary)
-}
-
-pragma[nomagic]
-private DataFlow::LocalSourceNode trackBlock(Block block) {
-  result = trackBlock(block, TypeTracker::end())
 }
 
 /** Holds if `m` is a singleton method named `name`, defined on `object. */
