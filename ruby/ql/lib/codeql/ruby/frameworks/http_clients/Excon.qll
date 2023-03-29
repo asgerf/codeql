@@ -5,9 +5,16 @@
 private import codeql.ruby.AST
 private import codeql.ruby.CFG
 private import codeql.ruby.Concepts
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.DataFlow
 private import codeql.ruby.dataflow.internal.DataFlowImplForHttpClientLibraries as DataFlowImplForHttpClientLibraries
+
+private DataFlow::LocalSourceNode exconConnection() {
+  // one-off requests
+  result = DataFlow::getConstant("Excon") or
+  // connection re-use
+  result = DataFlow::getConstant("Excon").getAMethodCall("new") or
+  result = DataFlow::getConstant("Excon").getConstant("Connection").getAMethodCall("new")
+}
 
 /**
  * A call that makes an HTTP request using `Excon`.
@@ -25,31 +32,20 @@ private import codeql.ruby.dataflow.internal.DataFlowImplForHttpClientLibraries 
  * https://github.com/excon/excon/blob/master/README.md
  */
 class ExconHttpRequest extends Http::Client::Request::Range, DataFlow::CallNode {
-  API::Node requestNode;
-  API::Node connectionNode;
-  DataFlow::Node connectionUse;
+  DataFlow::LocalSourceNode connectionNode;
 
   ExconHttpRequest() {
-    this = requestNode.asSource() and
-    connectionUse = connectionNode.asSource() and
-    connectionNode =
-      [
-        // one-off requests
-        API::getTopLevelMember("Excon"),
-        // connection re-use
-        API::getTopLevelMember("Excon").getInstance(),
-        API::getTopLevelMember("Excon").getMember("Connection").getInstance()
-      ] and
-    requestNode =
+    connectionNode = exconConnection() and
+    this =
       connectionNode
-          .getReturn([
+          .getAMethodCall([
               // Excon#request exists but Excon.request doesn't.
               // This shouldn't be a problem - in real code the latter would raise NoMethodError anyway.
               "get", "head", "delete", "options", "post", "put", "patch", "trace", "request"
             ])
   }
 
-  override DataFlow::Node getResponseBody() { result = requestNode.getAMethodCall("body") }
+  override DataFlow::Node getResponseBody() { result = this.getAMethodCall("body") }
 
   override DataFlow::Node getAUrlPart() {
     // For one-off requests, the URL is in the first argument of the request method call.
@@ -59,15 +55,13 @@ class ExconHttpRequest extends Http::Client::Request::Range, DataFlow::CallNode 
     or
     result = this.getKeywordArgument("path")
     or
-    result = connectionUse.(DataFlow::CallNode).getArgument(0)
+    result = connectionNode.(DataFlow::CallNode).getArgument(0)
   }
 
   /** Gets the value that controls certificate validation, if any. */
   DataFlow::Node getCertificateValidationControllingValue() {
-    exists(DataFlow::CallNode newCall | newCall = connectionNode.getAValueReachableFromSource() |
-      // Check for `ssl_verify_peer: false`
-      result = newCall.getKeywordArgumentIncludeHashArgument("ssl_verify_peer")
-    )
+    result =
+      connectionNode.(DataFlow::CallNode).getKeywordArgumentIncludeHashArgument("ssl_verify_peer")
   }
 
   cached
@@ -83,11 +77,10 @@ class ExconHttpRequest extends Http::Client::Request::Range, DataFlow::CallNode 
     // for the request call.
     exists(DataFlow::CallNode disableCall, BooleanLiteral value |
       // Excon.defaults[:ssl_verify_peer]
-      disableCall = API::getTopLevelMember("Excon").getReturn("defaults").getAMethodCall("[]=") and
+      disableCall = DataFlow::getConstant("Excon").getAMethodCall("defaults").getAMethodCall("[]=") and
       disableCall
           .getArgument(0)
           .getALocalSource()
-          .asExpr()
           .getConstantValue()
           .isStringlikeValue("ssl_verify_peer") and
       disablingNode = disableCall.getArgument(1) and
@@ -95,7 +88,7 @@ class ExconHttpRequest extends Http::Client::Request::Range, DataFlow::CallNode 
       value = argumentOrigin.asExpr().getExpr()
       or
       // Excon.ssl_verify_peer
-      disableCall = API::getTopLevelMember("Excon").getAMethodCall("ssl_verify_peer=") and
+      disableCall = DataFlow::getConstant("Excon").getAMethodCall("ssl_verify_peer=") and
       disablingNode = disableCall.getArgument(0) and
       argumentOrigin = disablingNode.getALocalSource() and
       value = argumentOrigin.asExpr().getExpr()
