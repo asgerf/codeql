@@ -893,6 +893,8 @@ class ModuleNode instanceof Module {
   /** Gets a constant or `self` variable that refers to this module. */
   LocalSourceNode getAnImmediateReference() {
     result.asExpr().getExpr() = super.getAnImmediateReference()
+    or
+    result = this.getAnOwnModuleSelf()
   }
 
   /**
