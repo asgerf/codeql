@@ -1458,7 +1458,7 @@ class ConstRef extends Node instanceof LocalSourceNode {
    */
   pragma[inline]
   private LocalSourceNode getADescendentModuleRef() {
-    result = this.getADescendentModule().getAnOwnModuleSelf()
+    result = this.getADescendentModule().getAnImmediateReference()
     or
     result = this
   }
