@@ -334,9 +334,11 @@ private class ActiveRecordModelClassSelfReference extends ActiveRecordModelInsta
 }
 
 /**
+ * DEPRECATED. Use `ActiveRecordModelInstantiation` instead.
+ *
  * An instance of an `ActiveRecord` model object.
  */
-class ActiveRecordInstance extends DataFlow::Node {
+deprecated class ActiveRecordInstance extends DataFlow::Node {
   private ActiveRecordModelInstantiation instantiation;
 
   ActiveRecordInstance() { this = instantiation or instantiation.flowsTo(this) }
@@ -347,12 +349,15 @@ class ActiveRecordInstance extends DataFlow::Node {
 
 /** A call whose receiver may be an active record model object */
 class ActiveRecordInstanceMethodCall extends DataFlow::CallNode {
-  private ActiveRecordInstance instance;
+  private ActiveRecordModelInstantiation instantiation;
 
-  ActiveRecordInstanceMethodCall() { this.getReceiver() = instance }
+  ActiveRecordInstanceMethodCall() { this = instantiation.getAMethodCall() }
 
-  /** Gets the `ActiveRecordInstance` that is the receiver of this call. */
-  ActiveRecordInstance getInstance() { result = instance }
+  /** Gets the `ActiveRecordModelInstantiation` that this is a method call on. */
+  ActiveRecordModelInstantiation getModelInstantiation() { result = instantiation }
+
+  /** DEPRECATED. Use `getReceiver()` or `getModelInstantiation()` instead. */
+  deprecated ActiveRecordInstance getInstance() { result = this.getReceiver() }
 }
 
 /**

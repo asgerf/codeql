@@ -5,7 +5,7 @@ import codeql.ruby.DataFlow
 
 query predicate activeRecordModelClasses(ActiveRecordModelClass cls) { any() }
 
-query predicate activeRecordInstances(ActiveRecordInstance i) { any() }
+deprecated query predicate activeRecordInstances(ActiveRecordInstance i) { any() }
 
 query predicate activeRecordSqlExecutionRanges(ActiveRecordSqlExecutionRange range) { any() }
 

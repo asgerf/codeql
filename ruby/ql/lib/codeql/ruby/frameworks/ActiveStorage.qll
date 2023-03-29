@@ -3,7 +3,6 @@
  */
 
 private import codeql.ruby.AST
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.Concepts
 private import codeql.ruby.DataFlow
 private import codeql.ruby.dataflow.FlowSummary
@@ -19,10 +18,7 @@ module ActiveStorage {
   private class FilenameSanitizedCall extends Path::PathSanitization::Range, DataFlow::CallNode {
     FilenameSanitizedCall() {
       this =
-        API::getTopLevelMember("ActiveStorage")
-            .getMember("Filename")
-            .getInstance()
-            .getAMethodCall("sanitized")
+        DataFlow::getConstant("ActiveStorage").getConstant("Filename").getAMethodCall("sanitized")
     }
   }
 
@@ -59,16 +55,12 @@ module ActiveStorage {
     }
   }
 
-  private class BlobInstance extends DataFlow::Node {
+  private class BlobInstance extends DataFlow::LocalSourceNode {
     BlobInstance() {
-      this = ModelOutput::getATypeNode("ActiveStorage::Blob").getAValueReachableFromSource()
+      this = ModelOutput::getATypeNode("ActiveStorage::Blob").asSource()
       or
       // ActiveStorage::Attachment#blob : Blob
-      exists(DataFlow::CallNode call |
-        call = this and
-        call.getReceiver() instanceof AttachmentInstance and
-        call.getMethodName() = "blob"
-      )
+      this = any(AttachmentInstance i).getAMethodCall("blob")
       or
       // ActiveStorage::Attachment delegates method calls to its associated Blob
       this instanceof AttachmentInstance
@@ -83,21 +75,15 @@ module ActiveStorage {
       this =
         [
           // Class methods
-          API::getTopLevelMember("ActiveStorage")
-              .getMember("Blob")
-              .getASubclass()
+          DataFlow::getConstant("ActiveStorage")
+              .getConstant("Blob")
               .getAMethodCall(["create_after_unfurling!", "create_and_upload!"]),
           // Instance methods
-          any(BlobInstance i, DataFlow::CallNode c |
-            i.(DataFlow::LocalSourceNode).flowsTo(c.getReceiver()) and
-            c.getMethodName() =
-              [
-                "upload", "upload_without_unfurling", "download", "download_chunk", "delete",
-                "purge"
-              ]
-          |
-            c
-          )
+          any(BlobInstance i)
+              .getAMethodCall([
+                  "upload", "upload_without_unfurling", "download", "download_chunk", "delete",
+                  "purge"
+                ])
         ]
     }
 
@@ -142,23 +128,14 @@ module ActiveStorage {
    * ActiveStorage::Attachment.new
    * ```
    */
-  class AttachmentInstance extends DataFlow::Node {
+  class AttachmentInstance extends DataFlow::LocalSourceNode {
     AttachmentInstance() {
-      this =
-        API::getTopLevelMember("ActiveStorage")
-            .getMember("Attachment")
-            .getInstance()
-            .getAValueReachableFromSource()
+      this = DataFlow::getConstant("ActiveStorage").getConstant("Attachment").getAMethodCall("new")
       or
-      exists(Association assoc, string model, DataFlow::CallNode call |
-        model = assoc.getTargetModelName()
-      |
-        call = this and
-        call.getReceiver().(ActiveRecordInstance).getClass() = assoc.getSourceClass() and
-        call.getMethodName() = model
+      exists(ActiveRecordModelInstantiation record, Association assoc |
+        record.getClass() = assoc.getSourceClass() and
+        this = record.getAMethodCall(assoc.getTargetModelName())
       )
-      or
-      any(AttachmentInstance i).(DataFlow::LocalSourceNode).flowsTo(this)
     }
   }
 
@@ -169,43 +146,42 @@ module ActiveStorage {
   private class ImageProcessingCall extends SystemCommandExecution::Range instanceof DataFlow::CallNode
   {
     ImageProcessingCall() {
-      this.getReceiver() instanceof BlobInstance and
-      this.getMethodName() = ["variant", "preview", "representation"]
+      this = any(BlobInstance i).getAMethodCall(["variant", "preview", "representation"])
       or
       this =
-        API::getTopLevelMember("ActiveStorage")
-            .getMember("Attachment")
-            .getInstance()
+        DataFlow::getConstant("ActiveStorage")
+            .getConstant("Attachment")
+            .getAMethodCall("new")
             .getAMethodCall(["variant", "preview", "representation"])
       or
       this =
-        API::getTopLevelMember("ActiveStorage")
-            .getMember("Variation")
+        DataFlow::getConstant("ActiveStorage")
+            .getConstant("Variation")
             .getAMethodCall(["new", "wrap", "encode"])
       or
       this =
-        API::getTopLevelMember("ActiveStorage")
-            .getMember("Variation")
-            .getInstance()
+        DataFlow::getConstant("ActiveStorage")
+            .getConstant("Variation")
+            .getAMethodCall("new")
             .getAMethodCall("transformations=")
       or
       this =
-        API::getTopLevelMember("ActiveStorage")
-            .getMember("Transformers")
-            .getMember("ImageProcessingTransformer")
+        DataFlow::getConstant("ActiveStorage")
+            .getConstant("Transformers")
+            .getConstant("ImageProcessingTransformer")
             .getAMethodCall("new")
       or
       this =
-        API::getTopLevelMember("ActiveStorage")
-            .getMember(["Preview", "VariantWithRecord"])
+        DataFlow::getConstant("ActiveStorage")
+            .getConstant(["Preview", "VariantWithRecord"])
             .getAMethodCall("new")
       or
       // `ActiveStorage.paths` is a global hash whose values are passed to
       // a `system` call.
-      this = API::getTopLevelMember("ActiveStorage").getAMethodCall("paths=")
+      this = DataFlow::getConstant("ActiveStorage").getAMethodCall("paths=")
       or
       // `ActiveStorage.video_preview_arguments` is passed to a `system` call.
-      this = API::getTopLevelMember("ActiveStorage").getAMethodCall("video_preview_arguments=")
+      this = DataFlow::getConstant("ActiveStorage").getAMethodCall("video_preview_arguments=")
     }
 
     override DataFlow::Node getAnArgument() { result = super.getArgument(0) }
@@ -216,7 +192,7 @@ module ActiveStorage {
    */
   private class VariantProcessor extends DataFlow::CallNode, CodeExecution::Range {
     VariantProcessor() {
-      this = API::getTopLevelMember("ActiveStorage").getAMethodCall("variant_processor=")
+      this = DataFlow::getConstant("ActiveStorage").getAMethodCall("variant_processor=")
     }
 
     override DataFlow::Node getCode() { result = this.getArgument(0) }
