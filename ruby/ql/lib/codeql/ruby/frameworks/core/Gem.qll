@@ -4,7 +4,6 @@
 
 private import ruby
 private import Ast
-private import codeql.ruby.ApiGraphs
 
 /** Provides modeling for the `Gem` module and `.gemspec` files. */
 module Gem {
@@ -20,11 +19,11 @@ module Gem {
    * ```
    */
   class GemSpec instanceof File {
-    API::Node specCall;
+    DataFlow::CallNode specCall;
 
     GemSpec() {
       this.getExtension() = "gemspec" and
-      specCall = API::root().getMember("Gem").getMember("Specification").getMethod("new") and
+      specCall = DataFlow::getConstant("Gem").getConstant("Specification").getAMethodCall("new") and
       specCall.getLocation().getFile() = this
     }
 
@@ -39,15 +38,12 @@ module Gem {
       exists(Expr rhs |
         rhs =
           specCall
-              .getBlock()
+              .getABlockTarget()
               .getParameter(0)
-              .getMethod(name + "=")
-              .getParameter(0)
-              .asSink()
+              .getAMethodCall(name + "=")
+              .getArgument(0)
               .asExpr()
               .getExpr()
-              .(Ast::AssignExpr)
-              .getRightOperand()
       |
         result = rhs
         or
