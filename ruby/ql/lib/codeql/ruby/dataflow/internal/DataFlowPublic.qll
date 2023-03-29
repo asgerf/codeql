@@ -1293,7 +1293,7 @@ class ArrayLiteralNode extends LocalSourceNode, ExprNode {
  *
  * See `DataFlow::getConstant` for usage example.
  */
-class ConstRef extends LocalSourceNode {
+class ConstRef extends Node instanceof LocalSourceNode {
   private ConstantAccess access;
 
   ConstRef() { this = getConstantAccessNode(access) }
@@ -1451,6 +1451,24 @@ class ConstRef extends LocalSourceNode {
    * ```
    */
   ModuleNode getADescendentModule() { MkAncestorLookup(result) = this.getATargetScope() }
+
+  /**
+   * Gets a reference to any module that transitively subclasses, includes, or prepends the module referred to by
+   * this constant, including the constant itself.
+   */
+  pragma[inline]
+  private LocalSourceNode getADescendentModuleRef() {
+    result = this.getADescendentModule().getAnOwnModuleSelf()
+    or
+    result = this
+  }
+
+  /**
+   * Gets a call to `name` invoked on this constant or on any module that has the constant on its ancestor chain.
+   */
+  CallNode getAMethodCall(string name) {
+    result = this.getADescendentModuleRef().getAMethodCall(name)
+  }
 }
 
 /**

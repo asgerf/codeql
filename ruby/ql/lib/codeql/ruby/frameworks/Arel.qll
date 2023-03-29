@@ -32,10 +32,7 @@ module Arel {
 
   /** A call to `Arel.sql`, considered as a SQL construction. */
   private class ArelSqlConstruction extends SqlConstruction::Range, DataFlow::CallNode {
-    ArelSqlConstruction() {
-      this = DataFlow::getConstant("Arel").getAMethodCall() and
-      this.getMethodName() = "sql"
-    }
+    ArelSqlConstruction() { this = DataFlow::getConstant("Arel").getAMethodCall("sql") }
 
     override DataFlow::Node getSql() { result = this.getArgument(0) }
   }
