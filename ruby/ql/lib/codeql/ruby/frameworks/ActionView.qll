@@ -174,7 +174,8 @@ class LinkToCall extends ActionViewContextCall {
  */
 class FileSystemResolverAccess extends DataFlow::CallNode, FileSystemAccess::Range {
   FileSystemResolverAccess() {
-    this = API::getTopLevelMember("ActionView").getMember("FileSystemResolver").getAnInstantiation()
+    this =
+      DataFlow::getConstant("ActionView").getConstant("FileSystemResolver").getAMethodCall("new")
   }
 
   override DataFlow::Node getAPathArgument() { result = this.getArgument(0) }
