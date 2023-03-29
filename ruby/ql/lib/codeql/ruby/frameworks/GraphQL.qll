@@ -7,12 +7,13 @@ private import codeql.ruby.Concepts
 private import codeql.ruby.controlflow.CfgNodes
 private import codeql.ruby.DataFlow
 private import codeql.ruby.dataflow.RemoteFlowSources
-private import codeql.ruby.ApiGraphs
 
-private API::Node graphQlSchema() { result = API::getTopLevelMember("GraphQL").getMember("Schema") }
+private DataFlow::ConstRef graphQlSchema() {
+  result = DataFlow::getConstant("GraphQL").getConstant("Schema")
+}
 
 /**
- * A `ClassDeclaration` for a class that extends `GraphQL::Schema::RelayClassicMutation`.
+ * A class that extends `GraphQL::Schema::RelayClassicMutation`.
  * For example,
  *
  * ```rb
@@ -37,20 +38,14 @@ private API::Node graphQlSchema() { result = API::getTopLevelMember("GraphQL").g
  * end
  * ```
  */
-private class GraphqlRelayClassicMutationClass extends ClassDeclaration {
+private class GraphqlRelayClassicMutationClass extends DataFlow::ClassNode {
   GraphqlRelayClassicMutationClass() {
-    this.getSuperclassExpr() =
-      graphQlSchema()
-          .getMember("RelayClassicMutation")
-          .getASubclass*()
-          .getAValueReachableFromSource()
-          .asExpr()
-          .getExpr()
+    this = graphQlSchema().getConstant("RelayClassicMutation").getADescendentModule()
   }
 }
 
 /**
- * A `ClassDeclaration` for a class that extends `GraphQL::Schema::Resolver`.
+ * A class that extends `GraphQL::Schema::Resolver`.
  * For example,
  *
  * ```rb
@@ -72,15 +67,9 @@ private class GraphqlRelayClassicMutationClass extends ClassDeclaration {
  * end
  * ```
  */
-private class GraphqlSchemaResolverClass extends ClassDeclaration {
+private class GraphqlSchemaResolverClass extends DataFlow::ClassNode {
   GraphqlSchemaResolverClass() {
-    this.getSuperclassExpr() =
-      graphQlSchema()
-          .getMember("Resolver")
-          .getASubclass()
-          .getAValueReachableFromSource()
-          .asExpr()
-          .getExpr()
+    this = graphQlSchema().getConstant("Resolver").getADescendentModule()
   }
 }
 
@@ -103,13 +92,7 @@ private string getASupportedHttpMethod() { result = ["get", "post"] }
  */
 class GraphqlSchemaObjectClass extends ClassDeclaration {
   GraphqlSchemaObjectClass() {
-    this.getSuperclassExpr() =
-      graphQlSchema()
-          .getMember("Object")
-          .getASubclass()
-          .getAValueReachableFromSource()
-          .asExpr()
-          .getExpr()
+    this = graphQlSchema().getConstant("Object").getADescendentModule().getADeclaration()
   }
 
   /** Gets a `GraphqlFieldDefinitionMethodCall` called in this class. */
@@ -126,7 +109,7 @@ class GraphqlSchemaObjectClass extends ClassDeclaration {
  * Both of these classes have an overridable `resolve` instance
  * method which can receive user input in order to resolve a query or mutation.
  */
-private class GraphqlResolvableClass extends ClassDeclaration {
+private class GraphqlResolvableClass extends DataFlow::ClassNode {
   GraphqlResolvableClass() {
     this instanceof GraphqlRelayClassicMutationClass or
     this instanceof GraphqlSchemaResolverClass
@@ -169,7 +152,9 @@ private class GraphqlResolvableClass extends ClassDeclaration {
 class GraphqlResolveMethod extends Method, Http::Server::RequestHandler::Range {
   private GraphqlResolvableClass resolvableClass;
 
-  GraphqlResolveMethod() { this = resolvableClass.getMethod("resolve") }
+  GraphqlResolveMethod() {
+    this = resolvableClass.getOwnInstanceMethod("resolve").asCallableAstNode()
+  }
 
   override Parameter getARoutedParameter() { result = this.getAParameter() }
 
@@ -216,7 +201,7 @@ class GraphqlLoadMethod extends Method, Http::Server::RequestHandler::Range {
   private GraphqlResolvableClass resolvableClass;
 
   GraphqlLoadMethod() {
-    this.getEnclosingModule() = resolvableClass and
+    this = resolvableClass.getAnOwnInstanceMethod().asCallableAstNode() and
     this.getName().regexpMatch("^load_.*")
   }
 
