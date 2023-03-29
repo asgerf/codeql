@@ -2,13 +2,12 @@
  * Provides modeling for the `Digest` module.
  */
 
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.Concepts
 private import codeql.ruby.DataFlow
 
 /** Gets an API node for a Digest class that hashes using `algo`. */
-private API::Node digest(Cryptography::HashingAlgorithm algo) {
-  exists(string name | result = API::getTopLevelMember("Digest").getMember(name) |
+private DataFlow::ConstRef digest(Cryptography::HashingAlgorithm algo) {
+  exists(string name | result = DataFlow::getConstant("Digest").getConstant(name) |
     name = ["MD5", "SHA1", "SHA2", "RMD160"] and
     algo.matchesName(name)
   )
@@ -24,7 +23,7 @@ private class DigestCall extends Cryptography::CryptographicOperation::Range ins
     or
     this = digest(algo).getAMethodCall("file") // it's directly hashing the contents of a file, but that's close enough for us.
     or
-    this = digest(algo).getInstance().getAMethodCall(["digest", "update", "<<"])
+    this = digest(algo).getAMethodCall("new").getAMethodCall(["digest", "update", "<<"])
   }
 
   override Cryptography::HashingAlgorithm getAlgorithm() { result = algo }
