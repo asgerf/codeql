@@ -3,7 +3,6 @@
  */
 
 private import codeql.ruby.AST
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.Concepts
 private import codeql.ruby.controlflow.CfgNodes
 private import codeql.ruby.DataFlow
