@@ -7,7 +7,6 @@ private import codeql.ruby.AST
 private import codeql.ruby.Concepts
 private import codeql.ruby.DataFlow
 private import codeql.ruby.dataflow.FlowSummary
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.frameworks.stdlib.Logger::Logger as StdlibLogger
 private import codeql.ruby.frameworks.data.ModelsAsData
 
@@ -452,9 +451,9 @@ module ActiveSupport {
     private class ActiveSupportLoggerInstantiation extends StdlibLogger::LoggerInstantiation {
       ActiveSupportLoggerInstantiation() {
         this =
-          API::getTopLevelMember("ActiveSupport")
-              .getMember(["Logger", "TaggedLogging"])
-              .getAnInstantiation()
+          DataFlow::getConstant("ActiveSupport")
+              .getConstant(["Logger", "TaggedLogging"])
+              .getAMethodCall("new")
       }
     }
   }
