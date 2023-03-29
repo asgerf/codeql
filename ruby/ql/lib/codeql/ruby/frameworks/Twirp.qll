@@ -4,7 +4,6 @@
 
 private import codeql.ruby.DataFlow
 private import codeql.ruby.CFG
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.AST as Ast
 private import codeql.ruby.security.ServerSideRequestForgeryCustomizations
 private import codeql.ruby.Concepts
@@ -18,42 +17,18 @@ module Twirp {
    */
   class ServiceInstantiation extends DataFlow::CallNode {
     ServiceInstantiation() {
-      this =
-        API::getTopLevelMember("Twirp").getMember("Service").getASubclass().getAnInstantiation()
+      this = DataFlow::getConstant("Twirp").getConstant("Service").getAMethodCall("new")
     }
 
-    /**
-     * Gets a local source node for the Service instantiation argument (the service handler).
-     */
-    private DataFlow::LocalSourceNode getHandlerSource() {
-      result = this.getArgument(0).getALocalSource()
-    }
-
-    /**
-     * Gets the API::Node for the service handler's class.
-     */
-    private API::Node getAHandlerClassApiNode() {
-      result.getAnInstantiation() = this.getHandlerSource()
-    }
-
-    /**
-     * Gets the AST module for the service handler's class.
-     */
-    private Ast::Module getAHandlerClassAstNode() {
-      result =
-        this.getAHandlerClassApiNode()
-            .asSource()
-            .asExpr()
-            .(CfgNodes::ExprNodes::ConstantReadAccessCfgNode)
-            .getExpr()
-            .getModule()
+    private DataFlow::ModuleNode getHandlerClass() {
+      result.getAnInstanceReference().flowsTo(this.getArgument(0))
     }
 
     /**
      * Gets a handler's method.
      */
     Ast::Method getAHandlerMethod() {
-      result = this.getAHandlerClassAstNode().getAnInstanceMethod()
+      result = this.getHandlerClass().getAnInstanceMethod().asCallableAstNode()
     }
   }
 
@@ -62,7 +37,7 @@ module Twirp {
    */
   class ClientInstantiation extends DataFlow::CallNode {
     ClientInstantiation() {
-      this = API::getTopLevelMember("Twirp").getMember("Client").getASubclass().getAnInstantiation()
+      this = DataFlow::getConstant("Twirp").getConstant("Client").getAMethodCall("new")
     }
   }
 
