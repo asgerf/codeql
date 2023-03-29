@@ -5,9 +5,19 @@
 private import codeql.ruby.AST
 private import codeql.ruby.CFG
 private import codeql.ruby.Concepts
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.DataFlow
 private import codeql.ruby.dataflow.internal.DataFlowImplForHttpClientLibraries as DataFlowImplForHttpClientLibraries
+
+private DataFlow::LocalSourceNode faradayConnection() {
+  // one-off requests
+  result = DataFlow::getConstant("Faraday")
+  or
+  // connection re-use
+  result = DataFlow::getConstant("Faraday").getAMethodCall("new")
+  or
+  // connection re-use with Faraday::Connection.new instantiation
+  result = DataFlow::getConstant("Faraday").getConstant("Connection").getAMethodCall("new")
+}
 
 /**
  * A call that makes an HTTP request using `Faraday`.
@@ -24,33 +34,21 @@ private import codeql.ruby.dataflow.internal.DataFlowImplForHttpClientLibraries 
  * ```
  */
 class FaradayHttpRequest extends Http::Client::Request::Range, DataFlow::CallNode {
-  API::Node requestNode;
-  API::Node connectionNode;
-  DataFlow::Node connectionUse;
+  DataFlow::LocalSourceNode connectionNode;
 
   FaradayHttpRequest() {
-    connectionNode =
-      [
-        // one-off requests
-        API::getTopLevelMember("Faraday"),
-        // connection re-use
-        API::getTopLevelMember("Faraday").getInstance(),
-        // connection re-use with Faraday::Connection.new instantiation
-        API::getTopLevelMember("Faraday").getMember("Connection").getInstance()
-      ] and
-    requestNode =
+    connectionNode = faradayConnection() and
+    this =
       connectionNode
-          .getReturn(["get", "head", "delete", "post", "put", "patch", "trace", "run_request"]) and
-    this = requestNode.asSource() and
-    connectionUse = connectionNode.asSource()
+          .getAMethodCall(["get", "head", "delete", "post", "put", "patch", "trace", "run_request"])
   }
 
-  override DataFlow::Node getResponseBody() { result = requestNode.getAMethodCall("body") }
+  override DataFlow::Node getResponseBody() { result = this.getAMethodCall("body") }
 
   override DataFlow::Node getAUrlPart() {
     result = this.getArgument(0) or
-    result = connectionUse.(DataFlow::CallNode).getArgument(0) or
-    result = connectionUse.(DataFlow::CallNode).getKeywordArgument("url")
+    result = connectionNode.(DataFlow::CallNode).getArgument(0) or
+    result = connectionNode.(DataFlow::CallNode).getKeywordArgument("url")
   }
 
   /** Gets the value that controls certificate validation, if any, with argument name `name`. */
@@ -61,9 +59,8 @@ class FaradayHttpRequest extends Http::Client::Request::Range, DataFlow::CallNod
     // or
     // `{ ssl: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }`
     argName in ["verify", "verify_mode"] and
-    exists(DataFlow::Node sslValue, DataFlow::CallNode newCall |
-      newCall = connectionNode.getAValueReachableFromSource() and
-      sslValue = newCall.getKeywordArgumentIncludeHashArgument("ssl")
+    exists(DataFlow::Node sslValue |
+      sslValue = connectionNode.(DataFlow::CallNode).getKeywordArgumentIncludeHashArgument("ssl")
     |
       exists(CfgNodes::ExprNodes::PairCfgNode p, DataFlow::Node key |
         p = sslValue.asExpr().(CfgNodes::ExprNodes::HashLiteralCfgNode).getAKeyValuePair() and
@@ -99,7 +96,7 @@ private class FaradayDisablesCertificateValidationConfiguration extends DataFlow
     source.asExpr().getExpr().(BooleanLiteral).isFalse() and
     state = "verify"
     or
-    source = API::getTopLevelMember("OpenSSL").getMember("SSL").getMember("VERIFY_NONE").asSource() and
+    source = DataFlow::getConstant("OpenSSL").getConstant("SSL").getConstant("VERIFY_NONE") and
     state = "verify_mode"
   }
 
