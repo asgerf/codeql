@@ -5,7 +5,6 @@
  */
 
 private import codeql.ruby.AST
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.CFG
 private import codeql.ruby.Concepts
 private import codeql.ruby.DataFlow
@@ -43,20 +42,12 @@ module ZipSlip {
   /**
    * A call to `Zlib::GzipReader.open(path)`, considered a flow source.
    */
-  private class GzipReaderOpen extends Source {
+  private class GzipReaderOpen extends Source instanceof DataFlow::CallNode {
     GzipReaderOpen() {
-      (
-        this = API::getTopLevelMember("Zlib").getMember("GzipReader").getReturn("open").asSource()
-        or
-        this = API::getTopLevelMember("Zlib").getMember("GzipReader").getInstance().asSource()
-      ) and
+      this = DataFlow::getConstant("Zlib").getConstant("GzipReader").getAMethodCall(["open", "new"]) and
       // If argument refers to a string object, then it's a hardcoded path and
       // this file is safe.
-      not this.(DataFlow::CallNode)
-          .getArgument(0)
-          .getALocalSource()
-          .getConstantValue()
-          .isStringlikeValue(_)
+      not this.getArgument(0).getALocalSource().getConstantValue().isStringlikeValue(_)
     }
   }
 
@@ -65,16 +56,19 @@ module ZipSlip {
    */
   private class TarReaderInstance extends Source {
     TarReaderInstance() {
-      exists(API::MethodAccessNode newTarReader |
+      exists(DataFlow::CallNode newTarReader |
         newTarReader =
-          API::getTopLevelMember("Gem").getMember("Package").getMember("TarReader").getMethod("new")
+          DataFlow::getConstant("Gem")
+              .getConstant("Package")
+              .getConstant("TarReader")
+              .getAMethodCall("new")
       |
         // Unlike in two other modules, there's no check for the constant path because TarReader class is called with an `io` object and not filepath.
         // This, of course, can be modeled but probably in the internal IO.qll file
         // For now, I'm leaving this prone to false-positives
-        not exists(newTarReader.getBlock()) and this = newTarReader.getReturn().asSource()
+        not exists(newTarReader.getBlock()) and this = newTarReader
         or
-        this = newTarReader.getBlock().getParameter(0).asSource()
+        this = newTarReader.getABlockTarget().getParameter(0)
       )
     }
   }
@@ -84,22 +78,17 @@ module ZipSlip {
    */
   private class ZipFileOpen extends Source {
     ZipFileOpen() {
-      exists(API::MethodAccessNode zipOpen |
-        zipOpen = API::getTopLevelMember("Zip").getMember("File").getMethod("open") and
+      exists(DataFlow::CallNode zipOpen |
+        zipOpen = DataFlow::getConstant("Zip").getConstant("File").getAMethodCall("open") and
         // If argument refers to a string object, then it's a hardcoded path and
         // this file is safe.
-        not zipOpen
-            .getCallNode()
-            .getArgument(0)
-            .getALocalSource()
-            .getConstantValue()
-            .isStringlikeValue(_)
+        not zipOpen.getArgument(0).getALocalSource().getConstantValue().isStringlikeValue(_)
       |
         // the case with variable assignment `zip_file = Zip::File.open(path)`
-        not exists(zipOpen.getBlock()) and this = zipOpen.getReturn().asSource()
+        not exists(zipOpen.getBlock()) and this = zipOpen
         or
         // the case with direct block`Zip::File.open(path) do |zip_file|` case
-        this = zipOpen.getBlock().getParameter(0).asSource()
+        this = zipOpen.getABlockTarget().getParameter(0)
       )
     }
   }
