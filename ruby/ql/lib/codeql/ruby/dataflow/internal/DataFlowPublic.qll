@@ -1019,6 +1019,31 @@ class ModuleNode instanceof Module {
    * this predicate.
    */
   ModuleNode getNestedModule(string name) { result = super.getNestedModule(name) }
+
+  /**
+   * Gets a call to method `name` with this module object as the receiver.
+   *
+   * This only finds calls where the receiver is a constant referring to the module,
+   * or the `self` variable in the module scope or in one of its singleton methods.
+   *
+   * Does not take inheritance into account.
+   *
+   * For example, gets the following calls to `foo`:
+   *
+   * ```rb
+   * module M
+   *   foo # in module scope
+   *
+   *   def self.bar
+   *     foo # in singleton method
+   *   end
+   * end
+   * M.foo # via a constant
+   * ```
+   */
+  CallNode getAModuleCall(string name) {
+    result = this.getAnImmediateReference().getAMethodCall(name)
+  }
 }
 
 /**
