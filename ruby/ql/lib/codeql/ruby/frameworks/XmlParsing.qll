@@ -6,21 +6,24 @@ private import codeql.ruby.Concepts
 private import codeql.ruby.AST
 private import codeql.ruby.DataFlow
 private import codeql.ruby.typetracking.TypeTracker
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.controlflow.CfgNodes as CfgNodes
 
 private class NokogiriXmlParserCall extends XmlParserCall::Range, DataFlow::CallNode {
   NokogiriXmlParserCall() {
     this =
       [
-        API::getTopLevelMember("Nokogiri").getMember("XML"),
-        API::getTopLevelMember("Nokogiri").getMember("XML").getMember("Document"),
-        API::getTopLevelMember("Nokogiri")
-            .getMember("XML")
-            .getMember("SAX")
-            .getMember("Parser")
-            .getInstance()
-      ].getAMethodCall("parse")
+        DataFlow::getConstant("Nokogiri").getConstant("XML").getAMethodCall("parse"),
+        DataFlow::getConstant("Nokogiri")
+            .getConstant("XML")
+            .getConstant("Document")
+            .getAMethodCall("parse"),
+        DataFlow::getConstant("Nokogiri")
+            .getConstant("XML")
+            .getConstant("SAX")
+            .getConstant("Parser")
+            .getAMethodCall("new")
+            .getAMethodCall("parse")
+      ]
   }
 
   override DataFlow::Node getInput() { result = this.getArgument(0) }
@@ -75,8 +78,8 @@ private predicate enablesLibXmlDefaultEntitySubstitution(AssignExpr assign) {
 private class LibXmlRubyXmlParserCall extends XmlParserCall::Range, DataFlow::CallNode {
   LibXmlRubyXmlParserCall() {
     this =
-      [API::getTopLevelMember("LibXML").getMember("XML"), API::getTopLevelMember("XML")]
-          .getMember(["Document", "Parser"])
+      [DataFlow::getConstant("LibXML").getConstant("XML"), DataFlow::getConstant("XML")]
+          .getConstant(["Document", "Parser"])
           .getAMethodCall(["file", "io", "string"])
   }
 
@@ -104,7 +107,7 @@ private class LibXmlRubyXmlParserCall extends XmlParserCall::Range, DataFlow::Ca
  * Holds if `call` sets `ActiveSupport::XmlMini.backend` to `"LibXML"`.
  */
 private predicate setsXmlMiniBackendToLibXml(DataFlow::CallNode call) {
-  call = API::getTopLevelMember("ActiveSupport").getMember("XmlMini").getAMethodCall("backend=") and
+  call = DataFlow::getConstant("ActiveSupport").getConstant("XmlMini").getAMethodCall("backend=") and
   call.getArgument(0)
       .asExpr()
       .(CfgNodes::ExprNodes::AssignExprCfgNode)
@@ -128,7 +131,7 @@ private predicate xmlMiniEntitySubstitutionEnabled() {
  */
 private class XmlMiniXmlParserCall extends XmlParserCall::Range, DataFlow::CallNode {
   XmlMiniXmlParserCall() {
-    this = API::getTopLevelMember("ActiveSupport").getMember("XmlMini").getAMethodCall("parse")
+    this = DataFlow::getConstant("ActiveSupport").getConstant("XmlMini").getAMethodCall("parse")
   }
 
   override DataFlow::Node getInput() { result = this.getArgument(0) }
@@ -142,7 +145,7 @@ private class XmlMiniXmlParserCall extends XmlParserCall::Range, DataFlow::CallN
  */
 private class HashFromXmlXmlParserCall extends XmlParserCall::Range, DataFlow::CallNode {
   HashFromXmlXmlParserCall() {
-    this = API::getTopLevelMember("Hash").getAMethodCall(["from_xml", "from_trusted_xml"])
+    this = DataFlow::getConstant("Hash").getAMethodCall(["from_xml", "from_trusted_xml"])
   }
 
   override DataFlow::Node getInput() { result = this.getArgument(0) }
@@ -196,13 +199,13 @@ private class FeatureDtdLoad extends Feature, TDTDLOAD {
   override string getConstantName() { result = "DTDLOAD" }
 }
 
-private API::Node parseOptionsModule() {
-  result = API::getTopLevelMember("Nokogiri").getMember("XML").getMember("ParseOptions")
+private DataFlow::ConstRef parseOptionsModule() {
+  result = DataFlow::getConstant("Nokogiri").getConstant("XML").getConstant("ParseOptions")
   or
   result =
-    API::getTopLevelMember("LibXML").getMember("XML").getMember("Parser").getMember("Options")
+    DataFlow::getConstant("LibXML").getConstant("XML").getConstant("Parser").getConstant("Options")
   or
-  result = API::getTopLevelMember("XML").getMember("Parser").getMember("Options")
+  result = DataFlow::getConstant("XML").getConstant("Parser").getConstant("Options")
 }
 
 private predicate bitWiseAndOr(CfgNodes::ExprNodes::OperationCfgNode operation) {
@@ -224,7 +227,7 @@ private DataFlow::LocalSourceNode trackFeature(Feature f, boolean enable, TypeTr
     or
     // Use of a constant f
     enable = true and
-    result = parseOptionsModule().getMember(f.getConstantName()).getAValueReachableFromSource()
+    result = parseOptionsModule().getConstant(f.getConstantName())
     or
     // Treat `&`, `&=`, `|` and `|=` operators as if they preserve the on/off states
     // of their operands. This is an overapproximation but likely to work well in practice
@@ -244,10 +247,10 @@ private DataFlow::LocalSourceNode trackFeature(Feature f, boolean enable, TypeTr
     // Nokogiri has a ParseOptions class that is a wrapper around the bit-fields and
     // provides methods for querying and updating the fields.
     result =
-      API::getTopLevelMember("Nokogiri")
-          .getMember("XML")
-          .getMember("ParseOptions")
-          .getAnInstantiation() and
+      DataFlow::getConstant("Nokogiri")
+          .getConstant("XML")
+          .getConstant("ParseOptions")
+          .getAMethodCall("new") and
     result.asExpr().(CfgNodes::ExprNodes::CallCfgNode).getArgument(0) =
       trackFeature(f, enable).asExpr()
     or
