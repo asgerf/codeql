@@ -4,7 +4,6 @@
  */
 
 private import codeql.ruby.Concepts
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.DataFlow
 private import codeql.ruby.controlflow.CfgNodes
 
@@ -13,21 +12,15 @@ private import codeql.ruby.controlflow.CfgNodes
  * Version: 0.3.15
  */
 module PosixSpawn {
-  private API::Node posixSpawnModule() {
-    result = API::getTopLevelMember("POSIX").getMember("Spawn")
+  private DataFlow::ConstRef posixSpawnModule() {
+    result = DataFlow::getConstant("POSIX").getConstant("Spawn")
   }
 
   /**
    * A call to `POSIX::Spawn::Child.new` or `POSIX::Spawn::Child.build`.
    */
   class ChildCall extends SystemCommandExecution::Range instanceof DataFlow::CallNode {
-    ChildCall() {
-      this =
-        [
-          posixSpawnModule().getMember("Child").getAMethodCall("build"),
-          posixSpawnModule().getMember("Child").getAnInstantiation()
-        ]
-    }
+    ChildCall() { this = posixSpawnModule().getConstant("Child").getAMethodCall(["build", "new"]) }
 
     override DataFlow::Node getAnArgument() {
       result = super.getArgument(_) and not result.asExpr() instanceof ExprNodes::PairCfgNode
