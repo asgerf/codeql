@@ -2,7 +2,6 @@
  * Provides templating for embedding Ruby code into text files, allowing dynamic content generation in web applications.
  */
 
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.dataflow.FlowSummary
 private import codeql.ruby.Concepts
 
@@ -13,7 +12,7 @@ module Slim {
   /** A call to `Slim::Template.new`, considered as a template construction. */
   private class SlimTemplateNewCall extends TemplateConstruction::Range, DataFlow::CallNode {
     SlimTemplateNewCall() {
-      this = API::getTopLevelMember("Slim").getMember("Template").getAnInstantiation()
+      this = DataFlow::getConstant("Slim").getConstant("Template").getAMethodCall("new")
     }
 
     override DataFlow::Node getTemplate() {
