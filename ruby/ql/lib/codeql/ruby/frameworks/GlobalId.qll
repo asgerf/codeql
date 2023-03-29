@@ -17,12 +17,12 @@ private import codeql.ruby.frameworks.ActiveRecord
 module GlobalId {
   /** A call to `GlobalID::parse` */
   class ParseCall extends DataFlow::CallNode {
-    ParseCall() { this = API::getTopLevelMember("GlobalID").getAMethodCall("parse") }
+    ParseCall() { this = DataFlow::getConstant("GlobalID").getAMethodCall("parse") }
   }
 
   /** A call to `GlobalID::find` */
   class FindCall extends DataFlow::CallNode, OrmInstantiation::Range {
-    FindCall() { this = API::getTopLevelMember("GlobalID").getAMethodCall("find") }
+    FindCall() { this = DataFlow::getConstant("GlobalID").getAMethodCall("find") }
 
     override predicate methodCallMayAccessField(string methodName) { none() }
   }
@@ -32,7 +32,7 @@ module GlobalId {
     /** A call to `GlobalID::Locator.locate` */
     class LocateCall extends DataFlow::CallNode, OrmInstantiation::Range {
       LocateCall() {
-        this = API::getTopLevelMember("GlobalID").getMember("Locator").getAMethodCall("locate")
+        this = DataFlow::getConstant("GlobalID").getConstant("Locator").getAMethodCall("locate")
       }
 
       override predicate methodCallMayAccessField(string methodName) { none() }
@@ -42,7 +42,7 @@ module GlobalId {
     class LocateSignedCall extends DataFlow::CallNode, OrmInstantiation::Range {
       LocateSignedCall() {
         this =
-          API::getTopLevelMember("GlobalID").getMember("Locator").getAMethodCall("locate_signed")
+          DataFlow::getConstant("GlobalID").getConstant("Locator").getAMethodCall("locate_signed")
       }
 
       override predicate methodCallMayAccessField(string methodName) { none() }
@@ -51,7 +51,8 @@ module GlobalId {
     /** A call to `GlobalID::Locator.locate_many` */
     class LocateManyCall extends DataFlow::CallNode, OrmInstantiation::Range {
       LocateManyCall() {
-        this = API::getTopLevelMember("GlobalID").getMember("Locator").getAMethodCall("locate_many")
+        this =
+          DataFlow::getConstant("GlobalID").getConstant("Locator").getAMethodCall("locate_many")
       }
 
       override predicate methodCallMayAccessField(string methodName) { none() }
@@ -61,8 +62,8 @@ module GlobalId {
     class LocateManySignedCall extends DataFlow::CallNode, OrmInstantiation::Range {
       LocateManySignedCall() {
         this =
-          API::getTopLevelMember("GlobalID")
-              .getMember("Locator")
+          DataFlow::getConstant("GlobalID")
+              .getConstant("Locator")
               .getAMethodCall("locate_many_signed")
       }
 
@@ -113,12 +114,12 @@ module GlobalId {
 module SignedGlobalId {
   /** A call to `SignedGlobalID::parse` */
   class ParseCall extends DataFlow::CallNode {
-    ParseCall() { this = API::getTopLevelMember("SignedGlobalID").getAMethodCall("parse") }
+    ParseCall() { this = DataFlow::getConstant("SignedGlobalID").getAMethodCall("parse") }
   }
 
   /** A call to `SignedGlobalID::find` */
   class FindCall extends DataFlow::CallNode, OrmInstantiation::Range {
-    FindCall() { this = API::getTopLevelMember("SignedGlobalID").getAMethodCall("find") }
+    FindCall() { this = DataFlow::getConstant("SignedGlobalID").getAMethodCall("find") }
 
     override predicate methodCallMayAccessField(string methodName) { none() }
   }
