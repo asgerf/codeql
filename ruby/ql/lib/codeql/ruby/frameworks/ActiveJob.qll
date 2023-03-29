@@ -4,7 +4,6 @@
  * https://rubygems.org/gems/activejob
  */
 
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.Concepts
 private import codeql.ruby.DataFlow
 
@@ -21,7 +20,9 @@ module ActiveJob {
     class DeserializeCall extends DataFlow::CallNode, CodeExecution::Range {
       DeserializeCall() {
         this =
-          API::getTopLevelMember("ActiveJob").getMember("Serializers").getAMethodCall("deserialize")
+          DataFlow::getConstant("ActiveJob")
+              .getConstant("Serializers")
+              .getAMethodCall("deserialize")
       }
 
       override DataFlow::Node getCode() { result = this.getArgument(0) }
