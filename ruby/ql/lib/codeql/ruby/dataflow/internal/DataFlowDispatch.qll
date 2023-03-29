@@ -425,6 +425,10 @@ private module Cached {
     result = trackBlock(block, TypeTracker::end())
   }
 
+  pragma[nomagic]
+  cached
+  DataFlow::LocalSourceNode trackModuleInstance(Module mod) { result = trackInstance(mod, _) }
+
   cached
   newtype TArgumentPosition =
     TSelfArgumentPosition() or

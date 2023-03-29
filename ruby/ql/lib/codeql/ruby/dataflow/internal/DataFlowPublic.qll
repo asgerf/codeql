@@ -1046,6 +1046,11 @@ class ModuleNode instanceof Module {
   CallNode getAModuleCall(string name) {
     result = this.getAnImmediateReference().getAMethodCall(name)
   }
+
+  /**
+   * Gets a source node that refers to an instance of this module.
+   */
+  LocalSourceNode getAnInstanceReference() { result = trackModuleInstance(this) }
 }
 
 /**
