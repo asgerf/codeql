@@ -5,7 +5,6 @@
 
 private import codeql.ruby.AST
 private import codeql.ruby.Concepts
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.DataFlow
 private import codeql.ruby.dataflow.RemoteFlowSources
 private import codeql.ruby.frameworks.stdlib.Logger::Logger as StdlibLogger
@@ -21,10 +20,10 @@ module ActionCable {
     private class ActionCableLoggerInstantiation extends StdlibLogger::LoggerInstantiation {
       ActionCableLoggerInstantiation() {
         this =
-          API::getTopLevelMember("ActionCable")
-              .getMember("Connection")
-              .getMember("TaggedLoggerProxy")
-              .getAnInstantiation()
+          DataFlow::getConstant("ActionCable")
+              .getConstant("Connection")
+              .getConstant("TaggedLoggerProxy")
+              .getAMethodCall("new")
       }
     }
   }
