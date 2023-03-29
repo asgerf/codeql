@@ -82,11 +82,15 @@ class ActiveRecordModelClass extends ClassDeclaration {
       (
         // ...The receiver does not have a matching method definition, or...
         not exists(
-          cNode.getInstance().getClass().getAllClassDeclarations().getMethod(c.getMethodName())
+          cNode
+              .getModelInstantiation()
+              .getClass()
+              .getAllClassDeclarations()
+              .getMethod(c.getMethodName())
         )
         or
         // ...the called method can access a field
-        c.getATarget() = cNode.getInstance().getClass().getAPotentialFieldAccessMethod()
+        c.getATarget() = cNode.getModelInstantiation().getClass().getAPotentialFieldAccessMethod()
       )
     )
   }
@@ -643,8 +647,9 @@ private class ActiveRecordAssociationMethodCall extends DataFlow::CallNode {
   ActiveRecordAssociation assoc;
 
   ActiveRecordAssociationMethodCall() {
-    exists(string model | model = assoc.getTargetModelName() |
-      this.getReceiver().(ActiveRecordInstance).getClass() = assoc.getSourceClass() and
+    exists(string model, ActiveRecordModelInstantiation inst | model = assoc.getTargetModelName() |
+      inst.getClass() = assoc.getSourceClass() and
+      this = inst.getAMethodCall() and
       (
         assoc.isCollection() and
         (
