@@ -2,8 +2,8 @@
  * Provides modeling for the `ActionMailer` library.
  */
 
+private import codeql.ruby.DataFlow
 private import codeql.ruby.AST
-private import codeql.ruby.ApiGraphs
 private import codeql.ruby.frameworks.internal.Rails
 
 /**
@@ -22,14 +22,14 @@ module ActionMailer {
    */
   class MailerClass extends ClassDeclaration {
     MailerClass() {
-      this.getSuperclassExpr() =
+      this =
         [
-          API::getTopLevelMember("ActionMailer").getMember("Base"),
+          DataFlow::getConstant("ActionMailer").getConstant("Base"),
           // In Rails applications `ApplicationMailer` typically extends
           // `ActionMailer::Base`, but we treat it separately in case the
           // `ApplicationMailer` definition is not in the database.
-          API::getTopLevelMember("ApplicationMailer")
-        ].getASubclass().getAValueReachableFromSource().asExpr().getExpr()
+          DataFlow::getConstant("ApplicationMailer")
+        ].getADescendentModule().getADeclaration()
     }
   }
 
