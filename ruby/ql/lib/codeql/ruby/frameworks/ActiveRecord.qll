@@ -31,16 +31,16 @@ private predicate isBuiltInMethodForActiveRecordModelInstance(string methodName)
   methodName = objectInstanceMethodName()
 }
 
-private API::Node activeRecordClassApiNode() {
+private DataFlow::ConstRef activeRecordConstant() {
   result =
     // class Foo < ActiveRecord::Base
     // class Bar < Foo
     [
-      API::getTopLevelMember("ActiveRecord").getMember("Base"),
+      DataFlow::getConstant("ActiveRecord").getConstant("Base"),
       // In Rails applications `ApplicationRecord` typically extends `ActiveRecord::Base`, but we
       // treat it separately in case the `ApplicationRecord` definition is not in the database.
-      API::getTopLevelMember("ApplicationRecord")
-    ].getASubclass()
+      DataFlow::getConstant("ApplicationRecord")
+    ]
 }
 
 /**
@@ -57,8 +57,7 @@ private API::Node activeRecordClassApiNode() {
  */
 class ActiveRecordModelClass extends ClassDeclaration {
   ActiveRecordModelClass() {
-    this.getSuperclassExpr() =
-      activeRecordClassApiNode().getAValueReachableFromSource().asExpr().getExpr()
+    this = activeRecordConstant().getADescendentModule().getADeclaration()
   }
 
   // Gets the class declaration for this class and all of its super classes
@@ -214,15 +213,12 @@ class ActiveRecordSqlExecutionRange extends SqlExecution::Range {
       this.asExpr().getNode() = mc.getSqlFragmentSinkArgument()
     )
     or
-    this = activeRecordConnectionInstance().getAMethodCall("execute").getArgument(0) and
+    this =
+      activeRecordConstant().getAMethodCall("connection").getAMethodCall("execute").getArgument(0) and
     unsafeSqlExpr(this.asExpr().getExpr())
   }
 
   override DataFlow::Node getSql() { result = this }
-}
-
-private API::Node activeRecordConnectionInstance() {
-  result = activeRecordClassApiNode().getReturn("connection")
 }
 
 // TODO: model `ActiveRecord` sanitizers
