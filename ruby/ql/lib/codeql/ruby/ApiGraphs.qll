@@ -586,6 +586,8 @@ module API {
       or
       defStep(_, trackDefNode(_), rhs)
       or
+      rhs instanceof DataFlow::MethodNode
+      or
       rhs = any(EntryPoint entry).getASink()
     }
 
