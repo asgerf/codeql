@@ -552,6 +552,8 @@ module API {
       or
       parameterStep(_, defCand(), nd)
       or
+      nd instanceof DataFlow::ParameterNode
+      or
       nd = any(EntryPoint entry).getASource()
       or
       nd = any(EntryPoint entry).getACall()
@@ -639,7 +641,7 @@ module API {
     private DataFlow::LocalSourceNode trackUseNode(DataFlow::LocalSourceNode src, TypeTracker t) {
       result = src and
       isUse(src) and
-      t.start()
+      (if src instanceof DataFlow::ParameterNode then t.call() else t.start())
       or
       exists(TypeTracker t2 |
         result = trackUseNode(src, t2).track(t2, t) and
