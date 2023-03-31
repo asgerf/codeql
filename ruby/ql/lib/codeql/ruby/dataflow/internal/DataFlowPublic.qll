@@ -1342,7 +1342,7 @@ class ConstRef extends LocalSourceNode {
    * Gets a scope in which a constant lookup may access the contents of the module referenced by this constant.
    */
   cached
-  private ConstantLookupScope getATargetScope() {
+  ConstantLookupScope getATargetScope() {
     forceCachingInSameStage() and
     result = MkAncestorLookup(this.getAncestryTarget().getAnImmediateDescendent*())
     or
@@ -1377,7 +1377,7 @@ class ConstRef extends LocalSourceNode {
    * Holds if this can reference a constant named `name` from `scope`.
    */
   cached
-  private predicate accesses(ConstantLookupScope scope, string name) {
+  predicate accesses(ConstantLookupScope scope, string name) {
     forceCachingInSameStage() and
     scope = this.getLookupScope() and
     name = this.getName()

@@ -177,8 +177,7 @@ module API {
      * - A submodule of a module
      * - An attribute of an object
      */
-    bindingset[m]
-    bindingset[result]
+    pragma[inline]
     Node getMember(string m) { result = this.getASuccessor(Label::member(m)) }
 
     /**
@@ -285,32 +284,45 @@ module API {
      * Gets a string representation of the lexicographically least among all shortest access paths
      * from the root to this node.
      */
-    string getPath() {
-      result = min(string p | p = this.getAPath(Impl::distanceFromRoot(this)) | p)
-    }
+    string getPath() { result = min(this.getAPath()) }
 
     /**
      * Gets a node such that there is an edge in the API graph between this node and the other
      * one, and that edge is labeled with `lbl`.
      */
-    Node getASuccessor(Label::ApiLabel lbl) { Impl::edge(this, lbl, result) }
+    pragma[inline]
+    Node getASuccessor(Label::ApiLabel lbl) {
+      exists(API::Node mid |
+        pragma[only_bind_into](mid) = this.getAnEpsilonSuccessor() and
+        pragma[only_bind_into](result) = mid.getARawSuccessor(lbl)
+      )
+    }
+
+    pragma[inline]
+    private Node getARawSuccessor(Label::ApiLabel lbl) { Impl::labelledEdge(this, lbl, result) }
+
+    pragma[inline]
+    private Node getAnEpsilonSuccessor() { Impl::epsilonEdge(this, result) }
 
     /**
      * Gets a node such that there is an edge in the API graph between that other node and
      * this one, and that edge is labeled with `lbl`
      */
+    pragma[inline]
     Node getAPredecessor(Label::ApiLabel lbl) { this = result.getASuccessor(lbl) }
 
     /**
      * Gets a node such that there is an edge in the API graph between this node and the other
      * one.
      */
+    pragma[inline]
     Node getAPredecessor() { result = this.getAPredecessor(_) }
 
     /**
      * Gets a node such that there is an edge in the API graph between that other node and
      * this one.
      */
+    pragma[inline]
     Node getASuccessor() { result = this.getASuccessor(_) }
 
     /**
@@ -342,21 +354,27 @@ module API {
     /**
      * Gets a path of the given `length` from the root to this node.
      */
-    private string getAPath(int length) {
+    private string getAPath() {
       this instanceof Impl::MkRoot and
-      length = 0 and
       result = ""
       or
       exists(Node pred, Label::ApiLabel lbl, string predpath |
-        Impl::edge(pred, lbl, this) and
-        predpath = pred.getAPath(length - 1) and
-        exists(string dot | if length = 1 then dot = "" else dot = "." |
+        Impl::labelledEdge(pred, lbl, this) and
+        pred.getDepth() = this.getDepth() - 1 and
+        predpath = pred.getAPath() and
+        exists(string dot | if predpath = "" then dot = "" else dot = "." |
           result = predpath + dot + lbl and
           // avoid producing strings longer than 1MB
           result.length() < 1000 * 1000
         )
-      ) and
-      length in [1 .. Impl::distanceFromRoot(this)]
+      )
+      or
+      // Extend path by an epsilon edge
+      exists(Node pred |
+        Impl::epsilonEdge(pred, this) and
+        pred.getDepth() = this.getDepth() - 1 and
+        result = pred.getAPath()
+      )
     }
 
     /** Gets the shortest distance from the root to this node in the API graph. */
@@ -478,7 +496,9 @@ module API {
       /** A use of an API member at the node `nd`. */
       MkUse(DataFlow::Node nd) { isUse(nd) } or
       /** A value that escapes into an external library at the node `nd` */
-      MkDef(DataFlow::Node nd) { isDef(nd) }
+      MkDef(DataFlow::Node nd) { isDef(nd) } or
+      /** A constant lookup scope, only used as an intermediate node. */
+      MkConstantLookupScope(DataFlowPrivate::ConstantLookupScope scope)
 
     private string resolveTopLevel(ConstantReadAccess read) {
       result = read.getModule().getQualifiedName() and
@@ -491,15 +511,9 @@ module API {
      */
     pragma[nomagic]
     private predicate useRoot(Label::ApiLabel lbl, DataFlow::Node ref) {
-      exists(string name, ConstantReadAccess read |
-        read = ref.asExpr().getExpr() and
-        lbl = Label::member(read.getName())
-      |
-        name = resolveTopLevel(read)
-        or
-        name = read.getName() and
-        not exists(resolveTopLevel(read)) and
-        not exists(read.getScopeExpr())
+      exists(string name |
+        ref = DataFlow::getConstant(name) and
+        lbl = Label::member(name)
       )
     }
 
@@ -542,6 +556,8 @@ module API {
     pragma[nomagic]
     private predicate isUse(DataFlow::Node nd) {
       useRoot(_, nd)
+      or
+      nd = any(DataFlow::ConstRef ref)
       or
       exists(DataFlow::Node node |
         useCandFwd().flowsTo(node) and
@@ -679,11 +695,21 @@ module API {
       trackUseNode(use).flowsTo(call.getReceiver())
     }
 
+    cached
+    predicate epsilonEdge(Node pred, Node succ) {
+      exists(DataFlow::ConstRef ref |
+        use(pred, ref) and
+        succ = MkConstantLookupScope(ref.getATargetScope())
+      )
+      or
+      pred = succ
+    }
+
     /**
      * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
      */
     cached
-    predicate edge(TApiNode pred, Label::ApiLabel lbl, TApiNode succ) {
+    predicate labelledEdge(TApiNode pred, Label::ApiLabel lbl, TApiNode succ) {
       /* Every node that is a use of an API component is itself added to the API graph. */
       exists(DataFlow::LocalSourceNode ref | succ = MkUse(ref) |
         pred = MkRoot() and
@@ -699,6 +725,13 @@ module API {
           pred = MkDef(callback) and
           parameterStep(lbl, trackDefNode(callback), ref)
         )
+      )
+      or
+      exists(DataFlow::ConstRef ref, DataFlowPrivate::ConstantLookupScope scope, string name |
+        ref.accesses(scope, name) and
+        pred = MkConstantLookupScope(scope) and
+        use(succ, ref) and
+        lbl = Label::member(name)
       )
       or
       exists(DataFlow::Node predNode, DataFlow::Node succNode |
@@ -753,9 +786,13 @@ module API {
     }
 
     /**
-     * Holds if there is an edge from `pred` to `succ` in the API graph.
+     * Holds if there is an edge from `pred` to `succ` in the API graph (possibly an epsilon edge).
      */
-    private predicate edge(TApiNode pred, TApiNode succ) { edge(pred, _, succ) }
+    private predicate edge(TApiNode pred, TApiNode succ) {
+      labelledEdge(pred, _, succ)
+      or
+      epsilonEdge(pred, succ)
+    }
 
     /** Gets the shortest distance from the root to `nd` in the API graph. */
     cached
