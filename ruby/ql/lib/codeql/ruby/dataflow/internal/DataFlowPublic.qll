@@ -1305,7 +1305,11 @@ class ConstRef extends LocalSourceNode {
       mod.getAnImmediateReference() = access
     )
     or
+    access instanceof ConstantReadAccess and
     not exists(Module mod | mod.getAnImmediateReference() = access) and
+    not exists(access.getScopeExpr())
+    or
+    access.getEnclosingModule() instanceof Toplevel and
     not exists(access.getScopeExpr())
   }
 
