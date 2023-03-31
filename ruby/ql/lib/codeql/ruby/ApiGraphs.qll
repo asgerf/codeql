@@ -554,6 +554,8 @@ module API {
       or
       nd instanceof DataFlow::ParameterNode
       or
+      nd = any(DataFlow::MethodNode m).getSelfParameter()
+      or
       nd = any(EntryPoint entry).getASource()
       or
       nd = any(EntryPoint entry).getACall()
