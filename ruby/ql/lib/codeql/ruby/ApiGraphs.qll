@@ -199,7 +199,10 @@ module API {
      * Consider using `getAnInstantiation()` if there is a need to distinguish between individual constructor calls.
      */
     pragma[inline]
-    Node getInstance() { result = this.getASubclass().getReturn("new") }
+    Node getInstance() { result = this.getASubclass().getOwnInstance() }
+
+    pragma[inline]
+    Node getOwnInstance() { result = this.getASuccessor(Label::instance()) }
 
     /**
      * Gets a node representing a call to `method` on the receiver represented by this node.
@@ -595,7 +598,9 @@ module API {
       /** A use of an API member at the node `nd`. */
       MkUse(DataFlow::Node nd) { isUse(nd) } or
       /** A value that escapes into an external library at the node `nd` */
-      MkDef(DataFlow::Node nd) { isDef(nd) }
+      MkDef(DataFlow::Node nd) { isDef(nd) } or
+      MkModuleObject(DataFlow::ModuleNode mod) or
+      MkModuleInstance(DataFlow::ModuleNode mod)
 
     private string resolveTopLevel(ConstantReadAccess read) {
       result = read.getModule().getQualifiedName() and
@@ -684,7 +689,17 @@ module API {
      * Holds if `ref` is a use of node `nd`.
      */
     cached
-    predicate use(TApiNode nd, DataFlow::Node ref) { nd = MkUse(ref) }
+    predicate use(TApiNode nd, DataFlow::Node ref) {
+      nd = MkUse(ref)
+      or
+      exists(DataFlow::ModuleNode mod |
+        nd = MkModuleObject(mod) and
+        ref = mod.getAnImmediateReference()
+        or
+        nd = MkModuleInstance(mod) and
+        ref = mod.getAnOwnInstanceSelf()
+      )
+    }
 
     /**
      * Holds if `rhs` is a RHS of node `nd`.
@@ -883,6 +898,24 @@ module API {
         lbl = Label::subclass()
       )
       or
+      exists(DataFlow::ModuleNode mod |
+        trackUseNode(pred).flowsTo(mod.getAnAncestorExpr()) and
+        lbl = Label::subclass() and
+        succ = MkModuleObject(mod)
+        or
+        pred = MkModuleObject(mod) and
+        lbl = Label::instance() and
+        succ = MkModuleInstance(mod)
+        or
+        pred = MkModuleObject(mod) and
+        exists(DataFlow::CallNode call |
+          useNodeReachesReceiver(pred, call) and
+          call.getMethodName() = "new" and
+          use(succ, call) and
+          lbl = Label::instance()
+        )
+      )
+      or
       exists(DataFlow::CallNode call |
         // from receiver to method call node
         useNodeReachesReceiver(pred, call) and
@@ -942,7 +975,8 @@ module API {
       } or
       MkLabelBlockParameter() or
       MkLabelEntryPoint(EntryPoint name) or
-      MkLabelContent(DataFlow::Content content)
+      MkLabelContent(DataFlow::Content content) or
+      MkLabelInstance()
   }
 
   /** Provides classes modeling the various edges (labels) in the API graph. */
@@ -1046,6 +1080,10 @@ module API {
         /** Gets the content represented by this label. */
         DataFlow::Content getContent() { result = content }
       }
+
+      class LabelInstance extends ApiLabel, MkLabelInstance {
+        override string toString() { result = "getInstance()" }
+      }
     }
 
     /** Gets the `member` edge label for member `m`. */
@@ -1074,6 +1112,9 @@ module API {
 
     /** Gets a label representing the given content. */
     LabelContent content(DataFlow::Content content) { result.getContent() = content }
+
+    /** Gets a label representing a `self` reference to an instance of a class. */
+    LabelInstance instance() { any() }
 
     /** Gets the API graph label corresponding to the given argument position. */
     Label::ApiLabel getLabelFromArgumentPosition(DataFlowDispatch::ArgumentPosition pos) {
