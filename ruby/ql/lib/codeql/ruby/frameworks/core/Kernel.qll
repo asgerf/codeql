@@ -19,7 +19,7 @@ module Kernel {
    */
   class KernelMethodCall extends DataFlow::CallNode {
     KernelMethodCall() {
-      this = API::getTopLevelMember("Kernel").getAMethodCall(_)
+      this = API::getTopLevelMember("Kernel").asSource().getAMethodCall()
       or
       this.asExpr().getExpr() instanceof UnknownMethodCall and
       (
