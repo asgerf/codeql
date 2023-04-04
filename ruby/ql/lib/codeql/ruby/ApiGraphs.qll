@@ -183,7 +183,7 @@ module API {
      * - A submodule of a module
      * - An attribute of an object
      */
-    bindingset[this]
+    bindingset[this, m]
     pragma[inline]
     Node getMember(string m) { Forward::memberEdge(this, m, result) }
 
