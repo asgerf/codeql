@@ -511,6 +511,58 @@ module API {
   pragma[inline_late]
   private predicate asSink(Node nd, DataFlow::Node rhs) { Impl::def(nd, rhs) }
 
+  private module Forward {
+    bindingset[pred]
+    pragma[inline_late]
+    predicate subclassEdge(Node pred, Node succ) { Impl::subclassEdge(pred, succ) }
+
+    bindingset[pred]
+    pragma[inline_late]
+    predicate subclassTransitive(Node pred, Node succ) { Impl::subclassTransitive(pred, succ) }
+
+    bindingset[pred, method]
+    pragma[inline_late]
+    predicate methodEdge(Node pred, string method, Node succ) {
+      Impl::methodEdge(pred, method, succ)
+    }
+
+    bindingset[pred, member]
+    pragma[inline_late]
+    predicate memberEdge(Node pred, string member, Node succ) {
+      Impl::memberEdge(pred, member, succ)
+    }
+
+    bindingset[pred, n]
+    pragma[inline_late]
+    predicate parameterEdge(Node pred, int n, Node succ) { Impl::parameterEdge(pred, n, succ) }
+
+    bindingset[pred, name]
+    pragma[inline_late]
+    predicate keywordParameterEdge(Node pred, string name, Node succ) {
+      Impl::keywordParameterEdge(pred, name, succ)
+    }
+
+    bindingset[pred]
+    pragma[inline_late]
+    predicate blockParameterEdge(Node pred, Node succ) { Impl::blockParameterEdge(pred, succ) }
+
+    bindingset[pred]
+    pragma[inline_late]
+    predicate returnEdge(Node pred, Node succ) { Impl::returnEdge(pred, succ) }
+
+    bindingset[pred, content]
+    pragma[inline_late]
+    predicate contentEdge(Node pred, DataFlow::Content content, Node succ) {
+      Impl::contentEdge(pred, content, succ)
+    }
+
+    bindingset[pred]
+    pragma[inline_late]
+    predicate entryPointEdge(Node pred, EntryPoint name, Node succ) {
+      Impl::entryPointEdge(pred, name, succ)
+    }
+  }
+
   /**
    * Provides the actual implementation of API graphs, cached for performance.
    *
