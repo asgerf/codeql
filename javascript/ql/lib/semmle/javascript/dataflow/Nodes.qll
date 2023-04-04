@@ -1032,16 +1032,29 @@ class ClassNode extends DataFlow::SourceNode instanceof ClassNode::Range {
       result = DataFlow::parameterNode(param)
     )
     or
-    result = this.getAnInstanceReferenceAux(t) and
+    result = this.getAnInstanceReferenceRec(t)
+  }
+
+  pragma[noopt]
+  private DataFlow::SourceNode getAnInstanceReferenceRec(DataFlow::TypeTracker t) {
+    exists(DataFlow::TypeTracker t2, StepSummary summary |
+      result = this.getAnInstanceReferenceDoubleRecursiveJoin(t2, summary) and
+      t = t2.append(summary)
+    ) and
     // Avoid tracking into the receiver of other classes.
     // Note that this also blocks flows into a property of the receiver,
     // but the `localFieldStep` rule will often compensate for this.
-    not result = any(DataFlow::ClassNode cls).getAReceiverNode()
+    not isReceiverNode(result)
   }
 
-  pragma[noinline]
-  private DataFlow::SourceNode getAnInstanceReferenceAux(DataFlow::TypeTracker t) {
-    exists(DataFlow::TypeTracker t2 | result = this.getAnInstanceReference(t2).track(t2, t))
+  pragma[nomagic]
+  private DataFlow::SourceNode getAnInstanceReferenceDoubleRecursiveJoin(
+    DataFlow::TypeTracker t, StepSummary summary
+  ) {
+    exists(DataFlow::SourceNode prev |
+      prev = this.getAnInstanceReference(t) and
+      StepSummary::step(prev, result, summary)
+    )
   }
 
   /**
@@ -1103,6 +1116,11 @@ class ClassNode extends DataFlow::SourceNode instanceof ClassNode::Range {
    * Gets a decorator applied to this class.
    */
   DataFlow::Node getADecorator() { result = super.getADecorator() }
+}
+
+pragma[nomagic]
+private predicate isReceiverNode(DataFlow::Node node) {
+  node = any(ClassNode cls).getAReceiverNode()
 }
 
 module ClassNode {

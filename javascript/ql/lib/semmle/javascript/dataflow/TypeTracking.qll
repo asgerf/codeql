@@ -136,10 +136,7 @@ class TypeTracker extends TTypeTracker {
    */
   pragma[inline]
   TypeTracker step(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
-    exists(StepSummary summary |
-      StepSummary::step(pred, succ, summary) and
-      result = this.append(summary)
-    )
+    result = step(this, pred, succ)
   }
 
   /**
@@ -168,14 +165,31 @@ class TypeTracker extends TTypeTracker {
    */
   pragma[inline]
   TypeTracker smallstep(DataFlow::Node pred, DataFlow::Node succ) {
-    exists(StepSummary summary |
-      StepSummary::smallstep(pred, succ, summary) and
-      result = this.append(summary)
-    )
-    or
-    succ = pred.getASuccessor() and
-    result = this
+    result = smallstep(this, pred, succ)
   }
+}
+
+bindingset[tt, pred]
+pragma[inline_late]
+pragma[noopt]
+private TypeTracker step(TypeTracker tt, DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
+  exists(StepSummary summary |
+    StepSummary::step(pred, succ, summary) and
+    result = tt.append(summary)
+  )
+}
+
+bindingset[tt, pred]
+pragma[inline_late]
+pragma[noopt]
+private TypeTracker smallstep(TypeTracker tt, DataFlow::Node pred, DataFlow::Node succ) {
+  exists(StepSummary summary |
+    StepSummary::smallstep(pred, succ, summary) and
+    result = tt.append(summary)
+  )
+  or
+  succ = pred.getASuccessor() and
+  result = tt
 }
 
 module TypeTracker {
