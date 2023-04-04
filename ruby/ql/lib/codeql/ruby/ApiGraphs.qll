@@ -496,9 +496,8 @@ module API {
   pragma[inline_late]
   pragma[noopt]
   private predicate valueReachableFromSourceForward(Node nd, DataFlow::Node ref) {
-    exists(DataFlow::LocalSourceNode src, DataFlow::LocalSourceNode mid |
-      Impl::use(nd, src) and
-      Impl::trackUseNode(src) = mid and
+    exists(DataFlow::LocalSourceNode mid |
+      Impl::trackUseNode(nd) = mid and
       DataFlow::Internal::hasLocalUse(mid, ref)
     )
   }
@@ -758,13 +757,12 @@ module API {
      *
      * The flow from `src` to the returned node may be inter-procedural.
      */
-    private DataFlow::LocalSourceNode trackUseNode(DataFlow::LocalSourceNode src, TypeTracker t) {
-      result = src and
-      isUse(src) and
+    private DataFlow::LocalSourceNode trackUseNode(TApiNode node, TypeTracker t) {
+      use(node, result) and
       t.start()
       or
       exists(TypeTracker t2 |
-        result = trackUseNode(src, t2).track(t2, t) and
+        result = trackUseNode(node, t2).track(t2, t) and
         not result instanceof DataFlowPrivate::SelfParameterNode
       )
     }
@@ -775,8 +773,8 @@ module API {
      * The flow from `src` to the returned node may be inter-procedural.
      */
     cached
-    DataFlow::LocalSourceNode trackUseNode(DataFlow::LocalSourceNode src) {
-      result = trackUseNode(src, TypeTracker::end())
+    DataFlow::LocalSourceNode trackUseNode(TApiNode node) {
+      result = trackUseNode(node, TypeTracker::end())
     }
 
     /** Gets a data flow node reaching the RHS of the given def node. */
@@ -799,7 +797,7 @@ module API {
     }
 
     pragma[nomagic]
-    private predicate useNodeReachesReceiver(DataFlow::Node use, DataFlow::CallNode call) {
+    private predicate useNodeReachesReceiver(TApiNode use, DataFlow::CallNode call) {
       trackUseNode(use).flowsTo(call.getReceiver())
     }
 
@@ -857,9 +855,8 @@ module API {
         pred = MkRoot() and
         useRoot(lbl, ref)
         or
-        exists(DataFlow::Node node, DataFlow::Node src |
-          pred = MkUse(src) and
-          trackUseNode(src).flowsTo(node) and
+        exists(DataFlow::Node node |
+          trackUseNode(pred).flowsTo(node) and
           useStep(lbl, node, ref)
         )
         or
@@ -888,12 +885,9 @@ module API {
       or
       exists(DataFlow::CallNode call |
         // from receiver to method call node
-        exists(DataFlow::Node receiver |
-          pred = MkUse(receiver) and
-          useNodeReachesReceiver(receiver, call) and
-          lbl = Label::method(call.getMethodName()) and
-          succ = MkMethodAccessNode(call)
-        )
+        useNodeReachesReceiver(pred, call) and
+        lbl = Label::method(call.getMethodName()) and
+        succ = MkMethodAccessNode(call)
         or
         // from method call node to return and arguments
         pred = MkMethodAccessNode(call) and
