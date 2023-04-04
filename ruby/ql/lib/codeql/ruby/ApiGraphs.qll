@@ -493,6 +493,8 @@ module API {
   pragma[inline_late]
   private predicate subclassTransitiveForward(Node pred, Node succ) {
     Impl::subclassTransitive(pred, succ)
+    or
+    pred = succ
   }
 
   bindingset[nd]
