@@ -98,11 +98,7 @@ module API {
      * See `asSource()` for examples.
      */
     pragma[inline]
-    DataFlow::Node getAValueReachableFromSource() {
-      exists(DataFlow::LocalSourceNode src | Impl::use(this, src) |
-        Impl::trackUseNode(src).flowsTo(result)
-      )
-    }
+    DataFlow::Node getAValueReachableFromSource() { valueReachableFromSourceForward(this, result) }
 
     /**
      * Gets a data-flow node where this value enters the current codebase.
@@ -122,7 +118,7 @@ module API {
      * ```
      */
     pragma[inline]
-    DataFlow::LocalSourceNode asSource() { Impl::use(pragma[only_bind_out](this), result) }
+    DataFlow::LocalSourceNode asSource() { asSource(this, result) }
 
     /**
      * Gets a data-flow node where this value leaves the current codebase and flows into an
@@ -143,7 +139,8 @@ module API {
      * })
      * ```
      */
-    DataFlow::Node asSink() { Impl::def(this, result) }
+    pragma[inline]
+    DataFlow::Node asSink() { asSink(this, result) }
 
     /**
      * Get a data-flow node that transitively flows to an external library (or in general, any external codebase).
@@ -151,6 +148,7 @@ module API {
      * This is similar to `asSink()` but additionally includes nodes that transitively reach a sink by data flow.
      * See `asSink()` for examples.
      */
+    pragma[inline]
     DataFlow::Node getAValueReachingSink() { result = Impl::trackDefNode(this.asSink()) }
 
     /** DEPRECATED. This predicate has been renamed to `getAValueReachableFromSource()`. */
@@ -168,6 +166,7 @@ module API {
     /**
      * Gets a call to a method on the receiver represented by this API component.
      */
+    pragma[inline]
     DataFlow::CallNode getAMethodCall(string method) { result = this.getReturn(method).asSource() }
 
     /**
@@ -239,6 +238,7 @@ module API {
     /**
      * Gets a `new` call to the function represented by this API component.
      */
+    pragma[inline]
     DataFlow::ExprNode getAnInstantiation() { result = this.getInstance().asSource() }
 
     /**
@@ -250,7 +250,8 @@ module API {
      * ```
      * In the example above, `getMember("A").getASubclass()` will return uses of `A`, `B` and `C`.
      */
-    Node getASubclass() { result = this.getAnImmediateSubclass*() }
+    pragma[inline]
+    Node getASubclass() { subclassTransitiveForward(this, result) }
 
     /**
      * Gets a node representing a direct subclass of the class represented by this node.
@@ -261,7 +262,8 @@ module API {
      * ```
      * In the example above, `getMember("A").getAnImmediateSubclass()` will return uses of `B` only.
      */
-    Node getAnImmediateSubclass() { result = this.getASuccessor(Label::subclass()) }
+    pragma[inline]
+    Node getAnImmediateSubclass() { subclassForward(this, result) }
 
     /**
      * Gets a node representing the `content` stored on the base object.
@@ -465,10 +467,8 @@ module API {
    * use `getTopLevelMember("Gem").getMember("Version")`.
    */
   bindingset[m]
-  pragma[inline]
-  Node getTopLevelMember(string m) {
-    pragma[only_bind_into](result) = getTopLevelMemberRaw(pragma[only_bind_out](m))
-  }
+  pragma[inline_late]
+  Node getTopLevelMember(string m) { result = getTopLevelMemberRaw(m) }
 
   cached
   private Node getTopLevelMemberRaw(string m) {
@@ -481,6 +481,35 @@ module API {
   private predicate edgeForward(Node pred, Label::ApiLabel lbl, Node succ) {
     Impl::edge(pred, lbl, succ)
   }
+
+  bindingset[pred]
+  pragma[inline_late]
+  private predicate subclassForward(Node pred, Node succ) { Impl::subclassEdge(pred, succ) }
+
+  bindingset[pred]
+  pragma[inline_late]
+  private predicate subclassTransitiveForward(Node pred, Node succ) {
+    Impl::subclassTransitive(pred, succ)
+  }
+
+  bindingset[nd]
+  pragma[inline_late]
+  pragma[noopt]
+  private predicate valueReachableFromSourceForward(Node nd, DataFlow::Node ref) {
+    exists(DataFlow::LocalSourceNode src, DataFlow::LocalSourceNode mid |
+      Impl::use(nd, src) and
+      Impl::trackUseNode(src) = mid and
+      DataFlow::Internal::hasLocalUse(mid, ref)
+    )
+  }
+
+  bindingset[nd]
+  pragma[inline_late]
+  private predicate asSource(Node nd, DataFlow::Node ref) { Impl::use(nd, ref) }
+
+  bindingset[nd]
+  pragma[inline_late]
+  private predicate asSink(Node nd, DataFlow::Node rhs) { Impl::def(nd, rhs) }
 
   /**
    * Provides the actual implementation of API graphs, cached for performance.
@@ -721,6 +750,12 @@ module API {
     private predicate useNodeReachesReceiver(DataFlow::Node use, DataFlow::CallNode call) {
       trackUseNode(use).flowsTo(call.getReceiver())
     }
+
+    cached
+    predicate subclassEdge(TApiNode pred, TApiNode succ) { edge(pred, Label::subclass(), succ) }
+
+    cached
+    predicate subclassTransitive(TApiNode pred, TApiNode succ) = fastTC(subclassEdge/2)(pred, succ)
 
     /**
      * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
