@@ -757,6 +757,44 @@ module API {
     cached
     predicate subclassTransitive(TApiNode pred, TApiNode succ) = fastTC(subclassEdge/2)(pred, succ)
 
+    cached
+    predicate methodEdge(TApiNode pred, string method, TApiNode succ) {
+      edge(pred, Label::method(method), succ)
+    }
+
+    cached
+    predicate memberEdge(TApiNode pred, string member, TApiNode succ) {
+      edge(pred, Label::member(member), succ)
+    }
+
+    cached
+    predicate parameterEdge(TApiNode pred, int n, TApiNode succ) {
+      edge(pred, Label::parameter(n), succ)
+    }
+
+    cached
+    predicate keywordParameterEdge(TApiNode pred, string name, TApiNode succ) {
+      edge(pred, Label::keywordParameter(name), succ)
+    }
+
+    cached
+    predicate blockParameterEdge(TApiNode pred, TApiNode succ) {
+      edge(pred, Label::blockParameter(), succ)
+    }
+
+    cached
+    predicate returnEdge(TApiNode pred, TApiNode succ) { edge(pred, Label::return(), succ) }
+
+    cached
+    predicate contentEdge(TApiNode pred, DataFlow::Content content, TApiNode succ) {
+      edge(pred, Label::content(content), succ)
+    }
+
+    cached
+    predicate entryPointEdge(TApiNode pred, EntryPoint name, TApiNode succ) {
+      edge(pred, Label::entryPoint(name), succ)
+    }
+
     /**
      * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
      */
