@@ -97,8 +97,11 @@ module API {
      * This is similar to `asSource()` but additionally includes nodes that are transitively reachable by data flow.
      * See `asSource()` for examples.
      */
+    bindingset[this]
     pragma[inline]
-    DataFlow::Node getAValueReachableFromSource() { valueReachableFromSourceForward(this, result) }
+    DataFlow::Node getAValueReachableFromSource() {
+      Forward::valueReachableFromSource(this, result)
+    }
 
     /**
      * Gets a data-flow node where this value enters the current codebase.
@@ -117,8 +120,9 @@ module API {
      * end
      * ```
      */
+    bindingset[this]
     pragma[inline]
-    DataFlow::LocalSourceNode asSource() { asSource(this, result) }
+    DataFlow::LocalSourceNode asSource() { Forward::use(this, result) }
 
     /**
      * Gets a data-flow node where this value leaves the current codebase and flows into an
@@ -139,8 +143,9 @@ module API {
      * })
      * ```
      */
+    bindingset[this]
     pragma[inline]
-    DataFlow::Node asSink() { asSink(this, result) }
+    DataFlow::Node asSink() { Forward::def(this, result) }
 
     /**
      * Get a data-flow node that transitively flows to an external library (or in general, any external codebase).
@@ -148,6 +153,7 @@ module API {
      * This is similar to `asSink()` but additionally includes nodes that transitively reach a sink by data flow.
      * See `asSink()` for examples.
      */
+    bindingset[this]
     pragma[inline]
     DataFlow::Node getAValueReachingSink() { result = Impl::trackDefNode(this.asSink()) }
 
@@ -166,6 +172,7 @@ module API {
     /**
      * Gets a call to a method on the receiver represented by this API component.
      */
+    bindingset[this, method]
     pragma[inline]
     DataFlow::CallNode getAMethodCall(string method) { result = this.getReturn(method).asSource() }
 
@@ -177,15 +184,17 @@ module API {
      * - A submodule of a module
      * - An attribute of an object
      */
+    bindingset[this, m]
     pragma[inline]
-    Node getMember(string m) { result = this.getASuccessor(Label::member(m)) }
+    Node getMember(string m) { Forward::memberEdge(this, m, result) }
 
     /**
      * Gets a node representing a member of this API component where the name of the member may
      * or may not be known statically.
      */
+    bindingset[this]
     pragma[inline]
-    Node getAMember() { result = this.getASuccessor(Label::member(_)) }
+    Node getAMember() { Forward::memberEdge(this, result) }
 
     /**
      * Gets a node representing an instance of this API component, that is, an object whose
@@ -198,15 +207,18 @@ module API {
      * This predicate may have multiple results when there are multiple constructor calls invoking this API component.
      * Consider using `getAnInstantiation()` if there is a need to distinguish between individual constructor calls.
      */
+    bindingset[this]
     pragma[inline]
     Node getInstance() { result = this.getASubclass().getOwnInstance() }
 
+    bindingset[this]
     pragma[inline]
-    Node getOwnInstance() { result = this.getASuccessor(Label::instance()) }
+    Node getOwnInstance() { Forward::instanceEdge(this, result) }
 
     /**
      * Gets a node representing a call to `method` on the receiver represented by this node.
      */
+    bindingset[this, method]
     pragma[inline]
     MethodAccessNode getMethod(string method) {
       result = this.getASubclass().getASuccessor(Label::method(method))
@@ -215,6 +227,7 @@ module API {
     /**
      * Gets a node representing a definition of `method`.
      */
+    bindingset[this, method]
     pragma[inline]
     Node getMethodDefinition(string method) {
       result = this.getASuccessor(Label::method(method)).(Def)
@@ -223,32 +236,38 @@ module API {
     /**
      * Gets a node representing the result of this call.
      */
+    bindingset[this]
     pragma[inline]
     Node getReturn() { result = this.getASuccessor(Label::return()) }
 
     /**
      * Gets a node representing the result of calling a method on the receiver represented by this node.
      */
+    bindingset[this, method]
     pragma[inline]
     Node getReturn(string method) { result = this.getMethod(method).getReturn() }
 
     /** Gets an API node representing the `n`th positional parameter. */
+    bindingset[this]
     pragma[inline]
     Node getParameter(int n) { result = this.getASuccessor(Label::parameter(n)) }
 
     /** Gets an API node representing the given keyword parameter. */
+    bindingset[this]
     pragma[inline]
     Node getKeywordParameter(string name) {
       result = this.getASuccessor(Label::keywordParameter(name))
     }
 
     /** Gets an API node representing the block parameter. */
+    bindingset[this]
     pragma[inline]
     Node getBlock() { result = this.getASuccessor(Label::blockParameter()) }
 
     /**
      * Gets a `new` call to the function represented by this API component.
      */
+    bindingset[this]
     pragma[inline]
     DataFlow::ExprNode getAnInstantiation() { result = this.getInstance().asSource() }
 
@@ -261,8 +280,9 @@ module API {
      * ```
      * In the example above, `getMember("A").getASubclass()` will return uses of `A`, `B` and `C`.
      */
+    bindingset[this]
     pragma[inline]
-    Node getASubclass() { subclassTransitiveForward(this, result) }
+    Node getASubclass() { Forward::subclassTransitive(this, result) }
 
     /**
      * Gets a node representing a direct subclass of the class represented by this node.
@@ -273,20 +293,21 @@ module API {
      * ```
      * In the example above, `getMember("A").getAnImmediateSubclass()` will return uses of `B` only.
      */
+    bindingset[this]
     pragma[inline]
-    Node getAnImmediateSubclass() { subclassForward(this, result) }
+    Node getAnImmediateSubclass() { Forward::subclassEdge(this, result) }
 
     /**
      * Gets a node representing the `content` stored on the base object.
      */
+    bindingset[this]
     pragma[inline]
-    Node getContent(DataFlow::Content content) {
-      result = this.getASuccessor(Label::content(content))
-    }
+    Node getContent(DataFlow::Content content) { Forward::contentEdge(this, content, result) }
 
     /**
      * Gets a node representing the `contents` stored on the base object.
      */
+    bindingset[this]
     pragma[inline]
     Node getContents(DataFlow::ContentSet contents) {
       // We always use getAStoreContent when generating the graph, and we always use getAReadContent when querying the graph.
@@ -294,10 +315,12 @@ module API {
     }
 
     /** Gets a node representing the instance field of the given `name`, which must include the `@` character. */
+    bindingset[this]
     pragma[inline]
     Node getField(string name) { result = this.getContent(DataFlowPrivate::TFieldContent(name)) }
 
     /** Gets a node representing an element of this collection (known or unknown). */
+    bindingset[this]
     pragma[inline]
     Node getAnElement() {
       result = this.getContents(any(DataFlow::ContentSet set | set.isAnyElement()))
@@ -315,13 +338,8 @@ module API {
      * Gets a node such that there is an edge in the API graph between this node and the other
      * one, and that edge is labeled with `lbl`.
      */
-    bindingset[this, lbl]
     pragma[inline]
-    Node getASuccessor(Label::ApiLabel lbl) {
-      edgeForward(this, lbl, result)
-      // pragma[only_bind_into](result) =
-      //   pragma[only_bind_out](this).getASuccessorRaw(pragma[only_bind_out](lbl))
-    }
+    Node getASuccessor(Label::ApiLabel lbl) { Impl::edge(this, lbl, result) }
 
     /**
      * Like `getASuccessor` but without join-order restrictions. Should rarely be used.
@@ -333,7 +351,7 @@ module API {
      * Gets a node such that there is an edge in the API graph between that other node and
      * this one, and that edge is labeled with `lbl`
      */
-    Node getAPredecessor(Label::ApiLabel lbl) { this = result.getASuccessorRaw(lbl) }
+    Node getAPredecessor(Label::ApiLabel lbl) { this = result.getASuccessor(lbl) }
 
     /**
      * Gets a node such that there is an edge in the API graph between this node and the other
@@ -345,7 +363,7 @@ module API {
      * Gets a node such that there is an edge in the API graph between that other node and
      * this one.
      */
-    Node getASuccessor() { result = this.getASuccessorRaw(_) }
+    Node getASuccessor() { result = this.getASuccessor(_) }
 
     /**
      * Gets the data-flow node that gives rise to this node, if any.
@@ -469,7 +487,7 @@ module API {
     DataFlow::CallNode getACall() { none() }
 
     /** Gets an API-node for this entry point. */
-    API::Node getANode() { result = root().getASuccessor(Label::entryPoint(this)) }
+    API::Node getANode() { Forward::entryPointEdge(root(), this, result) }
   }
 
   // Ensure all entry points are imported from ApiGraphs.qll
@@ -496,53 +514,27 @@ module API {
   cached
   private Node getTopLevelMemberRaw(string m) {
     Impl::forceCachingInSameStage() and
-    result = root().getMember(m)
+    Impl::memberEdge(root(), m, result)
   }
-
-  bindingset[pred, lbl]
-  pragma[inline_late]
-  private predicate edgeForward(Node pred, Label::ApiLabel lbl, Node succ) {
-    Impl::edge(pred, lbl, succ)
-  }
-
-  bindingset[pred]
-  pragma[inline_late]
-  private predicate subclassForward(Node pred, Node succ) { Impl::subclassEdge(pred, succ) }
-
-  bindingset[pred]
-  pragma[inline_late]
-  private predicate subclassTransitiveForward(Node pred, Node succ) {
-    Impl::subclassTransitive(pred, succ)
-    or
-    pred = succ
-  }
-
-  bindingset[nd]
-  pragma[inline_late]
-  pragma[noopt]
-  private predicate valueReachableFromSourceForward(Node nd, DataFlow::Node ref) {
-    exists(DataFlow::LocalSourceNode mid |
-      Impl::trackUseNode(nd) = mid and
-      DataFlow::Internal::hasLocalUse(mid, ref)
-    )
-  }
-
-  bindingset[nd]
-  pragma[inline_late]
-  private predicate asSource(Node nd, DataFlow::Node ref) { Impl::use(nd, ref) }
-
-  bindingset[nd]
-  pragma[inline_late]
-  private predicate asSink(Node nd, DataFlow::Node rhs) { Impl::def(nd, rhs) }
 
   private module Forward {
+    bindingset[nd]
+    pragma[inline_late]
+    predicate use(Node nd, DataFlow::Node ref) { Impl::use(nd, ref) }
+
+    bindingset[nd]
+    pragma[inline_late]
+    predicate def(Node nd, DataFlow::Node rhs) { Impl::def(nd, rhs) }
+
     bindingset[pred]
     pragma[inline_late]
     predicate subclassEdge(Node pred, Node succ) { Impl::subclassEdge(pred, succ) }
 
     bindingset[pred]
     pragma[inline_late]
-    predicate subclassTransitive(Node pred, Node succ) { Impl::subclassTransitive(pred, succ) }
+    predicate subclassTransitive(Node pred, Node succ) {
+      Impl::subclassTransitive(pred, succ) or pred = succ
+    }
 
     bindingset[pred, method]
     pragma[inline_late]
@@ -555,6 +547,10 @@ module API {
     predicate memberEdge(Node pred, string member, Node succ) {
       Impl::memberEdge(pred, member, succ)
     }
+
+    bindingset[pred]
+    pragma[inline_late]
+    predicate memberEdge(Node pred, Node succ) { Impl::memberEdge(pred, _, succ) }
 
     bindingset[pred, n]
     pragma[inline_late]
@@ -580,10 +576,24 @@ module API {
       Impl::contentEdge(pred, content, succ)
     }
 
-    bindingset[pred]
+    bindingset[pred, name]
     pragma[inline_late]
     predicate entryPointEdge(Node pred, EntryPoint name, Node succ) {
       Impl::entryPointEdge(pred, name, succ)
+    }
+
+    bindingset[pred]
+    pragma[inline_late]
+    predicate instanceEdge(Node pred, Node succ) { Impl::instanceEdge(pred, succ) }
+
+    bindingset[nd]
+    pragma[inline_late]
+    pragma[noopt]
+    predicate valueReachableFromSource(Node nd, DataFlow::Node ref) {
+      exists(DataFlow::LocalSourceNode mid |
+        Impl::trackUseNode(nd) = mid and
+        DataFlow::Internal::hasLocalUse(mid, ref)
+      )
     }
   }
 
@@ -883,6 +893,9 @@ module API {
     predicate entryPointEdge(TApiNode pred, EntryPoint name, TApiNode succ) {
       edge(pred, Label::entryPoint(name), succ)
     }
+
+    cached
+    predicate instanceEdge(TApiNode pred, TApiNode succ) { edge(pred, Label::instance(), succ) }
 
     /**
      * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
