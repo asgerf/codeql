@@ -213,6 +213,14 @@ module API {
     }
 
     /**
+     * Gets a node representing a definition of `method`.
+     */
+    pragma[inline]
+    Node getMethodDefinition(string method) {
+      result = this.getASuccessor(Label::method(method)).(Def)
+    }
+
+    /**
      * Gets a node representing the result of this call.
      */
     pragma[inline]
@@ -417,6 +425,18 @@ module API {
 
     /** Gets the call node corresponding to this method access. */
     DataFlow::CallNode getCallNode() { this = Impl::MkMethodAccessNode(result) }
+  }
+
+  class ModuleObject extends Node, Impl::MkModuleObject {
+    DataFlow::ModuleNode getModule() { this = Impl::MkModuleObject(result) }
+
+    override string toString() { result = "ModuleObject " + this.getModule().toString() }
+  }
+
+  class ModuleInstance extends Node, Impl::MkModuleInstance {
+    DataFlow::ModuleNode getModule() { this = Impl::MkModuleInstance(result) }
+
+    override string toString() { result = "ModuleInstance " + this.getModule().toString() }
   }
 
   /**
@@ -691,7 +711,7 @@ module API {
      * Holds if `ref` is a use of node `nd`.
      */
     cached
-    predicate use(TApiNode nd, DataFlow::Node ref) {
+    predicate use(Node nd, DataFlow::Node ref) {
       nd = MkUse(ref)
       or
       exists(DataFlow::ModuleNode mod |
@@ -725,6 +745,8 @@ module API {
       argumentStep(_, useCandFwd(), rhs)
       or
       defStep(_, defCand(), rhs)
+      or
+      rhs instanceof DataFlow::MethodNode
       or
       rhs = any(EntryPoint entry).getASink()
     }
@@ -866,7 +888,7 @@ module API {
      * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
      */
     cached
-    predicate edge(TApiNode pred, Label::ApiLabel lbl, TApiNode succ) {
+    predicate edge(Node pred, Label::ApiLabel lbl, Node succ) {
       /* Every node that is a use of an API component is itself added to the API graph. */
       exists(DataFlow::LocalSourceNode ref | succ = MkUse(ref) |
         pred = MkRoot() and
@@ -916,6 +938,14 @@ module API {
           use(succ, call) and
           lbl = Label::instance()
         )
+        or
+        exists(string name | lbl = Label::method(name) |
+          pred = MkModuleInstance(mod) and
+          def(succ, mod.getOwnInstanceMethod(name))
+          or
+          pred = MkModuleObject(mod) and
+          def(succ, mod.getOwnSingletonMethod(name))
+        )
       )
       or
       exists(DataFlow::CallNode call |
@@ -962,7 +992,10 @@ module API {
     cached
     newtype TLabel =
       MkLabelMember(string member) { member = any(ConstantReadAccess a).getName() } or
-      MkLabelMethod(string m) { m = any(DataFlow::CallNode c).getMethodName() } or
+      MkLabelMethod(string m) {
+        m = any(DataFlow::CallNode c).getMethodName() or
+        m = any(DataFlow::MethodNode n).getMethodName()
+      } or
       MkLabelReturn() or
       MkLabelSubclass() or
       MkLabelKeywordParameter(string name) {

@@ -73,3 +73,14 @@ array = [A::B::C] #$ use=getMember("Array").getMethod("[]").getReturn()
 array[0].m #$ use=getMember("A").getMember("B").getMember("C").getMethod("m").getReturn()
 
 A::B::C[0] #$ use=getMember("A").getMember("B").getMember("C").getContent(element_0)
+
+class Q < QBase #$ use=getMember("QBase")
+    def self.q_singleton x #$ use=getMember("QBase").getASubclass() def=getMember("QBase").getASubclass().getMethod("q_singleton")
+        q_singleton_self #$ use=getMember("QBase").getASubclass().getMethod("q_singleton_self").getReturn()
+        x.foo #$ use=getMember("QBase").getASubclass().getMethod("q_singleton").getParameter(0).getMethod("foo").getReturn()
+    end
+    def q_instance x
+        q_instance_self #$ use=getMember("QBase").getASubclass().getInstance() use=getMember("QBase").getASubclass().getInstance().getMethod("q_instance_self").getReturn()
+        x.foo #$ use=getMember("QBase").getASubclass().getInstance().getMethod("q_instance").getParameter(0).getMethod("foo").getReturn()
+    end
+end

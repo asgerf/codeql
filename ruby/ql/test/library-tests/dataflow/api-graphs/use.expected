@@ -1,0 +1,3 @@
+| test1.rb:78:28:78:130 | #$ use=getMember("QBase").getASubclass() def=getMember("QBase").getASubclass().getMethod("q_singleton") | Missing result:def=getMember("QBase").getASubclass().getMethod("q_singleton") |
+| test1.rb:79:26:79:107 | #$ use=getMember("QBase").getASubclass().getMethod("q_singleton_self").getReturn() | Missing result:use=getMember("QBase").getASubclass().getMethod("q_singleton_self").getReturn() |
+| test1.rb:83:25:83:171 | #$ use=getMember("QBase").getASubclass().getInstance() use=getMember("QBase").getASubclass().getInstance().getMethod("q_instance_self").getReturn() | Missing result:use=getMember("QBase").getASubclass().getInstance().getMethod("q_instance_self").getReturn() |
