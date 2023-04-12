@@ -2,26 +2,28 @@ private import javascript
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 
 private module Inputs {
-  predicate storeEdge(DataFlow::Node pred, string prop, DataFlow::Node succ) {
+  predicate storeEdge(DataFlow::SourceNode pred, string prop, DataFlow::SourceNode succ) {
     exists(DataFlow::PropWrite write |
-      pred = write.getRhs() and
+      pred = write.getRhs().getALocalSource() and
       prop = write.getPropertyName() and
       succ = write.getBase().getALocalSource()
     )
   }
 
-  predicate loadEdge(DataFlow::Node pred, string prop, DataFlow::Node succ) {
+  predicate loadEdge(DataFlow::SourceNode pred, string prop, DataFlow::SourceNode succ) {
     exists(DataFlow::PropRead read |
-      pred = read.getBase() and
+      pred = read.getBase().getALocalSource() and
       succ = read and
       prop = read.getPropertyName()
     )
   }
 
-  predicate callEdge(DataFlow::Node pred, DataFlow::Node succ) { FlowSteps::callStep(pred, succ) }
+  predicate callEdge(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
+    FlowSteps::callStep(pred.getALocalUse(), succ)
+  }
 
-  predicate returnEdge(DataFlow::Node pred, DataFlow::Node succ) {
-    FlowSteps::returnStep(pred, succ)
+  predicate returnEdge(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
+    FlowSteps::returnStep(pred.getALocalUse(), succ)
   }
 }
 
@@ -105,7 +107,7 @@ predicate rawNode(DataFlow::SourceNode node, IntermediateNode inode) {
 bindingset[node]
 pragma[inline_late]
 pragma[noopt]
-DataFlow::SourceNode getAGlobalSource(DataFlow::SourceNode node) {
+DataFlow::SourceNode getAGlobalSuccessor(DataFlow::SourceNode node) {
   exists(IntermediateNode start, IntermediateNode mid, IntermediateNode end |
     rawNode(node, start) and
     stage1Edge*(start, mid) and
@@ -115,6 +117,6 @@ DataFlow::SourceNode getAGlobalSource(DataFlow::SourceNode node) {
 }
 
 predicate test(DataFlow::CallNode fetch, DataFlow::SourceNode arg) {
-  fetch.getCalleeName() = "fetch" and
-  arg = getAGlobalSource(fetch.getArgument(0).getALocalSource())
+  arg = getAGlobalSuccessor(fetch) and
+  arg != fetch
 }
