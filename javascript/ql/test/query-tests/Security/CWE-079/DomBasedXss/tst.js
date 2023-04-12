@@ -490,3 +490,13 @@ function urlStuff() {
 
   navigation.navigate(location.hash.substr(1)); // NOT OK
 }
+
+function Foo() {
+  this.foo = document;
+  var obj = {
+    bar: function() {
+      this.foo.innerHTML = decodeURI(window.location.hash); // NOT OK
+    }
+  };
+  Object.assign(this, obj);
+}

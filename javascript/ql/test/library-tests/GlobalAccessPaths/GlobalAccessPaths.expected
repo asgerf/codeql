@@ -83,6 +83,8 @@ test_getAReferenceTo
 | test.js:70:11:70:16 | O.seal | Object.seal |
 | test.js:70:18:70:20 | foo | foo |
 | test.js:70:18:70:24 | foo.bar | foo.bar |
+| test.js:79:3:79:8 | Object | Object |
+| test.js:79:3:79:15 | Object.assign | Object.assign |
 test_getAnAssignmentTo
 | other_ns.js:4:9:4:16 | NS \|\| {} | NS |
 | other_ns.js:6:12:6:13 | {} | Conflict |
@@ -94,7 +96,9 @@ test_getAnAssignmentTo
 | test.js:32:1:35:1 | functio ... .baz'\\n} | destruct |
 | test.js:37:1:41:1 | functio ... Init;\\n} | lazy |
 | test.js:43:1:64:1 | functio ... // no\\n} | dominatingWrite |
+| test.js:73:1:80:1 | functio ... obj);\\n} | Foo |
 test_assignedUnique
+| Foo |
 | GlobalClass |
 | destruct |
 | dominatingWrite |
@@ -105,3 +109,22 @@ hasDominatingWrite
 | test.js:48:3:48:11 | obj.prop1 |
 | test.js:57:5:57:13 | obj.prop3 |
 | test.js:62:29:62:37 | obj.prop5 |
+test_getAnAssignmentToRoot
+| test.js:44:13:44:27 | Object.create() | test.js:47:15:47:19 | "foo" | prop1 |
+| test.js:44:13:44:27 | Object.create() | test.js:51:17:51:21 | "foo" | prop2 |
+| test.js:44:13:44:27 | Object.create() | test.js:55:15:55:19 | "foo" | prop3 |
+| test.js:44:13:44:27 | Object.create() | test.js:60:15:60:23 | obj.prop4 | prop4 |
+| test.js:44:13:44:27 | Object.create() | test.js:62:26:62:26 | 2 | prop5 |
+| test.js:44:13:44:27 | Object.create() | test.js:63:37:63:37 | 3 | prop6 |
+| test.js:47:3:47:11 | obj.prop1 | test.js:47:15:47:19 | "foo" |  |
+| test.js:51:5:51:13 | obj.prop2 | test.js:51:17:51:21 | "foo" |  |
+| test.js:55:3:55:11 | obj.prop3 | test.js:55:15:55:19 | "foo" |  |
+| test.js:60:3:60:11 | obj.prop4 | test.js:60:15:60:23 | obj.prop4 |  |
+| test.js:62:14:62:22 | obj.prop5 | test.js:62:26:62:26 | 2 |  |
+| test.js:63:25:63:33 | obj.prop6 | test.js:63:37:63:37 | 3 |  |
+| test.js:73:1:73:0 | this | test.js:75:10:77:5 | functio ... ;\\n    } | foo |
+| test.js:73:1:73:0 | this | test.js:76:24:76:26 | 'a' | propInFoo |
+| test.js:73:1:73:0 | this | test.js:79:23:79:25 | obj |  |
+| test.js:74:13:78:3 | {\\n    f ...   }\\n  } | test.js:75:10:77:5 | functio ... ;\\n    } | foo |
+| test.js:74:13:78:3 | {\\n    f ...   }\\n  } | test.js:76:24:76:26 | 'a' | propInFoo |
+| test.js:76:7:76:20 | this.propInFoo | test.js:76:24:76:26 | 'a' |  |

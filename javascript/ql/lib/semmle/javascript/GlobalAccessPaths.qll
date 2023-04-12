@@ -36,11 +36,33 @@ module AccessPath {
       not this instanceof PropertyProjection and
       not this instanceof Closure::ClosureNamespaceAccess and
       not this = DataFlow::parameterNode(any(ImmediatelyInvokedFunctionExpr iife).getAParameter()) and
-      not FlowSteps::identityFunctionStep(_, this)
+      not FlowSteps::identityFunctionStep(_, this) and
+      not exists(getUniqueEnclosingReceiver(this, _)) and
+      not this = any(ExtendCall call).getASourceOperand()
     }
 
     /** Holds if this represents the root of the global access path. */
     predicate isGlobal() { this = DataFlow::globalAccessPathRootPseudoNode() }
+  }
+
+  private DataFlow::Node getEnclosingReceiver(
+    DataFlow::SourceNode receiver, DataFlow::PropWrite write
+  ) {
+    exists(DataFlow::FunctionNode function |
+      write.getRhs().getALocalSource() = function and
+      receiver = function.getReceiver() and
+      result = write.getBase() and
+      // Ignore class members
+      not function.getFunction() = any(MemberDefinition def).getInit() and
+      not function.getFunction() = any(ClassDefinition cls).getConstructor().getBody() and
+      not result.(DataFlow::PropRead).getPropertyName() = "prototype"
+    )
+  }
+
+  private DataFlow::Node getUniqueEnclosingReceiver(
+    DataFlow::SourceNode receiver, DataFlow::PropWrite write
+  ) {
+    result = unique( | | getEnclosingReceiver(receiver, write))
   }
 
   /**
@@ -120,6 +142,13 @@ module AccessPath {
     result = ""
     or
     result = fromReference(node.getImmediatePredecessor(), root)
+    or
+    result = fromReference(getUniqueEnclosingReceiver(node, _), root)
+    or
+    exists(DataFlow::PropWrite write |
+      exists(getUniqueEnclosingReceiver(node, write)) and
+      result = fromRhs(GetLaterAccess::getLaterBaseAccess(write), root)
+    )
     or
     exists(EffectivelyConstantVariable var |
       var.isCaptured() and
@@ -270,6 +299,11 @@ module AccessPath {
       node = DataFlow::valueNode(decl) and
       result = decl.getIdentifier().(GlobalVarDecl).getName() and
       root.isGlobal()
+    )
+    or
+    exists(ExtendCall call |
+      node = call.getASourceOperand() and
+      result = fromReference(call.getDestinationOperand(), root)
     )
   }
 

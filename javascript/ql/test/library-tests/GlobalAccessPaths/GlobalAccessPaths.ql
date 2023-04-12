@@ -13,3 +13,7 @@ query string test_assignedUnique() { AccessPath::isAssignedInUniqueFile(result) 
 query DataFlow::PropRead hasDominatingWrite() {
   AccessPath::DominatingPaths::hasDominatingWrite(result)
 }
+
+query string test_getAnAssignmentToRoot(DataFlow::Node root, DataFlow::Node node) {
+  node = AccessPath::getAnAssignmentTo(root, result)
+}

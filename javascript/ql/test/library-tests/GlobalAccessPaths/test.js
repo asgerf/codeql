@@ -69,3 +69,12 @@ function dominatingWrite() {
 	let O = Object;
 	var v3 = O.seal(foo.bar).baz; // not recognized
 });
+
+function Foo() {
+  var obj = {
+    foo: function() {
+      this.propInFoo = 'a';
+    }
+  };
+  Object.assign(this, obj);
+}
