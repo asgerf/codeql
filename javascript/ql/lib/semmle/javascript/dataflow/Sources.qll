@@ -9,6 +9,7 @@
 private import javascript
 private import semmle.javascript.dataflow.TypeTracking
 private import semmle.javascript.internal.CachedStages
+private import semmle.javascript.dataflow.internal.FastTCDataFlow
 
 /**
  * An alias for `SourceNode`.
@@ -39,6 +40,14 @@ class LocalSourceNode = SourceNode;
  * ```
  */
 class SourceNode extends DataFlow::Node instanceof SourceNode::Range {
+  /** Gets a node that is reachable from this node via interprocedural data flow. */
+  pragma[inline]
+  SourceNode track() { result = getAGlobalSuccessor(this) }
+
+  /** Gets a node that can reach this node via interprocedural data flow. */
+  pragma[inline]
+  SourceNode backtrack() { result = getAGlobalPredecessor(this) }
+
   /**
    * Holds if this node flows into `sink` in zero or more local (that is,
    * intra-procedural) steps.
@@ -128,6 +137,14 @@ class SourceNode extends DataFlow::Node instanceof SourceNode::Range {
   DataFlow::CallNode getAMethodCall(string methodName) {
     result = getAMemberInvocation(methodName) and
     Cached::isSyntacticMethodCall(result)
+  }
+
+  /**
+   * Like `getAMethodCall` but where interprocedural flow is taken into account.
+   */
+  pragma[inline]
+  DataFlow::CallNode getAGlobalMethodCall(string methodName) {
+    result = this.track().getAMethodCall(methodName)
   }
 
   /**
