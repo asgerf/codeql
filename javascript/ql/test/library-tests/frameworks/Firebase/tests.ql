@@ -1,8 +1,8 @@
 import javascript
 
-query predicate firebaseRef(DataFlow::SourceNode ref) { ref = Firebase::Database::ref() }
+query predicate firebaseRef(DataFlow::SourceNode ref) { ref = Firebase::Database::ref().track() }
 
-query predicate firebaseSnapshot(DataFlow::SourceNode snap) { snap = Firebase::snapshot() }
+query predicate firebaseSnapshot(DataFlow::SourceNode snap) { snap = Firebase::snapshot().track() }
 
 query predicate firebaseVal(Firebase::FirebaseVal val) { any() }
 

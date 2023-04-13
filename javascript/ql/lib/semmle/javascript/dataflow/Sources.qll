@@ -78,6 +78,14 @@ class SourceNode extends DataFlow::Node instanceof SourceNode::Range {
   DataFlow::PropRead getAPropertyRead(string propName) { result = getAPropertyReference(propName) }
 
   /**
+   * Like `getAPropertyRead(propName)` but where interprocedural flow is taken into account.
+   */
+  pragma[inline]
+  DataFlow::PropRead getAGlobalPropertyRead(string propName) {
+    result = this.track().getAPropertyRead(propName)
+  }
+
+  /**
    * Gets a write of property `propName` on this node.
    */
   DataFlow::PropWrite getAPropertyWrite(string propName) {
@@ -129,6 +137,14 @@ class SourceNode extends DataFlow::Node instanceof SourceNode::Range {
   DataFlow::CallNode getAMemberCall(string memberName) { result = getAMemberInvocation(memberName) }
 
   /**
+   * Like `getAMemberCall(memberName)` but where interprocedural flow is taken into account.
+   */
+  pragma[inline]
+  DataFlow::CallNode getAGlobalMemberCall(string memberName) {
+    result = this.track().getAMemberCall(memberName)
+  }
+
+  /**
    * Gets a method call that invokes method `methodName` on this node.
    *
    * This includes only calls that have the syntactic shape of a method call,
@@ -140,12 +156,16 @@ class SourceNode extends DataFlow::Node instanceof SourceNode::Range {
   }
 
   /**
-   * Like `getAMethodCall` but where interprocedural flow is taken into account.
+   * Like `getAMethodCall(methodName)` but where interprocedural flow is taken into account.
    */
   pragma[inline]
   DataFlow::CallNode getAGlobalMethodCall(string methodName) {
     result = this.track().getAMethodCall(methodName)
   }
+
+  /** Like `getAMethodCall()` but where interprocedural flow is taken into account. */
+  pragma[inline]
+  DataFlow::CallNode getAGlobalMethodCall() { result = this.track().getAMethodCall() }
 
   /**
    * Gets a method call that invokes a method on this node.
