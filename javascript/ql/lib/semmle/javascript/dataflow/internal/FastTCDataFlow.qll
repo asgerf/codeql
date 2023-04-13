@@ -1,39 +1,46 @@
 private import javascript
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
+private import semmle.javascript.dataflow.internal.StepSummary
+private import semmle.javascript.dataflow.TypeTracking
 
-private module Inputs {
-  predicate storeEdge(DataFlow::SourceNode pred, string prop, DataFlow::SourceNode succ) {
-    exists(DataFlow::PropWrite write |
-      pred = write.getRhs().getALocalSource() and
-      prop = write.getPropertyName() and
-      succ = write.getBase().getALocalSource()
-    )
-  }
-
-  predicate loadEdge(DataFlow::SourceNode pred, string prop, DataFlow::SourceNode succ) {
-    exists(DataFlow::PropRead read |
-      pred = read.getBase().getALocalSource() and
-      succ = read and
-      prop = read.getPropertyName()
-    )
-  }
-
-  predicate callEdge(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
-    FlowSteps::callStep(pred.getALocalUse(), succ)
-  }
-
-  predicate returnEdge(DataFlow::SourceNode pred, DataFlow::SourceNode succ) {
-    FlowSteps::returnStep(pred.getALocalUse(), succ)
-  }
-}
-
+/**
+ * Gets a node that is reachable by type-tracking with a TypeTracker that has the given `prop` and `call` state.
+ */
+pragma[nomagic]
 private DataFlow::SourceNode getANodeWithProperty(string prop, boolean call) {
   call = false and
-  Inputs::storeEdge(_, prop, result)
+  StepSummary::step(_, result, StoreStep(prop))
   or
-  Inputs::callEdge(getANodeWithProperty(prop, _), result) and call = true
-  or
-  Inputs::returnEdge(getANodeWithProperty(prop, false), result) and call = false
+  exists(StepSummary step, string prevProp, boolean prevCall |
+    StepSummary::step(getANodeWithProperty(prevProp, prevCall), result, step)
+  |
+    step = LevelStep() and
+    call = prevCall and
+    prop = prevProp
+    or
+    step = CallStep() and
+    call = true and
+    prop = prevProp
+    or
+    step = ReturnStep() and
+    prevCall = false and
+    call = false and
+    prop = prevProp
+    or
+    step = CopyStep(prevProp) and
+    prop = prevProp and
+    call = prevCall
+    or
+    step = LoadStoreStep(prevProp, prop) and
+    call = prevCall
+    or
+    exists(PropertySet props |
+      step = WithoutPropStep(props) and
+      not props.getAProperty() = prevProp and
+      call = prevCall and
+      prop = prevProp
+    )
+  )
 }
 
 private newtype TIntermediateNode =
@@ -60,17 +67,38 @@ private class IntermediateNode extends TIntermediateNode {
 }
 
 pragma[noopt]
-private predicate epsilonEdge(IntermediateNode pred, IntermediateNode succ) {
-  exists(DataFlow::SourceNode predNode, DataFlow::SourceNode succNode, string prop |
-    Inputs::loadEdge(predNode, prop, succNode) and
+private predicate commonEdge(IntermediateNode pred, IntermediateNode succ) {
+  exists(
+    DataFlow::SourceNode predNode, DataFlow::SourceNode succNode, StepSummary step, string prop
+  |
+    StepSummary::step(predNode, succNode, step)
+  |
+    step = LoadStep(prop) and
     pred = MkIntermediateNode(predNode, prop) and
     succ = MkIntermediateNode(succNode, "")
     or
-    Inputs::storeEdge(predNode, prop, succNode) and
+    step = StoreStep(prop) and
     pred = MkIntermediateNode(predNode, "") and
     succ = MkIntermediateNode(succNode, prop)
     or
-    predNode.flowsTo(succNode) and
+    step = CopyStep(prop) and
+    pred = MkIntermediateNode(predNode, prop) and
+    succ = MkIntermediateNode(succNode, prop)
+    or
+    exists(string prop2 |
+      step = LoadStoreStep(prop, prop2) and
+      pred = MkIntermediateNode(predNode, prop) and
+      succ = MkIntermediateNode(succNode, prop2)
+    )
+    or
+    exists(PropertySet props |
+      step = WithoutPropStep(props) and
+      pred = MkIntermediateNode(predNode, prop) and
+      succ = MkIntermediateNode(succNode, prop) and
+      not prop = props.getAProperty()
+    )
+    or
+    step = LevelStep() and
     predNode != succNode and
     pred = MkIntermediateNode(predNode, prop) and
     succ = MkIntermediateNode(succNode, prop)
@@ -79,10 +107,13 @@ private predicate epsilonEdge(IntermediateNode pred, IntermediateNode succ) {
 
 pragma[noopt]
 private predicate stage1Edge(IntermediateNode pred, IntermediateNode succ) {
-  epsilonEdge(pred, succ)
+  commonEdge(pred, succ)
   or
-  exists(DataFlow::SourceNode predNode, DataFlow::SourceNode succNode, string prop |
-    Inputs::returnEdge(predNode, succNode) and
+  exists(
+    DataFlow::SourceNode predNode, DataFlow::SourceNode succNode, StepSummary step, string prop
+  |
+    StepSummary::step(predNode, succNode, step) and
+    step = ReturnStep() and
     pred = MkIntermediateNode(predNode, prop) and
     succ = MkIntermediateNode(succNode, prop)
   )
@@ -90,10 +121,13 @@ private predicate stage1Edge(IntermediateNode pred, IntermediateNode succ) {
 
 pragma[noopt]
 private predicate stage2Edge(IntermediateNode pred, IntermediateNode succ) {
-  epsilonEdge(pred, succ)
+  commonEdge(pred, succ)
   or
-  exists(DataFlow::SourceNode predNode, DataFlow::SourceNode succNode, string prop |
-    Inputs::callEdge(predNode, succNode) and
+  exists(
+    DataFlow::SourceNode predNode, DataFlow::SourceNode succNode, StepSummary step, string prop
+  |
+    StepSummary::step(predNode, succNode, step) and
+    step = CallStep() and
     pred = MkIntermediateNode(predNode, prop) and
     succ = MkIntermediateNode(succNode, prop)
   )
@@ -116,7 +150,37 @@ DataFlow::SourceNode getAGlobalSuccessor(DataFlow::SourceNode node) {
   )
 }
 
-predicate test(DataFlow::CallNode fetch, DataFlow::SourceNode arg) {
-  arg = getAGlobalSuccessor(fetch) and
-  arg != fetch
+/**
+ * INTERNAL. DO NOT USE.
+ *
+ * Used for testing.
+ */
+module Internal {
+  pragma[nomagic]
+  private DataFlow::SourceNode getAGlobalSuccessorMaterialized(DataFlow::SourceNode node) {
+    result = getAGlobalSuccessor(node)
+  }
+
+  private DataFlow::SourceNode trackNode(DataFlow::SourceNode src, DataFlow::TypeTracker t) {
+    t.start() and
+    result = src
+    or
+    exists(DataFlow::TypeTracker t2 | result = trackNode(src, t2).track(t2, t))
+  }
+
+  pragma[nomagic]
+  private DataFlow::SourceNode trackNode(DataFlow::SourceNode src) {
+    result = trackNode(src, DataFlow::TypeTracker::end())
+  }
+
+  pragma[noopt]
+  predicate diffWithTypeTracking(DataFlow::SourceNode src, DataFlow::SourceNode dst, string diff) {
+    dst = getAGlobalSuccessorMaterialized(src) and
+    not dst = trackNode(src) and
+    diff = "gained"
+    or
+    dst = trackNode(src) and
+    not dst = getAGlobalSuccessorMaterialized(src) and
+    diff = "lost"
+  }
 }
