@@ -53,8 +53,6 @@ private newtype TIntermediateNode =
 private class IntermediateNode extends TIntermediateNode {
   private string getProperty() { this = MkIntermediateNode(_, result) }
 
-  private string getPropertyNonEmpty() { result = this.getProperty() and result != "" }
-
   private DataFlow::SourceNode getNode() { this = MkIntermediateNode(result, _) }
 
   string toString() { result = this.getNode() + " [" + this.getProperty() + "]" }
@@ -105,33 +103,40 @@ private predicate commonEdge(IntermediateNode pred, IntermediateNode succ) {
   )
 }
 
-pragma[noopt]
-private predicate stage1Edge(IntermediateNode pred, IntermediateNode succ) {
-  commonEdge(pred, succ)
-  or
-  exists(
-    DataFlow::SourceNode predNode, DataFlow::SourceNode succNode, StepSummary step, string prop
-  |
-    StepSummary::step(predNode, succNode, step) and
-    step = ReturnStep() and
-    pred = MkIntermediateNode(predNode, prop) and
-    succ = MkIntermediateNode(succNode, prop)
-  )
+cached
+private module Cached {
+  pragma[noopt]
+  cached
+  predicate stage1Edge(IntermediateNode pred, IntermediateNode succ) {
+    commonEdge(pred, succ)
+    or
+    exists(
+      DataFlow::SourceNode predNode, DataFlow::SourceNode succNode, StepSummary step, string prop
+    |
+      StepSummary::step(predNode, succNode, step) and
+      step = ReturnStep() and
+      pred = MkIntermediateNode(predNode, prop) and
+      succ = MkIntermediateNode(succNode, prop)
+    )
+  }
+
+  pragma[noopt]
+  cached
+  predicate stage2Edge(IntermediateNode pred, IntermediateNode succ) {
+    commonEdge(pred, succ)
+    or
+    exists(
+      DataFlow::SourceNode predNode, DataFlow::SourceNode succNode, StepSummary step, string prop
+    |
+      StepSummary::step(predNode, succNode, step) and
+      step = CallStep() and
+      pred = MkIntermediateNode(predNode, prop) and
+      succ = MkIntermediateNode(succNode, prop)
+    )
+  }
 }
 
-pragma[noopt]
-private predicate stage2Edge(IntermediateNode pred, IntermediateNode succ) {
-  commonEdge(pred, succ)
-  or
-  exists(
-    DataFlow::SourceNode predNode, DataFlow::SourceNode succNode, StepSummary step, string prop
-  |
-    StepSummary::step(predNode, succNode, step) and
-    step = CallStep() and
-    pred = MkIntermediateNode(predNode, prop) and
-    succ = MkIntermediateNode(succNode, prop)
-  )
-}
+private import Cached
 
 pragma[nomagic]
 predicate rawNode(DataFlow::SourceNode node, IntermediateNode inode) {
@@ -150,12 +155,24 @@ DataFlow::SourceNode getAGlobalSuccessor(DataFlow::SourceNode node) {
   )
 }
 
+bindingset[node]
+pragma[inline_late]
+pragma[noopt]
+DataFlow::SourceNode getAGlobalPredecessor(DataFlow::SourceNode node) {
+  exists(IntermediateNode start, IntermediateNode mid, IntermediateNode end |
+    rawNode(node, end) and
+    stage2Edge*(mid, end) and
+    stage1Edge*(start, mid) and
+    rawNode(result, start)
+  )
+}
+
 /**
  * INTERNAL. DO NOT USE.
  *
  * Used for testing.
  */
-module Internal {
+private module Internal {
   pragma[nomagic]
   private DataFlow::SourceNode getAGlobalSuccessorMaterialized(DataFlow::SourceNode node) {
     result = getAGlobalSuccessor(node)
@@ -174,7 +191,9 @@ module Internal {
   }
 
   pragma[noopt]
-  predicate diffWithTypeTracking(DataFlow::SourceNode src, DataFlow::SourceNode dst, string diff) {
+  query predicate diffWithTypeTracking(
+    DataFlow::SourceNode src, DataFlow::SourceNode dst, string diff
+  ) {
     dst = getAGlobalSuccessorMaterialized(src) and
     not dst = trackNode(src) and
     diff = "gained"
