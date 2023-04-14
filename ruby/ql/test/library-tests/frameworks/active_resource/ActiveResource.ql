@@ -3,7 +3,8 @@ import codeql.ruby.DataFlow
 import codeql.ruby.frameworks.ActiveResource
 
 query predicate modelClasses(
-  ActiveResource::ModelClass c, DataFlow::Node siteAssignCall, boolean disablesCertificateValidation
+  ActiveResource::ModelClassNode c, DataFlow::Node siteAssignCall,
+  boolean disablesCertificateValidation
 ) {
   c.getASiteAssignment() = siteAssignCall and
   if c.disablesCertificateValidation(siteAssignCall)

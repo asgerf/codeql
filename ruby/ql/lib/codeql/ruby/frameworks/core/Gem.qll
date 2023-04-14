@@ -24,7 +24,7 @@ module Gem {
 
     GemSpec() {
       this.getExtension() = "gemspec" and
-      specCall = API::root().getMember("Gem").getMember("Specification").getMethod("new") and
+      specCall = API::getTopLevelMember("Gem").getMember("Specification").getMethod("new") and
       specCall.getLocation().getFile() = this
     }
 

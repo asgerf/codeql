@@ -113,7 +113,7 @@ class Configuration extends TaintTracking::Configuration {
               .getMember("Multibyte")
               .getMember("Chars")
               .getMethod("new")
-              .getCallNode() and
+              .asCall() and
         n = cn.getAMethodCall("normalize") and
         sink = cn.getArgument(0)
       )

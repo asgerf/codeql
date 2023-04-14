@@ -8,6 +8,7 @@
 
 private import codeql.ruby.AST
 private import codeql.ruby.DataFlow
+private import codeql.ruby.typetracking.ApiGraphShared
 private import codeql.ruby.typetracking.TypeTracker
 private import codeql.ruby.typetracking.TypeTrackerSpecific as TypeTrackerSpecific
 private import codeql.ruby.controlflow.CfgNodes
@@ -19,13 +20,15 @@ private import codeql.ruby.dataflow.internal.DataFlowDispatch as DataFlowDispatc
  */
 module API {
   /**
-   * A node in the API graph, representing a value that has crossed the boundary between this
-   * codebase and an external library (or in general, any external codebase).
+   * A node in the API graph, that is, a value that can be tracked interprocedurally.
    *
-   * ### Basic usage
+   * The API graph is a graph for tracking values of certain types in a way that accounts for inheritance
+   * and interprocedural data flow.
    *
    * API graphs are typically used to identify "API calls", that is, calls to an external function
    * whose implementation is not necessarily part of the current codebase.
+   *
+   * ### Basic usage
    *
    * The most basic use of API graphs is typically as follows:
    * 1. Start with `API::getTopLevelMember` for the relevant library.
@@ -39,65 +42,63 @@ module API {
    *
    * The most commonly used accessors are `getMember`, `getMethod`, `getParameter`, and `getReturn`.
    *
-   * ### API graph nodes
+   * ### Forward and backward data flow
    *
-   * There are two kinds of nodes in the API graphs, distinguished by who is "holding" the value:
-   * - **Use-nodes** represent values held by the current codebase, which came from an external library.
-   *   (The current codebase is "using" a value that came from the library).
-   * - **Def-nodes** represent values held by the external library, which came from this codebase.
-   *   (The current codebase "defines" the value seen by the library).
+   * The members predicates on this class generally takes inheritance and data flow into account.
    *
-   * API graph nodes are associated with data-flow nodes in the current codebase.
-   * (Since external libraries are not part of the database, there is no way to associate with concrete
-   * data-flow nodes from the external library).
-   * - **Use-nodes** are associated with data-flow nodes where a value enters the current codebase,
-   *   such as the return value of a call to an external function.
-   * - **Def-nodes** are associated with data-flow nodes where a value leaves the current codebase,
-   *   such as an argument passed in a call to an external function.
-   *
-   *
-   * ### Access paths and edge labels
-   *
-   * Nodes in the API graph are associated with a set of access paths, describing a series of operations
-   * that may be performed to obtain that value.
-   *
-   * For example, the access path `API::getTopLevelMember("Foo").getMethod("bar")` represents the action of
-   * reading the top-level constant `Foo` and then accessing the method `bar` on the resulting object.
-   * It would be associated with a call such as `Foo.bar()`.
-   *
-   * Each edge in the graph is labelled by such an "operation". For an edge `A->B`, the type of the `A` node
-   * determines who is performing the operation, and the type of the `B` node determines who ends up holding
-   * the result:
-   * - An edge starting from a use-node describes what the current codebase is doing to a value that
-   *   came from a library.
-   * - An edge starting from a def-node describes what the external library might do to a value that
-   *   came from the current codebase.
-   * - An edge ending in a use-node means the result ends up in the current codebase (at its associated data-flow node).
-   * - An edge ending in a def-node means the result ends up in external code (its associated data-flow node is
-   *   the place where it was "last seen" in the current codebase before flowing out)
-   *
-   * Because the implementation of the external library is not visible, it is not known exactly what operations
-   * it will perform on values that flow there. Instead, the edges starting from a def-node are operations that would
-   * lead to an observable effect within the current codebase; without knowing for certain if the library will actually perform
-   * those operations. (When constructing these edges, we assume the library is somewhat well-behaved).
-   *
-   * For example, given this snippet:
-   * ```ruby
-   * Foo.bar(->(x) { doSomething(x) })
+   * We will illustrate this principle with the following example:
+   * ```codeql
+   * API::getTopLevelMember("Foo").getInstance().getMethod("bar").getParameter(0).getAnElement().getParameter(0)
    * ```
-   * A callback is passed to the external function `Foo.bar`. We can't know if `Foo.bar` will actually invoke this callback.
-   * But _if_ the library should decide to invoke the callback, then a value will flow into the current codebase via the `x` parameter.
-   * For that reason, an edge is generated representing the argument-passing operation that might be performed by `Foo.bar`.
-   * This edge is going from the def-node associated with the callback to the use-node associated with the parameter `x` of the lambda.
+   * The above expression would match the lamda parameter `x` in the following:
+   * ```ruby
+   * def doSomething f callbacks
+   *   f.bar(callbacks)
+   * end
+   * doSomething Foo.new [
+   *   ->(x) { puts x }
+   * ]
+   * ```
+   * Here's a breakdown of what happens:
+   * - `getTopLevelMember("Foo")` gets the access to `Foo`
+   * - `.getInstance()` gets the return value of the `Foo.new` call
+   * - `.getMethod("bar")` gets the call to `f.bar`. The value `Foo.new` value was implicitly
+   *   tracked forwards to the receiver `f`.
+   * - `.getParameter(0)` gets the first argument to this call, named `callbacks`.
+   * - `.getAnElement()` gets the lambda expression. The `callbacks` argument was implicitly
+   *   tracked backwards to the array literal, and the elements of that array literal were then retrieved.
+   * - `.getParameter(0)` gets the lambda parameter named `x`.
+   *
+   * ### Strict left-to-right evaluation
+   *
+   * Most member predicates on this class are intended to be chained, and are always evaluated from left to right, which means
+   * the caller should restrict the initial set of values.
+   *
+   * For example, in the following snippet, we always find the uses of `Foo` before finding calls to `bar`:
+   * ```ql
+   * API::getTopLevelMember("Foo").getMethod("bar")
+   * ```
+   * In particular, we will never look for calls to `bar` and work backward from there.
+   *
+   * Beware of the footgun that is to use API graphs with an unrestricted receiver:
+   * ```ql
+   * API::Node barCall(API::Node base) {
+   *   result = base.getMethod("bar") // Do not do this!
+   * }
+   * ```
+   * The above predicate does not restrict the receiver, and will thus perform an interprocedural data flow
+   * search starting at _every node_ in the graph - this is incredibly expensive and will result in unacceptable
+   * performance.
    */
   class Node extends Impl::TApiNode {
     /**
-     * Gets a data-flow node where this value may flow after entering the current codebase.
+     * Gets a data-flow node where this value may flow interprocedurally.
      *
      * This is similar to `asSource()` but additionally includes nodes that are transitively reachable by data flow.
      * See `asSource()` for examples.
      */
-    pragma[inline]
+    bindingset[this]
+    pragma[inline_late]
     DataFlow::Node getAValueReachableFromSource() {
       result = getAValueReachableFromSourceInline(this)
     }
@@ -119,10 +120,9 @@ module API {
      * end
      * ```
      */
-    pragma[inline]
-    DataFlow::LocalSourceNode asSource() {
-      result = pragma[only_bind_out](this).(Node::Internal).asSourceInternal()
-    }
+    bindingset[this]
+    pragma[inline_late]
+    DataFlow::LocalSourceNode asSource() { result = asSourceInline(this) }
 
     /**
      * Gets a data-flow node where this value leaves the current codebase and flows into an
@@ -143,7 +143,9 @@ module API {
      * })
      * ```
      */
-    DataFlow::Node asSink() { Impl::def(this, result) }
+    bindingset[this]
+    pragma[inline_late]
+    DataFlow::Node asSink() { result = asSinkInline(this) }
 
     /**
      * Get a data-flow node that transitively flows to an external library (or in general, any external codebase).
@@ -151,7 +153,36 @@ module API {
      * This is similar to `asSink()` but additionally includes nodes that transitively reach a sink by data flow.
      * See `asSink()` for examples.
      */
-    DataFlow::Node getAValueReachingSink() { result = Impl::trackDefNode(this.asSink()) }
+    bindingset[this]
+    pragma[inline_late]
+    DataFlow::Node getAValueReachingSink() { result = getAValueReachingSinkInline(this) }
+
+    /**
+     * Gets a module referred to by this API node.
+     */
+    bindingset[this]
+    pragma[inline_late]
+    DataFlow::ModuleNode asModule() { this = Impl::MkModuleObjectDown(result) }
+
+    /**
+     * Gets the call referred to by this API node.
+     */
+    bindingset[this]
+    pragma[inline_late]
+    DataFlow::CallNode asCall() { this = Impl::MkMethodAccessNode(result) }
+
+    /**
+     * DEPRECATED. Use `asCall()` instead.
+     */
+    pragma[inline]
+    deprecated DataFlow::CallNode getCallNode() { this = Impl::MkMethodAccessNode(result) }
+
+    /**
+     * Gets a module that descends from the value referenced by this API node.
+     */
+    bindingset[this]
+    pragma[inline_late]
+    DataFlow::ModuleNode getADescendentModule() { result = this.getEpsilonSuccessor().asModule() }
 
     /** DEPRECATED. This predicate has been renamed to `getAValueReachableFromSource()`. */
     deprecated DataFlow::Node getAUse() { result = this.getAValueReachableFromSource() }
@@ -169,91 +200,111 @@ module API {
      * Gets a call to a method on the receiver represented by this API component.
      */
     pragma[inline]
-    DataFlow::CallNode getAMethodCall(string method) { result = this.getReturn(method).asSource() }
+    DataFlow::CallNode getAMethodCall(string method) {
+      // This predicate is currently not 'inline_late' because 'method' can be an input or output
+      result = this.getMethod(method).asCall()
+    }
 
     /**
-     * Gets a node representing member `m` of this API component.
+     * Gets a node representing the constant `m` accessed on this value.
      *
-     * For example, a member can be:
-     *
-     * - A submodule of a module
-     * - An attribute of an object
+     * For example, the constant `A::B` would be found by `API::getATopLevelMember("A").getMember("B")`
      */
     pragma[inline]
     Node getMember(string m) {
-      result = pragma[only_bind_out](this).(Node::Internal).getMemberInternal(m)
+      // This predicate is currently not 'inline_late' because 'm' can be an input or output
+      Impl::memberEdge(this.getEpsilonSuccessor(), m, result)
     }
 
     /**
-     * Gets a node representing a member of this API component where the name of the member may
-     * or may not be known statically.
+     * Gets a node representing a constant accessed on this value.
      */
-    cached
-    Node getAMember() {
-      Impl::forceCachingInSameStage() and
-      result = this.getASuccessor(Label::member(_))
-    }
+    bindingset[this]
+    pragma[inline_late]
+    Node getAMember() { Impl::anyMemberEdge(this.getEpsilonSuccessor(), result) }
 
     /**
-     * Gets a node representing an instance of this API component, that is, an object whose
-     * constructor is the function represented by this node.
+     * Gets a node representing an instance of the module or class represented by this API node.
      *
-     * For example, if this node represents a use of some class `A`, then there might be a node
-     * representing instances of `A`, typically corresponding to expressions `A.new` at the
-     * source level.
-     *
-     * This predicate may have multiple results when there are multiple constructor calls invoking this API component.
-     * Consider using `getAnInstantiation()` if there is a need to distinguish between individual constructor calls.
+     * This includes the following:
+     * - Calls to `new` on this module or a subclass thereof
+     * - References to `self` in instance methods in any ancestor of any subclass
      */
-    pragma[inline]
-    Node getInstance() { result = this.getASubclass().getReturn("new") }
+    bindingset[this]
+    pragma[inline_late]
+    Node getInstance() { Impl::instanceEdge(this.getEpsilonSuccessor(), result) }
 
     /**
-     * Gets a node representing a call to `method` on the receiver represented by this node.
+     * Gets a node representing a call to `method` with this value as the receiver, or the
+     * definition of a method named `method` if back-tracking an argument.
+     *
+     * If the receiver represents a module object, this includes calls on subclasses of that module.
      */
     pragma[inline]
-    MethodAccessNode getMethod(string method) {
-      result = pragma[only_bind_out](this).(Node::Internal).getMethodInternal(method)
+    Node getMethod(string method) {
+      // This predicate is currently not 'inline_late' because 'method' can be an input or output
+      Impl::methodEdge(this.getEpsilonSuccessor(), method, result)
     }
 
     /**
-     * Gets a node representing the result of this call.
+     * Gets a node representing the result of this call, or the return value of this callable.
      */
-    pragma[inline]
-    Node getReturn() { result = pragma[only_bind_out](this).(Node::Internal).getReturnInternal() }
+    bindingset[this]
+    pragma[inline_late]
+    Node getReturn() { Impl::returnEdge(this.getEpsilonSuccessor(), result) } // note: epsilon edges are not needed because receiver must be a MethodAccessNode
 
     /**
      * Gets a node representing the result of calling a method on the receiver represented by this node.
      */
     pragma[inline]
-    Node getReturn(string method) { result = this.getMethod(method).getReturn() }
+    Node getReturn(string method) {
+      // This predicate is currently not 'inline_late' because 'method' can be an input or output
+      result = this.getMethod(method).getReturn()
+    }
 
     /** Gets an API node representing the `n`th positional parameter. */
-    cached
+    pragma[inline]
     Node getParameter(int n) {
-      Impl::forceCachingInSameStage() and
-      result = this.getASuccessor(Label::parameter(n))
+      // This predicate is currently not 'inline_late' because 'n' can be an input or output
+      Impl::positionalParameterOrArgumentEdge(this.getEpsilonSuccessor(), n, result)
     }
 
     /** Gets an API node representing the given keyword parameter. */
-    cached
+    pragma[inline]
     Node getKeywordParameter(string name) {
-      Impl::forceCachingInSameStage() and
-      result = this.getASuccessor(Label::keywordParameter(name))
+      // This predicate is currently not 'inline_late' because 'name' can be an input or output
+      Impl::keywordParameterOrArgumentEdge(this.getEpsilonSuccessor(), name, result)
     }
 
     /** Gets an API node representing the block parameter. */
-    cached
-    Node getBlock() {
-      Impl::forceCachingInSameStage() and
-      result = this.getASuccessor(Label::blockParameter())
+    bindingset[this]
+    pragma[inline_late]
+    Node getBlock() { Impl::blockParameterOrArgumentEdge(this.getEpsilonSuccessor(), result) }
+
+    /**
+     * Gets the argument at the argument position `pos`.
+     */
+    pragma[inline]
+    Node getArgumentAtPosition(DataFlowDispatch::ArgumentPosition pos) {
+      // This predicate is currently not 'inline_late' because 'pos' can be an input or output
+      Impl::argumentEdge(pragma[only_bind_out](this), pos, result) // note: no need for epsilon step since 'this' must be a call
+    }
+
+    /**
+     * Gets the function parameter at the parameter position `pos`.
+     */
+    pragma[inline]
+    Node getParameterAtPosition(DataFlowDispatch::ParameterPosition pos) {
+      // This predicate is currently not 'inline_late' because 'pos' can be an input or output
+      Impl::parameterEdge(this.getEpsilonSuccessor(), pos, result)
     }
 
     /**
      * Gets a `new` call to the function represented by this API component.
      */
-    pragma[inline]
-    DataFlow::ExprNode getAnInstantiation() { result = this.getInstance().asSource() }
+    bindingset[this]
+    pragma[inline_late]
+    DataFlow::ExprNode getAnInstantiation() { result = this.getReturn("new").asSource() }
 
     /**
      * Gets a node representing a (direct or indirect) subclass of the class represented by this node.
@@ -264,7 +315,8 @@ module API {
      * ```
      * In the example above, `getMember("A").getASubclass()` will return uses of `A`, `B` and `C`.
      */
-    Node getASubclass() { result = this.getAnImmediateSubclass*() }
+    pragma[inline]
+    deprecated Node getASubclass() { result = this }
 
     /**
      * Gets a node representing a direct subclass of the class represented by this node.
@@ -275,84 +327,94 @@ module API {
      * ```
      * In the example above, `getMember("A").getAnImmediateSubclass()` will return uses of `B` only.
      */
-    cached
-    Node getAnImmediateSubclass() {
-      Impl::forceCachingInSameStage() and result = this.getASuccessor(Label::subclass())
+    pragma[inline]
+    deprecated Node getAnImmediateSubclass() {
+      result = this.asModule().getAnImmediateDescendent().trackModule()
     }
 
     /**
      * Gets a node representing the `content` stored on the base object.
      */
-    cached
+    pragma[inline]
     Node getContent(DataFlow::Content content) {
-      Impl::forceCachingInSameStage() and
-      result = this.getASuccessor(Label::content(content))
+      // This predicate is currently not 'inline_late' because 'content' can be an input or output
+      Impl::contentEdge(this.getEpsilonSuccessor(), content, result)
     }
 
     /**
      * Gets a node representing the `contents` stored on the base object.
      */
-    pragma[inline]
+    bindingset[this, contents]
+    pragma[inline_late]
     Node getContents(DataFlow::ContentSet contents) {
       // We always use getAStoreContent when generating the graph, and we always use getAReadContent when querying the graph.
       result = this.getContent(contents.getAReadContent())
     }
 
     /** Gets a node representing the instance field of the given `name`, which must include the `@` character. */
-    cached
+    pragma[inline]
     Node getField(string name) {
-      Impl::forceCachingInSameStage() and
-      result = this.getContent(DataFlowPrivate::TFieldContent(name))
+      // This predicate is currently not 'inline_late' because 'name' can be an input or output
+      Impl::fieldEdge(this.getEpsilonSuccessor(), name, result)
     }
 
     /** Gets a node representing an element of this collection (known or unknown). */
-    cached
-    Node getAnElement() {
-      Impl::forceCachingInSameStage() and
-      result = this.getContents(any(DataFlow::ContentSet set | set.isAnyElement()))
-    }
+    bindingset[this]
+    pragma[inline_late]
+    Node getAnElement() { Impl::elementEdge(this.getEpsilonSuccessor(), result) }
 
     /**
+     * DEPRECATED. API graph nodes are no longer associated with specific paths.
+     *
      * Gets a string representation of the lexicographically least among all shortest access paths
      * from the root to this node.
      */
-    string getPath() {
-      result = min(string p | p = this.getAPath(Impl::distanceFromRoot(this)) | p)
-    }
+    deprecated string getPath() { none() }
 
     /**
+     * DEPRECATED. Use label-specific predicates in this class, such as `getMember`, instead of using `getASuccessor`.
+     *
      * Gets a node such that there is an edge in the API graph between this node and the other
      * one, and that edge is labeled with `lbl`.
      */
-    Node getASuccessor(Label::ApiLabel lbl) { Impl::edge(this, lbl, result) }
+    pragma[inline]
+    deprecated Node getASuccessor(Label::ApiLabel lbl) {
+      labelledEdge(this.getEpsilonSuccessor(), lbl, result)
+    }
 
     /**
+     * DEPRECATED. API graphs no longer support backward traversal of edges. If possible use `.backtrack()` to get
+     * a node intended for backtracking.
+     *
      * Gets a node such that there is an edge in the API graph between that other node and
      * this one, and that edge is labeled with `lbl`
      */
-    Node getAPredecessor(Label::ApiLabel lbl) { this = result.getASuccessor(lbl) }
+    deprecated Node getAPredecessor(Label::ApiLabel lbl) { this = result.getASuccessor(lbl) }
 
     /**
+     * DEPRECATED. API graphs no longer support backward traversal of edges. If possible use `.backtrack()` to get
+     * a node intended for backtracking.
+     *
      * Gets a node such that there is an edge in the API graph between this node and the other
      * one.
      */
-    Node getAPredecessor() { result = this.getAPredecessor(_) }
+    deprecated Node getAPredecessor() { result = this.getAPredecessor(_) }
 
     /**
      * Gets a node such that there is an edge in the API graph between that other node and
      * this one.
      */
-    Node getASuccessor() { result = this.getASuccessor(_) }
+    pragma[inline]
+    deprecated Node getASuccessor() { result = this.getASuccessor(_) }
 
     /**
      * Gets the data-flow node that gives rise to this node, if any.
      */
     DataFlow::Node getInducingNode() {
-      this = Impl::MkUse(result)
-      or
-      this = Impl::MkDef(result)
-      or
-      this = Impl::MkMethodAccessNode(result)
+      this = Impl::MkMethodAccessNode(result) or
+      this = Impl::MkBackwardNode(result, _) or
+      this = Impl::MkForwardNode(result, _) or
+      this = Impl::MkSinkNode(result)
     }
 
     /** Gets the location of this node. */
@@ -360,13 +422,14 @@ module API {
       result = this.getInducingNode().getLocation()
       or
       exists(DataFlow::ModuleNode mod |
-        this = Impl::MkModuleObject(mod) and
+        this = Impl::MkModuleObjectDown(mod)
+        or
+        this = Impl::MkModuleInstanceUp(mod)
+      |
         result = mod.getLocation()
       )
       or
-      // For nodes that do not have a meaningful location, `path` is the empty string and all other
-      // parameters are zero.
-      not exists(this.getInducingNode()) and
+      this instanceof RootNode and
       result instanceof EmptyLocation
     }
 
@@ -375,117 +438,108 @@ module API {
      */
     string toString() { none() }
 
-    /**
-     * Gets a path of the given `length` from the root to this node.
-     */
-    private string getAPath(int length) {
-      this instanceof Impl::MkRoot and
-      length = 0 and
-      result = ""
-      or
-      exists(Node pred, Label::ApiLabel lbl, string predpath |
-        Impl::edge(pred, lbl, this) and
-        predpath = pred.getAPath(length - 1) and
-        exists(string dot | if length = 1 then dot = "" else dot = "." |
-          result = predpath + dot + lbl and
-          // avoid producing strings longer than 1MB
-          result.length() < 1000 * 1000
-        )
-      ) and
-      length in [1 .. Impl::distanceFromRoot(this)]
-    }
+    /** DEPRECATED. API graphs are no longer associated with a depth. */
+    deprecated int getDepth() { none() }
 
-    /** Gets the shortest distance from the root to this node in the API graph. */
-    int getDepth() { result = Impl::distanceFromRoot(this) }
+    pragma[inline]
+    private Node getEpsilonSuccessor() { result = getEpsilonSuccessorInline(this) }
   }
 
-  /** Companion module to the `Node` class. */
-  module Node {
-    /**
-     * INTERNAL USE ONLY.
-     *
-     * An API node, with some internal predicates exposed.
-     */
-    class Internal extends Node {
-      /**
-       * INTERNAL USE ONLY.
-       *
-       * Same as `asSource()` but without join-order hints.
-       */
-      cached
-      DataFlow::LocalSourceNode asSourceInternal() {
-        Impl::forceCachingInSameStage() and
-        Impl::use(this, result)
-      }
+  /** DEPRECATED. Use `API::root()` to access the root node. */
+  deprecated class Root = RootNode;
 
-      /**
-       * Same as `getMember` but without join-order hints.
-       */
-      cached
-      Node getMemberInternal(string m) {
-        Impl::forceCachingInSameStage() and
-        result = this.getASuccessor(Label::member(m))
-      }
+  /** DEPRECATED. A node corresponding to the use of an API component. */
+  deprecated class Use = ForwardNode;
 
-      /**
-       * Same as `getMethod` but without join-order hints.
-       */
-      cached
-      MethodAccessNode getMethodInternal(string method) {
-        Impl::forceCachingInSameStage() and
-        result = this.getASubclass().getASuccessor(Label::method(method))
-      }
-
-      /**
-       * INTERNAL USE ONLY.
-       *
-       * Same as `getReturn()` but without join-order hints.
-       */
-      cached
-      Node getReturnInternal() {
-        Impl::forceCachingInSameStage() and result = this.getASuccessor(Label::return())
-      }
-    }
-  }
-
-  bindingset[node]
-  pragma[inline_late]
-  private DataFlow::Node getAValueReachableFromSourceInline(Node node) {
-    exists(DataFlow::LocalSourceNode src, DataFlow::LocalSourceNode dst |
-      Impl::use(node, pragma[only_bind_into](src)) and
-      pragma[only_bind_into](dst) = Impl::trackUseNode(src) and
-      dst.flowsTo(result)
-    )
-  }
+  /** DEPRECATED. A node corresponding to a value escaping into an API component. */
+  deprecated class Def = BackwardNode; // TODO use sink node instead?
 
   /** The root node of an API graph. */
-  class Root extends Node, Impl::MkRoot {
-    override string toString() { result = "root" }
+  private class RootNode extends Node, Impl::MkRoot {
+    override string toString() { result = "Root()" }
   }
 
-  private string tryGetPath(Node node) {
-    result = node.getPath()
-    or
-    not exists(node.getPath()) and
-    result = "with no path"
+  /** A node representing a given type-tracking state when tracking forwards. */
+  private class ForwardNode extends Node {
+    private DataFlow::LocalSourceNode node;
+    private TypeTracker tracker;
+
+    ForwardNode() { this = Impl::MkForwardNode(node, tracker) }
+
+    override string toString() {
+      if tracker.start()
+      then result = "ForwardNode(" + node + ")"
+      else result = "ForwardNode(" + node + ", " + tracker + ")"
+    }
   }
 
-  /** A node corresponding to the use of an API component. */
-  class Use extends Node, Impl::MkUse {
-    override string toString() { result = "Use " + tryGetPath(this) }
+  /** A node representing a given type-tracking state when tracking backwards. */
+  private class BackwardNode extends Node {
+    private DataFlow::LocalSourceNode node;
+    private TypeTracker tracker;
+
+    BackwardNode() { this = Impl::MkBackwardNode(node, tracker) }
+
+    override string toString() {
+      if tracker.start()
+      then result = "BackwardNode(" + node + ")"
+      else result = "BackwardNode(" + node + ", " + tracker + ")"
+    }
   }
 
-  /** A node corresponding to a value escaping into an API component. */
-  class Def extends Node, Impl::MkDef {
-    override string toString() { result = "Def " + tryGetPath(this) }
+  /** A node representing the module/class object for a given module or class. */
+  private class ModuleObjectUpNode extends Node {
+    ModuleObjectUpNode() { this instanceof Impl::MkModuleObjectDown }
+
+    /** Gets the module represented by this API node. */
+    DataFlow::ModuleNode getModule() { this = Impl::MkModuleObjectDown(result) }
+
+    override string toString() { result = "ModuleObjectDown(" + this.getModule() + ")" }
+  }
+
+  /** A node representing a module/class object escaping into external code. */
+  private class ModuleObjectDownNode extends Node {
+    ModuleObjectDownNode() { this instanceof Impl::MkModuleObjectUp }
+
+    /** Gets the module represented by this API node. */
+    DataFlow::ModuleNode getModule() { this = Impl::MkModuleObjectUp(result) }
+
+    override string toString() { result = "ModuleObjectUp(" + this.getModule() + ")" }
+  }
+
+  /** A node representing instances of a module/class and its ancestors. */
+  private class ModuleInstanceUpNode extends Node {
+    ModuleInstanceUpNode() { this instanceof Impl::MkModuleInstanceUp }
+
+    /** Gets the module whose instances are represented by this API node. */
+    DataFlow::ModuleNode getModule() { this = Impl::MkModuleInstanceUp(result) }
+
+    override string toString() { result = "ModuleInstanceUp(" + this.getModule() + ")" }
+  }
+
+  /** A node representing instances of a module/class and its descendents. */
+  private class ModuleInstanceDownNode extends Node {
+    ModuleInstanceDownNode() { this instanceof Impl::MkModuleInstanceDown }
+
+    /** Gets the module whose instances are represented by this API node. */
+    DataFlow::ModuleNode getModule() { this = Impl::MkModuleInstanceDown(result) }
+
+    override string toString() { result = "ModuleInstanceDown(" + this.getModule() + ")" }
   }
 
   /** A node corresponding to the method being invoked at a method call. */
   class MethodAccessNode extends Node, Impl::MkMethodAccessNode {
-    override string toString() { result = "MethodAccessNode " + tryGetPath(this) }
+    override string toString() { result = "MethodAccessNode(" + this.asCall() + ")" }
+  }
 
-    /** Gets the call node corresponding to this method access. */
-    DataFlow::CallNode getCallNode() { this = Impl::MkMethodAccessNode(result) }
+  /**
+   * A node corresponding to an argument or right-hand side of a store edge.
+   *
+   * Such a node may serve as the starting-point of backtracking, and has epsilon edges going
+   * the backward nodes corresponding to `getALocalSource`.
+   */
+  private class SinkNode extends Node, Impl::MkSinkNode {
+    override string toString() { result = "SinkNode(" + this.getInducingNode() + ")" }
   }
 
   /**
@@ -499,6 +553,8 @@ module API {
    * additional entry points may be added by extending this class.
    */
   abstract class EntryPoint extends string {
+    // Note: this class can be deprecated in Ruby, but is still referenced by shared code in ApiGraphModels.qll,
+    // where it can't be removed since other languages are still dependent on the EntryPoint class.
     bindingset[this]
     EntryPoint() { any() }
 
@@ -518,7 +574,7 @@ module API {
     DataFlow::CallNode getACall() { none() }
 
     /** Gets an API-node for this entry point. */
-    API::Node getANode() { result = root().getASuccessor(Label::entryPoint(this)) }
+    API::Node getANode() { Impl::entryPointEdge(this, result) }
   }
 
   // Ensure all entry points are imported from ApiGraphs.qll
@@ -527,7 +583,7 @@ module API {
   }
 
   /** Gets the root node. */
-  Root root() { any() }
+  Node root() { result instanceof RootNode }
 
   /**
    * Gets a node corresponding to a top-level member `m` (typically a module).
@@ -538,77 +594,241 @@ module API {
    * you should use `.getMember` on the parent module/class. For example, for nodes corresponding to the class `Gem::Version`,
    * use `getTopLevelMember("Gem").getMember("Version")`.
    */
-  cached
-  Node getTopLevelMember(string m) {
-    Impl::forceCachingInSameStage() and result = root().(Node::Internal).getMemberInternal(m)
-  }
+  pragma[inline]
+  Node getTopLevelMember(string m) { Impl::topLevelMember(m, result) }
 
   /**
-   * Provides the actual implementation of API graphs, cached for performance.
-   *
-   * Ideally, we'd like nodes to correspond to (global) access paths, with edge labels
-   * corresponding to extending the access path by one element. We also want to be able to map
-   * nodes to their definitions and uses in the data-flow graph, and this should happen modulo
-   * (inter-procedural) data flow.
-   *
-   * This, however, is not easy to implement, since access paths can have unbounded length
-   * and we need some way of recognizing cycles to avoid non-termination. Unfortunately, expressing
-   * a condition like "this node hasn't been involved in constructing any predecessor of
-   * this node in the API graph" without negative recursion is tricky.
-   *
-   * So instead most nodes are directly associated with a data-flow node, representing
-   * either a use or a definition of an API component. This ensures that we only have a finite
-   * number of nodes. However, we can now have multiple nodes with the same access
-   * path, which are essentially indistinguishable for a client of the API.
-   *
-   * On the other hand, a single node can have multiple access paths (which is, of
-   * course, unavoidable). We pick as canonical the alphabetically least access path with
-   * shortest length.
+   * Gets a call at the top-level with the given method name.
    */
-  cached
-  private module Impl {
-    cached
-    predicate forceCachingInSameStage() { any() }
+  pragma[inline]
+  Node getTopLevelCall(string name) { Impl::toplevelCall(name, result) }
 
-    cached
-    predicate forceCachingBackref() {
-      1 = 1
-      or
-      exists(getTopLevelMember(_))
-      or
-      exists(
-        any(Node n)
-            .(Node::Internal)
-            .getMemberInternal("foo")
-            .getAMember()
-            .(Node::Internal)
-            .getMethodInternal("foo")
-            .(Node::Internal)
-            .getReturnInternal()
-            .getParameter(0)
-            .getKeywordParameter("foo")
-            .getBlock()
-            .getAnImmediateSubclass()
-            .getContent(_)
-            .getField(_)
-            .getAnElement()
-            .(Node::Internal)
-            .asSourceInternal()
+  pragma[nomagic]
+  private predicate isReachable(DataFlow::LocalSourceNode node, TypeTracker t) {
+    t.start() and exists(node)
+    or
+    exists(DataFlow::LocalSourceNode prev, TypeTracker t2 |
+      isReachable(prev, t2) and
+      node = prev.track(t2, t) and
+      notSelfParameter(node)
+    )
+  }
+
+  bindingset[node]
+  pragma[inline_late]
+  private predicate notSelfParameter(DataFlow::Node node) {
+    not node instanceof DataFlow::SelfParameterNode
+  }
+
+  bindingset[node]
+  pragma[inline_late]
+  private DataFlow::LocalSourceNode getALocalSource(DataFlow::Node node) {
+    result = node.getALocalSource()
+  }
+
+  private module SharedArg implements ApiGraphSharedSig {
+    class ApiNode = Node;
+
+    ApiNode getForwardNode(DataFlow::LocalSourceNode node, TypeTracker t) {
+      result = Impl::MkForwardNode(node, t)
+    }
+
+    ApiNode getBackwardNode(DataFlow::LocalSourceNode node, TypeTracker t) {
+      result = Impl::MkBackwardNode(node, t)
+    }
+
+    ApiNode getSinkNode(DataFlow::Node node) { result = Impl::MkSinkNode(node) }
+
+    pragma[nomagic]
+    predicate specificEpsilonEdge(ApiNode pred, ApiNode succ) {
+      exists(DataFlow::ModuleNode mod |
+        moduleReferenceEdge(mod, pred, succ)
+        or
+        moduleInheritanceEdge(mod, pred, succ)
+        or
+        pred = getForwardEndNode(getSuperClassNode(mod)) and
+        succ = Impl::MkModuleObjectDown(mod)
+        or
+        exists(DataFlow::MethodNode method |
+          pred = getForwardStartNode(method.getBlockParameter()) and
+          succ = Impl::MkMethodAccessNode(method.getABlockCall())
+        )
       )
     }
 
+    /**
+     * Holds if `pred -> succ` should be an epsilon edge related to inheritance for `mod`.
+     */
+    pragma[inline]
+    private predicate moduleInheritanceEdge(DataFlow::ModuleNode mod, ApiNode pred, ApiNode succ) {
+      pred = Impl::MkModuleObjectDown(mod) and
+      succ = Impl::MkModuleObjectDown(mod.getAnImmediateDescendent())
+      or
+      pred = Impl::MkModuleInstanceDown(mod) and
+      succ = Impl::MkModuleInstanceDown(mod.getAnImmediateDescendent())
+      or
+      exists(DataFlow::ModuleNode ancestor |
+        ancestor = mod.getAnImmediateAncestor() and
+        // Restrict flow back to Object to avoid spurious flow for methods that happen
+        // to exist on Object, such as top-level methods.
+        not ancestor.getQualifiedName() = "Object"
+      |
+        pred = Impl::MkModuleInstanceUp(mod) and
+        succ = Impl::MkModuleInstanceUp(ancestor)
+        or
+        pred = Impl::MkModuleObjectUp(mod) and
+        succ = Impl::MkModuleObjectUp(ancestor)
+      )
+      or
+      // Due to multiple inheritance, allow upwards traversal after downward traversal,
+      // so we can detect calls sideways in the hierarchy.
+      // Note that a similar case does not exist for ModuleObject since singleton methods are only inherited
+      // from the superclass, and there can only be one superclass.
+      pred = Impl::MkModuleInstanceDown(mod) and
+      succ = Impl::MkModuleInstanceUp(mod)
+    }
+
+    /**
+     * Holds if the epsilon `pred -> succ` be generated, to associate `mod` with its references in the codebase.
+     */
+    bindingset[mod]
+    pragma[inline_late]
+    private predicate moduleReferenceEdge(DataFlow::ModuleNode mod, ApiNode pred, ApiNode succ) {
+      pred = Impl::MkModuleObjectDown(mod) and
+      succ = getForwardStartNode(getAModuleReference(mod))
+      or
+      pred = getBackwardEndNode(getAModuleReference(mod)) and
+      (
+        succ = Impl::MkModuleObjectUp(mod)
+        or
+        succ = Impl::MkModuleObjectDown(mod)
+      )
+      or
+      pred = Impl::MkModuleInstanceUp(mod) and
+      succ = getAModuleInstanceUseNode(mod)
+      or
+      pred = getAModuleInstanceDefNode(mod) and
+      succ = Impl::MkModuleInstanceUp(mod)
+      or
+      pred = getAModuleDescendentInstanceDefNode(mod) and
+      succ = Impl::MkModuleInstanceDown(mod)
+    }
+
+    pragma[nomagic]
+    private DataFlow::LocalSourceNode getAModuleReference(DataFlow::ModuleNode mod) {
+      result = mod.getAnImmediateReference()
+      or
+      mod.getAnAncestor().getAnOwnInstanceSelf() = getANodeReachingClassCall(result)
+    }
+
+    /**
+     * Gets an API node that may refer to an instance of `mod`.
+     */
+    bindingset[mod]
+    pragma[inline_late]
+    private ApiNode getAModuleInstanceUseNode(DataFlow::ModuleNode mod) {
+      result = getForwardStartNode(mod.getAnOwnInstanceSelf())
+    }
+
+    /**
+     * Gets a node that can be backtracked to an instance of `mod`.
+     */
+    bindingset[mod]
+    pragma[inline_late]
+    private ApiNode getAModuleInstanceDefNode(DataFlow::ModuleNode mod) {
+      result = getBackwardEndNode(mod.getAnImmediateReference().getAMethodCall("new"))
+    }
+
+    bindingset[mod]
+    pragma[inline_late]
+    private ApiNode getAModuleDescendentInstanceDefNode(DataFlow::ModuleNode mod) {
+      result = getBackwardEndNode(mod.getAnOwnInstanceSelf())
+    }
+
+    /**
+     * Holds if `superclass` is the superclass of `mod`.
+     */
+    pragma[nomagic]
+    private DataFlow::LocalSourceNode getSuperClassNode(DataFlow::ModuleNode mod) {
+      result.getALocalUse().asExpr().getExpr() =
+        mod.getADeclaration().(ClassDeclaration).getSuperclassExpr()
+    }
+
+    /** Gets a node that can reach the receiver of the given `.class` call. */
+    private DataFlow::LocalSourceNode getANodeReachingClassCall(
+      DataFlow::CallNode call, TypeBackTracker t
+    ) {
+      t.start() and
+      call.getMethodName() = "class" and
+      result = getALocalSource(call.getReceiver())
+      or
+      exists(DataFlow::LocalSourceNode prev, TypeBackTracker t2 |
+        prev = getANodeReachingClassCall(call, t2) and
+        result = prev.backtrack(t2, t) and
+        notSelfParameter(prev)
+      )
+    }
+
+    /** Gets a node that can reach the receiver of the given `.class` call. */
+    private DataFlow::LocalSourceNode getANodeReachingClassCall(DataFlow::CallNode call) {
+      result = getANodeReachingClassCall(call, TypeBackTracker::end())
+    }
+  }
+
+  /** INTERNAL USE ONLY. */
+  module Internal {
+    private module Shared = ApiGraphShared<SharedArg>;
+
+    import Shared
+
+    /** Gets the API node corresponding to the module/class object for `mod`. */
+    bindingset[mod]
+    pragma[inline_late]
+    Node getModuleNode(DataFlow::ModuleNode mod) { result = Impl::MkModuleObjectDown(mod) }
+
+    /** Gets the API node corresponding to instances of `mod`. */
+    bindingset[mod]
+    pragma[inline_late]
+    Node getModuleInstance(DataFlow::ModuleNode mod) { result = getModuleNode(mod).getInstance() }
+  }
+
+  private import Internal
+
+  cached
+  private module Impl {
     cached
     newtype TApiNode =
       /** The root of the API graph. */
       MkRoot() or
       /** The method accessed at `call`, synthetically treated as a separate object. */
-      MkMethodAccessNode(DataFlow::CallNode call) { isUse(call) } or
-      /** A use of an API member at the node `nd`. */
-      MkUse(DataFlow::Node nd) { isUse(nd) } or
-      /** A value that escapes into an external library at the node `nd` */
-      MkDef(DataFlow::Node nd) { isDef(nd) } or
-      /** A module object seen as a use node. */
-      MkModuleObject(DataFlow::ModuleNode mod)
+      MkMethodAccessNode(DataFlow::CallNode call) or
+      /** The module object `mod` with epsilon edges to its ancestors. */
+      MkModuleObjectUp(DataFlow::ModuleNode mod) or
+      /** The module object `mod` with epsilon edges to its descendents. */
+      MkModuleObjectDown(DataFlow::ModuleNode mod) or
+      /** Instances of `mod` with epsilon edges to its ancestors. */
+      MkModuleInstanceUp(DataFlow::ModuleNode mod) or
+      /** Instances of `mod` with epsilon edges to its descendents, and to its upward node. */
+      MkModuleInstanceDown(DataFlow::ModuleNode mod) or
+      /** Intermediate node for tracking use-nodes. */
+      MkForwardNode(DataFlow::LocalSourceNode node, TypeTracker t) { isReachable(node, t) } or
+      /** Intermediate node for tracking def-nodes. */
+      MkBackwardNode(DataFlow::LocalSourceNode node, TypeTracker t) { isReachable(node, t) } or
+      MkSinkNode(DataFlow::Node node) { needsSinkNode(node) }
+
+    private predicate needsSinkNode(DataFlow::Node node) {
+      node instanceof DataFlowPrivate::ArgumentNode
+      or
+      TypeTrackerSpecific::basicStoreStep(node, _, _)
+      or
+      node = any(DataFlow::CallableNode callable).getAReturnNode()
+      or
+      node = any(EntryPoint e).getASink()
+    }
+
+    bindingset[e]
+    pragma[inline_late]
+    private DataFlow::Node getNodeFromExpr(Expr e) { result.asExpr().getExpr() = e }
 
     private string resolveTopLevel(ConstantReadAccess read) {
       result = read.getModule().getQualifiedName() and
@@ -616,300 +836,254 @@ module API {
     }
 
     /**
-     * Holds if `ref` is a use of a node that should have an incoming edge from the root
-     * node labeled `lbl` in the API graph (not including those from API::EntryPoint).
+     * Holds `pred` should have a member edge to `mod`.
      */
     pragma[nomagic]
-    private predicate useRoot(Label::ApiLabel lbl, DataFlow::Node ref) {
-      exists(string name, ConstantReadAccess read |
-        read = ref.asExpr().getExpr() and
-        lbl = Label::member(read.getName())
+    private predicate moduleScope(DataFlow::ModuleNode mod, Node pred, string name) {
+      exists(Namespace namespace |
+        name = namespace.getName() and
+        namespace = mod.getADeclaration()
       |
-        name = resolveTopLevel(read)
+        exists(DataFlow::Node scopeNode |
+          scopeNode.asExpr().getExpr() = namespace.getScopeExpr() and
+          pred = getForwardEndNode(getALocalSource(scopeNode))
+        )
         or
-        name = read.getName() and
-        not exists(resolveTopLevel(read)) and
-        not exists(read.getScopeExpr())
+        not exists(namespace.getScopeExpr()) and
+        if namespace.hasGlobalScope() or namespace.getEnclosingModule() instanceof Toplevel
+        then pred = MkRoot()
+        else pred = MkModuleObjectDown(namespace.getEnclosingModule().getModule())
       )
     }
 
-    /**
-     * Holds if `ref` is a use of a node that should have an incoming edge labeled `lbl`,
-     * from a use node that flows to `node`.
-     */
-    private predicate useStep(Label::ApiLabel lbl, DataFlow::Node node, DataFlow::Node ref) {
-      // // Referring to an attribute on a node that is a use of `base`:
-      // pred = `Rails` part of `Rails::Whatever`
-      // lbl = `Whatever`
-      // ref = `Rails::Whatever`
-      exists(ExprNodes::ConstantAccessCfgNode c, ConstantReadAccess read |
-        not exists(resolveTopLevel(read)) and
-        node.asExpr() = c.getScopeExpr() and
-        lbl = Label::member(read.getName()) and
-        ref.asExpr() = c and
-        read = c.getExpr()
-      )
-      or
-      exists(TypeTrackerSpecific::TypeTrackerContent c |
-        TypeTrackerSpecific::basicLoadStep(node, ref, c) and
-        lbl = Label::content(c.getAStoreContent()) and
-        not c.isSingleton(any(DataFlow::Content::AttributeNameContent k))
-      )
-      // note: method calls are not handled here as there is no DataFlow::Node for the intermediate MkMethodAccessNode API node
-    }
-
-    /**
-     * Holds if `rhs` is a definition of a node that should have an incoming edge labeled `lbl`,
-     * from a def node that is reachable from `node`.
-     */
-    private predicate defStep(Label::ApiLabel lbl, DataFlow::Node node, DataFlow::Node rhs) {
-      exists(TypeTrackerSpecific::TypeTrackerContent c |
-        TypeTrackerSpecific::basicStoreStep(rhs, node, c) and
-        lbl = Label::content(c.getAStoreContent())
-      )
-    }
-
-    pragma[nomagic]
-    private predicate isUse(DataFlow::Node nd) {
-      useRoot(_, nd)
-      or
-      exists(DataFlow::Node node |
-        useCandFwd().flowsTo(node) and
-        useStep(_, node, nd)
-      )
-      or
-      useCandFwd().flowsTo(nd.(DataFlow::CallNode).getReceiver())
-      or
-      parameterStep(_, defCand(), nd)
-      or
-      nd = any(EntryPoint entry).getASource()
-      or
-      nd = any(EntryPoint entry).getACall()
-    }
-
-    /**
-     * Holds if `ref` is a use of node `nd`.
-     */
     cached
-    predicate use(TApiNode nd, DataFlow::Node ref) {
-      nd = MkUse(ref)
+    predicate memberEdge(Node pred, string name, Node succ) {
+      exists(ConstantReadAccess read | succ = getForwardStartNode(getNodeFromExpr(read)) |
+        name = resolveTopLevel(read) and
+        pred = MkRoot()
+        or
+        not exists(resolveTopLevel(read)) and
+        not exists(read.getScopeExpr()) and
+        name = read.getName() and
+        pred = MkRoot()
+        or
+        pred = getForwardEndNode(getALocalSource(getNodeFromExpr(read.getScopeExpr()))) and
+        name = read.getName()
+      )
       or
       exists(DataFlow::ModuleNode mod |
-        nd = MkModuleObject(mod) and
-        ref = mod.getAnImmediateReference()
+        moduleScope(mod, pred, name) and
+        (succ = MkModuleObjectDown(mod) or succ = MkModuleObjectUp(mod))
       )
     }
 
-    /**
-     * Holds if `rhs` is a RHS of node `nd`.
-     */
     cached
-    predicate def(TApiNode nd, DataFlow::Node rhs) { nd = MkDef(rhs) }
+    predicate topLevelMember(string name, Node node) { memberEdge(root(), name, node) }
 
-    /** Gets a node reachable from a use-node. */
-    private DataFlow::LocalSourceNode useCandFwd(TypeTracker t) {
-      t.start() and
-      isUse(result)
-      or
-      exists(TypeTracker t2 | result = useCandFwd(t2).track(t2, t))
-    }
-
-    /** Gets a node reachable from a use-node. */
-    private DataFlow::LocalSourceNode useCandFwd() { result = useCandFwd(TypeTracker::end()) }
-
-    private predicate isDef(DataFlow::Node rhs) {
-      // If a call node is relevant as a use-node, treat its arguments as def-nodes
-      argumentStep(_, useCandFwd(), rhs)
-      or
-      defStep(_, defCand(), rhs)
-      or
-      rhs = any(EntryPoint entry).getASink()
-    }
-
-    /** Gets a data flow node that flows to the RHS of a def-node. */
-    private DataFlow::LocalSourceNode defCand(TypeBackTracker t) {
-      t.start() and
-      exists(DataFlow::Node rhs |
-        isDef(rhs) and
-        result = rhs.getALocalSource()
-      )
-      or
-      exists(TypeBackTracker t2 | result = defCand(t2).backtrack(t2, t))
-    }
-
-    /** Gets a data flow node that flows to the RHS of a def-node. */
-    private DataFlow::LocalSourceNode defCand() { result = defCand(TypeBackTracker::end()) }
-
-    /**
-     * Holds if there should be a `lbl`-edge from the given call to an argument.
-     */
-    pragma[nomagic]
-    private predicate argumentStep(
-      Label::ApiLabel lbl, DataFlow::CallNode call, DataFlowPrivate::ArgumentNode argument
-    ) {
-      exists(DataFlowDispatch::ArgumentPosition argPos |
-        argument.sourceArgumentOf(call.asExpr(), argPos) and
-        lbl = Label::getLabelFromArgumentPosition(argPos)
-      )
-    }
-
-    /**
-     * Holds if there should be a `lbl`-edge from the given callable to a parameter.
-     */
-    pragma[nomagic]
-    private predicate parameterStep(
-      Label::ApiLabel lbl, DataFlow::Node callable, DataFlowPrivate::ParameterNodeImpl paramNode
-    ) {
-      exists(DataFlowDispatch::ParameterPosition paramPos |
-        paramNode.isSourceParameterOf(callable.asExpr().getExpr(), paramPos) and
-        lbl = Label::getLabelFromParameterPosition(paramPos)
-      )
-    }
-
-    /**
-     * Gets a data-flow node to which `src`, which is a use of an API-graph node, flows.
-     *
-     * The flow from `src` to the returned node may be inter-procedural.
-     */
-    private DataFlow::LocalSourceNode trackUseNode(DataFlow::LocalSourceNode src, TypeTracker t) {
-      result = src and
-      isUse(src) and
-      t.start()
-      or
-      exists(TypeTracker t2 |
-        result = trackUseNode(src, t2).track(t2, t) and
-        not result instanceof DataFlow::SelfParameterNode
-      )
-    }
-
-    /**
-     * Gets a data-flow node to which `src`, which is a use of an API-graph node, flows.
-     *
-     * The flow from `src` to the returned node may be inter-procedural.
-     */
     cached
-    DataFlow::LocalSourceNode trackUseNode(DataFlow::LocalSourceNode src) {
-      result = trackUseNode(src, TypeTracker::end())
-    }
-
-    /** Gets a data flow node reaching the RHS of the given def node. */
-    private DataFlow::LocalSourceNode trackDefNode(DataFlow::Node rhs, TypeBackTracker t) {
-      t.start() and
-      isDef(rhs) and
-      result = rhs.getALocalSource()
-      or
-      exists(TypeBackTracker t2, DataFlow::LocalSourceNode mid |
-        mid = trackDefNode(rhs, t2) and
-        not mid instanceof DataFlow::SelfParameterNode and
-        result = mid.backtrack(t2, t)
+    predicate toplevelCall(string name, Node node) {
+      exists(DataFlow::CallNode call |
+        call.asExpr().getExpr().getCfgScope() instanceof Toplevel and
+        call.getMethodName() = name and
+        node = MkMethodAccessNode(call)
       )
     }
 
-    /** Gets a data flow node reaching the RHS of the given def node. */
     cached
-    DataFlow::LocalSourceNode trackDefNode(DataFlow::Node rhs) {
-      result = trackDefNode(rhs, TypeBackTracker::end())
-    }
+    predicate anyMemberEdge(Node pred, Node succ) { memberEdge(pred, _, succ) }
 
-    pragma[nomagic]
-    private predicate useNodeReachesReceiver(DataFlow::Node use, DataFlow::CallNode call) {
-      trackUseNode(use).flowsTo(call.getReceiver())
-    }
-
-    /**
-     * Holds if `superclass` is the superclass of `mod`.
-     */
-    pragma[nomagic]
-    private predicate superclassNode(DataFlow::ModuleNode mod, DataFlow::Node superclass) {
-      superclass.asExpr().getExpr() = mod.getADeclaration().(ClassDeclaration).getSuperclassExpr()
-    }
-
-    /**
-     * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
-     */
     cached
-    predicate edge(TApiNode pred, Label::ApiLabel lbl, TApiNode succ) {
-      /* Every node that is a use of an API component is itself added to the API graph. */
-      exists(DataFlow::LocalSourceNode ref | succ = MkUse(ref) |
-        pred = MkRoot() and
-        useRoot(lbl, ref)
+    predicate methodEdge(Node pred, string name, Node succ) {
+      exists(DataFlow::ModuleNode mod, DataFlow::CallNode call |
+        // Treat super calls as if they were calls to the module object/instance.
+        succ = MkMethodAccessNode(call) and
+        name = call.getMethodName()
+      |
+        pred = MkModuleObjectDown(mod) and
+        call = mod.getAnOwnSingletonMethod().getASuperCall()
         or
-        exists(DataFlow::Node node, DataFlow::Node src |
-          use(pred, src) and
-          trackUseNode(src).flowsTo(node) and
-          useStep(lbl, node, ref)
-        )
-        or
-        exists(DataFlow::Node callback |
-          def(pred, callback) and
-          parameterStep(lbl, trackDefNode(callback), ref)
-        )
-      )
-      or
-      exists(DataFlow::Node predNode, DataFlow::Node succNode |
-        def(pred, predNode) and
-        succ = MkDef(succNode) and
-        defStep(lbl, trackDefNode(predNode), succNode)
-      )
-      or
-      exists(DataFlow::Node predNode, DataFlow::Node superclassNode, DataFlow::ModuleNode mod |
-        use(pred, predNode) and
-        trackUseNode(predNode).flowsTo(superclassNode) and
-        superclassNode(mod, superclassNode) and
-        succ = MkModuleObject(mod) and
-        lbl = Label::subclass()
+        pred = MkModuleInstanceUp(mod) and
+        call = mod.getAnOwnInstanceMethod().getASuperCall()
       )
       or
       exists(DataFlow::CallNode call |
         // from receiver to method call node
-        exists(DataFlow::Node receiver |
-          use(pred, receiver) and
-          useNodeReachesReceiver(receiver, call) and
-          lbl = Label::method(call.getMethodName()) and
-          succ = MkMethodAccessNode(call)
-        )
-        or
-        // from method call node to return and arguments
-        pred = MkMethodAccessNode(call) and
-        (
-          lbl = Label::return() and
-          succ = MkUse(call)
-          or
-          exists(DataFlow::Node rhs |
-            argumentStep(lbl, call, rhs) and
-            succ = MkDef(rhs)
-          )
-        )
+        pred = getForwardEndNode(getALocalSource(call.getReceiver())) and
+        succ = MkMethodAccessNode(call) and
+        name = call.getMethodName()
       )
       or
-      exists(EntryPoint entry |
-        pred = root() and
-        lbl = Label::entryPoint(entry)
-      |
-        succ = MkDef(entry.getASink())
+      exists(DataFlow::ModuleNode mod |
+        (pred = MkModuleObjectDown(mod) or pred = MkModuleObjectUp(mod)) and
+        succ = getBackwardStartNode(mod.getOwnSingletonMethod(name))
         or
-        succ = MkUse(entry.getASource())
-        or
-        succ = MkMethodAccessNode(entry.getACall())
+        pred = MkModuleInstanceUp(mod) and
+        succ = getBackwardStartNode(mod.getOwnInstanceMethod(name))
       )
     }
 
-    /**
-     * Holds if there is an edge from `pred` to `succ` in the API graph.
-     */
-    private predicate edge(TApiNode pred, TApiNode succ) { edge(pred, _, succ) }
-
-    /** Gets the shortest distance from the root to `nd` in the API graph. */
     cached
-    int distanceFromRoot(TApiNode nd) = shortestDistances(MkRoot/0, edge/2)(_, nd, result)
+    predicate contentEdge(Node pred, DataFlow::Content content, Node succ) {
+      exists(
+        DataFlow::Node object, DataFlow::Node value, TypeTrackerSpecific::TypeTrackerContent c
+      |
+        TypeTrackerSpecific::basicLoadStep(object, value, c) and
+        content = c.getAStoreContent() and
+        not c.isSingleton(any(DataFlow::Content::AttributeNameContent k)) and
+        pred = getForwardEndNode(getALocalSource(object)) and
+        succ = getForwardStartNode(value)
+        or
+        TypeTrackerSpecific::basicStoreStep(value, object, c) and
+        content = c.getAStoreContent() and
+        pred = getBackwardEndNode(getALocalSource(object)) and
+        succ = MkSinkNode(value)
+      )
+    }
 
+    cached
+    predicate fieldEdge(Node pred, string name, Node succ) {
+      Impl::contentEdge(pred, DataFlowPrivate::TFieldContent(name), succ)
+    }
+
+    cached
+    predicate elementEdge(Node pred, Node succ) {
+      contentEdge(pred, any(DataFlow::ContentSet set | set.isAnyElement()).getAReadContent(), succ)
+    }
+
+    cached
+    predicate parameterEdge(Node pred, DataFlowDispatch::ParameterPosition paramPos, Node succ) {
+      exists(DataFlowPrivate::ParameterNodeImpl parameter, DataFlow::CallableNode callable |
+        parameter.isSourceParameterOf(callable.asExpr().getExpr(), paramPos) and
+        pred = getBackwardEndNode(callable) and
+        succ = getForwardStartNode(parameter)
+      )
+    }
+
+    cached
+    predicate argumentEdge(Node pred, DataFlowDispatch::ArgumentPosition argPos, Node succ) {
+      exists(DataFlow::CallNode call, DataFlowPrivate::ArgumentNode argument |
+        argument.sourceArgumentOf(call.asExpr(), argPos) and
+        pred = MkMethodAccessNode(call) and
+        succ = MkSinkNode(argument)
+      )
+    }
+
+    cached
+    predicate positionalParameterOrArgumentEdge(Node pred, int n, Node succ) {
+      parameterEdge(pred, any(DataFlowDispatch::ParameterPosition pos | pos.isPositional(n)), succ)
+      or
+      argumentEdge(pred, any(DataFlowDispatch::ArgumentPosition pos | pos.isPositional(n)), succ)
+    }
+
+    cached
+    predicate keywordParameterOrArgumentEdge(Node pred, string name, Node succ) {
+      parameterEdge(pred, any(DataFlowDispatch::ParameterPosition pos | pos.isKeyword(name)), succ)
+      or
+      argumentEdge(pred, any(DataFlowDispatch::ArgumentPosition pos | pos.isKeyword(name)), succ)
+    }
+
+    cached
+    predicate blockParameterOrArgumentEdge(Node pred, Node succ) {
+      parameterEdge(pred, any(DataFlowDispatch::ParameterPosition pos | pos.isBlock()), succ)
+      or
+      argumentEdge(pred, any(DataFlowDispatch::ArgumentPosition pos | pos.isBlock()), succ)
+    }
+
+    pragma[nomagic]
+    private predicate newCall(DataFlow::LocalSourceNode receiver, DataFlow::CallNode call) {
+      call = receiver.getAMethodCall("new")
+    }
+
+    cached
+    predicate instanceEdge(Node pred, Node succ) {
+      exists(DataFlow::ModuleNode mod |
+        pred = MkModuleObjectDown(mod) and
+        succ = MkModuleInstanceUp(mod)
+      )
+      or
+      exists(DataFlow::LocalSourceNode receiver, DataFlow::CallNode call |
+        newCall(receiver, call) and
+        pred = getForwardEndNode(receiver) and
+        succ = getForwardStartNode(call)
+      )
+    }
+
+    cached
+    predicate returnEdge(Node pred, Node succ) {
+      exists(DataFlow::CallNode call |
+        pred = MkMethodAccessNode(call) and
+        succ = getForwardStartNode(call)
+      )
+      or
+      exists(DataFlow::CallableNode callable |
+        pred = getBackwardEndNode(callable) and
+        succ = MkSinkNode(callable.getAReturnNode())
+      )
+    }
+
+    cached
+    predicate entryPointEdge(EntryPoint entry, Node node) {
+      node = MkSinkNode(entry.getASink()) or
+      node = getForwardStartNode(entry.getASource()) or
+      node = MkMethodAccessNode(entry.getACall())
+    }
+  }
+
+  /**
+   * Holds if there is an edge from `pred` to `succ` in the API graph that is labeled with `lbl`.
+   */
+  pragma[nomagic]
+  deprecated private predicate labelledEdge(Node pred, Label::ApiLabel lbl, Node succ) {
+    exists(string name |
+      Impl::memberEdge(pred, name, succ) and
+      lbl = Label::member(name)
+    )
+    or
+    exists(string name |
+      Impl::methodEdge(pred, name, succ) and
+      lbl = Label::method(name)
+    )
+    or
+    exists(DataFlow::Content content |
+      Impl::contentEdge(pred, content, succ) and
+      lbl = Label::content(content)
+    )
+    or
+    exists(DataFlowDispatch::ParameterPosition pos |
+      Impl::parameterEdge(pred, pos, succ) and
+      lbl = Label::getLabelFromParameterPosition(pos)
+    )
+    or
+    exists(DataFlowDispatch::ArgumentPosition pos |
+      Impl::argumentEdge(pred, pos, succ) and
+      lbl = Label::getLabelFromArgumentPosition(pos)
+    )
+    or
+    Impl::instanceEdge(pred, succ) and
+    lbl = Label::instance()
+    or
+    Impl::returnEdge(pred, succ) and
+    lbl = Label::return()
+    or
+    exists(EntryPoint entry |
+      Impl::entryPointEdge(entry, succ) and
+      pred = root() and
+      lbl = Label::entryPoint(entry)
+    )
+  }
+
+  /**
+   * DEPRECATED. Treating the API graph as an explicit labelled graph is deprecated - instead use the methods on `API:Node` directly.
+   *
+   * Provides classes modeling the various edges (labels) in the API graph.
+   */
+  deprecated module Label {
     /** All the possible labels in the API graph. */
-    cached
-    newtype TLabel =
+    private newtype TLabel =
       MkLabelMember(string member) { member = any(ConstantReadAccess a).getName() } or
       MkLabelMethod(string m) { m = any(DataFlow::CallNode c).getMethodName() } or
       MkLabelReturn() or
-      MkLabelSubclass() or
+      MkLabelInstance() or
       MkLabelKeywordParameter(string name) {
         any(DataFlowDispatch::ArgumentPosition arg).isKeyword(name)
         or
@@ -923,12 +1097,9 @@ module API {
       MkLabelBlockParameter() or
       MkLabelEntryPoint(EntryPoint name) or
       MkLabelContent(DataFlow::Content content)
-  }
 
-  /** Provides classes modeling the various edges (labels) in the API graph. */
-  module Label {
     /** A label in the API-graph */
-    class ApiLabel extends Impl::TLabel {
+    class ApiLabel extends TLabel {
       /** Gets a string representation of this label. */
       string toString() { result = "???" }
     }
@@ -967,9 +1138,9 @@ module API {
         override string toString() { result = "getReturn()" }
       }
 
-      /** A label for the subclass relationship. */
-      class LabelSubclass extends ApiLabel, MkLabelSubclass {
-        override string toString() { result = "getASubclass()" }
+      /** A label for getting instances of a module/class. */
+      class LabelInstance extends ApiLabel, MkLabelInstance {
+        override string toString() { result = "getInstance()" }
       }
 
       /** A label for a keyword parameter. */
@@ -1037,8 +1208,8 @@ module API {
     /** Gets the `return` edge label. */
     LabelReturn return() { any() }
 
-    /** Gets the `subclass` edge label. */
-    LabelSubclass subclass() { any() }
+    /** Gets the `instance` edge label. */
+    LabelInstance instance() { any() }
 
     /** Gets the label representing the given keyword argument/parameter. */
     LabelKeywordParameter keywordParameter(string name) { result.getName() = name }
