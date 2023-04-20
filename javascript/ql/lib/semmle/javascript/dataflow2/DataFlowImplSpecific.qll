@@ -74,7 +74,7 @@ module Private {
 
   predicate nodeIsHidden(Node node) { DataFlow::PathNode::shouldNodeBeHidden(node) }
 
-  string ppReprType(DataFlowType t) { result = "any-type" and exists(t) }
+  string ppReprType(DataFlowType t) { none() }
 
   pragma[inline]
   predicate compatibleTypes(DataFlowType t1, DataFlowType t2) { any() }
