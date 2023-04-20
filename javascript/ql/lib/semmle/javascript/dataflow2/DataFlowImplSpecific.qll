@@ -248,7 +248,7 @@ module Private {
 }
 
 module Public {
-  import semmle.javascript.dataflow.DataFlow
+  private import semmle.javascript.dataflow.DataFlow
 
   class Node = DataFlow::Node;
 }
