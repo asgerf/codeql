@@ -122,7 +122,7 @@ module Private {
   predicate parameterMatch(ParameterPosition ppos, ArgumentPosition apos) { ppos = apos }
 
   pragma[inline]
-  Function viableCallable(DataFlow::CallNode node) { result = node.getACallee() }
+  Function viableCallable(DataFlow::InvokeNode node) { result = node.getACallee() }
 
   /**
    * Holds if the set of viable implementations that can be called by `call`
@@ -223,11 +223,10 @@ module Private {
    *
    * Argument `arg` is part of a path from a source to a sink, and `p` is the target parameter.
    */
-  //   int getAdditionalFlowIntoCallNodeTerm(ArgumentNode arg, ParameterNode p);
   int getAdditionalFlowIntoCallNodeTerm(Node arg, Node p) { none() }
 
-  //   predicate golangSpecificParamArgFilter(DataFlowCall call, ParameterNode p, ArgumentNode arg);
-  predicate golangSpecificParamArgFilter(DataFlowCall call, Node p, Node arg) { none() }
+  pragma[inline]
+  predicate golangSpecificParamArgFilter(DataFlowCall call, Node p, Node arg) { any() }
 
   class ArgumentNode extends DataFlow::Node {
     ArgumentNode() { isArgumentNode(this, _, _) }

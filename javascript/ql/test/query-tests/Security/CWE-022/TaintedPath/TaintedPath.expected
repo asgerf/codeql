@@ -947,6 +947,10 @@ edges
 | other-fs-libraries.js:68:14:68:37 | url.par ... , true) : any-type | other-fs-libraries.js:72:15:72:18 | path |
 | other-fs-libraries.js:68:14:68:37 | url.par ... , true) : any-type | other-fs-libraries.js:72:15:72:18 | path |
 | other-fs-libraries.js:68:14:68:37 | url.par ... , true) : any-type | other-fs-libraries.js:72:15:72:18 | path |
+| other-fs-libraries.js:68:14:68:37 | url.par ... , true) : any-type | other-fs-libraries.js:73:8:73:11 | path : any-type |
+| other-fs-libraries.js:68:14:68:37 | url.par ... , true) : any-type | other-fs-libraries.js:73:8:73:11 | path : any-type |
+| other-fs-libraries.js:68:14:68:37 | url.par ... , true) : any-type | other-fs-libraries.js:73:8:73:11 | path : any-type |
+| other-fs-libraries.js:68:14:68:37 | url.par ... , true) : any-type | other-fs-libraries.js:73:8:73:11 | path : any-type |
 | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:68:14:68:37 | url.par ... , true) : any-type |
 | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:68:14:68:37 | url.par ... , true) : any-type |
 | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:68:14:68:37 | url.par ... , true) : any-type |
@@ -971,26 +975,38 @@ edges
 | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:72:15:72:18 | path |
 | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:72:15:72:18 | path |
 | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:72:15:72:18 | path |
-| other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type | other-fs-libraries.js:79:16:79:19 | path |
-| other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type | other-fs-libraries.js:79:16:79:19 | path |
-| other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type | other-fs-libraries.js:79:16:79:19 | path |
-| other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type | other-fs-libraries.js:79:16:79:19 | path |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path |
+| other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:73:8:73:11 | path : any-type |
+| other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:73:8:73:11 | path : any-type |
+| other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:73:8:73:11 | path : any-type |
+| other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:73:8:73:11 | path : any-type |
+| other-fs-libraries.js:73:8:73:11 | path : any-type | other-fs-libraries.js:75:15:75:15 | x : any-type |
+| other-fs-libraries.js:73:8:73:11 | path : any-type | other-fs-libraries.js:75:15:75:15 | x : any-type |
+| other-fs-libraries.js:73:8:73:11 | path : any-type | other-fs-libraries.js:75:15:75:15 | x : any-type |
+| other-fs-libraries.js:73:8:73:11 | path : any-type | other-fs-libraries.js:75:15:75:15 | x : any-type |
+| other-fs-libraries.js:75:15:75:15 | x : any-type | other-fs-libraries.js:76:19:76:19 | x |
+| other-fs-libraries.js:75:15:75:15 | x : any-type | other-fs-libraries.js:76:19:76:19 | x |
+| other-fs-libraries.js:75:15:75:15 | x : any-type | other-fs-libraries.js:76:19:76:19 | x |
+| other-fs-libraries.js:75:15:75:15 | x : any-type | other-fs-libraries.js:76:19:76:19 | x |
+| other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type | other-fs-libraries.js:83:16:83:19 | path |
+| other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type | other-fs-libraries.js:83:16:83:19 | path |
+| other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type | other-fs-libraries.js:83:16:83:19 | path |
+| other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type | other-fs-libraries.js:83:16:83:19 | path |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path |
 | prettier.js:6:13:6:13 | p : any-type | prettier.js:7:28:7:28 | p |
 | prettier.js:6:13:6:13 | p : any-type | prettier.js:7:28:7:28 | p |
 | prettier.js:6:13:6:13 | p : any-type | prettier.js:7:28:7:28 | p |
@@ -1005,6 +1021,14 @@ edges
 | pupeteer.js:5:28:5:53 | parseTo ... t).name : any-type | pupeteer.js:13:37:13:43 | tainted |
 | pupeteer.js:5:28:5:53 | parseTo ... t).name : any-type | pupeteer.js:13:37:13:43 | tainted |
 | pupeteer.js:5:28:5:53 | parseTo ... t).name : any-type | pupeteer.js:13:37:13:43 | tainted |
+| sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | sharedlib-repro.js:21:27:21:34 | filepath : any-type |
+| sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | sharedlib-repro.js:21:27:21:34 | filepath : any-type |
+| sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | sharedlib-repro.js:21:27:21:34 | filepath : any-type |
+| sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | sharedlib-repro.js:21:27:21:34 | filepath : any-type |
+| sharedlib-repro.js:21:27:21:34 | filepath : any-type | sharedlib-repro.js:22:18:22:25 | filepath |
+| sharedlib-repro.js:21:27:21:34 | filepath : any-type | sharedlib-repro.js:22:18:22:25 | filepath |
+| sharedlib-repro.js:21:27:21:34 | filepath : any-type | sharedlib-repro.js:22:18:22:25 | filepath |
+| sharedlib-repro.js:21:27:21:34 | filepath : any-type | sharedlib-repro.js:22:18:22:25 | filepath |
 | tainted-access-paths.js:6:14:6:37 | url.par ... , true) : any-type | tainted-access-paths.js:8:19:8:22 | path |
 | tainted-access-paths.js:6:14:6:37 | url.par ... , true) : any-type | tainted-access-paths.js:8:19:8:22 | path |
 | tainted-access-paths.js:6:14:6:37 | url.par ... , true) : any-type | tainted-access-paths.js:8:19:8:22 | path |
@@ -1939,18 +1963,30 @@ nodes
 | other-fs-libraries.js:72:15:72:18 | path | semmle.label | path |
 | other-fs-libraries.js:72:15:72:18 | path | semmle.label | path |
 | other-fs-libraries.js:72:15:72:18 | path | semmle.label | path |
-| other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:14:77:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | semmle.label | req.url : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | semmle.label | req.url : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | semmle.label | req.url : any-type |
-| other-fs-libraries.js:77:24:77:30 | req.url : any-type | semmle.label | req.url : any-type |
-| other-fs-libraries.js:79:16:79:19 | path | semmle.label | path |
-| other-fs-libraries.js:79:16:79:19 | path | semmle.label | path |
-| other-fs-libraries.js:79:16:79:19 | path | semmle.label | path |
-| other-fs-libraries.js:79:16:79:19 | path | semmle.label | path |
+| other-fs-libraries.js:73:8:73:11 | path : any-type | semmle.label | path : any-type |
+| other-fs-libraries.js:73:8:73:11 | path : any-type | semmle.label | path : any-type |
+| other-fs-libraries.js:73:8:73:11 | path : any-type | semmle.label | path : any-type |
+| other-fs-libraries.js:73:8:73:11 | path : any-type | semmle.label | path : any-type |
+| other-fs-libraries.js:75:15:75:15 | x : any-type | semmle.label | x : any-type |
+| other-fs-libraries.js:75:15:75:15 | x : any-type | semmle.label | x : any-type |
+| other-fs-libraries.js:75:15:75:15 | x : any-type | semmle.label | x : any-type |
+| other-fs-libraries.js:75:15:75:15 | x : any-type | semmle.label | x : any-type |
+| other-fs-libraries.js:76:19:76:19 | x | semmle.label | x |
+| other-fs-libraries.js:76:19:76:19 | x | semmle.label | x |
+| other-fs-libraries.js:76:19:76:19 | x | semmle.label | x |
+| other-fs-libraries.js:76:19:76:19 | x | semmle.label | x |
+| other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:14:81:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | semmle.label | req.url : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | semmle.label | req.url : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | semmle.label | req.url : any-type |
+| other-fs-libraries.js:81:24:81:30 | req.url : any-type | semmle.label | req.url : any-type |
+| other-fs-libraries.js:83:16:83:19 | path | semmle.label | path |
+| other-fs-libraries.js:83:16:83:19 | path | semmle.label | path |
+| other-fs-libraries.js:83:16:83:19 | path | semmle.label | path |
+| other-fs-libraries.js:83:16:83:19 | path | semmle.label | path |
 | prettier.js:6:13:6:13 | p : any-type | semmle.label | p : any-type |
 | prettier.js:6:13:6:13 | p : any-type | semmle.label | p : any-type |
 | prettier.js:6:13:6:13 | p : any-type | semmle.label | p : any-type |
@@ -1968,6 +2004,18 @@ nodes
 | pupeteer.js:5:28:5:53 | parseTo ... t).name : any-type | semmle.label | parseTo ... t).name : any-type |
 | pupeteer.js:9:28:9:34 | tainted | semmle.label | tainted |
 | pupeteer.js:13:37:13:43 | tainted | semmle.label | tainted |
+| sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | semmle.label | req.par ... spaceId : any-type |
+| sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | semmle.label | req.par ... spaceId : any-type |
+| sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | semmle.label | req.par ... spaceId : any-type |
+| sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | semmle.label | req.par ... spaceId : any-type |
+| sharedlib-repro.js:21:27:21:34 | filepath : any-type | semmle.label | filepath : any-type |
+| sharedlib-repro.js:21:27:21:34 | filepath : any-type | semmle.label | filepath : any-type |
+| sharedlib-repro.js:21:27:21:34 | filepath : any-type | semmle.label | filepath : any-type |
+| sharedlib-repro.js:21:27:21:34 | filepath : any-type | semmle.label | filepath : any-type |
+| sharedlib-repro.js:22:18:22:25 | filepath | semmle.label | filepath |
+| sharedlib-repro.js:22:18:22:25 | filepath | semmle.label | filepath |
+| sharedlib-repro.js:22:18:22:25 | filepath | semmle.label | filepath |
+| sharedlib-repro.js:22:18:22:25 | filepath | semmle.label | filepath |
 | tainted-access-paths.js:6:14:6:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
 | tainted-access-paths.js:6:14:6:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
 | tainted-access-paths.js:6:14:6:37 | url.par ... , true) : any-type | semmle.label | url.par ... , true) : any-type |
@@ -3152,22 +3200,38 @@ subpaths
 | other-fs-libraries.js:72:15:72:18 | path | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:72:15:72:18 | path | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
 | other-fs-libraries.js:72:15:72:18 | path | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:72:15:72:18 | path | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
 | other-fs-libraries.js:72:15:72:18 | path | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:72:15:72:18 | path | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
-| other-fs-libraries.js:79:16:79:19 | path | other-fs-libraries.js:77:24:77:30 | req.url : any-type | other-fs-libraries.js:79:16:79:19 | path | This path depends on a $@. | other-fs-libraries.js:77:24:77:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:76:19:76:19 | x | other-fs-libraries.js:68:24:68:30 | req.url : any-type | other-fs-libraries.js:76:19:76:19 | x | This path depends on a $@. | other-fs-libraries.js:68:24:68:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
+| other-fs-libraries.js:83:16:83:19 | path | other-fs-libraries.js:81:24:81:30 | req.url : any-type | other-fs-libraries.js:83:16:83:19 | path | This path depends on a $@. | other-fs-libraries.js:81:24:81:30 | req.url | user-provided value |
 | prettier.js:7:28:7:28 | p | prettier.js:6:13:6:13 | p : any-type | prettier.js:7:28:7:28 | p | This path depends on a $@. | prettier.js:6:13:6:13 | p | user-provided value |
 | prettier.js:7:28:7:28 | p | prettier.js:6:13:6:13 | p : any-type | prettier.js:7:28:7:28 | p | This path depends on a $@. | prettier.js:6:13:6:13 | p | user-provided value |
 | prettier.js:7:28:7:28 | p | prettier.js:6:13:6:13 | p : any-type | prettier.js:7:28:7:28 | p | This path depends on a $@. | prettier.js:6:13:6:13 | p | user-provided value |
@@ -3182,6 +3246,10 @@ subpaths
 | pupeteer.js:13:37:13:43 | tainted | pupeteer.js:5:28:5:53 | parseTo ... t).name : any-type | pupeteer.js:13:37:13:43 | tainted | This path depends on a $@. | pupeteer.js:5:28:5:53 | parseTo ... t).name | user-provided value |
 | pupeteer.js:13:37:13:43 | tainted | pupeteer.js:5:28:5:53 | parseTo ... t).name : any-type | pupeteer.js:13:37:13:43 | tainted | This path depends on a $@. | pupeteer.js:5:28:5:53 | parseTo ... t).name | user-provided value |
 | pupeteer.js:13:37:13:43 | tainted | pupeteer.js:5:28:5:53 | parseTo ... t).name : any-type | pupeteer.js:13:37:13:43 | tainted | This path depends on a $@. | pupeteer.js:5:28:5:53 | parseTo ... t).name | user-provided value |
+| sharedlib-repro.js:22:18:22:25 | filepath | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | sharedlib-repro.js:22:18:22:25 | filepath | This path depends on a $@. | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId | user-provided value |
+| sharedlib-repro.js:22:18:22:25 | filepath | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | sharedlib-repro.js:22:18:22:25 | filepath | This path depends on a $@. | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId | user-provided value |
+| sharedlib-repro.js:22:18:22:25 | filepath | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | sharedlib-repro.js:22:18:22:25 | filepath | This path depends on a $@. | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId | user-provided value |
+| sharedlib-repro.js:22:18:22:25 | filepath | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId : any-type | sharedlib-repro.js:22:18:22:25 | filepath | This path depends on a $@. | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId | user-provided value |
 | tainted-access-paths.js:8:19:8:22 | path | tainted-access-paths.js:6:24:6:30 | req.url : any-type | tainted-access-paths.js:8:19:8:22 | path | This path depends on a $@. | tainted-access-paths.js:6:24:6:30 | req.url | user-provided value |
 | tainted-access-paths.js:8:19:8:22 | path | tainted-access-paths.js:6:24:6:30 | req.url : any-type | tainted-access-paths.js:8:19:8:22 | path | This path depends on a $@. | tainted-access-paths.js:6:24:6:30 | req.url | user-provided value |
 | tainted-access-paths.js:8:19:8:22 | path | tainted-access-paths.js:6:24:6:30 | req.url : any-type | tainted-access-paths.js:8:19:8:22 | path | This path depends on a $@. | tainted-access-paths.js:6:24:6:30 | req.url | user-provided value |
