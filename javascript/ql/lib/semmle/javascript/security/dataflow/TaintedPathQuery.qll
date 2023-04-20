@@ -9,6 +9,8 @@
 
 import javascript
 import TaintedPathCustomizations::TaintedPath
+private import semmle.javascript.dataflow2.DataFlow as SharedLib
+private import semmle.javascript.dataflow2.BarrierGuards
 
 // Materialize flow labels
 private class ConcretePosixPath extends Label::PosixPath {
@@ -22,30 +24,32 @@ private class ConcreteSplitPath extends Label::SplitPath {
 /**
  * A taint-tracking configuration for reasoning about tainted-path vulnerabilities.
  */
-class Configuration extends DataFlow::Configuration {
-  Configuration() { this = "TaintedPath" }
+module ConfigurationArgs implements SharedLib::StateConfigSig {
+  class FlowState = DataFlow::FlowLabel;
 
-  override predicate isSource(DataFlow::Node source, DataFlow::FlowLabel label) {
+  predicate isSource(DataFlow::Node source, DataFlow::FlowLabel label) {
     label = source.(Source).getAFlowLabel()
   }
 
-  override predicate isSink(DataFlow::Node sink, DataFlow::FlowLabel label) {
+  predicate isSink(DataFlow::Node sink, DataFlow::FlowLabel label) {
     label = sink.(Sink).getAFlowLabel()
   }
 
-  override predicate isBarrier(DataFlow::Node node) {
-    super.isBarrier(node) or
-    node instanceof Sanitizer
+  predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel label) {
+    node instanceof Sanitizer and exists(label)
+    or
+    barrierGuardBlocksNode(_, node, label)
+    or
+    barrierGuardBlocksNode(_, node, "") and exists(label)
   }
 
-  override predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
-    guard instanceof BarrierGuardNode
-  }
-
-  override predicate isAdditionalFlowStep(
-    DataFlow::Node src, DataFlow::Node dst, DataFlow::FlowLabel srclabel,
+  // predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) { guard instanceof BarrierGuardNode }
+  predicate isAdditionalFlowStep(
+    DataFlow::Node src, DataFlow::FlowLabel srclabel, DataFlow::Node dst,
     DataFlow::FlowLabel dstlabel
   ) {
     isAdditionalTaintedPathFlowStep(src, dst, srclabel, dstlabel)
   }
 }
+
+module Configuration = SharedLib::GlobalWithState<ConfigurationArgs>;

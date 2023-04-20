@@ -17,9 +17,9 @@
 
 import javascript
 import semmle.javascript.security.dataflow.TaintedPathQuery
-import DataFlow::PathGraph
+import Configuration::PathGraph
 
-from Configuration cfg, DataFlow::PathNode source, DataFlow::PathNode sink
-where cfg.hasFlowPath(source, sink)
+from Configuration::PathNode source, Configuration::PathNode sink
+where Configuration::flowPath(source, sink)
 select sink.getNode(), source, sink, "This path depends on a $@.", source.getNode(),
   "user-provided value"
