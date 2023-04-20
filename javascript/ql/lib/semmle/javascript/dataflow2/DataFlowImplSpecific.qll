@@ -228,6 +228,23 @@ module Private {
 
   //   predicate golangSpecificParamArgFilter(DataFlowCall call, ParameterNode p, ArgumentNode arg);
   predicate golangSpecificParamArgFilter(DataFlowCall call, Node p, Node arg) { none() }
+
+  class ArgumentNode extends DataFlow::Node {
+    ArgumentNode() { isArgumentNode(this, _, _) }
+
+    predicate argumentOf(DataFlowCall call, ArgumentPosition pos) {
+      isArgumentNode(this, call, pos)
+    }
+  }
+
+  class ParameterNode extends DataFlow::Node {
+    ParameterNode() { isParameterNode(this, _, _) }
+  }
+
+  // TODO stub
+  predicate defaultAdditionalTaintStep(DataFlow::Node pred, DataFlow::Node succ) {
+    TaintTracking::sharedTaintStep(pred, succ)
+  }
 }
 
 module Public {
