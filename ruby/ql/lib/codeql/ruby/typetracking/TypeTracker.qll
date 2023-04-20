@@ -297,6 +297,42 @@ class StepSummary extends TStepSummary {
 /** Provides predicates for updating step summaries (`StepSummary`s). */
 module StepSummary {
   /**
+   * Holds if `nodeFrom` flows to `nodeTo` with a step that maps type tracker `t1` to `t2`.
+   */
+  bindingset[nodeFrom, t1]
+  pragma[inline_late]
+  pragma[noopt]
+  predicate trackStep(
+    TypeTrackingNode nodeFrom, TypeTracker t1, TypeTrackingNode nodeTo, TypeTracker t2
+  ) {
+    exists(StepSummary summary |
+      stepNoCall(nodeFrom, nodeTo, summary)
+      or
+      stepCall(nodeFrom, nodeTo, summary)
+    |
+      t2 = append(t1, summary)
+    )
+  }
+
+  /**
+   * Holds if `node1` can be backtracked to `node2` with a step that maps type backtracker `t1` to `t2`.
+   */
+  bindingset[node1, t1]
+  pragma[inline_late]
+  pragma[noopt]
+  predicate backtrackStep(
+    TypeTrackingNode node1, TypeBackTracker t1, TypeTrackingNode node2, TypeBackTracker t2
+  ) {
+    exists(StepSummary summary |
+      stepNoCall(node2, node1, summary)
+      or
+      stepCall(node2, node1, summary)
+    |
+      t2 = prepend(t1, summary)
+    )
+  }
+
+  /**
    * Gets the summary that corresponds to having taken a forwards
    * heap and/or inter-procedural step from `nodeFrom` to `nodeTo`.
    *
