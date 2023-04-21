@@ -21,6 +21,14 @@ private class ConcreteSplitPath extends Label::SplitPath {
   ConcreteSplitPath() { this = this }
 }
 
+private class SourceState extends DataFlow::FlowLabel {
+  SourceState() { this = "SourceState" }
+}
+
+private class SinkState extends DataFlow::FlowLabel {
+  SinkState() { this = "SinkState" }
+}
+
 /**
  * A taint-tracking configuration for reasoning about tainted-path vulnerabilities.
  */
@@ -28,11 +36,11 @@ module ConfigurationArgs implements SharedLib::StateConfigSig {
   class FlowState = DataFlow::FlowLabel;
 
   predicate isSource(DataFlow::Node source, DataFlow::FlowLabel label) {
-    label = source.(Source).getAFlowLabel()
+    source instanceof Source and label instanceof SourceState
   }
 
   predicate isSink(DataFlow::Node sink, DataFlow::FlowLabel label) {
-    label = sink.(Sink).getAFlowLabel()
+    sink instanceof Sink and label instanceof SinkState
   }
 
   predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel label) {
@@ -49,6 +57,20 @@ module ConfigurationArgs implements SharedLib::StateConfigSig {
     DataFlow::FlowLabel dstlabel
   ) {
     isAdditionalTaintedPathFlowStep(src, dst, srclabel, dstlabel)
+    or
+    exists(Source source |
+      src = source and
+      dst = source and
+      srclabel instanceof SourceState and
+      dstlabel = source.getAFlowLabel()
+    )
+    or
+    exists(Sink sink |
+      src = sink and
+      dst = sink and
+      srclabel = sink.getAFlowLabel() and
+      dstlabel instanceof SinkState
+    )
   }
 }
 
