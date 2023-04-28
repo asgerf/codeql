@@ -44,13 +44,15 @@ predicate parseTypeString(string rawType, string package, string qualifiedName) 
   )
 }
 
+private string globalType() { result = ["global", "global.Window"] }
+
 /**
  * Holds if models describing `package` may be relevant for the analysis of this database.
  */
 predicate isPackageUsed(string package) {
   exists(DataFlow::moduleImport(package))
   or
-  package = "global"
+  package = globalType()
   or
   any(DataFlow::SourceNode sn).hasUnderlyingType(package, _)
 }
@@ -78,7 +80,7 @@ private predicate parseRelevantTypeString(string rawType, string package, string
 /** Holds if `global` is a global variable referenced via a the `global` package in a CSV row. */
 private predicate isRelevantGlobal(string global) {
   exists(AccessPath path, AccessPathToken token |
-    isRelevantFullPath(["global", "global.Window"], path) and
+    isRelevantFullPath(globalType(), path) and
     token = path.getToken(0) and
     token.getName() = "Member" and
     global = token.getAnArgument()
@@ -112,7 +114,7 @@ bindingset[type, path]
 API::Node getExtraNodeFromPath(string type, AccessPath path, int n) {
   // Global variable accesses is via the 'global' package
   exists(AccessPathToken token |
-    type = "global" and
+    type = globalType() and
     token = path.getToken(0) and
     token.getName() = "Member" and
     result = getGlobalNode(token.getAnArgument()) and
