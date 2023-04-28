@@ -136,14 +136,19 @@ module Private {
    */
   DataFlowCallable viableImplInCallContext(DataFlowCall call, DataFlowCall ctx) { none() }
 
-  predicate simpleLocalFlowStep(Node node1, Node node2) { node1.getASuccessor() = node2 }
+  predicate simpleLocalFlowStep(Node node1, Node node2) {
+    node1.getASuccessor() = node2 and
+    pragma[only_bind_out](node1).getContainer() = pragma[only_bind_out](node2).getContainer()
+  }
 
   /**
    * Holds if data can flow from `node1` to `node2` through a non-local step
    * that does not follow a call edge. For example, a step through a global
    * variable.
    */
-  predicate jumpStep(Node node1, Node node2) { none() }
+  predicate jumpStep(Node node1, Node node2) {
+    node1.getASuccessor() = node2 and node1.getContainer() != node2.getContainer()
+  }
 
   /**
    * Holds if data can flow from `node1` to `node2` via a read of `c`.  Thus,
