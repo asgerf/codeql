@@ -78,7 +78,7 @@ private predicate parseRelevantTypeString(string rawType, string package, string
 /** Holds if `global` is a global variable referenced via a the `global` package in a CSV row. */
 private predicate isRelevantGlobal(string global) {
   exists(AccessPath path, AccessPathToken token |
-    isRelevantFullPath("global", path) and
+    isRelevantFullPath(["global", "global.Window"], path) and
     token = path.getToken(0) and
     token.getName() = "Member" and
     global = token.getAnArgument()
