@@ -9,6 +9,9 @@
         "sinks": [],
         "typeDefinitions": [
             "global.Window;global;"
+        ],
+        "summaries": [
+            "global.GlobalEventHandlers;;;AnyMember.Parameter[this];type"
         ]
     },
     "usedTypes": {

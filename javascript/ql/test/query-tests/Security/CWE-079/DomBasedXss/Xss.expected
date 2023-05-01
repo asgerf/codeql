@@ -364,6 +364,11 @@ nodes
 | dragAndDrop.ts:73:29:73:39 | droppedHtml |
 | dragAndDrop.ts:73:29:73:39 | droppedHtml |
 | dragAndDrop.ts:73:29:73:39 | droppedHtml |
+| event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href |
+| event-handler-receiver.js:2:49:2:61 | location.href |
 | express.js:7:15:7:33 | req.param("wobble") |
 | express.js:7:15:7:33 | req.param("wobble") |
 | express.js:7:15:7:33 | req.param("wobble") |
@@ -1478,6 +1483,12 @@ edges
 | dragAndDrop.ts:71:27:71:61 | e.dataT ... /html') | dragAndDrop.ts:71:13:71:61 | droppedHtml |
 | dragAndDrop.ts:71:27:71:61 | e.dataT ... /html') | dragAndDrop.ts:71:13:71:61 | droppedHtml |
 | dragAndDrop.ts:71:27:71:61 | e.dataT ... /html') | dragAndDrop.ts:71:13:71:61 | droppedHtml |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
 | express.js:7:15:7:33 | req.param("wobble") | express.js:7:15:7:33 | req.param("wobble") |
 | jquery.js:2:7:2:40 | tainted | jquery.js:7:20:7:26 | tainted |
 | jquery.js:2:7:2:40 | tainted | jquery.js:8:28:8:34 | tainted |
@@ -2299,6 +2310,7 @@ edges
 | dragAndDrop.ts:33:19:33:67 | e.origi ... /html') | dragAndDrop.ts:33:19:33:67 | e.origi ... /html') | dragAndDrop.ts:33:19:33:67 | e.origi ... /html') | Cross-site scripting vulnerability due to $@. | dragAndDrop.ts:33:19:33:67 | e.origi ... /html') | user-provided value |
 | dragAndDrop.ts:50:29:50:32 | html | dragAndDrop.ts:43:22:43:54 | dataTra ... /html') | dragAndDrop.ts:50:29:50:32 | html | Cross-site scripting vulnerability due to $@. | dragAndDrop.ts:43:22:43:54 | dataTra ... /html') | user-provided value |
 | dragAndDrop.ts:73:29:73:39 | droppedHtml | dragAndDrop.ts:71:27:71:61 | e.dataT ... /html') | dragAndDrop.ts:73:29:73:39 | droppedHtml | Cross-site scripting vulnerability due to $@. | dragAndDrop.ts:71:27:71:61 | e.dataT ... /html') | user-provided value |
+| event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' | event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' | Cross-site scripting vulnerability due to $@. | event-handler-receiver.js:2:49:2:61 | location.href | user-provided value |
 | express.js:7:15:7:33 | req.param("wobble") | express.js:7:15:7:33 | req.param("wobble") | express.js:7:15:7:33 | req.param("wobble") | Cross-site scripting vulnerability due to $@. | express.js:7:15:7:33 | req.param("wobble") | user-provided value |
 | jquery.js:7:5:7:34 | "<div i ... + "\\">" | jquery.js:2:17:2:40 | documen ... .search | jquery.js:7:5:7:34 | "<div i ... + "\\">" | Cross-site scripting vulnerability due to $@. | jquery.js:2:17:2:40 | documen ... .search | user-provided value |
 | jquery.js:8:18:8:34 | "XSS: " + tainted | jquery.js:2:17:2:40 | documen ... .search | jquery.js:8:18:8:34 | "XSS: " + tainted | Cross-site scripting vulnerability due to $@. | jquery.js:2:17:2:40 | documen ... .search | user-provided value |

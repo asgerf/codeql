@@ -1,4 +1,3 @@
-| query-tests/Security/CWE-079/DomBasedXss/event-handler-receiver.js:2 | expected an alert, but found none | NOT OK |  |
 | query-tests/Security/CWE-079/DomBasedXss/react-use-context.js:10 | expected an alert, but found none | NOT OK |  |
 | query-tests/Security/CWE-079/DomBasedXss/react-use-context.js:16 | expected an alert, but found none | NOT OK |  |
 | query-tests/Security/CWE-079/DomBasedXss/tst3.js:4 | expected an alert, but found none | NOT OK |  |

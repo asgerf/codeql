@@ -364,6 +364,11 @@ nodes
 | dragAndDrop.ts:73:29:73:39 | droppedHtml |
 | dragAndDrop.ts:73:29:73:39 | droppedHtml |
 | dragAndDrop.ts:73:29:73:39 | droppedHtml |
+| event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href |
+| event-handler-receiver.js:2:49:2:61 | location.href |
 | express.js:7:15:7:33 | req.param("wobble") |
 | express.js:7:15:7:33 | req.param("wobble") |
 | express.js:7:15:7:33 | req.param("wobble") |
@@ -1528,6 +1533,12 @@ edges
 | dragAndDrop.ts:71:27:71:61 | e.dataT ... /html') | dragAndDrop.ts:71:13:71:61 | droppedHtml |
 | dragAndDrop.ts:71:27:71:61 | e.dataT ... /html') | dragAndDrop.ts:71:13:71:61 | droppedHtml |
 | dragAndDrop.ts:71:27:71:61 | e.dataT ... /html') | dragAndDrop.ts:71:13:71:61 | droppedHtml |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
+| event-handler-receiver.js:2:49:2:61 | location.href | event-handler-receiver.js:2:31:2:83 | '<h2><a ... ></h2>' |
 | express.js:7:15:7:33 | req.param("wobble") | express.js:7:15:7:33 | req.param("wobble") |
 | jquery.js:2:7:2:40 | tainted | jquery.js:7:20:7:26 | tainted |
 | jquery.js:2:7:2:40 | tainted | jquery.js:8:28:8:34 | tainted |
