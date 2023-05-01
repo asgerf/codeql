@@ -129,6 +129,10 @@ nodes
 | clipboard.ts:15:25:15:28 | html |
 | clipboard.ts:15:25:15:28 | html |
 | clipboard.ts:15:25:15:28 | html |
+| clipboard.ts:24:23:24:58 | e.clipb ... /html') |
+| clipboard.ts:24:23:24:58 | e.clipb ... /html') |
+| clipboard.ts:24:23:24:58 | e.clipb ... /html') |
+| clipboard.ts:24:23:24:58 | e.clipb ... /html') |
 | clipboard.ts:29:19:29:54 | e.clipb ... /html') |
 | clipboard.ts:29:19:29:54 | e.clipb ... /html') |
 | clipboard.ts:29:19:29:54 | e.clipb ... /html') |
@@ -332,6 +336,10 @@ nodes
 | dragAndDrop.ts:15:25:15:28 | html |
 | dragAndDrop.ts:15:25:15:28 | html |
 | dragAndDrop.ts:15:25:15:28 | html |
+| dragAndDrop.ts:24:23:24:57 | e.dataT ... /html') |
+| dragAndDrop.ts:24:23:24:57 | e.dataT ... /html') |
+| dragAndDrop.ts:24:23:24:57 | e.dataT ... /html') |
+| dragAndDrop.ts:24:23:24:57 | e.dataT ... /html') |
 | dragAndDrop.ts:29:19:29:53 | e.dataT ... /html') |
 | dragAndDrop.ts:29:19:29:53 | e.dataT ... /html') |
 | dragAndDrop.ts:29:19:29:53 | e.dataT ... /html') |
@@ -1227,6 +1235,7 @@ edges
 | clipboard.ts:8:18:8:51 | clipboa ... /html') | clipboard.ts:8:11:8:51 | html |
 | clipboard.ts:8:18:8:51 | clipboa ... /html') | clipboard.ts:8:11:8:51 | html |
 | clipboard.ts:8:18:8:51 | clipboa ... /html') | clipboard.ts:8:11:8:51 | html |
+| clipboard.ts:24:23:24:58 | e.clipb ... /html') | clipboard.ts:24:23:24:58 | e.clipb ... /html') |
 | clipboard.ts:29:19:29:54 | e.clipb ... /html') | clipboard.ts:29:19:29:54 | e.clipb ... /html') |
 | clipboard.ts:33:19:33:68 | e.origi ... /html') | clipboard.ts:33:19:33:68 | e.origi ... /html') |
 | clipboard.ts:43:15:43:55 | html | clipboard.ts:50:29:50:32 | html |
@@ -1450,6 +1459,7 @@ edges
 | dragAndDrop.ts:8:18:8:50 | dataTra ... /html') | dragAndDrop.ts:8:11:8:50 | html |
 | dragAndDrop.ts:8:18:8:50 | dataTra ... /html') | dragAndDrop.ts:8:11:8:50 | html |
 | dragAndDrop.ts:8:18:8:50 | dataTra ... /html') | dragAndDrop.ts:8:11:8:50 | html |
+| dragAndDrop.ts:24:23:24:57 | e.dataT ... /html') | dragAndDrop.ts:24:23:24:57 | e.dataT ... /html') |
 | dragAndDrop.ts:29:19:29:53 | e.dataT ... /html') | dragAndDrop.ts:29:19:29:53 | e.dataT ... /html') |
 | dragAndDrop.ts:33:19:33:67 | e.origi ... /html') | dragAndDrop.ts:33:19:33:67 | e.origi ... /html') |
 | dragAndDrop.ts:43:15:43:54 | html | dragAndDrop.ts:50:29:50:32 | html |
@@ -2256,6 +2266,7 @@ edges
 | classnames.js:15:31:15:78 | `<span  ... <span>` | classnames.js:15:52:15:62 | window.name | classnames.js:15:31:15:78 | `<span  ... <span>` | Cross-site scripting vulnerability due to $@. | classnames.js:15:52:15:62 | window.name | user-provided value |
 | classnames.js:17:32:17:79 | `<span  ... <span>` | classnames.js:17:53:17:63 | window.name | classnames.js:17:32:17:79 | `<span  ... <span>` | Cross-site scripting vulnerability due to $@. | classnames.js:17:53:17:63 | window.name | user-provided value |
 | clipboard.ts:15:25:15:28 | html | clipboard.ts:8:18:8:51 | clipboa ... /html') | clipboard.ts:15:25:15:28 | html | Cross-site scripting vulnerability due to $@. | clipboard.ts:8:18:8:51 | clipboa ... /html') | user-provided value |
+| clipboard.ts:24:23:24:58 | e.clipb ... /html') | clipboard.ts:24:23:24:58 | e.clipb ... /html') | clipboard.ts:24:23:24:58 | e.clipb ... /html') | Cross-site scripting vulnerability due to $@. | clipboard.ts:24:23:24:58 | e.clipb ... /html') | user-provided value |
 | clipboard.ts:29:19:29:54 | e.clipb ... /html') | clipboard.ts:29:19:29:54 | e.clipb ... /html') | clipboard.ts:29:19:29:54 | e.clipb ... /html') | Cross-site scripting vulnerability due to $@. | clipboard.ts:29:19:29:54 | e.clipb ... /html') | user-provided value |
 | clipboard.ts:33:19:33:68 | e.origi ... /html') | clipboard.ts:33:19:33:68 | e.origi ... /html') | clipboard.ts:33:19:33:68 | e.origi ... /html') | Cross-site scripting vulnerability due to $@. | clipboard.ts:33:19:33:68 | e.origi ... /html') | user-provided value |
 | clipboard.ts:50:29:50:32 | html | clipboard.ts:43:22:43:55 | clipboa ... /html') | clipboard.ts:50:29:50:32 | html | Cross-site scripting vulnerability due to $@. | clipboard.ts:43:22:43:55 | clipboa ... /html') | user-provided value |
@@ -2283,6 +2294,7 @@ edges
 | dates.js:59:31:59:87 | `Time i ... aint)}` | dates.js:54:36:54:55 | window.location.hash | dates.js:59:31:59:87 | `Time i ... aint)}` | Cross-site scripting vulnerability due to $@. | dates.js:54:36:54:55 | window.location.hash | user-provided value |
 | dates.js:61:31:61:88 | `Time i ... aint)}` | dates.js:54:36:54:55 | window.location.hash | dates.js:61:31:61:88 | `Time i ... aint)}` | Cross-site scripting vulnerability due to $@. | dates.js:54:36:54:55 | window.location.hash | user-provided value |
 | dragAndDrop.ts:15:25:15:28 | html | dragAndDrop.ts:8:18:8:50 | dataTra ... /html') | dragAndDrop.ts:15:25:15:28 | html | Cross-site scripting vulnerability due to $@. | dragAndDrop.ts:8:18:8:50 | dataTra ... /html') | user-provided value |
+| dragAndDrop.ts:24:23:24:57 | e.dataT ... /html') | dragAndDrop.ts:24:23:24:57 | e.dataT ... /html') | dragAndDrop.ts:24:23:24:57 | e.dataT ... /html') | Cross-site scripting vulnerability due to $@. | dragAndDrop.ts:24:23:24:57 | e.dataT ... /html') | user-provided value |
 | dragAndDrop.ts:29:19:29:53 | e.dataT ... /html') | dragAndDrop.ts:29:19:29:53 | e.dataT ... /html') | dragAndDrop.ts:29:19:29:53 | e.dataT ... /html') | Cross-site scripting vulnerability due to $@. | dragAndDrop.ts:29:19:29:53 | e.dataT ... /html') | user-provided value |
 | dragAndDrop.ts:33:19:33:67 | e.origi ... /html') | dragAndDrop.ts:33:19:33:67 | e.origi ... /html') | dragAndDrop.ts:33:19:33:67 | e.origi ... /html') | Cross-site scripting vulnerability due to $@. | dragAndDrop.ts:33:19:33:67 | e.origi ... /html') | user-provided value |
 | dragAndDrop.ts:50:29:50:32 | html | dragAndDrop.ts:43:22:43:54 | dataTra ... /html') | dragAndDrop.ts:50:29:50:32 | html | Cross-site scripting vulnerability due to $@. | dragAndDrop.ts:43:22:43:54 | dataTra ... /html') | user-provided value |

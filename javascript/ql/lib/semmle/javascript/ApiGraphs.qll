@@ -588,6 +588,13 @@ module API {
       or
       result = ModelOutput::getATypeNode(moduleName, exportedName)
     }
+
+    /** Gets a node whose type has the given qualified name. */
+    Node ofType(string name) {
+      result = Internal::getANodeOfTypeRaw(name)
+      or
+      result = ModelOutput::getATypeNode("global", name)
+    }
   }
 
   /** Provides access to API graph nodes without taking into account types from models. */
@@ -604,6 +611,11 @@ module API {
       or
       exportedName = "" and
       result = getAModuleImportRaw(moduleName)
+    }
+
+    /** Gets a node whose type has the given qualified name, not including types from models. */
+    Node getANodeOfTypeRaw(string name) {
+      result = Impl::MkGlobalTypeUse(name).(Node).getInstance()
     }
   }
 
@@ -720,6 +732,11 @@ module API {
         any(TypeAnnotation n).hasQualifiedName(moduleName, exportName)
         or
         any(Type t).hasUnderlyingType(moduleName, exportName)
+      } or
+      MkGlobalTypeUse(string name) {
+        any(TypeAnnotation n).hasQualifiedName(name)
+        or
+        any(Type t).hasUnderlyingType(name)
       } or
       MkSyntheticCallbackArg(DataFlow::Node src, int bound, DataFlow::InvokeNode nd) {
         trackUseNode(src, true, bound, "").flowsTo(nd.getCalleeNode())
@@ -969,6 +986,12 @@ module API {
           base = MkTypeUse(moduleName, exportName) and
           lbl = Label::instance() and
           ref.(DataFlow::SourceNode).hasUnderlyingType(moduleName, exportName)
+        )
+        or
+        exists(string exportName |
+          base = MkGlobalTypeUse(exportName) and
+          lbl = Label::instance() and
+          ref.(DataFlow::SourceNode).hasUnderlyingType(exportName)
         )
         or
         exists(DataFlow::InvokeNode call |

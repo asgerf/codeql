@@ -132,6 +132,9 @@ API::Node getExtraNodeFromType(string type) {
     or
     // Access instance of a type based on type annotations
     result = API::Internal::getANodeOfTypeRaw(package, qualifiedName)
+    or
+    package = "global" and
+    result = API::Internal::getANodeOfTypeRaw(qualifiedName)
   )
 }
 
