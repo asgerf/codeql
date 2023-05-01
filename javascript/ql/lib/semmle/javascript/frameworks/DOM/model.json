@@ -18,7 +18,8 @@
         "sources": [
             "global.Element",
             "global.ShadowRoot",
-            "global.Node"
+            "global.Node",
+            "global.Range"
         ]
     },
     "generatedModel": {

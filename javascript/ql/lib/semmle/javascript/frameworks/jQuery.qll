@@ -3,6 +3,7 @@
  */
 
 import javascript
+private import semmle.javascript.dataflow.InferredTypes
 
 /**
  * Gets a data flow node that may refer to the jQuery `$` function.
@@ -618,5 +619,36 @@ module JQuery {
      * Gets the name of this plugin.
      */
     string getPluginName() { result = pluginName }
+  }
+
+  private InferredType getArgumentTypeFromJQueryMethodGet(JQuery::MethodCall call) {
+    call.getMethodName() = "get" and
+    result = call.getArgument(0).analyze().getAType()
+  }
+
+  private class DomModel extends ModelInput::TypeModel {
+    override DataFlow::Node getASource(string type) {
+      type = "global.Node" and
+      (
+        exists(JQuery::MethodCall call | result = call and call.getMethodName() = "get" |
+          call.getNumArgument() = 1 and
+          unique(InferredType t | t = getArgumentTypeFromJQueryMethodGet(call)) = TTNumber()
+        )
+        or
+        // A `this` node from a callback given to a `$().each(callback)` call.
+        // purposely not using JQuery::MethodCall to avoid `jquery.each()`.
+        exists(DataFlow::CallNode eachCall | eachCall = JQuery::objectRef().getAMethodCall("each") |
+          result = DataFlow::thisNode(eachCall.getCallback(0).getFunction()) or
+          result = eachCall.getABoundCallbackParameter(0, 1)
+        )
+        or
+        // A read of an array-element from a JQuery object. E.g. `$("#foo")[0]`
+        exists(DataFlow::PropRead read |
+          read = result and read = JQuery::objectRef().getAPropertyRead()
+        |
+          unique(InferredType t | t = read.getPropertyNameExpr().analyze().getAType()) = TTNumber()
+        )
+      )
+    }
   }
 }

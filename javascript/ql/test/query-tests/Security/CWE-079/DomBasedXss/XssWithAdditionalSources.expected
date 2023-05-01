@@ -906,8 +906,10 @@ nodes
 | tst.js:184:19:184:42 | documen ... .search |
 | tst.js:186:31:186:37 | tainted |
 | tst.js:186:31:186:37 | tainted |
-| tst.js:188:42:188:48 | tainted |
-| tst.js:188:42:188:48 | tainted |
+| tst.js:188:48:188:54 | tainted |
+| tst.js:188:48:188:54 | tainted |
+| tst.js:193:63:193:69 | tainted |
+| tst.js:193:63:193:69 | tainted |
 | tst.js:197:9:197:42 | tainted |
 | tst.js:197:19:197:42 | documen ... .search |
 | tst.js:197:19:197:42 | documen ... .search |
@@ -958,6 +960,14 @@ nodes
 | tst.js:280:22:280:29 | location |
 | tst.js:280:22:280:29 | location |
 | tst.js:280:22:280:29 | location |
+| tst.js:285:9:285:29 | tainted |
+| tst.js:285:9:285:29 | tainted |
+| tst.js:285:19:285:29 | window.name |
+| tst.js:285:19:285:29 | window.name |
+| tst.js:285:19:285:29 | window.name |
+| tst.js:288:59:288:65 | tainted |
+| tst.js:288:59:288:65 | tainted |
+| tst.js:288:59:288:65 | tainted |
 | tst.js:301:9:301:16 | location |
 | tst.js:301:9:301:16 | location |
 | tst.js:302:10:302:10 | e |
@@ -996,6 +1006,10 @@ nodes
 | tst.js:355:19:355:42 | documen ... .search |
 | tst.js:356:16:356:21 | target |
 | tst.js:356:16:356:21 | target |
+| tst.js:360:21:360:26 | target |
+| tst.js:360:21:360:26 | target |
+| tst.js:363:18:363:23 | target |
+| tst.js:363:18:363:23 | target |
 | tst.js:371:7:371:39 | target |
 | tst.js:371:16:371:39 | documen ... .search |
 | tst.js:371:16:371:39 | documen ... .search |
@@ -2104,8 +2118,10 @@ edges
 | tst.js:177:18:177:41 | documen ... .search | tst.js:177:9:177:41 | target |
 | tst.js:184:9:184:42 | tainted | tst.js:186:31:186:37 | tainted |
 | tst.js:184:9:184:42 | tainted | tst.js:186:31:186:37 | tainted |
-| tst.js:184:9:184:42 | tainted | tst.js:188:42:188:48 | tainted |
-| tst.js:184:9:184:42 | tainted | tst.js:188:42:188:48 | tainted |
+| tst.js:184:9:184:42 | tainted | tst.js:188:48:188:54 | tainted |
+| tst.js:184:9:184:42 | tainted | tst.js:188:48:188:54 | tainted |
+| tst.js:184:9:184:42 | tainted | tst.js:193:63:193:69 | tainted |
+| tst.js:184:9:184:42 | tainted | tst.js:193:63:193:69 | tainted |
 | tst.js:184:19:184:42 | documen ... .search | tst.js:184:9:184:42 | tainted |
 | tst.js:184:19:184:42 | documen ... .search | tst.js:184:9:184:42 | tainted |
 | tst.js:197:9:197:42 | tainted | tst.js:199:67:199:73 | tainted |
@@ -2146,6 +2162,14 @@ edges
 | tst.js:260:7:260:10 | name | tst.js:260:7:260:10 | name |
 | tst.js:264:11:264:21 | window.name | tst.js:264:11:264:21 | window.name |
 | tst.js:280:22:280:29 | location | tst.js:280:22:280:29 | location |
+| tst.js:285:9:285:29 | tainted | tst.js:288:59:288:65 | tainted |
+| tst.js:285:9:285:29 | tainted | tst.js:288:59:288:65 | tainted |
+| tst.js:285:9:285:29 | tainted | tst.js:288:59:288:65 | tainted |
+| tst.js:285:9:285:29 | tainted | tst.js:288:59:288:65 | tainted |
+| tst.js:285:19:285:29 | window.name | tst.js:285:9:285:29 | tainted |
+| tst.js:285:19:285:29 | window.name | tst.js:285:9:285:29 | tainted |
+| tst.js:285:19:285:29 | window.name | tst.js:285:9:285:29 | tainted |
+| tst.js:285:19:285:29 | window.name | tst.js:285:9:285:29 | tainted |
 | tst.js:301:9:301:16 | location | tst.js:302:10:302:10 | e |
 | tst.js:301:9:301:16 | location | tst.js:302:10:302:10 | e |
 | tst.js:302:10:302:10 | e | tst.js:303:20:303:20 | e |
@@ -2177,6 +2201,10 @@ edges
 | tst.js:348:16:348:39 | documen ... .search | tst.js:348:7:348:39 | target |
 | tst.js:355:10:355:42 | target | tst.js:356:16:356:21 | target |
 | tst.js:355:10:355:42 | target | tst.js:356:16:356:21 | target |
+| tst.js:355:10:355:42 | target | tst.js:360:21:360:26 | target |
+| tst.js:355:10:355:42 | target | tst.js:360:21:360:26 | target |
+| tst.js:355:10:355:42 | target | tst.js:363:18:363:23 | target |
+| tst.js:355:10:355:42 | target | tst.js:363:18:363:23 | target |
 | tst.js:355:19:355:42 | documen ... .search | tst.js:355:10:355:42 | target |
 | tst.js:355:19:355:42 | documen ... .search | tst.js:355:10:355:42 | target |
 | tst.js:371:7:371:39 | target | tst.js:374:18:374:23 | target |

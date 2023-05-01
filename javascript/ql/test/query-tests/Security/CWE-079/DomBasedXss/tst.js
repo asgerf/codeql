@@ -185,12 +185,12 @@ function references() {
 
     document.body.innerHTML = tainted; // NOT OK
 
-    document.createElement().innerHTML = tainted; // NOT OK
-    createElement().innerHTML = tainted; // NOT OK
+    document.createElement('span').innerHTML = tainted; // NOT OK
+    createElement('span').innerHTML = tainted; // OK - createElement is not a global function
 
-    document.getElementsByClassName()[0].innerHTML = tainted; // NOT OK
-    getElementsByClassName()[0].innerHTML = tainted; // NOT OK
-    getElementsByClassName().item().innerHTML = tainted; // NOT OK
+    document.getElementsByClassName('foo')[0].innerHTML = tainted; // NOT OK
+    getElementsByClassName('foo')[0].innerHTML = tainted; // OK - getElementsByClassName is not a global function
+    document.getElementsByClassName('foo').item().innerHTML = tainted; // NOT OK
 }
 
 function react(){

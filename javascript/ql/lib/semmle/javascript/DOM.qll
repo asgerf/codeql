@@ -317,73 +317,23 @@ module DOM {
       )
     }
 
-    private InferredType getArgumentTypeFromJQueryMethodGet(JQuery::MethodCall call) {
-      call.getMethodName() = "get" and
-      result = call.getArgument(0).analyze().getAType()
-    }
+    private class ModelFromDomValueSources extends ModelInput::TypeModel {
+      override API::Node getAnApiNode(string type) {
+        type = "global.Node" and
+        result.asSource() instanceof DomValueSource::Range
+      }
 
-    private class DefaultRange extends Range {
-      DefaultRange() {
-        this.asExpr().(VarAccess).getVariable() instanceof DomGlobalVariable
-        or
-        exists(DataFlow::PropRead read |
-          this = read and
-          read = domValueRef().getAPropertyRead()
-        |
-          not read.mayHavePropertyName(_)
+      override DataFlow::Node getASource(string type) {
+        type = "global.Node" and
+        (
+          result = DataFlow::thisNode(any(EventHandlerCode evt))
           or
-          read.mayHavePropertyName(getADomPropertyName())
-          or
-          read.mayHavePropertyName(any(string s | exists(s.toInt())))
+          // reading property `foo` - where a child has `name="foo"` - resolves to that child.
+          // We only look for such properties on forms/document, to avoid potential false positives.
+          exists(DataFlow::SourceNode form | form = [forms(), documentRef()] |
+            result = form.getAPropertyRead(any(string s | not s = getADomPropertyName()))
+          )
         )
-        or
-        this = domElementCreationOrQuery()
-        or
-        this = domElementCollection()
-        or
-        this = domValueRef().getAMethodCall(getAMethodProducingDomElements())
-        or
-        this = forms()
-        or
-        // reading property `foo` - where a child has `name="foo"` - resolves to that child.
-        // We only look for such properties on forms/document, to avoid potential false positives.
-        exists(DataFlow::SourceNode form | form = [forms(), documentRef()] |
-          this = form.getAPropertyRead(any(string s | not s = getADomPropertyName()))
-        )
-        or
-        exists(JQuery::MethodCall call | this = call and call.getMethodName() = "get" |
-          call.getNumArgument() = 1 and
-          unique(InferredType t | t = getArgumentTypeFromJQueryMethodGet(call)) = TTNumber()
-        )
-        or
-        // A `this` node from a callback given to a `$().each(callback)` call.
-        // purposely not using JQuery::MethodCall to avoid `jquery.each()`.
-        exists(DataFlow::CallNode eachCall | eachCall = JQuery::objectRef().getAMethodCall("each") |
-          this = DataFlow::thisNode(eachCall.getCallback(0).getFunction()) or
-          this = eachCall.getABoundCallbackParameter(0, 1)
-        )
-        or
-        // A read of an array-element from a JQuery object. E.g. `$("#foo")[0]`
-        exists(DataFlow::PropRead read |
-          read = this and read = JQuery::objectRef().getAPropertyRead()
-        |
-          unique(InferredType t | t = read.getPropertyNameExpr().analyze().getAType()) = TTNumber()
-        )
-        or
-        // A receiver node of an event handler on a DOM node
-        exists(DataFlow::SourceNode domNode, DataFlow::FunctionNode eventHandler |
-          // NOTE: we do not use `getABoundFunctionValue()`, since bound functions tend to have
-          // a different receiver anyway
-          eventHandler = domNode.getAPropertySource(any(string n | n.matches("on%")))
-          or
-          eventHandler =
-            domNode.getAMethodCall("addEventListener").getArgument(1).getAFunctionValue()
-        |
-          domNode = domValueRef() and
-          this = eventHandler.getReceiver()
-        )
-        or
-        this = DataFlow::thisNode(any(EventHandlerCode evt))
       }
     }
   }
@@ -427,8 +377,9 @@ module DOM {
     // or
     // result.hasUnderlyingType(any(string s | s.matches("HTML%Element")))
     result =
-      ModelOutput::getATypeNode(["global.Element", "global.ShadowRoot", "global.Node"])
-          .getAValueReachableFromSource()
+      ModelOutput::getATypeNode([
+          "global.Element", "global.ShadowRoot", "global.Node", "global.Range"
+        ]).getAValueReachableFromSource()
     or
     exists(DataFlow::ClassNode cls |
       cls.getASuperClassNode().getALocalSource() =

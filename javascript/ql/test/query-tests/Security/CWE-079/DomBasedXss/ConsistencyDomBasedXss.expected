@@ -1,9 +1,3 @@
-| query-tests/Security/CWE-079/DomBasedXss/tst.js:189 | expected an alert, but found none | NOT OK |  |
 | query-tests/Security/CWE-079/DomBasedXss/tst.js:191 | expected an alert, but found none | NOT OK |  |
-| query-tests/Security/CWE-079/DomBasedXss/tst.js:192 | expected an alert, but found none | NOT OK |  |
-| query-tests/Security/CWE-079/DomBasedXss/tst.js:193 | expected an alert, but found none | NOT OK |  |
-| query-tests/Security/CWE-079/DomBasedXss/tst.js:288 | expected an alert, but found none | NOT OK |  |
-| query-tests/Security/CWE-079/DomBasedXss/tst.js:360 | expected an alert, but found none | NOT OK. (this is a DOM-node); |  |
-| query-tests/Security/CWE-079/DomBasedXss/tst.js:363 | expected an alert, but found none | NOT OK. |  |
 | query-tests/Security/CWE-079/DomBasedXss/tst.js:465 | expected an alert, but found none | NOT OK |  |
 | query-tests/Security/CWE-079/DomBasedXss/tst.js:467 | expected an alert, but found none | NOT OK |  |
