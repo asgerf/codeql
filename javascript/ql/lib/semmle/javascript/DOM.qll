@@ -377,9 +377,8 @@ module DOM {
     // or
     // result.hasUnderlyingType(any(string s | s.matches("HTML%Element")))
     result =
-      ModelOutput::getATypeNode([
-          "global.Element", "global.ShadowRoot", "global.Node", "global.Range"
-        ]).getAValueReachableFromSource()
+      ModelOutput::getATypeNode(["global.ShadowRoot", "global.Node", "global.Range"])
+          .getAValueReachableFromSource()
     or
     exists(DataFlow::ClassNode cls |
       cls.getASuperClassNode().getALocalSource() =
