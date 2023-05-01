@@ -1,3 +1,1 @@
-| query-tests/Security/CWE-079/DomBasedXss/clipboard.ts:24 | expected an alert, but found none | NOT OK |  |
-| query-tests/Security/CWE-079/DomBasedXss/dragAndDrop.ts:24 | expected an alert, but found none | NOT OK |  |
 | query-tests/Security/CWE-079/DomBasedXss/tst.js:191 | expected an alert, but found none | NOT OK |  |
