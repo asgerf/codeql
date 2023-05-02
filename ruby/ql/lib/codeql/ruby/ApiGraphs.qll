@@ -216,6 +216,11 @@ module API {
       result = pragma[only_bind_out](this).(Node::Internal).getMethodInternal(method)
     }
 
+    pragma[inline]
+    MethodDefinitionNode getMethodDefition(string method) {
+      result = pragma[only_bind_out](this).(Node::Internal).getMethodInternal(method)
+    }
+
     /**
      * Gets a node representing the result of this call.
      */
@@ -361,6 +366,8 @@ module API {
       this = Impl::MkDef(result)
       or
       this = Impl::MkMethodAccessNode(result)
+      or
+      this = Impl::MkMethodDefinitionNode(result)
     }
 
     /** Gets the location of this node. */
@@ -439,7 +446,7 @@ module API {
        * Same as `getMethod` but without join-order hints.
        */
       cached
-      MethodAccessNode getMethodInternal(string method) {
+      Node getMethodInternal(string method) {
         Impl::forceCachingInSameStage() and
         result = this.getASubclass().getASuccessor(Label::method(method))
       }
@@ -504,6 +511,14 @@ module API {
 
     /** Gets the call node corresponding to this method access. */
     DataFlow::CallNode getCallNode() { this = Impl::MkMethodAccessNode(result) }
+  }
+
+  /** A node corresponding to the method being defined at a method declaration. */
+  class MethodDefinitionNode extends Node, Impl::MkMethodDefinitionNode {
+    override string toString() { result = "MethodDefinitionNode " + tryGetPath(this) }
+
+    /** Gets the method represented by this node. */
+    DataFlow::MethodNode getMethodNode() { this = Impl::MkMethodDefinitionNode(result) }
   }
 
   /** A node representing a module/class object. */
@@ -637,6 +652,8 @@ module API {
       MkRoot() or
       /** The method accessed at `call`, synthetically treated as a separate object. */
       MkMethodAccessNode(DataFlow::CallNode call) { isUse(call) } or
+      /** The method defined by `method`. */
+      MkMethodDefinitionNode(DataFlow::MethodNode method) or
       /** A use of an API member at the node `nd`. */
       MkUse(DataFlow::Node nd) { isUse(nd) } or
       /** A value that escapes into an external library at the node `nd` */
@@ -717,6 +734,8 @@ module API {
       useCandFwd().flowsTo(nd.(DataFlow::CallNode).getReceiver())
       or
       parameterStep(_, defCand(), nd)
+      or
+      parameterStep(_, any(DataFlow::MethodNode m), nd)
       or
       nd = any(EntryPoint entry).getASource()
       or
@@ -911,6 +930,22 @@ module API {
         )
       )
       or
+      exists(DataFlow::ModuleNode mod, string name |
+        pred = MkModuleObject(mod) and
+        succ = MkMethodDefinitionNode(mod.getOwnSingletonMethod(name)) and
+        lbl = Label::method(name)
+        or
+        pred = MkModuleInstance(mod) and
+        succ = MkMethodDefinitionNode(mod.getOwnInstanceMethod(name)) and
+        lbl = Label::method(name)
+      )
+      or
+      exists(DataFlow::MethodNode method, DataFlow::Node paramNode |
+        pred = MkMethodDefinitionNode(method) and
+        parameterStep(lbl, method, paramNode) and
+        succ = MkUse(paramNode)
+      )
+      or
       exists(DataFlow::CallNode call |
         // from receiver to method call node
         exists(DataFlow::Node receiver |
@@ -958,7 +993,10 @@ module API {
     cached
     newtype TLabel =
       MkLabelMember(string member) { member = any(ConstantReadAccess a).getName() } or
-      MkLabelMethod(string m) { m = any(DataFlow::CallNode c).getMethodName() } or
+      MkLabelMethod(string m) {
+        m = any(DataFlow::CallNode c).getMethodName() or
+        m = any(DataFlow::MethodNode method).getMethodName()
+      } or
       MkLabelReturn() or
       MkLabelSubclass() or
       MkLabelInstance() or
