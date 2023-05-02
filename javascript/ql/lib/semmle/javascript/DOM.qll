@@ -237,33 +237,6 @@ module DOM {
     )
   }
 
-  /** Gets a call that queries the DOM for a collection of DOM nodes. */
-  private DataFlow::SourceNode domElementCollection() {
-    exists(string collectionName |
-      collectionName =
-        [
-          "getElementsByClassName", "getElementsByName", "getElementsByTagName",
-          "getElementsByTagNameNS", "querySelectorAll"
-        ]
-    |
-      (
-        result = documentRef().getAMethodCall(collectionName) or
-        result = DataFlow::globalVarRef(collectionName).getACall()
-      )
-    )
-  }
-
-  /** Gets a call that creates a DOM node or queries the DOM for a DOM node. */
-  private DataFlow::SourceNode domElementCreationOrQuery() {
-    exists(string methodName |
-      methodName =
-        ["createElement", "createElementNS", "createRange", "getElementById", "querySelector"]
-    |
-      result = documentRef().getAMethodCall(methodName) or
-      result = DataFlow::globalVarRef(methodName).getACall()
-    )
-  }
-
   module DomValueSource {
     /**
      * A data flow node that should be considered a source of DOM values.
@@ -276,27 +249,6 @@ module DOM {
       exists(ExternalInstanceMemberDecl decl |
         result = decl.getName() and
         isDomElementType(decl.getDeclaringType())
-      )
-    }
-
-    private predicate isDomElementTypeName(string name) {
-      exists(ExternalType type |
-        isDomElementType(type) and
-        name = type.getName()
-      )
-    }
-
-    /** Gets a method name which, if invoked on a DOM element (possibly of a specific subtype), returns a DOM element. */
-    private string getAMethodProducingDomElements() {
-      exists(ExternalInstanceMemberDecl decl |
-        result = decl.getName() and
-        isDomElementType(decl.getDeclaringType()) and
-        isDomElementTypeName(decl.getDocumentation()
-              .getATagByTitle("return")
-              .getType()
-              .getAnUnderlyingType()
-              .(JSDocNamedTypeExpr)
-              .getName())
       )
     }
 
@@ -338,44 +290,11 @@ module DOM {
     }
   }
 
-  // private DataFlow::SourceNode domEventSource() {
-  //   // e.g. <form onSubmit={e => e.target}/>
-  //   exists(JsxAttribute attr | attr.getName().matches("on%") |
-  //     result = attr.getValue().flow().getABoundFunctionValue(0).getParameter(0)
-  //   )
-  //   or
-  //   // node.addEventListener("submit", e => e.target)
-  //   result = domValueRef().getAMethodCall("addEventListener").getABoundCallbackParameter(1, 0)
-  //   or
-  //   // node.onSubmit = (e => e.target);
-  //   exists(DataFlow::PropWrite write | write = domValueRef().getAPropertyWrite() |
-  //     write.getPropertyName().matches("on%") and
-  //     result = write.getRhs().getAFunctionValue().getParameter(0)
-  //   )
-  // }
   /** Gets a data flow node that refers directly to a value from the DOM. */
   DataFlow::SourceNode domValueSource() { result instanceof DomValueSource::Range }
 
-  // /** Gets a data flow node that may refer to a value from the DOM. */
-  // private DataFlow::SourceNode domValueRef(DataFlow::TypeTracker t) {
-  //   t.start() and
-  //   result = domValueSource()
-  //   or
-  //   t.start() and
-  //   result = domValueRef().getAMethodCall(["item", "namedItem"])
-  //   or
-  //   t.startInProp("target") and
-  //   result = domEventSource()
-  //   or
-  //   exists(DataFlow::TypeTracker t2 | result = domValueRef(t2).track(t2, t))
-  // }
   /** Gets a data flow node that may refer to a value from the DOM. */
   DataFlow::SourceNode domValueRef() {
-    // result = domValueRef(DataFlow::TypeTracker::end())
-    // or
-    // result.hasUnderlyingType("Element")
-    // or
-    // result.hasUnderlyingType(any(string s | s.matches("HTML%Element")))
     result =
       ModelOutput::getATypeNode(["global.ShadowRoot", "global.Node", "global.Range"])
           .getAValueReachableFromSource()
