@@ -138,6 +138,14 @@ API::Node getExtraNodeFromType(string type) {
   )
 }
 
+pragma[nomagic]
+private string numericMemberName() {
+  exists(DataFlow::PropRef ref |
+    result = ref.getPropertyName() and
+    exists(result.toInt())
+  )
+}
+
 /**
  * Gets a JavaScript-specific API graph successor of `node` reachable by resolving `token`.
  */
@@ -168,7 +176,7 @@ API::Node getExtraSuccessorFromNode(API::Node node, AccessPathToken token) {
   // Currently we need to include the "unknown member" for ArrayElement and Element since
   // API graphs do not use store/load steps for arrays
   token.getName() = ["ArrayElement", "Element"] and
-  result = node.getUnknownMember()
+  result = [node.getUnknownMember(), node.getMember(numericMemberName())]
   or
   token.getName() = "Parameter" and
   token.getAnArgument() = "this" and

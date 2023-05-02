@@ -896,6 +896,8 @@ nodes
 | tst.js:186:31:186:37 | tainted |
 | tst.js:188:48:188:54 | tainted |
 | tst.js:188:48:188:54 | tainted |
+| tst.js:191:59:191:65 | tainted |
+| tst.js:191:59:191:65 | tainted |
 | tst.js:193:63:193:69 | tainted |
 | tst.js:193:63:193:69 | tainted |
 | tst.js:197:9:197:42 | tainted |
@@ -2062,6 +2064,8 @@ edges
 | tst.js:184:9:184:42 | tainted | tst.js:186:31:186:37 | tainted |
 | tst.js:184:9:184:42 | tainted | tst.js:188:48:188:54 | tainted |
 | tst.js:184:9:184:42 | tainted | tst.js:188:48:188:54 | tainted |
+| tst.js:184:9:184:42 | tainted | tst.js:191:59:191:65 | tainted |
+| tst.js:184:9:184:42 | tainted | tst.js:191:59:191:65 | tainted |
 | tst.js:184:9:184:42 | tainted | tst.js:193:63:193:69 | tainted |
 | tst.js:184:9:184:42 | tainted | tst.js:193:63:193:69 | tainted |
 | tst.js:184:19:184:42 | documen ... .search | tst.js:184:9:184:42 | tainted |
@@ -2497,6 +2501,7 @@ edges
 | tst.js:180:28:180:33 | target | tst.js:177:18:177:41 | documen ... .search | tst.js:180:28:180:33 | target | Cross-site scripting vulnerability due to $@. | tst.js:177:18:177:41 | documen ... .search | user-provided value |
 | tst.js:186:31:186:37 | tainted | tst.js:184:19:184:42 | documen ... .search | tst.js:186:31:186:37 | tainted | Cross-site scripting vulnerability due to $@. | tst.js:184:19:184:42 | documen ... .search | user-provided value |
 | tst.js:188:48:188:54 | tainted | tst.js:184:19:184:42 | documen ... .search | tst.js:188:48:188:54 | tainted | Cross-site scripting vulnerability due to $@. | tst.js:184:19:184:42 | documen ... .search | user-provided value |
+| tst.js:191:59:191:65 | tainted | tst.js:184:19:184:42 | documen ... .search | tst.js:191:59:191:65 | tainted | Cross-site scripting vulnerability due to $@. | tst.js:184:19:184:42 | documen ... .search | user-provided value |
 | tst.js:193:63:193:69 | tainted | tst.js:184:19:184:42 | documen ... .search | tst.js:193:63:193:69 | tainted | Cross-site scripting vulnerability due to $@. | tst.js:184:19:184:42 | documen ... .search | user-provided value |
 | tst.js:199:67:199:73 | tainted | tst.js:197:19:197:42 | documen ... .search | tst.js:199:67:199:73 | tainted | Cross-site scripting vulnerability due to $@. | tst.js:197:19:197:42 | documen ... .search | user-provided value |
 | tst.js:200:67:200:73 | tainted | tst.js:197:19:197:42 | documen ... .search | tst.js:200:67:200:73 | tainted | Cross-site scripting vulnerability due to $@. | tst.js:197:19:197:42 | documen ... .search | user-provided value |
