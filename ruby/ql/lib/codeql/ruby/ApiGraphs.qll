@@ -720,6 +720,9 @@ module API {
         TypeTrackerSpecific::basicStoreStep(rhs, node, c) and
         lbl = Label::content(c.getAStoreContent())
       )
+      or
+      lbl = Label::return() and
+      rhs = node.(DataFlow::CallableNode).getAReturningNode()
     }
 
     pragma[nomagic]
@@ -780,6 +783,8 @@ module API {
       argumentStep(_, useCandFwd(), rhs)
       or
       defStep(_, defCand(), rhs)
+      or
+      rhs = any(DataFlow::MethodNode method).getAReturningNode()
       or
       rhs = any(EntryPoint entry).getASink()
     }
@@ -940,10 +945,14 @@ module API {
         lbl = Label::method(name)
       )
       or
-      exists(DataFlow::MethodNode method, DataFlow::Node paramNode |
-        pred = MkMethodDefinitionNode(method) and
-        parameterStep(lbl, method, paramNode) and
-        succ = MkUse(paramNode)
+      exists(DataFlow::MethodNode method | pred = MkMethodDefinitionNode(method) |
+        exists(DataFlow::Node paramNode |
+          parameterStep(lbl, method, paramNode) and
+          succ = MkUse(paramNode)
+        )
+        or
+        succ = MkDef(method.getAReturningNode()) and
+        lbl = Label::return()
       )
       or
       exists(DataFlow::CallNode call |
