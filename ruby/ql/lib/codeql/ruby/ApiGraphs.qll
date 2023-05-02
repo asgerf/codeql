@@ -206,7 +206,7 @@ module API {
      * Consider using `getAnInstantiation()` if there is a need to distinguish between individual constructor calls.
      */
     pragma[inline]
-    Node getInstance() { result = this.getASubclass().getReturn("new") }
+    Node getInstance() { result = this.getASubclass().getOwnInstance() }
 
     /**
      * Gets a node representing a call to `method` on the receiver represented by this node.
@@ -278,6 +278,14 @@ module API {
     cached
     Node getAnImmediateSubclass() {
       Impl::forceCachingInSameStage() and result = this.getASuccessor(Label::subclass())
+    }
+
+    /**
+     * Gets an instance of this module/class.
+     */
+    pragma[inline]
+    Node getOwnInstance() {
+      result = pragma[only_bind_out](this).(Node::Internal).getOwnInstanceInternal()
     }
 
     /**
@@ -445,6 +453,16 @@ module API {
       Node getReturnInternal() {
         Impl::forceCachingInSameStage() and result = this.getASuccessor(Label::return())
       }
+
+      /**
+       * INTERNAL USE ONLY.
+       *
+       * Same as `getOwnInstance()` but without join-order hints.
+       */
+      cached
+      Node getOwnInstanceInternal() {
+        Impl::forceCachingInSameStage() and result = this.getASuccessor(Label::instance())
+      }
     }
   }
 
@@ -486,6 +504,22 @@ module API {
 
     /** Gets the call node corresponding to this method access. */
     DataFlow::CallNode getCallNode() { this = Impl::MkMethodAccessNode(result) }
+  }
+
+  /** A node representing a module/class object. */
+  class ModuleObject extends Node, Impl::MkModuleObject {
+    override string toString() { result = "ModuleObject " + tryGetPath(this) }
+
+    /** Gets the module represented by this node. */
+    DataFlow::ModuleNode getModuleNode() { this = Impl::MkModuleObject(result) }
+  }
+
+  /** A node representing instances of a module/class. */
+  class ModuleInstance extends Node, Impl::MkModuleInstance {
+    override string toString() { result = "ModuleInstance " + tryGetPath(this) }
+
+    /** Gets the module represented by this node. */
+    DataFlow::ModuleNode getModuleNode() { this = Impl::MkModuleInstance(result) }
   }
 
   /**
@@ -608,7 +642,9 @@ module API {
       /** A value that escapes into an external library at the node `nd` */
       MkDef(DataFlow::Node nd) { isDef(nd) } or
       /** A module object seen as a use node. */
-      MkModuleObject(DataFlow::ModuleNode mod)
+      MkModuleObject(DataFlow::ModuleNode mod) or
+      /** An instance of a module seen as a def node. */
+      MkModuleInstance(DataFlow::ModuleNode mod)
 
     private string resolveTopLevel(ConstantReadAccess read) {
       result = read.getModule().getQualifiedName() and
@@ -697,6 +733,9 @@ module API {
       exists(DataFlow::ModuleNode mod |
         nd = MkModuleObject(mod) and
         ref = mod.getAnImmediateReference()
+        or
+        nd = MkModuleInstance(mod) and
+        ref = mod.getAnOwnInstanceSelf()
       )
     }
 
@@ -860,6 +899,18 @@ module API {
         lbl = Label::subclass()
       )
       or
+      exists(DataFlow::ModuleNode mod |
+        pred = MkModuleObject(mod) and
+        lbl = Label::instance() and
+        (
+          succ = MkModuleInstance(mod)
+          or
+          succ =
+            MkUse(trackUseNode(pragma[only_bind_out](mod).getAnImmediateReference())
+                  .getAMethodCall("new"))
+        )
+      )
+      or
       exists(DataFlow::CallNode call |
         // from receiver to method call node
         exists(DataFlow::Node receiver |
@@ -910,6 +961,7 @@ module API {
       MkLabelMethod(string m) { m = any(DataFlow::CallNode c).getMethodName() } or
       MkLabelReturn() or
       MkLabelSubclass() or
+      MkLabelInstance() or
       MkLabelKeywordParameter(string name) {
         any(DataFlowDispatch::ArgumentPosition arg).isKeyword(name)
         or
@@ -970,6 +1022,11 @@ module API {
       /** A label for the subclass relationship. */
       class LabelSubclass extends ApiLabel, MkLabelSubclass {
         override string toString() { result = "getASubclass()" }
+      }
+
+      /** A label for the instance of a module/class. */
+      class LabelInstance extends ApiLabel, MkLabelInstance {
+        override string toString() { result = "getInstance()" }
       }
 
       /** A label for a keyword parameter. */
@@ -1039,6 +1096,9 @@ module API {
 
     /** Gets the `subclass` edge label. */
     LabelSubclass subclass() { any() }
+
+    /** Gets the `instance` edge label. */
+    LabelInstance instance() { any() }
 
     /** Gets the label representing the given keyword argument/parameter. */
     LabelKeywordParameter keywordParameter(string name) { result.getName() = name }

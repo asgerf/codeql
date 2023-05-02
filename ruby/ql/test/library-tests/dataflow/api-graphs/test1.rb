@@ -59,7 +59,7 @@ M1::C1.m #$ use=getMember("M1").getMember("C1").getMethod("m").getReturn()
 M2::C3.m #$ use=getMember("M2").getMember("C3").getMethod("m").getReturn() use=getMember("M1").getMember("C1").getASubclass().getMethod("m").getReturn()
 
 M1::C1.new.m #$ use=getMember("M1").getMember("C1").getMethod("new").getReturn().getMethod("m").getReturn()
-M2::C3.new.m #$ use=getMember("M2").getMember("C3").getMethod("new").getReturn().getMethod("m").getReturn()
+M2::C3.new.m #$ use=getMember("M2").getMember("C3").getMethod("new").getReturn().getMethod("m").getReturn() use=getMember("M1").getMember("C1").getASubclass().getInstance().getMethod("m").getReturn()
 
 Foo.foo(a,b:c) #$ use=getMember("Foo").getMethod("foo").getReturn() def=getMember("Foo").getMethod("foo").getParameter(0) def=getMember("Foo").getMethod("foo").getKeywordParameter("b")
 
