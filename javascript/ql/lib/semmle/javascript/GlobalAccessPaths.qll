@@ -129,6 +129,7 @@ module AccessPath {
     or
     node.accessesGlobal(result) and
     result != "undefined" and
+    result != "window" and
     root.isGlobal()
     or
     not node.accessesGlobal(_) and
@@ -200,12 +201,87 @@ module AccessPath {
     )
   }
 
+  pragma[nomagic]
+  private int getNumFilesAssigningToAccessPath(string accessPath) {
+    result = strictcount(File f | isAssignedInFile(accessPath, f))
+  }
+
   /**
    * Holds if the global `accessPath` is only assigned to from one file, not counting
    * self-assignments.
    */
   predicate isAssignedInUniqueFile(string accessPath) {
-    strictcount(File f | isAssignedInFile(accessPath, f)) = 1
+    getNumFilesAssigningToAccessPath(accessPath) = 1
+  }
+
+  pragma[nomagic]
+  private predicate isUsedInExterns(string accessPath) {
+    getAReferenceOrAssignmentTo(accessPath).getTopLevel().isExterns()
+  }
+
+  /** Holds if ambiguous access paths should not be resolved when they start with the given variable. */
+  pragma[nomagic]
+  private predicate blockAmbiguousFlowThroughVariable(string name) {
+    exists(ExternalInstanceMemberDecl decl |
+      decl.getBaseName() = "Window" and
+      decl.getName() = name
+    )
+    or
+    name = ["require", "requirejs", "define", "module", "exports", "document"]
+  }
+
+  /** Holds if `accessPath` is assigned to in an externs file (including self-assignments). */
+  bindingset[accessPath]
+  private predicate blockAmbiguousFlowThroughAccessPath(string accessPath) {
+    isUsedInExterns(accessPath)
+    or
+    blockAmbiguousFlowThroughVariable(accessPath.splitAt(".", 0))
+  }
+
+  /**
+   * Holds if the global `accessPath` is assigned to from multiple files, not counting
+   * self-assignments. This excludes any access path assigned in an externs file.
+   */
+  pragma[nomagic]
+  private predicate hasAmbiguousAssignment(string accessPath) {
+    getNumFilesAssigningToAccessPath(accessPath) > 1 and
+    not blockAmbiguousFlowThroughAccessPath(accessPath)
+  }
+
+  /**
+   * Holds if `file` contains a reference to `accessPath`, and more than one file contains assignments to that access path,
+   * but the file itself does not.
+   */
+  pragma[nomagic]
+  private predicate hasAmbiguousReferenceInFile(string accessPath, File file) {
+    hasAmbiguousAssignment(accessPath) and
+    not isAssignedInFile(accessPath, file) and
+    // Note: Avoid unneeded materialization of DataFlow::Node.getFile()
+    getAReferenceTo(accessPath).getAstNode().getFile() = file
+  }
+
+  pragma[nomagic]
+  private int getRankOfAssigningFile(string accessPath, File fileWithRead, File fileWithWrite) {
+    hasAmbiguousReferenceInFile(accessPath, fileWithRead) and
+    isAssignedInFile(accessPath, fileWithWrite) and
+    exists(string path1, string path2 |
+      // Pad each file name to ensure they differ at some index, in case one was a prefix of the other
+      path1 = fileWithRead.getRelativePath() + "!" and
+      path2 = fileWithWrite.getRelativePath() + "@" and
+      result = min(int i | path1.charAt(i) != path2.charAt(i))
+    )
+  }
+
+  pragma[nomagic]
+  private predicate resolveAmbiguousReferencesToFile(
+    string accessPath, File fileWithRead, File fileWithWrite
+  ) {
+    fileWithWrite =
+      unique( | | min(File f | | f order by getRankOfAssigningFile(accessPath, fileWithRead, f)))
+    or
+    hasAmbiguousAssignment(accessPath) and
+    isAssignedInFile(accessPath, fileWithWrite) and
+    fileWithRead = fileWithWrite
   }
 
   /**
@@ -510,8 +586,12 @@ module AccessPath {
     or
     exists(string name |
       pred = getAnAssignmentTo(name) and
-      succ = getAReferenceTo(name) and
+      succ = getAReferenceTo(name)
+    |
       isAssignedInUniqueFile(name)
+      or
+      resolveAmbiguousReferencesToFile(name, succ.getAstNode().getFile(),
+        pred.getAstNode().getFile())
     )
   }
 
