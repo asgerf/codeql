@@ -6,6 +6,7 @@ import javascript
 private import semmle.javascript.dataflow.InferredTypes
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 private import semmle.javascript.internal.CachedStages
+private import semmle.javascript.frameworks.Bundling
 
 /**
  * Provides predicates for associating access paths with data flow nodes.
@@ -248,12 +249,17 @@ module AccessPath {
     not blockAmbiguousFlowThroughAccessPath(accessPath)
   }
 
+  private predicate isMinifiedOrBundle(File f) {
+    exists(TopLevel top | f = top.getFile() | top.isMinified() or isBundle(top))
+  }
+
   /**
    * Holds if `file` contains a reference to `accessPath`, and more than one file contains assignments to that access path,
    * but the file itself does not.
    */
   pragma[nomagic]
   private predicate hasAmbiguousReferenceInFile(string accessPath, File file) {
+    not isMinifiedOrBundle(file) and
     hasAmbiguousAssignment(accessPath) and
     not isAssignedInFile(accessPath, file) and
     // Note: Avoid unneeded materialization of DataFlow::Node.getFile()
@@ -281,7 +287,8 @@ module AccessPath {
     or
     hasAmbiguousAssignment(accessPath) and
     isAssignedInFile(accessPath, fileWithWrite) and
-    fileWithRead = fileWithWrite
+    fileWithRead = fileWithWrite and
+    not isMinifiedOrBundle(fileWithRead)
   }
 
   /**
