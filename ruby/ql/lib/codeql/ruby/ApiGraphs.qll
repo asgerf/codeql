@@ -42,10 +42,23 @@ module API {
    *
    * The most commonly used accessors are `getMember`, `getMethod`, `getParameter`, and `getReturn`.
    *
-   * ### Forward and backward data flow
+   * ### Data flow direction
    *
    * The members predicates on this class generally takes inheritance and data flow into account.
    *
+   * For example, consider the API graph expression
+   * ```codeql
+   * API::getTopLevelMember("Foo").getInstance().getMethod("bar").asCall()
+   * ```
+   * The above expression would match the `f.bar` call in the following:
+   * ```ruby
+   * def doSomething f
+   *   f.bar
+   * end
+   * doSomething Foo.new
+   * ```
+   *
+   * When tracking arguments of a call, the data flow direction is backwards.
    * We will illustrate this principle with the following example:
    * ```codeql
    * API::getTopLevelMember("Foo").getInstance().getMethod("bar").getParameter(0).getAnElement().getParameter(0)
@@ -67,7 +80,24 @@ module API {
    * - `.getParameter(0)` gets the first argument to this call, named `callbacks`.
    * - `.getAnElement()` gets the lambda expression. The `callbacks` argument was implicitly
    *   tracked backwards to the array literal, and the elements of that array literal were then retrieved.
-   * - `.getParameter(0)` gets the lambda parameter named `x`.
+   * - `.getParameter(0)` gets the parameter named `x` in the lambda expression.
+   *
+   * ### Inheritance
+   *
+   * When a class or module object is tracked, inheritance is taken into account.
+   *
+   * For example, consider the API graph expression
+   * ```codeql
+   * API::getTopLevelMember("Foo").getMethod("bar").asCall()
+   * ```
+   * The above expression would match the `self.bar` call below, due to `Subclass` inheriting the method `Foo.bar`.
+   * ```ruby
+   * class Subclass < Foo
+   *   def self.doSomething
+   *     self.bar # found by API::getTopLevelMember("Foo").getMethod("bar").asCall()
+   *   end
+   * end
+   * ```
    *
    * ### Strict left-to-right evaluation
    *
@@ -87,8 +117,7 @@ module API {
    * }
    * ```
    * The above predicate does not restrict the receiver, and will thus perform an interprocedural data flow
-   * search starting at _every node_ in the graph - this is incredibly expensive and will result in unacceptable
-   * performance.
+   * search starting at every node in the graph, which is very expensive.
    */
   class Node extends Impl::TApiNode {
     /**
