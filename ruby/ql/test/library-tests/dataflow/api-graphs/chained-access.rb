@@ -24,7 +24,7 @@ def chained_access4
     Something.foo {
         :one => {
             :two => {
-                :three => 'sink' # $ MISSING: sink=Member[Something].Method[foo].Argument[0].Element[:one].Element[:two].Element[:three]
+                :three => 'sink' # $ sink=Member[Something].Method[foo].Argument[0].Element[:one].Element[:two].Element[:three]
             }
         }
     }

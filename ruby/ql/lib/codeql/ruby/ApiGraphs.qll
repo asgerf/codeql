@@ -680,6 +680,13 @@ module API {
         pred = getForwardEndNode(getSuperClassNode(mod)) and
         succ = Impl::MkModuleObjectDown(mod)
       )
+      or
+      exists(DataFlow::HashLiteralNode splat | hashSplatEdge(splat, pred, succ))
+    }
+
+    pragma[nomagic]
+    private DataFlow::Node getHashSplatArgument(DataFlow::HashLiteralNode literal) {
+      result = DataFlowPrivate::TSynthHashSplatArgumentNode(literal.asExpr())
     }
 
     /**
@@ -769,6 +776,24 @@ module API {
         or
         pred = Impl::MkModuleInstanceUp(mod) and
         succ = getBackwardEndNode(mod.getOwnInstanceMethod("call"))
+      )
+    }
+
+    /**
+     * Holds if the epsilon edge `pred -> succ` should be generated to account for the members of a hash literal.
+     *
+     * This currently exists because hash literals are desugared to `Hash.[]` calls, whose summary relies on `WithContent`.
+     * However, `contentEdge` does not currently generate edges for `WithContent` steps.
+     */
+    bindingset[literal]
+    pragma[inline_late]
+    private predicate hashSplatEdge(DataFlow::HashLiteralNode literal, ApiNode pred, ApiNode succ) {
+      exists(TypeTracker t |
+        pred = Impl::MkForwardNode(getALocalSource(getHashSplatArgument(literal)), t) and
+        succ = Impl::MkForwardNode(pragma[only_bind_out](literal), pragma[only_bind_out](t))
+        or
+        succ = Impl::MkBackwardNode(getALocalSource(getHashSplatArgument(literal)), t) and
+        pred = Impl::MkBackwardNode(pragma[only_bind_out](literal), pragma[only_bind_out](t))
       )
     }
 
