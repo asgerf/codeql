@@ -15,7 +15,7 @@ end
 def chained_access3
     array = [[]]
     array[0][0] = [
-        'sink' # $ MISSING: sink=Member[Something].Method[foo].Argument[0].Element[0].Element[0].Element[0]
+        'sink' # $ sink=Member[Something].Method[foo].Argument[0].Element[0].Element[0].Element[0]
     ]
     Something.foo array
 end

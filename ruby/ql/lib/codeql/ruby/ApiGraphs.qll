@@ -988,12 +988,14 @@ module API {
         TypeTrackerSpecific::basicLoadStep(object, value, c) and
         content = c.getAStoreContent() and
         not c.isSingleton(any(DataFlow::Content::AttributeNameContent k)) and
-        pred = getForwardEndNode(getALocalSource(object)) and
+        // `x -> x.foo` with content "foo"
+        pred = getForwardOrBackwardEndNode(getALocalSource(object)) and
         succ = getForwardStartNode(value)
         or
+        // Based on `object.c = value` generate `object -> value` with content `c`
         TypeTrackerSpecific::basicStoreStep(value, object, c) and
         content = c.getAStoreContent() and
-        pred = getBackwardEndNode(getALocalSource(object)) and
+        pred = getForwardOrBackwardEndNode(getALocalSource(object)) and
         succ = MkSinkNode(value)
       )
     }

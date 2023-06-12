@@ -224,6 +224,17 @@ module ApiGraphShared<ApiGraphSharedSig S> {
   pragma[inline_late]
   ApiNode getBackwardEndNode(Node node) { result = backwardEndNode(node) }
 
+  /**
+   * Gets a possible eding point of forward or backward tracking at `node`.
+   *
+   * Should be used to obtain the predecessor of an edge generated from store or load edges.
+   */
+  bindingset[node]
+  pragma[inline_late]
+  ApiNode getForwardOrBackwardEndNode(Node node) {
+    result = getForwardEndNode(node) or result = getBackwardEndNode(node)
+  }
+
   /** The implementation of `DataFlow::LocalSourceNode.track()` */
   bindingset[node]
   pragma[inline_late]
