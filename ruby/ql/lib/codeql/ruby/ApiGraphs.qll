@@ -646,18 +646,15 @@ module API {
         or
         moduleInheritanceEdge(mod, pred, succ)
         or
+        implicitCallEdge(pred, succ)
+        or
         pred = getForwardEndNode(getSuperClassNode(mod)) and
         succ = Impl::MkModuleObjectDown(mod)
-        or
-        exists(DataFlow::MethodNode method |
-          pred = getForwardStartNode(method.getBlockParameter()) and
-          succ = Impl::MkMethodAccessNode(method.getABlockCall())
-        )
       )
     }
 
     /**
-     * Holds if `pred -> succ` should be an epsilon edge related to inheritance for `mod`.
+     * Holds if the epsilon edge `pred -> succ` should be generated, to handle inheritance relations of `mod`.
      */
     pragma[inline]
     private predicate moduleInheritanceEdge(DataFlow::ModuleNode mod, ApiNode pred, ApiNode succ) {
@@ -712,6 +709,38 @@ module API {
       or
       pred = getAModuleDescendentInstanceDefNode(mod) and
       succ = Impl::MkModuleInstanceDown(mod)
+    }
+
+    /**
+     * Holds if the epsilon step `pred -> succ` should be generated to account for the fact that `getMethod("call")`
+     * may be omitted when dealing with blocks, lambda, or procs.
+     *
+     * For example, a block may be invoked by a `yield`, or can be converted to a proc or lambda and then invoked via `.call`.
+     * To simplify this, lambad/proc conversion is seen as a no-op and the `.call` is omitted.
+     */
+    pragma[nomagic]
+    private predicate implicitCallEdge(ApiNode pred, ApiNode succ) {
+      // Step from &block parameter to yield call without needing `getMethod("call")`.
+      exists(DataFlow::MethodNode method |
+        pred = getForwardStartNode(method.getBlockParameter()) and
+        succ = Impl::MkMethodAccessNode(method.getABlockCall())
+      )
+      or
+      // Step from x -> x.call (the call itself, not its return value), without needing `getMethod("call")`.
+      exists(DataFlow::CallNode call |
+        call.getMethodName() = "call" and
+        pred = getForwardEndNode(getALocalSource(call.getReceiver())) and
+        succ = Impl::MkMethodAccessNode(call)
+      )
+      or
+      exists(DataFlow::ModuleNode mod |
+        // Step from module/class to its own `call` method withouht needing `getMethod("call")`.
+        (pred = Impl::MkModuleObjectDown(mod) or pred = Impl::MkModuleObjectUp(mod)) and
+        succ = getBackwardEndNode(mod.getOwnSingletonMethod("call"))
+        or
+        pred = Impl::MkModuleInstanceUp(mod) and
+        succ = getBackwardEndNode(mod.getOwnInstanceMethod("call"))
+      )
     }
 
     pragma[nomagic]

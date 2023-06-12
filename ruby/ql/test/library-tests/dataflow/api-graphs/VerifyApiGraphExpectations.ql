@@ -16,6 +16,9 @@ API::Node evaluatePath(AccessPath path, int n) {
     token.getName() = "Member" and
     result = API::getTopLevelMember(token.getAnArgument())
     or
+    token.getName() = "Method" and
+    result = API::getTopLevelCall(token.getAnArgument())
+    or
     token.getName() = "EntryPoint" and
     result = token.getAnArgument().(API::EntryPoint).getANode()
   )

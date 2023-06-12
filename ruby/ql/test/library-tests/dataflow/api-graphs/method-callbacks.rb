@@ -50,3 +50,15 @@ end
 
 Something.foo { ClassWithCallbacks.new }
 Something.bar { ClassWithCallbacks }
+
+class ClassWithCallMethod
+    def call x
+        x # $ reachableFromSource=Method[topLevelMethod].Argument[0].Parameter[0]
+        "bar" # $ sink=Method[topLevelMethod].Argument[0].ReturnValue
+    end
+end
+
+topLevelMethod ClassWithCallMethod.new
+
+blah = topLevelMethod
+blah # $ reachableFromSource=Method[topLevelMethod].ReturnValue
