@@ -280,7 +280,7 @@ module API {
      */
     bindingset[this]
     pragma[inline_late]
-    Node getReturn() { Impl::returnEdge(this.getEpsilonSuccessor(), result) } // note: epsilon edges are not needed because receiver must be a MethodAccessNode
+    Node getReturn() { Impl::returnEdge(this.getEpsilonSuccessor(), result) }
 
     /**
      * Gets the result of a call to `method` with this value as the receiver, or the return value of `method` defined on
