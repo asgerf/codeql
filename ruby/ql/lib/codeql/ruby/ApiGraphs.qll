@@ -294,21 +294,55 @@ module API {
       result = this.getMethod(method).getReturn()
     }
 
-    /** Gets the `n`th positional argument to this call, or `n`th positional parameter of this callable. */
+    /** Gets the `n`th positional argument to this call. */
+    pragma[inline]
+    Node getArgument(int n) {
+      // This predicate is currently not 'inline_late' because 'n' can be an input or output
+      Impl::positionalArgumentEdge(this, n, result)
+    }
+
+    /** Gets the given keyword argument to this call. */
+    pragma[inline]
+    Node getKeywordArgument(string name) {
+      // This predicate is currently not 'inline_late' because 'name' can be an input or output
+      Impl::keywordArgumentEdge(this, name, result)
+    }
+
+    /** Gets the block parameter of a callable that can reach this sink. */
+    bindingset[this]
+    pragma[inline_late]
+    Node getBlockParameter() { Impl::blockParameterEdge(this.getEpsilonSuccessor(), result) }
+
+    /**
+     * Gets the `n`th positional argument to this call, or `n`th positional parameter of this callable.
+     *
+     * Note: for historical reasons, this predicate may refer to an argument of a call, but this may change in the future.
+     * When referring to an argument, it is recommended to use `getArgument(n)` instead.
+     */
     pragma[inline]
     Node getParameter(int n) {
       // This predicate is currently not 'inline_late' because 'n' can be an input or output
       Impl::positionalParameterOrArgumentEdge(this.getEpsilonSuccessor(), n, result)
     }
 
-    /** Gets the given keyword argument to this call, or keyword parameter of this callable. */
+    /**
+     * Gets the given keyword argument to this call, or keyword parameter of this callable.
+     *
+     * Note: for historical reasons, this predicate may refer to an argument of a call, but this may change in the future.
+     * When referring to an argument, it is recommended to use `getKeywordArgument(n)` instead.
+     */
     pragma[inline]
     Node getKeywordParameter(string name) {
       // This predicate is currently not 'inline_late' because 'name' can be an input or output
       Impl::keywordParameterOrArgumentEdge(this.getEpsilonSuccessor(), name, result)
     }
 
-    /** Gets the block argument to this call, or the block parameter of this callable. */
+    /**
+     * Gets the block argument to this call, or the block parameter of this callable.
+     *
+     * Note: this predicate may refer to either an argument or a parameter. When referring to a block parameter,
+     * it is recommended to use `getBlockParameter()` instead.
+     */
     bindingset[this]
     pragma[inline_late]
     Node getBlock() { Impl::blockParameterOrArgumentEdge(this.getEpsilonSuccessor(), result) }
@@ -1065,24 +1099,51 @@ module API {
     }
 
     cached
-    predicate positionalParameterOrArgumentEdge(Node pred, int n, Node succ) {
-      parameterEdge(pred, any(DataFlowDispatch::ParameterPosition pos | pos.isPositional(n)), succ)
-      or
+    predicate positionalArgumentEdge(Node pred, int n, Node succ) {
       argumentEdge(pred, any(DataFlowDispatch::ArgumentPosition pos | pos.isPositional(n)), succ)
     }
 
     cached
-    predicate keywordParameterOrArgumentEdge(Node pred, string name, Node succ) {
-      parameterEdge(pred, any(DataFlowDispatch::ParameterPosition pos | pos.isKeyword(name)), succ)
-      or
+    predicate keywordArgumentEdge(Node pred, string name, Node succ) {
       argumentEdge(pred, any(DataFlowDispatch::ArgumentPosition pos | pos.isKeyword(name)), succ)
+    }
+
+    private predicate blockArgumentEdge(Node pred, Node succ) {
+      argumentEdge(pred, any(DataFlowDispatch::ArgumentPosition pos | pos.isBlock()), succ)
+    }
+
+    private predicate positionalParameterEdge(Node pred, int n, Node succ) {
+      parameterEdge(pred, any(DataFlowDispatch::ParameterPosition pos | pos.isPositional(n)), succ)
+    }
+
+    private predicate keywordParameterEdge(Node pred, string name, Node succ) {
+      parameterEdge(pred, any(DataFlowDispatch::ParameterPosition pos | pos.isKeyword(name)), succ)
+    }
+
+    cached
+    predicate blockParameterEdge(Node pred, Node succ) {
+      parameterEdge(pred, any(DataFlowDispatch::ParameterPosition pos | pos.isBlock()), succ)
+    }
+
+    cached
+    predicate positionalParameterOrArgumentEdge(Node pred, int n, Node succ) {
+      positionalArgumentEdge(pred, n, succ)
+      or
+      positionalParameterEdge(pred, n, succ)
+    }
+
+    cached
+    predicate keywordParameterOrArgumentEdge(Node pred, string name, Node succ) {
+      keywordArgumentEdge(pred, name, succ)
+      or
+      keywordParameterEdge(pred, name, succ)
     }
 
     cached
     predicate blockParameterOrArgumentEdge(Node pred, Node succ) {
-      parameterEdge(pred, any(DataFlowDispatch::ParameterPosition pos | pos.isBlock()), succ)
+      blockArgumentEdge(pred, succ)
       or
-      argumentEdge(pred, any(DataFlowDispatch::ArgumentPosition pos | pos.isBlock()), succ)
+      blockParameterEdge(pred, succ)
     }
 
     pragma[nomagic]

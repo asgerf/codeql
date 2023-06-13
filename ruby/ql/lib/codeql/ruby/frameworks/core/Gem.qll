@@ -42,7 +42,7 @@ module Gem {
               .getBlock()
               .getParameter(0)
               .getMethod(name + "=")
-              .getParameter(0)
+              .getArgument(0)
               .asSink()
               .asExpr()
               .getExpr()
