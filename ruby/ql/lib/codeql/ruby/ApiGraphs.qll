@@ -33,7 +33,7 @@ module API {
    * The most basic use of API graphs is typically as follows:
    * 1. Start with `API::getTopLevelMember` for the relevant library.
    * 2. Follow up with a chain of accessors such as `getMethod` describing how to get to the relevant API function.
-   * 3. Map the resulting API graph nodes to data-flow nodes, using `asSource` or `asSink`.
+   * 3. Map the resulting API graph nodes to data-flow nodes, using `asSource`, `asSink`, or `asCall`.
    *
    * For example, a simplified way to get arguments to `Foo.bar` would be
    * ```ql
@@ -108,7 +108,7 @@ module API {
    * ```ql
    * API::getTopLevelMember("Foo").getMethod("bar")
    * ```
-   * In particular, we will never look for calls to `bar` and work backward from there.
+   * In particular, the implementation will never look for calls to `bar` and work backward from there.
    *
    * Beware of the footgun that is to use API graphs with an unrestricted receiver:
    * ```ql
@@ -235,7 +235,7 @@ module API {
     }
 
     /**
-     * Gets a node representing the constant `m` accessed on this value.
+     * Gets an access to the constant `m` with this value as the base of the access.
      *
      * For example, the constant `A::B` would be found by `API::getATopLevelMember("A").getMember("B")`
      */
@@ -246,14 +246,14 @@ module API {
     }
 
     /**
-     * Gets a node representing a constant accessed on this value.
+     * Gets an access to a constant with this valeu as the base of the access.
      */
     bindingset[this]
     pragma[inline_late]
     Node getAMember() { Impl::anyMemberEdge(this.getEpsilonSuccessor(), result) }
 
     /**
-     * Gets a node representing an instance of the module or class represented by this API node.
+     * Gets an instance of the module or class represented by this API node.
      *
      * This includes the following:
      * - Calls to `new` on this module or a subclass thereof
@@ -264,8 +264,8 @@ module API {
     Node getInstance() { Impl::instanceEdge(this.getEpsilonSuccessor(), result) }
 
     /**
-     * Gets a node representing a call to `method` with this value as the receiver, or the
-     * definition of a method named `method` if back-tracking an argument.
+     * Gets a call to `method` with this value as the receiver, or the definition of `method` on
+     * an object that can reach this sink.
      *
      * If the receiver represents a module object, this includes calls on subclasses of that module.
      */
@@ -276,14 +276,17 @@ module API {
     }
 
     /**
-     * Gets a node representing the result of this call, or the return value of this callable.
+     * Gets the result of this call, or the return value of this callable.
      */
     bindingset[this]
     pragma[inline_late]
     Node getReturn() { Impl::returnEdge(this.getEpsilonSuccessor(), result) } // note: epsilon edges are not needed because receiver must be a MethodAccessNode
 
     /**
-     * Gets a node representing the result of calling a method on the receiver represented by this node.
+     * Gets the result of a call to `method` with this value as the receiver, or the return value of `method` defined on
+     * an object that can reach this sink.
+     *
+     * This is a shorthand for `getMethod(method).getReturn()`.
      */
     pragma[inline]
     Node getReturn(string method) {
@@ -291,27 +294,27 @@ module API {
       result = this.getMethod(method).getReturn()
     }
 
-    /** Gets an API node representing the `n`th positional parameter. */
+    /** Gets the `n`th positional argument to this call, or `n`th positional parameter of this callable. */
     pragma[inline]
     Node getParameter(int n) {
       // This predicate is currently not 'inline_late' because 'n' can be an input or output
       Impl::positionalParameterOrArgumentEdge(this.getEpsilonSuccessor(), n, result)
     }
 
-    /** Gets an API node representing the given keyword parameter. */
+    /** Gets the given keyword argument to this call, or keyword parameter of this callable. */
     pragma[inline]
     Node getKeywordParameter(string name) {
       // This predicate is currently not 'inline_late' because 'name' can be an input or output
       Impl::keywordParameterOrArgumentEdge(this.getEpsilonSuccessor(), name, result)
     }
 
-    /** Gets an API node representing the block parameter. */
+    /** Gets the block argument to this call, or the block parameter of this callable. */
     bindingset[this]
     pragma[inline_late]
     Node getBlock() { Impl::blockParameterOrArgumentEdge(this.getEpsilonSuccessor(), result) }
 
     /**
-     * Gets the argument at the argument position `pos`.
+     * Gets the argument passed in argument position `pos` at this call.
      */
     pragma[inline]
     Node getArgumentAtPosition(DataFlowDispatch::ArgumentPosition pos) {
@@ -320,7 +323,7 @@ module API {
     }
 
     /**
-     * Gets the function parameter at the parameter position `pos`.
+     * Gets the parameter at position `pos` of this callable.
      */
     pragma[inline]
     Node getParameterAtPosition(DataFlowDispatch::ParameterPosition pos) {
@@ -329,7 +332,7 @@ module API {
     }
 
     /**
-     * Gets a `new` call to the function represented by this API component.
+     * Gets a `new` call with this value as the receiver.
      */
     bindingset[this]
     pragma[inline_late]
@@ -362,7 +365,12 @@ module API {
     }
 
     /**
-     * Gets a node representing the `content` stored on the base object.
+     * Gets a representative for the `content` of this value.
+     *
+     * When possible, it is preferrable to use one of the specialized variants of this predicate, such as `getAnElement`.
+     *
+     * Concretely, this gets sources where `content` is read from this value, and as well as sinks where
+     * `content` is stored onto this value or onto an object that can reach this sink.
      */
     pragma[inline]
     Node getContent(DataFlow::Content content) {
@@ -371,23 +379,29 @@ module API {
     }
 
     /**
-     * Gets a node representing the `contents` stored on the base object.
+     * Gets a representative for the `contents` of this value.
+     *
+     * See `getContent()` for more details.
      */
     bindingset[this, contents]
     pragma[inline_late]
     Node getContents(DataFlow::ContentSet contents) {
-      // We always use getAStoreContent when generating the graph, and we always use getAReadContent when querying the graph.
+      // We always use getAStoreContent when generating content edges, and we always use getAReadContent when querying the graph.
       result = this.getContent(contents.getAReadContent())
     }
 
-    /** Gets a node representing the instance field of the given `name`, which must include the `@` character. */
+    /**
+     * Gets a representative for the instance field of the given `name`, which must include the `@` character.
+     */
     pragma[inline]
     Node getField(string name) {
       // This predicate is currently not 'inline_late' because 'name' can be an input or output
       Impl::fieldEdge(this.getEpsilonSuccessor(), name, result)
     }
 
-    /** Gets a node representing an element of this collection (known or unknown). */
+    /**
+     * Gets a representative for an arbitrary element of this collection.
+     */
     bindingset[this]
     pragma[inline_late]
     Node getAnElement() { Impl::elementEdge(this.getEpsilonSuccessor(), result) }
@@ -615,22 +629,19 @@ module API {
   Node root() { result instanceof RootNode }
 
   /**
-   * Gets a node corresponding to a top-level member `m` (typically a module).
+   * Gets an access to the top-level constant `name`.
    *
-   * This is equivalent to `root().getAMember("m")`.
-   *
-   * Note: You should only use this predicate for top level modules or classes. If you want nodes corresponding to a nested module or class,
-   * you should use `.getMember` on the parent module/class. For example, for nodes corresponding to the class `Gem::Version`,
+   * To access nested constants, use `getMember()` on the resulting node. For example, for nodes corresponding to the class `Gem::Version`,
    * use `getTopLevelMember("Gem").getMember("Version")`.
    */
   pragma[inline]
-  Node getTopLevelMember(string m) { Impl::topLevelMember(m, result) }
+  Node getTopLevelMember(string name) { Impl::topLevelMember(name, result) }
 
   /**
-   * Gets a call at the top-level with the given method name.
+   * Gets an unqualified call at the top-level with the given method name.
    */
   pragma[inline]
-  Node getTopLevelCall(string name) { Impl::toplevelCall(name, result) }
+  MethodAccessNode getTopLevelCall(string name) { Impl::toplevelCall(name, result) }
 
   pragma[nomagic]
   private predicate isReachable(DataFlow::LocalSourceNode node, TypeTracker t) {
