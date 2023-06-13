@@ -65,7 +65,7 @@ Foo.foo(a,b:c) #$ source=Member[Foo].Method[foo].ReturnValue sink=Member[Foo].Me
 
 def userDefinedFunction(x, y)
     x.noApiGraph(y)
-    x.customEntryPointCall(y) #$ call=EntryPoint[CustomEntryPointCall] source=EntryPoint[CustomEntryPointCall].ReturnValue rhs=EntryPoint[CustomEntryPointCall].Parameter[0]
+    x.customEntryPointCall(y) #$ call=EntryPoint[CustomEntryPointCall] source=EntryPoint[CustomEntryPointCall].ReturnValue sink=EntryPoint[CustomEntryPointCall].Parameter[0]
     x.customEntryPointUse(y) #$ source=EntryPoint[CustomEntryPointUse]
 end
 
