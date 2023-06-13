@@ -35,68 +35,91 @@ module API {
    * 2. Follow up with a chain of accessors such as `getMethod` describing how to get to the relevant API function.
    * 3. Map the resulting API graph nodes to data-flow nodes, using `asSource`, `asSink`, or `asCall`.
    *
-   * For example, a simplified way to get arguments to `Foo.bar` would be
-   * ```ql
-   * API::getTopLevelMember("Foo").getMethod("bar").getParameter(0).asSink()
+   * The following examples demonstrate how to identify the expression `x` in various basic cases:
+   * ```rb
+   * # API::getTopLevelMember("Foo").getMethod("bar").getArgument(0).asSink()
+   * Foo.bar(x)
+   *
+   * # API::getTopLevelMember("Foo").getMethod("bar").getKeywordArgument("foo").asSink()
+   * Foo.bar(foo: x)
+   *
+   * # API::getTopLevelMember("Foo").getInstance().getMethod("bar").getArgument(0).asSink()
+   * Foo.new.bar(x)
+   *
+   * Foo.bar do |x| # API::getTopLevelMember("Foo").getMethod("bar").getBlock().getParameter(0).asSource()
+   * end
    * ```
    *
-   * The most commonly used accessors are `getMember`, `getMethod`, `getParameter`, and `getReturn`.
+   * ### Data flow
    *
-   * ### Data flow direction
+   * The members predicates on this class generally take inheritance and data flow into account.
    *
-   * The members predicates on this class generally takes inheritance and data flow into account.
-   *
-   * For example, consider the API graph expression
-   * ```codeql
-   * API::getTopLevelMember("Foo").getInstance().getMethod("bar").asCall()
-   * ```
-   * The above expression would match the `f.bar` call in the following:
+   * The following example demonstrate a case where data flow was used to find the sink `x`:
    * ```ruby
    * def doSomething f
-   *   f.bar
+   *   f.bar(x) # API::getTopLevelMember("Foo").getInstance().getMethod("bar").getArgument(0).asSink()
    * end
    * doSomething Foo.new
    * ```
+   * The call `API::getTopLevelMember("Foo").getInstance()` identifies the `Foo.new` call, and `getMethod("bar")`
+   * then follows data flow from there to find calls to `bar` where that object flows to the receiver.
+   * This results in the `f.bar` call.
    *
-   * When tracking arguments of a call, the data flow direction is backwards.
-   * We will illustrate this principle with the following example:
-   * ```codeql
-   * API::getTopLevelMember("Foo").getInstance().getMethod("bar").getParameter(0).getAnElement().getParameter(0)
-   * ```
-   * The above expression would match the lamda parameter `x` in the following:
+   * ### Backward data flow
+   *
+   * When inspecting the arguments of a call, the data flow direction is backwards.
+   * The following example illustrates this when we match the `x` parameter of a block:
    * ```ruby
-   * def doSomething f callbacks
-   *   f.bar(callbacks)
+   * def doSomething &blk
+   *   Foo.bar &blk
    * end
-   * doSomething Foo.new [
-   *   ->(x) { puts x }
-   * ]
+   * doSomething do |x| # API::getTopLevelMember("Foo").getMethod("bar").getBlock().getParameter(0).asSource()
+   * end
    * ```
-   * Here's a breakdown of what happens:
-   * - `getTopLevelMember("Foo")` gets the access to `Foo`
-   * - `.getInstance()` gets the return value of the `Foo.new` call
-   * - `.getMethod("bar")` gets the call to `f.bar`. The value `Foo.new` value was implicitly
-   *   tracked forwards to the receiver `f`.
-   * - `.getParameter(0)` gets the first argument to this call, named `callbacks`.
-   * - `.getAnElement()` gets the lambda expression. The `callbacks` argument was implicitly
-   *   tracked backwards to the array literal, and the elements of that array literal were then retrieved.
-   * - `.getParameter(0)` gets the parameter named `x` in the lambda expression.
+   * When `getParameter(0)` is evaluated, the API graph backtracks the `&blk` argument to the block argument a few
+   * lines below. As a result, it eventually matches the `x` parameter of that block.
    *
    * ### Inheritance
    *
    * When a class or module object is tracked, inheritance is taken into account.
    *
-   * For example, consider the API graph expression
-   * ```codeql
-   * API::getTopLevelMember("Foo").getMethod("bar").asCall()
-   * ```
-   * The above expression would match the `self.bar` call below, due to `Subclass` inheriting the method `Foo.bar`.
+   * In the following example, a call to `Foo.bar` was found via a subclass of `Foo`,
+   * because classes inherit singleton methods from their base class:
    * ```ruby
    * class Subclass < Foo
    *   def self.doSomething
-   *     self.bar # found by API::getTopLevelMember("Foo").getMethod("bar").asCall()
+   *     bar(x) # API::getTopLevelMember("Foo").getMethod("bar").getArgument(0).asSink()
    *   end
    * end
+   * ```
+   *
+   * Similarly, instance methods can be found in subclasses, or ancestors of subclases in cases of multiple inheritance:
+   * ```rb
+   * module Mixin
+   *   def doSomething
+   *     bar(x) # API::getTopLevelMember("Foo").getInstance().getMethod("bar").getArgument(0).asSink()
+   *   end
+   * end
+   * class Subclass < Foo
+   *   include Mixin
+   * end
+   * ```
+   * The value of `self` in `Mixin#doSomething` is seen as a potential instance of `Foo`, and is thus found by `getTopLevelMember("Foo").getInstance()`.
+   * This eventually results in finding the call `bar`, due to its implicit `self` receiver, and finally find its argument `x`.
+   *
+   * ### Backward data flow and inheritance
+   *
+   * When inspecting the arguments of call, and the value flowing into that arguemnt appears to a user-defined class (or an instance thereof),
+   * uses of `getMethod` will find method definitions in that class (including inherited ones) rather than finding method calls.
+   *
+   * This example illustrates how this can be used to model cases where the library calls a specific named method on a user-defined class:
+   * ```rb
+   * class MyClass
+   *   def doSomething
+   *     x # API::getTopLevelMember("Foo").getMethod("bar").getArgument(0).getMethod("doSomething").getReturn().asSink()
+   *   end
+   * end
+   * Foo.bar MyClass.new
    * ```
    *
    * ### Strict left-to-right evaluation
