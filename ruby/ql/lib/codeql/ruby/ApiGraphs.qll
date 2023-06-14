@@ -105,11 +105,11 @@ module API {
    * end
    * ```
    * The value of `self` in `Mixin#doSomething` is seen as a potential instance of `Foo`, and is thus found by `getTopLevelMember("Foo").getInstance()`.
-   * This eventually results in finding the call `bar`, due to its implicit `self` receiver, and finally find its argument `x`.
+   * This eventually results in finding the call `bar`, due to its implicit `self` receiver, and finally its argument `x` is found as the sink.
    *
-   * ### Backward data flow and inheritance
+   * ### Backward data flow and classes
    *
-   * When inspecting the arguments of call, and the value flowing into that arguemnt appears to a user-defined class (or an instance thereof),
+   * When inspecting the arguments of call, and the value flowing into that argument is a user-defined class (or an instance thereof),
    * uses of `getMethod` will find method definitions in that class (including inherited ones) rather than finding method calls.
    *
    * This example illustrates how this can be used to model cases where the library calls a specific named method on a user-defined class:
@@ -121,6 +121,9 @@ module API {
    * end
    * Foo.bar MyClass.new
    * ```
+   *
+   * When modeling an external library that is known to call a specific method on a parameter (in this case `doSomething`), this makes
+   * it possible to find the corresponding method definition in user code.
    *
    * ### Strict left-to-right evaluation
    *
@@ -962,9 +965,9 @@ module API {
       MkModuleInstanceUp(DataFlow::ModuleNode mod) or
       /** Instances of `mod` with epsilon edges to its descendents, and to its upward node. */
       MkModuleInstanceDown(DataFlow::ModuleNode mod) or
-      /** Intermediate node for tracking use-nodes. */
+      /** Intermediate node for following forward data flow. */
       MkForwardNode(DataFlow::LocalSourceNode node, TypeTracker t) { isReachable(node, t) } or
-      /** Intermediate node for tracking def-nodes. */
+      /** Intermediate node for following backward data flow. */
       MkBackwardNode(DataFlow::LocalSourceNode node, TypeTracker t) { isReachable(node, t) } or
       MkSinkNode(DataFlow::Node node) { needsSinkNode(node) }
 
