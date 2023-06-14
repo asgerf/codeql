@@ -893,6 +893,9 @@ module API {
       result = getBackwardEndNode(mod.getAnImmediateReference().getAMethodCall("new"))
     }
 
+    /**
+     * Gets a node that can be backtracked to an instance of `mod` or any of its descendents.
+     */
     bindingset[mod]
     pragma[inline_late]
     private ApiNode getAModuleDescendentInstanceDefNode(DataFlow::ModuleNode mod) {
