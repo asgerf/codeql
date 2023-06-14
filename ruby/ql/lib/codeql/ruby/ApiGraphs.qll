@@ -829,7 +829,7 @@ module API {
     private predicate implicitCallEdge(ApiNode pred, ApiNode succ) {
       // Step from &block parameter to yield call without needing `getMethod("call")`.
       exists(DataFlow::MethodNode method |
-        pred = getForwardStartNode(method.getBlockParameter()) and
+        pred = getForwardEndNode(method.getBlockParameter()) and
         succ = Impl::MkMethodAccessNode(method.getABlockCall())
       )
       or
