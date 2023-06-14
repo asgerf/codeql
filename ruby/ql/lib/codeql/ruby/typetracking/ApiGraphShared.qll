@@ -247,68 +247,73 @@ module ApiGraphShared<ApiGraphSharedSig S> {
     result = getBackwardStartNode(getALocalSourceStrict(node))
   }
 
-  /**
-   * The signature to use when instantiating the `ExplainFlow` module.
-   */
-  signature module ExplainFlowSig {
-    /** Holds if `node` should be a source. */
-    predicate isSource(ApiNode node);
+  /** Parts of the shared module to be re-exported by the user-facing `API` module. */
+  module Public {
+    /**
+     * The signature to use when instantiating the `ExplainFlow` module.
+     */
+    signature module ExplainFlowSig {
+      /** Holds if `node` should be a source. */
+      predicate isSource(ApiNode node);
 
-    /** Holds if `node` should be a sink. */
-    default predicate isSink(ApiNode node) { any() }
+      /** Holds if `node` should be a sink. */
+      default predicate isSink(ApiNode node) { any() }
 
-    /** Holds if `node` should be skipped in the generated paths. */
-    default predicate isHidden(ApiNode node) { none() }
-  }
-
-  /**
-   * Module to help debug and visualize the data flows underlying API graphs.
-   *
-   * This module exports the query predicates for a path-problem query, and should be imported
-   * into the top-level of such a query.
-   *
-   * The module argument should specify source and sink API nodes, and the resulting query
-   * will show paths of epsilon edges that go from a source to a sink. Only epsilon edges are visualized.
-   *
-   * To condense the output a bit, paths in which the source and sink are the same node are omitted.
-   */
-  module ExplainFlow<ExplainFlowSig Cfg> {
-    private import Cfg
-
-    private ApiNode relevantNode() {
-      isSink(result) and
-      result = getEpsilonSuccessorInline(any(ApiNode node | isSource(node)))
-      or
-      epsilonEdge(result, relevantNode())
+      /** Holds if `node` should be skipped in the generated paths. */
+      default predicate isHidden(ApiNode node) { none() }
     }
 
-    query predicate nodes(ApiNode node) { node = relevantNode() and not isHidden(node) }
+    /**
+     * Module to help debug and visualize the data flows underlying API graphs.
+     *
+     * This module exports the query predicates for a path-problem query, and should be imported
+     * into the top-level of such a query.
+     *
+     * The module argument should specify source and sink API nodes, and the resulting query
+     * will show paths of epsilon edges that go from a source to a sink. Only epsilon edges are visualized.
+     *
+     * To condense the output a bit, paths in which the source and sink are the same node are omitted.
+     */
+    module ExplainFlow<ExplainFlowSig T> {
+      private import T
 
-    private predicate edgeToHiddenNode(ApiNode pred, ApiNode succ) {
-      epsilonEdge(pred, succ) and
-      isHidden(succ) and
-      pred = relevantNode() and
-      succ = relevantNode()
-    }
+      private ApiNode relevantNode() {
+        isSink(result) and
+        result = getEpsilonSuccessorInline(any(ApiNode node | isSource(node)))
+        or
+        epsilonEdge(result, relevantNode())
+      }
 
-    query predicate edges(ApiNode pred, ApiNode succ) {
-      nodes(pred) and
-      nodes(succ) and
-      exists(ApiNode mid |
-        edgeToHiddenNode*(pred, mid) and
-        epsilonEdge(mid, succ)
-      )
-    }
+      query predicate nodes(ApiNode node) { node = relevantNode() and not isHidden(node) }
 
-    query predicate problems(ApiNode location, ApiNode sourceNode, ApiNode sinkNode, string message) {
-      nodes(sourceNode) and
-      nodes(sinkNode) and
-      isSource(sourceNode) and
-      isSink(sinkNode) and
-      sinkNode = getEpsilonSuccessorInline(sourceNode) and
-      sourceNode != sinkNode and
-      location = sinkNode and
-      message = "Node flows here"
+      private predicate edgeToHiddenNode(ApiNode pred, ApiNode succ) {
+        epsilonEdge(pred, succ) and
+        isHidden(succ) and
+        pred = relevantNode() and
+        succ = relevantNode()
+      }
+
+      query predicate edges(ApiNode pred, ApiNode succ) {
+        nodes(pred) and
+        nodes(succ) and
+        exists(ApiNode mid |
+          edgeToHiddenNode*(pred, mid) and
+          epsilonEdge(mid, succ)
+        )
+      }
+
+      query predicate problems(
+        ApiNode location, ApiNode sourceNode, ApiNode sinkNode, string message
+      ) {
+        nodes(sourceNode) and
+        nodes(sinkNode) and
+        isSource(sourceNode) and
+        isSink(sinkNode) and
+        sinkNode = getEpsilonSuccessorInline(sourceNode) and
+        sourceNode != sinkNode and
+        location = sinkNode and
+        message = "Node flows here"
+      }
     }
   }
 }

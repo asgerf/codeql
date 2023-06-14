@@ -944,6 +944,7 @@ module API {
   }
 
   private import Internal
+  import Internal::Public
 
   cached
   private module Impl {
