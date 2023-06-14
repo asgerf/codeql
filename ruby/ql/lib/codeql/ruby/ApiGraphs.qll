@@ -738,11 +738,11 @@ module API {
         or
         moduleInheritanceEdge(mod, pred, succ)
         or
-        implicitCallEdge(pred, succ)
-        or
         pred = getForwardEndNode(getSuperClassNode(mod)) and
         succ = Impl::MkModuleObjectDown(mod)
       )
+      or
+      implicitCallEdge(pred, succ)
       or
       exists(DataFlow::HashLiteralNode splat | hashSplatEdge(splat, pred, succ))
     }
