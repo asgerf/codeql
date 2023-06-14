@@ -235,12 +235,12 @@ module ApiGraphShared<ApiGraphSharedSig S> {
     result = getForwardEndNode(node) or result = getBackwardEndNode(node)
   }
 
-  /** The implementation of `DataFlow::LocalSourceNode.track()` */
+  /** Gets an API node for tracking forward starting at `node`. This is the implementation of `DataFlow::LocalSourceNode.track()` */
   bindingset[node]
   pragma[inline_late]
   ApiNode getNodeForForwardTracking(Node node) { result = forwardStartNode(node) }
 
-  /** The implementation of `DataFlow::Node.backtrack()`. */
+  /** Gets an API node for backtracking starting at `node`. The implementation of `DataFlow::Node.backtrack()`. */
   bindingset[node]
   pragma[inline_late]
   ApiNode getNodeForBacktracking(Node node) {
