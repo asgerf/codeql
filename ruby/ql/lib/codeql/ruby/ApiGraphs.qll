@@ -563,7 +563,7 @@ module API {
   }
 
   /** A node representing a given type-tracking state when tracking forwards. */
-  private class ForwardNode extends Node {
+  private class ForwardNode extends Node, Impl::MkForwardNode {
     private DataFlow::LocalSourceNode node;
     private TypeTracker tracker;
 
@@ -577,7 +577,7 @@ module API {
   }
 
   /** A node representing a given type-tracking state when tracking backwards. */
-  private class BackwardNode extends Node {
+  private class BackwardNode extends Node, Impl::MkBackwardNode {
     private DataFlow::LocalSourceNode node;
     private TypeTracker tracker;
 
@@ -591,9 +591,7 @@ module API {
   }
 
   /** A node representing the module/class object for a given module or class. */
-  private class ModuleObjectUpNode extends Node {
-    ModuleObjectUpNode() { this instanceof Impl::MkModuleObjectDown }
-
+  private class ModuleObjectDownNode extends Node, Impl::MkModuleObjectDown {
     /** Gets the module represented by this API node. */
     DataFlow::ModuleNode getModule() { this = Impl::MkModuleObjectDown(result) }
 
@@ -601,9 +599,7 @@ module API {
   }
 
   /** A node representing a module/class object escaping into external code. */
-  private class ModuleObjectDownNode extends Node {
-    ModuleObjectDownNode() { this instanceof Impl::MkModuleObjectUp }
-
+  private class ModuleObjectUpNode extends Node, Impl::MkModuleObjectUp {
     /** Gets the module represented by this API node. */
     DataFlow::ModuleNode getModule() { this = Impl::MkModuleObjectUp(result) }
 
@@ -611,9 +607,7 @@ module API {
   }
 
   /** A node representing instances of a module/class and its ancestors. */
-  private class ModuleInstanceUpNode extends Node {
-    ModuleInstanceUpNode() { this instanceof Impl::MkModuleInstanceUp }
-
+  private class ModuleInstanceUpNode extends Node, Impl::MkModuleInstanceUp {
     /** Gets the module whose instances are represented by this API node. */
     DataFlow::ModuleNode getModule() { this = Impl::MkModuleInstanceUp(result) }
 
@@ -621,9 +615,7 @@ module API {
   }
 
   /** A node representing instances of a module/class and its descendents. */
-  private class ModuleInstanceDownNode extends Node {
-    ModuleInstanceDownNode() { this instanceof Impl::MkModuleInstanceDown }
-
+  private class ModuleInstanceDownNode extends Node, Impl::MkModuleInstanceDown {
     /** Gets the module whose instances are represented by this API node. */
     DataFlow::ModuleNode getModule() { this = Impl::MkModuleInstanceDown(result) }
 
