@@ -744,7 +744,7 @@ module API {
       or
       implicitCallEdge(pred, succ)
       or
-      exists(DataFlow::HashLiteralNode splat | hashSplatEdge(splat, pred, succ))
+      hashSplatEdge(_, pred, succ)
     }
 
     pragma[nomagic]
