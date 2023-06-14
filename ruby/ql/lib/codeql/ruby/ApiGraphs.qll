@@ -555,7 +555,7 @@ module API {
   deprecated class Use = ForwardNode;
 
   /** DEPRECATED. A node corresponding to a value escaping into an API component. */
-  deprecated class Def = BackwardNode; // TODO use sink node instead?
+  deprecated class Def = SinkNode;
 
   /** The root node of an API graph. */
   private class RootNode extends Node, Impl::MkRoot {
