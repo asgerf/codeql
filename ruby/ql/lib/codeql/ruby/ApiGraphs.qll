@@ -841,7 +841,7 @@ module API {
       )
       or
       exists(DataFlow::ModuleNode mod |
-        // Step from module/class to its own `call` method withouht needing `getMethod("call")`.
+        // Step from module/class to its own `call` method without needing `getMethod("call")`.
         (pred = Impl::MkModuleObjectDown(mod) or pred = Impl::MkModuleObjectUp(mod)) and
         succ = getBackwardEndNode(mod.getOwnSingletonMethod("call"))
         or
