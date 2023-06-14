@@ -822,8 +822,8 @@ module API {
      * Holds if the epsilon step `pred -> succ` should be generated to account for the fact that `getMethod("call")`
      * may be omitted when dealing with blocks, lambda, or procs.
      *
-     * For example, a block may be invoked by a `yield`, or can be converted to a proc or lambda and then invoked via `.call`.
-     * To simplify this, lambad/proc conversion is seen as a no-op and the `.call` is omitted.
+     * For example, a block may be invoked by a `yield`, or can be converted to a proc and then invoked via `.call`.
+     * To simplify this, the implicit proc conversion is seen as a no-op and the `.call` is omitted.
      */
     pragma[nomagic]
     private predicate implicitCallEdge(ApiNode pred, ApiNode succ) {
