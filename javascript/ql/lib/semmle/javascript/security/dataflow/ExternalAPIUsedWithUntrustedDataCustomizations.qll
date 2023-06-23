@@ -85,17 +85,23 @@ module ExternalApiUsedWithUntrustedData {
    * A call to an external API.
    */
   private class ExternalApiInvocation extends DataFlow::InvokeNode {
-    private string packageName;
-    private string methodName;
+    private string name;
 
     ExternalApiInvocation() {
-      this = externalCall(packageName, methodName) and
       not this = any(SafeExternalApiFunction f).getACall() and
-      not packageName instanceof SafeExternalApiPackage
+      exists(string packageName | not packageName instanceof SafeExternalApiPackage |
+        exists(string methodName |
+          this = namedExternalCall(packageName, methodName) and
+          name = packageName + "." + methodName + "()"
+        )
+        or
+        this = directExternalCall(packageName) and
+        name = packageName + "()"
+      )
     }
 
     /** Gets the API name representing this call. */
-    string getApiName() { result = packageName + "." + methodName }
+    string getApiName() { result = name }
   }
 
   /**
