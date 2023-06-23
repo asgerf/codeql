@@ -1,0 +1,6 @@
+extensions:
+  - addsTo: 
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      - [cloudinary, "Member[v2].Member[search].Member[aggregate].Argument[0]", adsf]

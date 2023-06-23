@@ -4,6 +4,7 @@
  */
 
 import javascript
+private import semmle.javascript.FuzzyModels
 
 /**
  * Provides sources, sinks and sanitizers for reasoning about flow of
@@ -80,187 +81,21 @@ module ExternalApiUsedWithUntrustedData {
    */
   abstract class SafeExternalApiFunction extends API::Node { }
 
-  /** Holds if data read from a use of `f` may originate from an imported package. */
-  private predicate mayComeFromLibrary(API::Node f) {
-    // base case: import
-    exists(string path |
-      f = API::moduleImport(path) and
-      not path instanceof SafeExternalApiPackage and
-      // Exclude paths that can be resolved to a file in the project
-      not exists(Import imprt |
-        imprt.getImportedPath().getValue() = path and exists(imprt.getImportedModule())
-      )
-    )
-    or
-    // covariant recursive cases: instances, members, results, and promise contents
-    // of something that comes from a library may themselves come from that library
-    exists(API::Node base | mayComeFromLibrary(base) |
-      f = base.getInstance() or
-      f = base.getAMember() or
-      f = base.getReturn() or
-      f = base.getPromised()
-    )
-    or
-    // contravariant recursive case: parameters of something that escapes to a library
-    // may come from that library
-    exists(API::Node base | mayEscapeToLibrary(base) | f = base.getAParameter())
-  }
-
-  /**
-   * Holds if data written to a definition of `f` may flow to an imported package.
-   */
-  private predicate mayEscapeToLibrary(API::Node f) {
-    // covariant recursive case: members, results, and promise contents of something that
-    // escapes to a library may themselves escape to that library
-    exists(API::Node base | mayEscapeToLibrary(base) and not isDeepObjectSink(base) |
-      f = base.getAMember() or
-      f = base.getPromised() or
-      f = base.getReturn()
-    )
-    or
-    // contravariant recursive case: arguments (other than the receiver) passed to a function
-    // that comes from a library may escape to that library
-    exists(API::Node base | mayComeFromLibrary(base) |
-      f = base.getAParameter() and not f = base.getReceiver()
-    )
-  }
-
-  /**
-   * Holds if `node` may be part of an access path leading to an external API call.
-   */
-  private predicate nodeIsRelevant(API::Node node) {
-    mayComeFromLibrary(node) and
-    not node instanceof SafeExternalApiFunction
-    or
-    nodeIsRelevant(node.getASuccessor()) and
-    not node = API::moduleImport(any(SafeExternalApiPackage p))
-  }
-
-  /** Holds if the edge `pred -> succ` may lead to an external API call. */
-  private predicate edge(API::Node pred, API::Node succ) {
-    nodeIsRelevant(succ) and
-    pred.getASuccessor() = succ
-  }
-
-  /**
-   * Gets the depth of `node` from the API graph root, not including paths that go through
-   * irrelevant nodes, such as a package marked as safe.
-   */
-  private int getDepth(API::Node node) = shortestDistances(API::root/0, edge/2)(_, node, result)
-
-  /**
-   * Gets a parameter of `base` with name `name`, or a property named `name` of a destructuring parameter.
-   */
-  private API::Node getNamedParameter(API::Node base, string name) {
-    exists(API::Node param |
-      param = base.getAParameter() and
-      not param = base.getReceiver()
-    |
-      result = param and
-      name = param.asSource().(DataFlow::ParameterNode).getName()
-      or
-      param.asSource().asExpr() instanceof DestructuringPattern and
-      result = param.getMember(name)
-    )
-  }
-
-  /**
-   * Gets a simplified name for the access path leading to `node`.
-   */
-  private string getSimplifiedName(API::Node node) {
-    node = API::moduleImport(result)
-    or
-    exists(API::Node base, string basename |
-      getDepth(base) < getDepth(node) and basename = getSimplifiedName(base)
-    |
-      // In practice there is no need to distinguish between 'new X' and 'X()'
-      node = [base.getInstance(), base.getReturn()] and
-      result = basename + "()"
-      or
-      exists(string member |
-        node = base.getMember(member) and
-        not node = base.getUnknownMember() and
-        not isNumericString(member) and
-        not (member = "default" and base = API::moduleImport(_)) and
-        not member = "then" // use the 'promised' edges for .then callbacks
-      |
-        if member.regexpMatch("[a-zA-Z_$]\\w*")
-        then result = basename + "." + member
-        else result = basename + "['" + member.regexpReplaceAll("'", "\\'") + "']"
-      )
-      or
-      (
-        node = base.getUnknownMember() or
-        node = base.getMember(any(string s | isNumericString(s)))
-      ) and
-      result = basename + "[]"
-      or
-      // just collapse promises
-      node = base.getPromised() and
-      result = basename
-      or
-      // Name callback parameters after their name in the source code.
-      // For example, the 'res' parameter in,
-      //
-      //   express.get('/foo', (req, res) => {...})`
-      //
-      // will be named `express().get.[callback].[param 'res']`
-      exists(string paramName |
-        node = getNamedParameter(base.getAParameter(), paramName) and
-        result = basename + ".[callback].[param '" + paramName + "']"
-        or
-        exists(string callbackName, int index |
-          node = getNamedParameter(base.getParameter(index).getMember(callbackName), paramName) and
-          result =
-            basename + ".[callback " + index + " '" + callbackName + "'].[param '" + paramName +
-              "']"
-        )
-      )
-    )
-  }
-
-  bindingset[str]
-  private predicate isNumericString(string str) { exists(str.toInt()) }
-
-  /**
-   * Holds if `name` is the name of a built-in method on Object, Array, or String that
-   * takes one or more arguments (methods not taking arguments are unlikely to be called
-   * by a call that actually has arguments, so they are excluded).
-   */
-  private predicate isCommonBuiltinMethodName(string name) {
-    exists(ExternalInstanceMemberDecl member |
-      member.getBaseName() in ["Object", "Array", "String"] and
-      name = member.getName() and
-      member.getInit().(Function).getNumParameter() > 0
-    )
-  }
-
   /**
    * A call to an external API.
    */
   private class ExternalApiInvocation extends DataFlow::InvokeNode {
-    API::Node callee;
+    private string packageName;
+    private string methodName;
 
     ExternalApiInvocation() {
-      mayComeFromLibrary(callee) and
-      this = callee.getAnInvocation() and
-      // Ignore arguments to a method such as 'indexOf' that's likely called on a string or array value
-      not isCommonBuiltinMethodName(this.(DataFlow::CallNode).getCalleeName()) and
-      // Not already modeled as a flow/taint step
-      not exists(DataFlow::Node arg |
-        arg = this.getAnArgument() and not arg instanceof DeepObjectSink
-      |
-        TaintTracking::sharedTaintStep(arg, _) or
-        DataFlow::SharedFlowStep::step(arg, _) or
-        DataFlow::SharedFlowStep::step(arg, _, _, _) or
-        DataFlow::SharedFlowStep::loadStep(arg, _, _) or
-        DataFlow::SharedFlowStep::storeStep(arg, _, _) or
-        DataFlow::SharedFlowStep::loadStoreStep(arg, _, _)
-      )
+      this = externalCall(packageName, methodName) and
+      not this = any(SafeExternalApiFunction f).getACall() and
+      not packageName instanceof SafeExternalApiPackage
     }
 
     /** Gets the API name representing this call. */
-    string getApiName() { result = getSimplifiedName(callee) + "()" }
+    string getApiName() { result = packageName + "." + methodName }
   }
 
   /**
@@ -284,7 +119,7 @@ module ExternalApiUsedWithUntrustedData {
       this = invoke.getArgument(index).(DataFlow::ObjectLiteralNode).getASpreadProperty()
     }
 
-    override string getApiName() { result = invoke.getApiName() + " [param " + index + "]" }
+    override string getApiName() { result = invoke.getApiName() + " Argument[" + index + "]" }
   }
 
   /** A spread argument or an unknown-index argument to an external API. */
@@ -300,7 +135,7 @@ module ExternalApiUsedWithUntrustedData {
       )
     }
 
-    override string getApiName() { result = invoke.getApiName() + " [param *]" }
+    override string getApiName() { result = invoke.getApiName() + " Argument[0..]" }
   }
 
   /** A "named argument" to an external API call, seen as a sink. */
@@ -325,7 +160,7 @@ module ExternalApiUsedWithUntrustedData {
     }
 
     override string getApiName() {
-      result = invoke.getApiName() + " [param " + index + " '" + prop + "']"
+      result = invoke.getApiName() + " Argument[" + index + "].Member[" + prop + "]"
     }
   }
 
@@ -341,7 +176,7 @@ module ExternalApiUsedWithUntrustedData {
     }
 
     override string getApiName() {
-      result = invoke.getApiName() + " [callback " + index + " result]"
+      result = invoke.getApiName() + " Argument[" + index + "].ReturnValue"
     }
   }
 
@@ -361,7 +196,7 @@ module ExternalApiUsedWithUntrustedData {
     }
 
     override string getApiName() {
-      result = invoke.getApiName() + " [callback " + index + " '" + prop + "' result]"
+      result = invoke.getApiName() + " Argument[" + index + "].Member[" + prop + "].ReturnValue"
     }
   }
 }
