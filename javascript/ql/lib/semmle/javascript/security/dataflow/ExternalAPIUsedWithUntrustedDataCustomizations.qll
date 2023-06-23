@@ -91,11 +91,11 @@ module ExternalApiUsedWithUntrustedData {
       not this = any(SafeExternalApiFunction f).getACall() and
       exists(string packageName | not packageName instanceof SafeExternalApiPackage |
         exists(string methodName |
-          this = namedExternalCall(packageName, methodName) and
+          this = getANamedExternalCall(packageName, methodName) and
           name = packageName + "." + methodName + "()"
         )
         or
-        this = directExternalCall(packageName) and
+        this = getADirectExternalCall(packageName) and
         name = packageName + "()"
       )
     }

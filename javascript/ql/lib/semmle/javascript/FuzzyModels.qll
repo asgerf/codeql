@@ -14,15 +14,27 @@ private DataFlow::SourceNode blockedNode() {
   DataFlow::SharedFlowStep::step(_, result)
 }
 
-bindingset[rawPackage]
-private string normalizePackageName(string rawPackage) {
-  result = rawPackage.regexpReplaceAll("^node:", "")
+/**
+ * Gets a normalized package name from `importString`.
+ */
+bindingset[importString]
+string normalizePackageName(string importString) {
+  result =
+    importString
+        .regexpReplaceAll("^node:", "")
+        .regexpReplaceAll("\\.js$", "")
+        .regexpReplaceAll("/index$", "")
 }
 
+/**
+ * Gets a node believed to originate from `package`.
+ *
+ * The package is normalized by `normalizePackageName`.
+ */
 API::Node getANodeFromPackage(string package) {
-  exists(string rawPackage |
-    result = API::moduleImport(rawPackage) and
-    package = normalizePackageName(rawPackage)
+  exists(string importString |
+    result = API::moduleImport(importString) and
+    package = normalizePackageName(importString)
   )
   or
   result = getANodeFromPackage(package).getAMember() and
@@ -39,11 +51,10 @@ API::Node getANodeFromPackage(string package) {
   result = getANodeFromPackage(package).getPromised()
 }
 
-DataFlow::InvokeNode namedExternalCallLike(string package, string methodName) {
-  result = getANodeFromPackage(package).getMember(methodName).getAnInvocation()
-}
-
-DataFlow::InvokeNode namedExternalCall(string package, string methodName) {
+/**
+ * Gets a call targeting targeting a method named `methodName` in `package`.
+ */
+DataFlow::InvokeNode getANamedExternalCall(string package, string methodName) {
   exists(API::Node member |
     member = getANodeFromPackage(package).getMember(methodName) and
     result = member.getAnInvocation() and
@@ -52,22 +63,32 @@ DataFlow::InvokeNode namedExternalCall(string package, string methodName) {
   )
 }
 
-DataFlow::InvokeNode directExternalCall(string package) {
+/**
+ * Gets a call that invokes `package` as a function (that is, its exported object is a function).
+ */
+DataFlow::InvokeNode getADirectExternalCall(string package) {
   result = API::moduleImport(package).getAnInvocation()
 }
 
-DataFlow::InvokeNode anonymousExternalCall(string package) {
+/**
+ * Gets a call target likely targets `package`, but with no associated method name.
+ *
+ * For example:
+ * ```javascript
+ * const lib = require('example')
+ *
+ * let fn = lib();
+ * fn() // curried calls are considered anonymous
+ *
+ * lib(fn => {
+ *   fn(); // callback invocation is considered anonymous
+ * })
+ *
+ * lib[complicated()](); // method call with unknown name
+ * ```
+ */
+DataFlow::InvokeNode getAnAnonymousExternalCall(string package) {
   result = getANodeFromPackage(package).getAnInvocation() and
-  not result = namedExternalCallLike(package, _) and
-  not result = directExternalCall(package)
-}
-
-DataFlow::InvokeNode externalCall(string package, string methodName) {
-  result = namedExternalCall(package, methodName)
-  or
-  methodName = "(direct call)" and
-  result = directExternalCall(package)
-  or
-  methodName = "(anonymous call)" and
-  result = anonymousExternalCall(package)
+  not result = getANodeFromPackage(package).getMember(_).getAnInvocation() and
+  not result = getADirectExternalCall(package)
 }
