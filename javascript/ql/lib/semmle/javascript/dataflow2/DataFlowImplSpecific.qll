@@ -83,22 +83,6 @@ module Private {
 
   predicate forceHighPrecision(Content c) { none() }
 
-  /**
-   * An entity that represents a set of `Content`s.
-   *
-   * The set may be interpreted differently depending on whether it is
-   * stored into (`getAStoreContent`) or read from (`getAReadContent`).
-   */
-  class ContentSet extends Content {
-    /** Gets a content that may be stored into when storing into this set. */
-    pragma[inline]
-    Content getAStoreContent() { result = this }
-
-    /** Gets a content that may be read from when reading from this set. */
-    pragma[inline]
-    Content getAReadContent() { result = this }
-  }
-
   class ContentApprox extends Content { }
 
   pragma[inline]
@@ -255,4 +239,20 @@ module Public {
   private import semmle.javascript.dataflow.DataFlow
 
   class Node = DataFlow::Node;
+
+  /**
+   * An entity that represents a set of `Content`s.
+   *
+   * The set may be interpreted differently depending on whether it is
+   * stored into (`getAStoreContent`) or read from (`getAReadContent`).
+   */
+  class ContentSet extends Private::Content {
+    /** Gets a content that may be stored into when storing into this set. */
+    pragma[inline]
+    Private::Content getAStoreContent() { result = this }
+
+    /** Gets a content that may be read from when reading from this set. */
+    pragma[inline]
+    Private::Content getAReadContent() { result = this }
+  }
 }
