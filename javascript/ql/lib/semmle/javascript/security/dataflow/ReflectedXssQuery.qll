@@ -6,11 +6,11 @@
 import javascript
 import ReflectedXssCustomizations::ReflectedXss
 private import Xss::Shared as SharedXss
-private import semmle.javascript.dataflow2.DataFlow as SharedLib
+private import semmle.javascript.dataflow2.DataFlow as DataFlow2
 private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
 private import semmle.javascript.dataflow2.BarrierGuards
 
-module ConfigurationArgs implements SharedLib::ConfigSig {
+module ConfigurationArgs implements DataFlow2::ConfigSig {
   predicate isSource(DataFlow::Node source) { source instanceof Source }
 
   predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
