@@ -14,17 +14,23 @@
  */
 
 import javascript
+import semmle.javascript.dataflow2.DataFlow as DataFlow2
 import semmle.javascript.security.dataflow.SqlInjectionQuery as SqlInjection
 import semmle.javascript.security.dataflow.NosqlInjectionQuery as NosqlInjection
-import DataFlow::PathGraph
 
-from DataFlow::Configuration cfg, DataFlow::PathNode source, DataFlow::PathNode sink, string type
+module Merged =
+  DataFlow2::MergePathGraph<SqlInjection::Configuration::PathNode,
+    NosqlInjection::Configuration::PathNode, SqlInjection::Configuration::PathGraph,
+    NosqlInjection::Configuration::PathGraph>;
+
+import Merged
+
+from PathNode source, PathNode sink, string type
 where
-  (
-    cfg instanceof SqlInjection::Configuration and type = "string"
-    or
-    cfg instanceof NosqlInjection::Configuration and type = "object"
-  ) and
-  cfg.hasFlowPath(source, sink)
+  SqlInjection::Configuration::flowPath(source.asPathNode1(), sink.asPathNode1()) and
+  type = "string"
+  or
+  NosqlInjection::Configuration::flowPath(source.asPathNode2(), sink.asPathNode2()) and
+  type = "object"
 select sink.getNode(), source, sink, "This query " + type + " depends on a $@.", source.getNode(),
   "user-provided value"
