@@ -34,7 +34,7 @@ app.get('/baz', function(req, res) {
   var other = clone(obj);
 
   res.send(p); // NOT OK
-  res.send(other.p); // NOT OK
+  res.send(other.p); // NOT OK - TODO[library-value-steps]
 });
 
 const serializeJavaScript = require('serialize-javascript');
@@ -45,7 +45,7 @@ app.get('/baz', function(req, res) {
   var serialized = serializeJavaScript(p);
 
   res.send(serialized); // OK
-  
+
   var unsafe = serializeJavaScript(p, {unsafe: true});
 
   res.send(unsafe); // NOT OK

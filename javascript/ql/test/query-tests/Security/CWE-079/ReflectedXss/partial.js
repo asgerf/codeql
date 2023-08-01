@@ -7,36 +7,36 @@ let app = express();
 
 app.get("/some/path", (req, res) => {
   function sendResponse(x, y) {
-    res.send(x + y); // NOT OK
+    res.send(x + y); // NOT OK - TODO[partial-invoke]
   }
-  
+
   let callback = sendResponse.bind(null, req.url);
   [1, 2, 3].forEach(callback);
 });
 
 app.get("/underscore", (req, res) => {
   function sendResponse(x, y) {
-    res.send(x + y); // NOT OK
+    res.send(x + y); // NOT OK - TODO[partial-invoke]
   }
-  
+
   let callback = underscore.partial(sendResponse, req.url);
   [1, 2, 3].forEach(callback);
 });
 
 app.get("/lodash", (req, res) => {
   function sendResponse(x, y) {
-    res.send(x + y); // NOT OK
+    res.send(x + y); // NOT OK - TODO[partial-invoke]
   }
-  
+
   let callback = lodash.partial(sendResponse, req.url);
   [1, 2, 3].forEach(callback);
 });
 
 app.get("/ramda", (req, res) => {
   function sendResponse(x, y) {
-    res.send(x + y); // NOT OK
+    res.send(x + y); // NOT OK - TODO[partial-invoke]
   }
-  
+
   let callback = R.partial(sendResponse, [req.url]);
   [1, 2, 3].forEach(callback);
 });
