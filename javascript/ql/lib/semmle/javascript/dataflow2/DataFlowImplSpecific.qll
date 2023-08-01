@@ -1,6 +1,7 @@
 private import javascript
 private import semmle.javascript.dataflow.internal.DataFlowNode
 private import semmle.javascript.dataflow.internal.StepSummary
+private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 
 module Private {
   private import Public
@@ -120,8 +121,18 @@ module Private {
    */
   DataFlowCallable viableImplInCallContext(DataFlowCall call, DataFlowCall ctx) { none() }
 
+  /**
+   * Holds if there is a value-preserving steps `node1` -> `node2` that might
+   * be cross function boundaries.
+   */
+  private predicate valuePreservingStep(Node node1, Node node2) {
+    node1.getASuccessor() = node2
+    or
+    DataFlow::SharedFlowStep::step(node1, node2)
+  }
+
   predicate simpleLocalFlowStep(Node node1, Node node2) {
-    node1.getASuccessor() = node2 and
+    valuePreservingStep(node1, node2) and
     pragma[only_bind_out](node1).getContainer() = pragma[only_bind_out](node2).getContainer()
   }
 
@@ -131,7 +142,8 @@ module Private {
    * variable.
    */
   predicate jumpStep(Node node1, Node node2) {
-    node1.getASuccessor() = node2 and node1.getContainer() != node2.getContainer()
+    valuePreservingStep(node1, node2) and
+    node1.getContainer() != node2.getContainer()
   }
 
   /**
