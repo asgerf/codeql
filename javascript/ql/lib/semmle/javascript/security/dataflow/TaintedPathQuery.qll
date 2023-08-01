@@ -9,7 +9,7 @@
 
 import javascript
 import TaintedPathCustomizations::TaintedPath
-private import semmle.javascript.dataflow2.DataFlow as SharedLib
+private import semmle.javascript.dataflow2.DataFlow as DataFlow2
 private import semmle.javascript.dataflow2.BarrierGuards
 
 // Materialize flow labels
@@ -32,7 +32,7 @@ private class SinkState extends DataFlow::FlowLabel {
 /**
  * A taint-tracking configuration for reasoning about tainted-path vulnerabilities.
  */
-module ConfigurationArgs implements SharedLib::StateConfigSig {
+module ConfigurationArgs implements DataFlow2::StateConfigSig {
   class FlowState = DataFlow::FlowLabel;
 
   predicate isSource(DataFlow::Node source, DataFlow::FlowLabel label) {
@@ -74,4 +74,4 @@ module ConfigurationArgs implements SharedLib::StateConfigSig {
   }
 }
 
-module Configuration = SharedLib::GlobalWithState<ConfigurationArgs>;
+module Configuration = DataFlow2::GlobalWithState<ConfigurationArgs>;
