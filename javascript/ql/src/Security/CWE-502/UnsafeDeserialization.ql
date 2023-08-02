@@ -13,9 +13,9 @@
 
 import javascript
 import semmle.javascript.security.dataflow.UnsafeDeserializationQuery
-import DataFlow::PathGraph
+import Configuration::PathGraph
 
-from Configuration cfg, DataFlow::PathNode source, DataFlow::PathNode sink
-where cfg.hasFlowPath(source, sink)
+from Configuration::PathNode source, Configuration::PathNode sink
+where Configuration::flowPath(source, sink)
 select sink.getNode(), source, sink, "Unsafe deserialization depends on a $@.", source.getNode(),
   "user-provided value"
