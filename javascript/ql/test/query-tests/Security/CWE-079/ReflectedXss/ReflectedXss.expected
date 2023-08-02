@@ -27,6 +27,14 @@ edges
 | formatting.js:4:16:4:29 | req.query.evil | formatting.js:7:14:7:53 | require ... , evil) |
 | live-server.js:4:21:4:27 | req.url | live-server.js:6:13:6:50 | `<html> ... /html>` |
 | live-server.js:10:21:10:27 | req.url | live-server.js:12:13:12:50 | `<html> ... /html>` |
+| partial.js:9:25:9:25 | x | partial.js:10:14:10:18 | x + y |
+| partial.js:13:42:13:48 | req.url | partial.js:9:25:9:25 | x |
+| partial.js:18:25:18:25 | x | partial.js:19:14:19:18 | x + y |
+| partial.js:22:51:22:57 | req.url | partial.js:18:25:18:25 | x |
+| partial.js:27:25:27:25 | x | partial.js:28:14:28:18 | x + y |
+| partial.js:31:47:31:53 | req.url | partial.js:27:25:27:25 | x |
+| partial.js:36:25:36:25 | x | partial.js:37:14:37:18 | x + y |
+| partial.js:40:43:40:49 | req.url | partial.js:36:25:36:25 | x |
 | promises.js:5:3:5:59 | new Pro ... .data)) | promises.js:6:11:6:11 | x |
 | promises.js:5:44:5:57 | req.query.data | promises.js:5:3:5:59 | new Pro ... .data)) |
 | promises.js:6:11:6:11 | x | promises.js:6:25:6:25 | x |
@@ -119,6 +127,18 @@ nodes
 | pages/Next.jsx:8:13:8:19 | req.url | semmle.label | req.url |
 | pages/Next.jsx:15:13:15:19 | req.url | semmle.label | req.url |
 | pages/api/myapi.js:2:14:2:20 | req.url | semmle.label | req.url |
+| partial.js:9:25:9:25 | x | semmle.label | x |
+| partial.js:10:14:10:18 | x + y | semmle.label | x + y |
+| partial.js:13:42:13:48 | req.url | semmle.label | req.url |
+| partial.js:18:25:18:25 | x | semmle.label | x |
+| partial.js:19:14:19:18 | x + y | semmle.label | x + y |
+| partial.js:22:51:22:57 | req.url | semmle.label | req.url |
+| partial.js:27:25:27:25 | x | semmle.label | x |
+| partial.js:28:14:28:18 | x + y | semmle.label | x + y |
+| partial.js:31:47:31:53 | req.url | semmle.label | req.url |
+| partial.js:36:25:36:25 | x | semmle.label | x |
+| partial.js:37:14:37:18 | x + y | semmle.label | x + y |
+| partial.js:40:43:40:49 | req.url | semmle.label | req.url |
 | promises.js:5:3:5:59 | new Pro ... .data)) | semmle.label | new Pro ... .data)) |
 | promises.js:5:44:5:57 | req.query.data | semmle.label | req.query.data |
 | promises.js:6:11:6:11 | x | semmle.label | x |
@@ -197,6 +217,10 @@ subpaths
 | pages/Next.jsx:8:13:8:19 | req.url | pages/Next.jsx:8:13:8:19 | req.url | pages/Next.jsx:8:13:8:19 | req.url | Cross-site scripting vulnerability due to a $@. | pages/Next.jsx:8:13:8:19 | req.url | user-provided value |
 | pages/Next.jsx:15:13:15:19 | req.url | pages/Next.jsx:15:13:15:19 | req.url | pages/Next.jsx:15:13:15:19 | req.url | Cross-site scripting vulnerability due to a $@. | pages/Next.jsx:15:13:15:19 | req.url | user-provided value |
 | pages/api/myapi.js:2:14:2:20 | req.url | pages/api/myapi.js:2:14:2:20 | req.url | pages/api/myapi.js:2:14:2:20 | req.url | Cross-site scripting vulnerability due to a $@. | pages/api/myapi.js:2:14:2:20 | req.url | user-provided value |
+| partial.js:10:14:10:18 | x + y | partial.js:13:42:13:48 | req.url | partial.js:10:14:10:18 | x + y | Cross-site scripting vulnerability due to a $@. | partial.js:13:42:13:48 | req.url | user-provided value |
+| partial.js:19:14:19:18 | x + y | partial.js:22:51:22:57 | req.url | partial.js:19:14:19:18 | x + y | Cross-site scripting vulnerability due to a $@. | partial.js:22:51:22:57 | req.url | user-provided value |
+| partial.js:28:14:28:18 | x + y | partial.js:31:47:31:53 | req.url | partial.js:28:14:28:18 | x + y | Cross-site scripting vulnerability due to a $@. | partial.js:31:47:31:53 | req.url | user-provided value |
+| partial.js:37:14:37:18 | x + y | partial.js:40:43:40:49 | req.url | partial.js:37:14:37:18 | x + y | Cross-site scripting vulnerability due to a $@. | partial.js:40:43:40:49 | req.url | user-provided value |
 | promises.js:6:25:6:25 | x | promises.js:5:44:5:57 | req.query.data | promises.js:6:25:6:25 | x | Cross-site scripting vulnerability due to a $@. | promises.js:5:44:5:57 | req.query.data | user-provided value |
 | tst2.js:7:12:7:12 | p | tst2.js:6:9:6:9 | p | tst2.js:7:12:7:12 | p | Cross-site scripting vulnerability due to a $@. | tst2.js:6:9:6:9 | p | user-provided value |
 | tst2.js:8:12:8:12 | r | tst2.js:6:12:6:15 | q: r | tst2.js:8:12:8:12 | r | Cross-site scripting vulnerability due to a $@. | tst2.js:6:12:6:15 | q: r | user-provided value |

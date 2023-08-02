@@ -7,7 +7,7 @@ let app = express();
 
 app.get("/some/path", (req, res) => {
   function sendResponse(x, y) {
-    res.send(x + y); // NOT OK - TODO[partial-invoke]
+    res.send(x + y); // NOT OK
   }
 
   let callback = sendResponse.bind(null, req.url);
@@ -16,7 +16,7 @@ app.get("/some/path", (req, res) => {
 
 app.get("/underscore", (req, res) => {
   function sendResponse(x, y) {
-    res.send(x + y); // NOT OK - TODO[partial-invoke]
+    res.send(x + y); // NOT OK
   }
 
   let callback = underscore.partial(sendResponse, req.url);
@@ -25,7 +25,7 @@ app.get("/underscore", (req, res) => {
 
 app.get("/lodash", (req, res) => {
   function sendResponse(x, y) {
-    res.send(x + y); // NOT OK - TODO[partial-invoke]
+    res.send(x + y); // NOT OK
   }
 
   let callback = lodash.partial(sendResponse, req.url);
@@ -34,7 +34,7 @@ app.get("/lodash", (req, res) => {
 
 app.get("/ramda", (req, res) => {
   function sendResponse(x, y) {
-    res.send(x + y); // NOT OK - TODO[partial-invoke]
+    res.send(x + y); // NOT OK
   }
 
   let callback = R.partial(sendResponse, [req.url]);

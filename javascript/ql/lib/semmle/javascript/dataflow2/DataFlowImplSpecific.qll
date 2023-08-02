@@ -37,9 +37,9 @@ module Private {
   }
 
   OutNode getAnOutNode(DataFlowCall call, ReturnKind kind) {
-    kind = MkNormalReturn() and result = call
+    kind = MkNormalReturn() and result = call.asOrdinaryCall()
     or
-    kind = MkExceptionalReturn() and result = call.getExceptionalReturn()
+    kind = MkExceptionalReturn() and result = call.asOrdinaryCall().getExceptionalReturn()
   }
 
   /**
@@ -62,9 +62,13 @@ module Private {
   }
 
   predicate isArgumentNode(Node n, DataFlowCall call, ArgumentPosition pos) {
-    n = call.getArgument(pos)
+    n = call.asOrdinaryCall().getArgument(pos)
     or
-    pos = -1 and n = call.(DataFlow::CallNode).getReceiver()
+    pos = -1 and n = call.asOrdinaryCall().(DataFlow::CallNode).getReceiver()
+    or
+    call.asPartialCall().isPartialArgument(_, n, pos)
+    or
+    pos = -1 and n = call.asPartialCall().getBoundReceiver()
   }
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) { result = node.getContainer() }
@@ -89,8 +93,42 @@ module Private {
   pragma[inline]
   ContentApprox getContentApprox(Content c) { result = c }
 
-  class DataFlowCall extends DataFlow::InvokeNode {
-    DataFlowCallable getEnclosingCallable() { result = this.getContainer() }
+  private newtype TDataFlowCall =
+    MkOrdinaryCall(DataFlow::InvokeNode node) or
+    MkPartialCall(DataFlow::PartialInvokeNode node)
+
+  class DataFlowCall extends TDataFlowCall {
+    DataFlowCallable getEnclosingCallable() { none() } // Overridden in subclass
+
+    string toString() { none() } // Overridden in subclass
+
+    DataFlow::InvokeNode asOrdinaryCall() { this = MkOrdinaryCall(result) }
+
+    DataFlow::PartialInvokeNode asPartialCall() { this = MkPartialCall(result) }
+  }
+
+  private class OrdinaryCall extends DataFlowCall, MkOrdinaryCall {
+    private DataFlow::InvokeNode node;
+
+    OrdinaryCall() { this = MkOrdinaryCall(node) }
+
+    DataFlow::InvokeNode getNode() { result = node }
+
+    override DataFlowCallable getEnclosingCallable() { result = node.getContainer() }
+
+    override string toString() { result = node.toString() }
+  }
+
+  private class PartialCall extends DataFlowCall, MkPartialCall {
+    private DataFlow::PartialInvokeNode node;
+
+    PartialCall() { this = MkPartialCall(node) }
+
+    DataFlow::PartialInvokeNode getNode() { result = node }
+
+    override DataFlowCallable getEnclosingCallable() { result = node.getContainer() }
+
+    override string toString() { result = node.toString() }
   }
 
   class ParameterPosition = int;
@@ -107,7 +145,11 @@ module Private {
   predicate parameterMatch(ParameterPosition ppos, ArgumentPosition apos) { ppos = apos }
 
   pragma[inline]
-  Function viableCallable(DataFlow::InvokeNode node) { result = node.getACallee() }
+  Function viableCallable(DataFlowCall node) {
+    result = node.asOrdinaryCall().getACallee()
+    or
+    result = node.asPartialCall().getACallbackNode().getAFunctionValue().getFunction()
+  }
 
   /**
    * Holds if the set of viable implementations that can be called by `call`
