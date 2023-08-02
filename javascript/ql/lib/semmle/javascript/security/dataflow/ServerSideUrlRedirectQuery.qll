@@ -11,11 +11,37 @@ import javascript
 import RemoteFlowSources
 import UrlConcatenation
 import ServerSideUrlRedirectCustomizations::ServerSideUrlRedirect
+private import semmle.javascript.dataflow2.DataFlow as DataFlow2
+private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
+private import semmle.javascript.dataflow2.BarrierGuards
+
+module ConfigurationArg implements DataFlow2::ConfigSig {
+  predicate isSource(DataFlow::Node source) { source instanceof Source }
+
+  predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
+
+  predicate isBarrier(DataFlow::Node node) {
+    node instanceof Sanitizer
+    or
+    barrierGuardBlocksNode(_, node, _)
+  }
+
+  predicate isBarrierOut(DataFlow::Node node) { hostnameSanitizingPrefixEdge(node, _) }
+
+  predicate isAdditionalFlowStep(DataFlow::Node pred, DataFlow::Node succ) {
+    exists(HtmlSanitizerCall call |
+      pred = call.getInput() and
+      succ = call
+    )
+  }
+}
+
+module Configuration = TaintTracking2::Global<ConfigurationArg>;
 
 /**
  * A taint-tracking configuration for reasoning about unvalidated URL redirections.
  */
-class Configuration extends TaintTracking::Configuration {
+deprecated class Configuration extends TaintTracking::Configuration {
   Configuration() { this = "ServerSideUrlRedirect" }
 
   override predicate isSource(DataFlow::Node source) { source instanceof Source }
@@ -27,7 +53,7 @@ class Configuration extends TaintTracking::Configuration {
     node instanceof Sanitizer
   }
 
-  override predicate isSanitizerOut(DataFlow::Node node) { hostnameSanitizingPrefixEdge(node, _) }
+  override predicate isSanitizerOut(DataFlow::Node node) { ConfigurationArg::isBarrierOut(node) }
 
   override predicate isSanitizerGuard(TaintTracking::SanitizerGuardNode guard) {
     guard instanceof LocalUrlSanitizingGuard or
@@ -35,10 +61,7 @@ class Configuration extends TaintTracking::Configuration {
   }
 
   override predicate isAdditionalTaintStep(DataFlow::Node pred, DataFlow::Node succ) {
-    exists(HtmlSanitizerCall call |
-      pred = call.getInput() and
-      succ = call
-    )
+    ConfigurationArg::isAdditionalFlowStep(pred, succ)
   }
 }
 
