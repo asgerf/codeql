@@ -11,6 +11,7 @@ import javascript
 import TaintedPathCustomizations::TaintedPath
 private import semmle.javascript.dataflow2.DataFlow as DataFlow2
 private import semmle.javascript.dataflow2.BarrierGuards
+private import semmle.javascript.dataflow2.DeduplicateFlowState
 
 // Materialize flow labels
 private class ConcretePosixPath extends Label::PosixPath {
@@ -21,27 +22,21 @@ private class ConcreteSplitPath extends Label::SplitPath {
   ConcreteSplitPath() { this = this }
 }
 
-private class SourceState extends DataFlow::FlowLabel {
-  SourceState() { this = "SourceState" }
-}
-
-private class SinkState extends DataFlow::FlowLabel {
-  SinkState() { this = "SinkState" }
-}
-
 /**
  * A taint-tracking configuration for reasoning about tainted-path vulnerabilities.
  */
 module ConfigurationArgs implements DataFlow2::StateConfigSig {
   class FlowState = DataFlow::FlowLabel;
 
-  predicate isSource(DataFlow::Node source, DataFlow::FlowLabel label) {
-    source instanceof Source and label instanceof SourceState
+  private predicate isSourceRaw(DataFlow::Node source, FlowState state) {
+    state = source.(Source).getAFlowLabel()
   }
 
-  predicate isSink(DataFlow::Node sink, DataFlow::FlowLabel label) {
-    sink instanceof Sink and label instanceof SinkState
+  private predicate isSinkRaw(DataFlow::Node sink, FlowState state) {
+    state = sink.(Sink).getAFlowLabel()
   }
+
+  import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
 
   predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel label) {
     node instanceof Sanitizer and exists(label)
@@ -53,24 +48,12 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
 
   // predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) { guard instanceof BarrierGuardNode }
   predicate isAdditionalFlowStep(
-    DataFlow::Node src, DataFlow::FlowLabel srclabel, DataFlow::Node dst,
-    DataFlow::FlowLabel dstlabel
+    DataFlow::Node node1, DataFlow::FlowLabel state1, DataFlow::Node node2,
+    DataFlow::FlowLabel state2
   ) {
-    isAdditionalTaintedPathFlowStep(src, dst, srclabel, dstlabel)
+    isAdditionalTaintedPathFlowStep(node1, node2, state1, state2)
     or
-    exists(Source source |
-      src = source and
-      dst = source and
-      srclabel instanceof SourceState and
-      dstlabel = source.getAFlowLabel()
-    )
-    or
-    exists(Sink sink |
-      src = sink and
-      dst = sink and
-      srclabel = sink.getAFlowLabel() and
-      dstlabel instanceof SinkState
-    )
+    deduplicationStep(node1, state1, node2, state2)
   }
 }
 
