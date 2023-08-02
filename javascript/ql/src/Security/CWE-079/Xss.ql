@@ -14,10 +14,10 @@
 
 import javascript
 import semmle.javascript.security.dataflow.DomBasedXssQuery
-import DataFlow::PathGraph
+import Configuration::PathGraph
 
-from DataFlow::Configuration cfg, DataFlow::PathNode source, DataFlow::PathNode sink
-where cfg.hasFlowPath(source, sink)
+from Configuration::PathNode source, Configuration::PathNode sink
+where Configuration::flowPath(source, sink)
 select sink.getNode(), source, sink,
   sink.getNode().(Sink).getVulnerabilityKind() + " vulnerability due to $@.", source.getNode(),
   "user-provided value"
