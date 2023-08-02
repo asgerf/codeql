@@ -1373,6 +1373,8 @@ module DataFlow {
     }
 
     override string toString() { result = this.getTag().toString() }
+
+    override StmtContainer getContainer() { result = this.getTag().getInnerTopLevel() }
   }
 
   /**
