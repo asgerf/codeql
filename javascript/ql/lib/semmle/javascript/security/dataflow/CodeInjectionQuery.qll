@@ -9,11 +9,29 @@
 
 import javascript
 import CodeInjectionCustomizations::CodeInjection
+private import semmle.javascript.dataflow2.DataFlow as DataFlow2
+private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
+private import semmle.javascript.dataflow2.BarrierGuards
+
+module ConfigurationArgs implements DataFlow2::ConfigSig {
+  predicate isSource(DataFlow::Node source) { source instanceof Source }
+
+  predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
+
+  predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
+
+  predicate isAdditionalFlowStep(DataFlow::Node node1, DataFlow::Node node2) {
+    // HTML sanitizers are insufficient protection against code injection
+    node1 = node2.(HtmlSanitizerCall).getInput()
+  }
+}
+
+module Configuration = TaintTracking2::Global<ConfigurationArgs>;
 
 /**
  * A taint-tracking configuration for reasoning about code injection vulnerabilities.
  */
-class Configuration extends TaintTracking::Configuration {
+deprecated class Configuration extends TaintTracking::Configuration {
   Configuration() { this = "CodeInjection" }
 
   override predicate isSource(DataFlow::Node source) { source instanceof Source }
@@ -25,8 +43,7 @@ class Configuration extends TaintTracking::Configuration {
     node instanceof Sanitizer
   }
 
-  override predicate isAdditionalTaintStep(DataFlow::Node src, DataFlow::Node trg) {
-    // HTML sanitizers are insufficient protection against code injection
-    src = trg.(HtmlSanitizerCall).getInput()
+  override predicate isAdditionalTaintStep(DataFlow::Node node1, DataFlow::Node node2) {
+    ConfigurationArgs::isAdditionalFlowStep(node1, node2)
   }
 }
