@@ -13,17 +13,22 @@ import NosqlInjectionCustomizations::NosqlInjection
 private import semmle.javascript.dataflow2.DataFlow as DataFlow2
 private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
 private import semmle.javascript.dataflow2.BarrierGuards
+private import semmle.javascript.dataflow2.DeduplicateFlowState
 
 module ConfigurationArgs implements DataFlow2::StateConfigSig {
   class FlowState = DataFlow::FlowLabel;
 
-  predicate isSource(DataFlow::Node source, FlowState state) {
+  private predicate isSourceRaw(DataFlow::Node source, FlowState state) {
     source instanceof Source and state.isTaint()
     or
     TaintedObject::isSource(source, state)
   }
 
-  predicate isSink(DataFlow::Node sink, FlowState state) { sink.(Sink).getAFlowLabel() = state }
+  private predicate isSinkRaw(DataFlow::Node sink, FlowState state) {
+    sink.(Sink).getAFlowLabel() = state
+  }
+
+  import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
 
   predicate isBarrier(DataFlow::Node node, FlowState state) {
     node instanceof Sanitizer and state.isTaint()
@@ -44,6 +49,8 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
       queryObj.flowsTo(node2) and
       node1 = queryObj.getAPropertyWrite().getRhs()
     )
+    or
+    deduplicationStep(node1, state1, node2, state2)
   }
 }
 
