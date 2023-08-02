@@ -14,9 +14,9 @@ import javascript
 import semmle.javascript.security.dataflow.RequestForgeryQuery
 import DataFlow::PathGraph
 
-from Configuration cfg, DataFlow::PathNode source, DataFlow::PathNode sink, DataFlow::Node request
+from Configuration::PathNode source, Configuration::PathNode sink, DataFlow::Node request
 where
-  cfg.hasFlowPath(source, sink) and
+  Configuration::flowPath(source, sink) and
   request = sink.getNode().(Sink).getARequest()
 select request, source, sink, "The $@ of this request depends on a $@.", sink.getNode(),
   sink.getNode().(Sink).getKind(), source, "user-provided value"

@@ -10,25 +10,49 @@
 import javascript
 import UrlConcatenation
 import RequestForgeryCustomizations::RequestForgery
+private import semmle.javascript.dataflow2.DataFlow as DataFlow2
+private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
+private import semmle.javascript.dataflow2.BarrierGuards
+
+module ConfigurationArgs implements DataFlow2::ConfigSig {
+  predicate isSource(DataFlow::Node source) { source.(Source).isServerSide() }
+
+  predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
+
+  predicate isBarrier(DataFlow::Node node) {
+    node instanceof Sanitizer
+    or
+    barrierGuardBlocksNode(_, node, DataFlow::FlowLabel::taint())
+  }
+
+  predicate isBarrierOut(DataFlow::Node node) { sanitizingPrefixEdge(node, _) }
+
+  predicate isAdditionalFlowStep(DataFlow::Node pred, DataFlow::Node succ) {
+    isAdditionalRequestForgeryStep(pred, succ)
+  }
+}
+
+module Configuration = TaintTracking2::Global<ConfigurationArgs>;
 
 /**
  * A taint tracking configuration for request forgery.
  */
-class Configuration extends TaintTracking::Configuration {
+deprecated class Configuration extends TaintTracking::Configuration {
   Configuration() { this = "RequestForgery" }
 
-  override predicate isSource(DataFlow::Node source) { source.(Source).isServerSide() }
+  override predicate isSource(DataFlow::Node source) { ConfigurationArgs::isSource(source) }
 
-  override predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
+  override predicate isSink(DataFlow::Node sink) { ConfigurationArgs::isSink(sink) }
 
   override predicate isSanitizer(DataFlow::Node node) {
-    super.isSanitizer(node) or
+    super.isSanitizer(node)
+    or
     node instanceof Sanitizer
   }
 
-  override predicate isSanitizerOut(DataFlow::Node node) { sanitizingPrefixEdge(node, _) }
+  override predicate isSanitizerOut(DataFlow::Node node) { ConfigurationArgs::isBarrierOut(node) }
 
   override predicate isAdditionalTaintStep(DataFlow::Node pred, DataFlow::Node succ) {
-    isAdditionalRequestForgeryStep(pred, succ)
+    ConfigurationArgs::isAdditionalFlowStep(pred, succ)
   }
 }
