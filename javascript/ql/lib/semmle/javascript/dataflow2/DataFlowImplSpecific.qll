@@ -40,6 +40,10 @@ module Private {
     kind = MkNormalReturn() and result = call.asOrdinaryCall()
     or
     kind = MkExceptionalReturn() and result = call.asOrdinaryCall().getExceptionalReturn()
+    or
+    kind = MkNormalReturn() and result = call.asBoundCall(_)
+    or
+    kind = MkExceptionalReturn() and result = call.asBoundCall(_).getExceptionalReturn()
   }
 
   /**
@@ -69,6 +73,8 @@ module Private {
     call.asPartialCall().isPartialArgument(_, n, pos)
     or
     pos = -1 and n = call.asPartialCall().getBoundReceiver()
+    or
+    exists(int boundArgs | n = call.asBoundCall(boundArgs).getArgument(pos - boundArgs))
   }
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) { result = node.getContainer() }
@@ -95,7 +101,10 @@ module Private {
 
   private newtype TDataFlowCall =
     MkOrdinaryCall(DataFlow::InvokeNode node) or
-    MkPartialCall(DataFlow::PartialInvokeNode node)
+    MkPartialCall(DataFlow::PartialInvokeNode node) or
+    MkBoundCall(DataFlow::InvokeNode node, int boundArgs) {
+      FlowSteps::callsBound(node, _, boundArgs)
+    }
 
   class DataFlowCall extends TDataFlowCall {
     DataFlowCallable getEnclosingCallable() { none() } // Overridden in subclass
@@ -105,6 +114,8 @@ module Private {
     DataFlow::InvokeNode asOrdinaryCall() { this = MkOrdinaryCall(result) }
 
     DataFlow::PartialInvokeNode asPartialCall() { this = MkPartialCall(result) }
+
+    DataFlow::InvokeNode asBoundCall(int boundArgs) { this = MkBoundCall(result, boundArgs) }
   }
 
   private class OrdinaryCall extends DataFlowCall, MkOrdinaryCall {
@@ -128,7 +139,20 @@ module Private {
 
     override DataFlowCallable getEnclosingCallable() { result = node.getContainer() }
 
-    override string toString() { result = node.toString() }
+    override string toString() { result = node.toString() + " (as partial invocation)" }
+  }
+
+  private class BoundCall extends DataFlowCall, MkBoundCall {
+    private DataFlow::InvokeNode node;
+    private int boundArgs;
+
+    BoundCall() { this = MkBoundCall(node, boundArgs) }
+
+    override DataFlowCallable getEnclosingCallable() { result = node.getContainer() }
+
+    override string toString() {
+      result = node.toString() + " (as call with " + boundArgs + " bound arguments)"
+    }
   }
 
   class ParameterPosition = int;
@@ -149,6 +173,11 @@ module Private {
     result = node.asOrdinaryCall().getACallee()
     or
     result = node.asPartialCall().getACallbackNode().getAFunctionValue().getFunction()
+    or
+    exists(DataFlow::InvokeNode invoke, int boundArgs |
+      invoke = node.asBoundCall(boundArgs) and
+      FlowSteps::callsBound(invoke, result, boundArgs)
+    )
   }
 
   /**
