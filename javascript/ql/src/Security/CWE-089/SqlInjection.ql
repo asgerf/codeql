@@ -23,9 +23,9 @@ module Merged =
     NosqlInjection::Configuration::PathNode, SqlInjection::Configuration::PathGraph,
     NosqlInjection::Configuration::PathGraph>;
 
-import Merged
+import Merged::PathGraph
 
-from PathNode source, PathNode sink, string type
+from Merged::PathNode source, Merged::PathNode sink, string type
 where
   SqlInjection::Configuration::flowPath(source.asPathNode1(), sink.asPathNode1()) and
   type = "string"
