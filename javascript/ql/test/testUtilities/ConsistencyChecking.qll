@@ -126,10 +126,9 @@ private predicate falseNegative(File file, int line, AssertionComment comment, C
 /**
  * Gets a file that should be included for consistency checking for configuration `conf`.
  */
-private File getATestFile(string conf) {
-  not exists(any(ConsistencyConfiguration res).getAFile()) and
-  result = any(LineComment comment).getFile() and
-  conf = ""
+private File getATestFile(Conf conf) {
+  not exists(conf.(ConsistencyConfiguration).getAFile()) and
+  result = any(LineComment comment).getFile()
   or
   result = conf.(ConsistencyConfiguration).getAFile()
 }
