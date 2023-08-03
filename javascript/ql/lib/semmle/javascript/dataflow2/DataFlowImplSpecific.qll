@@ -230,6 +230,8 @@ module Private {
       c = read.getPropertyName() and
       node2 = read
     )
+    or
+    DataFlow::SharedFlowStep::loadStep(node1, node2, c)
   }
 
   /**
@@ -243,6 +245,8 @@ module Private {
       c = write.getPropertyName() and
       node2 = write.getBase().getALocalSource() // TODO
     )
+    or
+    DataFlow::SharedFlowStep::storeStep(node1, node2, c)
   }
 
   /**
