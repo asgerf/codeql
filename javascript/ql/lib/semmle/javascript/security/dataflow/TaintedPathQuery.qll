@@ -41,9 +41,9 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
   predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel label) {
     node instanceof Sanitizer and exists(label)
     or
-    barrierGuardBlocksNode(_, node, label)
+    barrierGuardBlocksNode(node, label)
     or
-    barrierGuardBlocksNode(_, node, "") and exists(label)
+    barrierGuardBlocksNode(node, "") and exists(label)
   }
 
   // predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) { guard instanceof BarrierGuardNode }

@@ -26,7 +26,7 @@ module TestDataFlowConfigurationArgs implements DataFlow2::ConfigSig {
     or
     node.asExpr().(PropAccess).getPropertyName() = "notTracked"
     or
-    barrierGuardBlocksNode(_, node, DataFlow::FlowLabel::data())
+    barrierGuardBlocksNode(node, DataFlow::FlowLabel::data())
   }
 }
 
@@ -55,9 +55,7 @@ module FlowLabelConfigArg implements DataFlow2::StateConfigSig {
     lbl = "even"
   }
 
-  predicate isBarrier(DataFlow::Node node, FlowState state) {
-    barrierGuardBlocksNode(_, node, state)
-  }
+  predicate isBarrier(DataFlow::Node node, FlowState state) { barrierGuardBlocksNode(node, state) }
 
   predicate isAdditionalFlowStep(
     DataFlow::Node pred, FlowState predLabel, DataFlow::Node succ, FlowState succLabel
@@ -99,7 +97,7 @@ module TestTaintTrackingConfigurationArg implements DataFlow2::ConfigSig {
     or
     node.asExpr().(PropAccess).getPropertyName() = "notTracked"
     or
-    barrierGuardBlocksNode(_, node, DataFlow::FlowLabel::taint())
+    barrierGuardBlocksNode(node, DataFlow::FlowLabel::taint())
   }
 }
 
@@ -136,7 +134,7 @@ module GermanFlowConfigArg implements DataFlow2::ConfigSig {
     or
     node.asExpr().(PropAccess).getPropertyName() = "notTracked"
     or
-    barrierGuardBlocksNode(_, node, DataFlow::FlowLabel::data())
+    barrierGuardBlocksNode(node, DataFlow::FlowLabel::data())
   }
 }
 

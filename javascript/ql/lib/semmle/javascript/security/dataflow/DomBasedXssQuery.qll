@@ -54,14 +54,14 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
   predicate isBarrier(DataFlow::Node node) {
     node instanceof Sanitizer
     or
-    barrierGuardBlocksNode(_, node, "")
+    barrierGuardBlocksNode(node, "")
   }
 
   predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel lbl) {
-    barrierGuardBlocksNode(_, node, lbl)
+    barrierGuardBlocksNode(node, lbl)
     or
     // copy all taint barrier guards to the TaintedUrlSuffix/PrefixLabel label
-    barrierGuardBlocksNode(_, node, DataFlow::FlowLabel::taint()) and
+    barrierGuardBlocksNode(node, DataFlow::FlowLabel::taint()) and
     lbl = [TaintedUrlSuffix::label(), prefixLabel()]
     or
     // any non-first string-concatenation leaf is a barrier for the prefix label.

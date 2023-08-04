@@ -1055,6 +1055,8 @@ module TaintTracking {
    * `<isWhitelisted>` is a call with callee name 'safe', 'whitelist', 'allow', or similar.
    *
    * This sanitizer is not enabled by default.
+   *
+   * Currently only used by `CorsMisconfigurationForCredentials` and `UnsafeShellCommandConstruction`.
    */
   class AdHocWhitelistCheckSanitizer extends SanitizerGuardNode, DataFlow::CallNode {
     AdHocWhitelistCheckSanitizer() {

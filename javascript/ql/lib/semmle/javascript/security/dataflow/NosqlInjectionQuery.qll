@@ -33,7 +33,7 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
   predicate isBarrier(DataFlow::Node node, FlowState state) {
     node instanceof Sanitizer and state.isTaint()
     or
-    barrierGuardBlocksNode(_, node, _) and state.isTaint()
+    barrierGuardBlocksNode(node, _) and state.isTaint()
   }
 
   predicate isAdditionalFlowStep(

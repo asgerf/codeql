@@ -33,7 +33,7 @@ module ConfigurationArg implements DataFlow2::StateConfigSig {
   predicate isBarrier(DataFlow::Node node, FlowState state) {
     node instanceof Sanitizer
     or
-    barrierGuardBlocksNode(_, node, state)
+    barrierGuardBlocksNode(node, state)
   }
 
   predicate isBarrierOut(DataFlow::Node node) { hostnameSanitizingPrefixEdge(node, _) }

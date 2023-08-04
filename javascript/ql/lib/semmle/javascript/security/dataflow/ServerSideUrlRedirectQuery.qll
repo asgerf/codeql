@@ -23,7 +23,7 @@ module ConfigurationArg implements DataFlow2::ConfigSig {
   predicate isBarrier(DataFlow::Node node) {
     node instanceof Sanitizer
     or
-    barrierGuardBlocksNode(_, node, _)
+    barrierGuardBlocksNode(node, _)
   }
 
   predicate isBarrierOut(DataFlow::Node node) { hostnameSanitizingPrefixEdge(node, _) }

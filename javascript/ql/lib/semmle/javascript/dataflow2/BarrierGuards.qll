@@ -94,7 +94,9 @@ private predicate barrierGuardUsedInCondition(
  * `label` is bound to the blocked label, or the empty string if all labels should be blocked.
  */
 pragma[nomagic]
-predicate barrierGuardBlocksNode(DataFlow::BarrierGuardNode guard, DataFlow::Node nd, string label) {
+private predicate barrierGuardBlocksNode(
+  DataFlow::BarrierGuardNode guard, DataFlow::Node nd, string label
+) {
   // 1) `nd` is a use of a refinement node that blocks its input variable
   exists(SsaRefinementNode ref, boolean outcome |
     nd = DataFlow::ssaDefinitionNode(ref) and
@@ -236,4 +238,18 @@ private class CallAgainstEqualityCheck extends DataFlow::AdditionalBarrierGuardN
   }
 
   override predicate appliesTo(DataFlow::Configuration cfg) { none() }
+}
+
+pragma[nomagic]
+predicate barrierGuardBlocksNode(DataFlow::Node nd, string label) {
+  exists(DataFlow::BarrierGuardNode guard |
+    barrierGuardBlocksNode(guard, nd, label) and
+    // Block the AdHocWhitelistCheckSanitizer by default, as it is only used by two queries
+    not guard instanceof TaintTracking::AdHocWhitelistCheckSanitizer
+  )
+}
+
+pragma[nomagic]
+predicate barrierGuardBlocksNodeIncludeHeuristicCheck(DataFlow::Node nd, string label) {
+  exists(DataFlow::BarrierGuardNode guard | barrierGuardBlocksNode(guard, nd, label))
 }
