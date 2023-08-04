@@ -45,10 +45,18 @@ module ConfigurationArg implements DataFlow2::StateConfigSig {
     state1 instanceof DocumentUrl and
     state2.isTaint()
     or
-    // preserve document.url label in step from `location` to `location.href`
+    // preserve document.url label in step from `location` to `location.href` or `location.toString()`
     state1 instanceof DocumentUrl and
     state2 instanceof DocumentUrl and
-    node2.(DataFlow::PropRead).accesses(node1, "href")
+    (
+      node2.(DataFlow::PropRead).accesses(node1, "href")
+      or
+      exists(DataFlow::CallNode call |
+        call.getCalleeName() = "toString" and
+        node1 = call.getReceiver() and
+        node2 = call
+      )
+    )
     or
     exists(HtmlSanitizerCall call |
       node1 = call.getInput() and
