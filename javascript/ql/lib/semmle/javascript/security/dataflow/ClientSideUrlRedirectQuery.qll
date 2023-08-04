@@ -45,19 +45,6 @@ module ConfigurationArg implements DataFlow2::StateConfigSig {
     state1 instanceof DocumentUrl and
     state2.isTaint()
     or
-    // preserve document.url label in step from `location` to `location.href` or `location.toString()`
-    state1 instanceof DocumentUrl and
-    state2 instanceof DocumentUrl and
-    (
-      node2.(DataFlow::PropRead).accesses(node1, "href")
-      or
-      exists(DataFlow::CallNode call |
-        call.getCalleeName() = "toString" and
-        node1 = call.getReceiver() and
-        node2 = call
-      )
-    )
-    or
     exists(HtmlSanitizerCall call |
       node1 = call.getInput() and
       node2 = call and
@@ -92,6 +79,21 @@ deprecated class Configuration extends TaintTracking::Configuration {
     DataFlow::FlowLabel state2
   ) {
     ConfigurationArg::isAdditionalFlowStep(node1, state1, node2, state2)
+    or
+    // Preserve document.url label in step from `location` to `location.href` or `location.toString()`
+    // TODO: These steps are included in the default taint steps, which are inherited by all flow states.
+    //       They are therefore unnecessray in the ConfigSig above, but we may need to add some corresponding barriers.
+    state1 instanceof DocumentUrl and
+    state2 instanceof DocumentUrl and
+    (
+      node2.(DataFlow::PropRead).accesses(node1, "href")
+      or
+      exists(DataFlow::CallNode call |
+        call.getCalleeName() = "toString" and
+        node1 = call.getReceiver() and
+        node2 = call
+      )
+    )
   }
 
   override predicate isSanitizerGuard(TaintTracking::SanitizerGuardNode guard) {
