@@ -32,4 +32,8 @@ newtype TNode =
   TExceptionalInvocationReturnNode(InvokeExpr e) or
   TGlobalAccessPathRoot() or
   TTemplatePlaceholderTag(Templating::TemplatePlaceholderTag tag) or
-  TReflectiveParametersNode(Function f)
+  TReflectiveParametersNode(Function f) or
+  /** A synthesized node to decompose load-store steps into two steps through an intermediate expectsContent node. */
+  TSynthExpectPromiseNode(InvokeExpr e, string prop) {
+    prop = [Promises::valueProp(), Promises::errorProp()]
+  }

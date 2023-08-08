@@ -204,6 +204,16 @@ module Private {
     FlowSteps::propertyFlowStep(node1, node2)
     or
     FlowSteps::globalFlowStep(node1, node2)
+    or
+    exists(DataFlow::Node pred, DataFlow::Node succ, string prop |
+      DataFlow::SharedFlowStep::loadStoreStep(pred, succ, prop)
+    |
+      node1 = pred and
+      node2 = TSynthExpectPromiseNode(succ.asExpr(), prop)
+      or
+      node1 = TSynthExpectPromiseNode(succ.asExpr(), prop) and
+      node2 = succ
+    )
   }
 
   predicate simpleLocalFlowStep(Node node1, Node node2) {
@@ -262,7 +272,7 @@ module Private {
    * Holds if the value that is being tracked is expected to be stored inside content `c`
    * at node `n`.
    */
-  predicate expectsContent(Node n, ContentSet c) { none() }
+  predicate expectsContent(Node n, ContentSet c) { n = TSynthExpectPromiseNode(_, c) }
 
   /**
    * Holds if the node `n` is unreachable when the call context is `call`.
