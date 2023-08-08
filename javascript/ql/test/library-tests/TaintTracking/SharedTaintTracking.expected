@@ -56,6 +56,7 @@
 | library-tests/TaintTracking/object-bypass-sanitizer.js:11 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
 | library-tests/TaintTracking/object-bypass-sanitizer.js:12 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
 | library-tests/TaintTracking/object-bypass-sanitizer.js:28 | expected an alert, but found none | NOT OK | ConsistencyConfig |
+| library-tests/TaintTracking/promise.js:38 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/refinement-sanitizer.js:15 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
 | library-tests/TaintTracking/refinement-sanitizer.js:33 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
 | library-tests/TaintTracking/sanitizer-guards.js:7 | did not expect an alert, but found an alert | OK | ConsistencyConfig |

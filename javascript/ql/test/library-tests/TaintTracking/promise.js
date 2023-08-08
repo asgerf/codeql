@@ -24,3 +24,17 @@ function exceptionThroughThen() {
     sink(e); // NOT OK
   })
 }
+
+function exceptionThroughThen2() {
+  return new Promise((resolve, reject) => {
+    resolve("safe")
+  })
+  .then(x => {
+    throw new Error(source())
+  })
+  .then(x => "safe")
+  .then(x => "safe")
+  .catch(e => {
+    sink(e); // NOT OK
+  })
+}
