@@ -42,6 +42,12 @@ edges
 | tst13.js:78:15:78:38 | documen ... .search | tst13.js:81:28:81:30 | url |
 | tst13.js:78:15:78:38 | documen ... .search | tst13.js:82:27:82:29 | url |
 | tst13.js:78:15:78:38 | documen ... .search | tst13.js:83:22:83:24 | url |
+| tst15.js:2:15:2:31 | document.location | tst15.js:3:23:3:38 | url.substring(0) |
+| tst15.js:2:15:2:31 | document.location | tst15.js:4:23:4:42 | url.substring(0, 10) |
+| tst15.js:2:15:2:31 | document.location | tst15.js:5:23:5:60 | url.sub ... ', 10)) |
+| tst15.js:3:23:3:38 | url.substring(0) | tst15.js:3:23:3:51 | url.sub ... ring(1) |
+| tst15.js:4:23:4:42 | url.substring(0, 10) | tst15.js:4:23:4:55 | url.sub ... ring(1) |
+| tst15.js:5:23:5:60 | url.sub ... ', 10)) | tst15.js:5:23:5:73 | url.sub ... ring(1) |
 | tst.js:2:19:2:69 | /.*redi ... n.href) | tst.js:2:19:2:72 | /.*redi ... ref)[1] |
 | tst.js:2:47:2:68 | documen ... on.href | tst.js:2:19:2:69 | /.*redi ... n.href) |
 | tst.js:6:20:6:56 | indirec ... n.href) | tst.js:6:20:6:59 | indirec ... ref)[1] |
@@ -134,6 +140,13 @@ nodes
 | tst13.js:81:28:81:30 | url | semmle.label | url |
 | tst13.js:82:27:82:29 | url | semmle.label | url |
 | tst13.js:83:22:83:24 | url | semmle.label | url |
+| tst15.js:2:15:2:31 | document.location | semmle.label | document.location |
+| tst15.js:3:23:3:38 | url.substring(0) | semmle.label | url.substring(0) |
+| tst15.js:3:23:3:51 | url.sub ... ring(1) | semmle.label | url.sub ... ring(1) |
+| tst15.js:4:23:4:42 | url.substring(0, 10) | semmle.label | url.substring(0, 10) |
+| tst15.js:4:23:4:55 | url.sub ... ring(1) | semmle.label | url.sub ... ring(1) |
+| tst15.js:5:23:5:60 | url.sub ... ', 10)) | semmle.label | url.sub ... ', 10)) |
+| tst15.js:5:23:5:73 | url.sub ... ring(1) | semmle.label | url.sub ... ring(1) |
 | tst.js:2:19:2:69 | /.*redi ... n.href) | semmle.label | /.*redi ... n.href) |
 | tst.js:2:19:2:72 | /.*redi ... ref)[1] | semmle.label | /.*redi ... ref)[1] |
 | tst.js:2:47:2:68 | documen ... on.href | semmle.label | documen ... on.href |
@@ -216,6 +229,9 @@ subpaths
 | tst13.js:81:28:81:30 | url | tst13.js:78:15:78:38 | documen ... .search | tst13.js:81:28:81:30 | url | Untrusted URL redirection depends on a $@. | tst13.js:78:15:78:38 | documen ... .search | user-provided value |
 | tst13.js:82:27:82:29 | url | tst13.js:78:15:78:38 | documen ... .search | tst13.js:82:27:82:29 | url | Untrusted URL redirection depends on a $@. | tst13.js:78:15:78:38 | documen ... .search | user-provided value |
 | tst13.js:83:22:83:24 | url | tst13.js:78:15:78:38 | documen ... .search | tst13.js:83:22:83:24 | url | Untrusted URL redirection depends on a $@. | tst13.js:78:15:78:38 | documen ... .search | user-provided value |
+| tst15.js:3:23:3:51 | url.sub ... ring(1) | tst15.js:2:15:2:31 | document.location | tst15.js:3:23:3:51 | url.sub ... ring(1) | Untrusted URL redirection depends on a $@. | tst15.js:2:15:2:31 | document.location | user-provided value |
+| tst15.js:4:23:4:55 | url.sub ... ring(1) | tst15.js:2:15:2:31 | document.location | tst15.js:4:23:4:55 | url.sub ... ring(1) | Untrusted URL redirection depends on a $@. | tst15.js:2:15:2:31 | document.location | user-provided value |
+| tst15.js:5:23:5:73 | url.sub ... ring(1) | tst15.js:2:15:2:31 | document.location | tst15.js:5:23:5:73 | url.sub ... ring(1) | Untrusted URL redirection depends on a $@. | tst15.js:2:15:2:31 | document.location | user-provided value |
 | tst.js:2:19:2:72 | /.*redi ... ref)[1] | tst.js:2:47:2:68 | documen ... on.href | tst.js:2:19:2:72 | /.*redi ... ref)[1] | Untrusted URL redirection depends on a $@. | tst.js:2:47:2:68 | documen ... on.href | user-provided value |
 | tst.js:6:20:6:59 | indirec ... ref)[1] | tst.js:6:34:6:55 | documen ... on.href | tst.js:6:20:6:59 | indirec ... ref)[1] | Untrusted URL redirection depends on a $@. | tst.js:6:34:6:55 | documen ... on.href | user-provided value |
 | tst.js:10:19:10:84 | new Reg ... ref)[1] | tst.js:10:59:10:80 | documen ... on.href | tst.js:10:19:10:84 | new Reg ... ref)[1] | Untrusted URL redirection depends on a $@. | tst.js:10:59:10:80 | documen ... on.href | user-provided value |
