@@ -12,3 +12,15 @@ function closure() {
   resolver.resolve(source());
   sink(resolver.promise); // NOT OK
 }
+
+function exceptionThroughThen() {
+  return new Promise((resolve, reject) => {
+    reject(new Error(source()));
+  })
+  .then(x => "safe")
+  .then(x => "safe")
+  .then(x => "safe")
+  .catch(e => {
+    sink(e); // NOT OK
+  })
+}
