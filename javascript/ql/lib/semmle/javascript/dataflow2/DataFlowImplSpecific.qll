@@ -202,6 +202,8 @@ module Private {
     DataFlow::SharedFlowStep::step(node1, node2)
     or
     FlowSteps::propertyFlowStep(node1, node2)
+    or
+    FlowSteps::globalFlowStep(node1, node2)
   }
 
   predicate simpleLocalFlowStep(Node node1, Node node2) {
