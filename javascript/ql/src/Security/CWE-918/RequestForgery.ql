@@ -12,7 +12,7 @@
 
 import javascript
 import semmle.javascript.security.dataflow.RequestForgeryQuery
-import DataFlow::PathGraph
+import Configuration::PathGraph
 
 from Configuration::PathNode source, Configuration::PathNode sink, DataFlow::Node request
 where

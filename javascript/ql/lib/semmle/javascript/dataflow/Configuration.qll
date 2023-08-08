@@ -1902,7 +1902,7 @@ class SinkPathNode extends PathNode, MkSinkNode {
 /**
  * Provides the query predicates needed to include a graph in a path-problem query.
  */
-module PathGraph {
+deprecated module PathGraph {
   /** Holds if `nd` is a node in the graph of data flow path explanations. */
   query predicate nodes(PathNode nd) { not nd.(MidPathNode).isHidden() }
 
