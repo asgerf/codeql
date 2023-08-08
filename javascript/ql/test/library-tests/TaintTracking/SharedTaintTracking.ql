@@ -1,0 +1,40 @@
+import javascript
+import semmle.javascript.dataflow.InferredTypes
+import semmle.javascript.dataflow2.DataFlow as DataFlow2
+import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
+import semmle.javascript.dataflow2.BarrierGuards
+import testUtilities.ConsistencyChecking
+
+DataFlow::CallNode getACall(string name) {
+  result.getCalleeName() = name
+  or
+  result.getCalleeNode().getALocalSource() = DataFlow::globalVarRef(name)
+}
+
+module ConfigArg implements DataFlow2::ConfigSig {
+  predicate isSource(DataFlow::Node node) { node = getACall("source") }
+
+  predicate isSink(DataFlow::Node node) { node = getACall("sink").getAnArgument() }
+
+  predicate isBarrier(DataFlow::Node node) {
+    node.(DataFlow::InvokeNode).getCalleeName().matches("sanitizer_%")
+    or
+    barrierGuardBlocksNode(node, _)
+  }
+}
+
+module Configuration = TaintTracking2::Global<ConfigArg>;
+
+class BasicSanitizerGuard extends TaintTracking::SanitizerGuardNode, DataFlow::CallNode {
+  BasicSanitizerGuard() { this = getACall("isSafe") }
+
+  override predicate sanitizes(boolean outcome, Expr e) {
+    outcome = true and e = this.getArgument(0).asExpr()
+  }
+}
+
+class ConsistencyConfig extends ConsistencyConfiguration {
+  ConsistencyConfig() { this = "ConsistencyConfig" }
+
+  override DataFlow::Node getAnAlert() { Configuration::flow(_, result) }
+}
