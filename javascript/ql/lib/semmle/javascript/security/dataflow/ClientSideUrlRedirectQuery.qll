@@ -30,10 +30,13 @@ module ConfigurationArg implements DataFlow2::StateConfigSig {
     sink instanceof Sink and state.isTaint()
   }
 
+  predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
+
   predicate isBarrier(DataFlow::Node node, FlowState state) {
-    node instanceof Sanitizer
-    or
     barrierGuardBlocksNode(node, state)
+    or
+    isPrefixExtraction(node) and
+    state instanceof DocumentUrl
   }
 
   predicate isBarrierOut(DataFlow::Node node) { hostnameSanitizingPrefixEdge(node, _) }
