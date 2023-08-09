@@ -91,7 +91,10 @@ signature module ConfigSig {
 /** An input configuration for data flow using flow state. */
 signature module StateConfigSig {
   bindingset[this]
-  class FlowState;
+  class FlowState {
+    bindingset[this]
+    string toString();
+  }
 
   /**
    * Holds if `source` is a relevant data flow source with the given initial
