@@ -589,6 +589,18 @@ edges
 | trusted-types.js:13:20:13:30 | window.name | trusted-types-lib.js:1:28:1:28 | x |
 | trusted-types.js:13:20:13:30 | window.name | trusted-types.js:13:20:13:30 | window.name |
 | trusted-types.js:13:20:13:30 | window.name | trusted-types.js:13:20:13:30 | window.name |
+| tst3.js:2:42:2:63 | window. ... .search | tst3.js:2:42:2:63 | window. ... .search |
+| tst3.js:2:42:2:63 | window. ... .search | tst3.js:2:42:2:73 | window. ... bstr(1) |
+| tst3.js:2:42:2:73 | window. ... bstr(1) | tst3.js:4:25:4:32 | data.src |
+| tst3.js:2:42:2:73 | window. ... bstr(1) | tst3.js:5:26:5:31 | data.p |
+| tst3.js:2:42:2:73 | window. ... bstr(1) | tst3.js:7:32:7:37 | data.p |
+| tst3.js:2:42:2:73 | window. ... bstr(1) | tst3.js:9:37:9:42 | data.p |
+| tst3.js:2:42:2:73 | window. ... bstr(1) | tst3.js:10:38:10:43 | data.p |
+| tst3.js:4:25:4:32 | data.src | tst3.js:4:25:4:32 | data.src |
+| tst3.js:5:26:5:31 | data.p | tst3.js:5:26:5:31 | data.p |
+| tst3.js:7:32:7:37 | data.p | tst3.js:7:32:7:37 | data.p |
+| tst3.js:9:37:9:42 | data.p | tst3.js:9:37:9:42 | data.p |
+| tst3.js:10:38:10:43 | data.p | tst3.js:10:38:10:43 | data.p |
 | tst.js:2:16:2:39 | documen ... .search | tst.js:2:16:2:39 | documen ... .search |
 | tst.js:2:16:2:39 | documen ... .search | tst.js:5:18:5:23 | target |
 | tst.js:2:16:2:39 | documen ... .search | tst.js:12:28:12:33 | target |
@@ -605,6 +617,15 @@ edges
 | tst.js:8:37:8:114 | documen ... t=")+8) | tst.js:8:18:8:126 | "<OPTIO ... PTION>" |
 | tst.js:12:5:12:42 | '<div s ...  'px">' | tst.js:12:5:12:42 | '<div s ...  'px">' |
 | tst.js:12:28:12:33 | target | tst.js:12:5:12:42 | '<div s ...  'px">' |
+| tst.js:17:16:17:43 | (new UR ... ation)) [searchParams] | tst.js:17:16:17:56 | (new UR ... hParams |
+| tst.js:17:16:17:56 | (new UR ... hParams | tst.js:18:18:18:23 | params |
+| tst.js:17:17:17:42 | new URL ... cation) [searchParams] | tst.js:17:16:17:43 | (new UR ... ation)) [searchParams] |
+| tst.js:17:25:17:41 | document.location | tst.js:17:17:17:42 | new URL ... cation) [searchParams] |
+| tst.js:17:25:17:41 | document.location | tst.js:17:25:17:41 | document.location |
+| tst.js:18:18:18:23 | params | tst.js:18:18:18:35 | params.get('name') |
+| tst.js:18:18:18:23 | params | tst.js:18:18:18:35 | params.get('name') |
+| tst.js:18:18:18:35 | params.get('name') | tst.js:18:18:18:35 | params.get('name') |
+| tst.js:18:18:18:35 | params.get('name') | tst.js:18:18:18:35 | params.get('name') |
 | tst.js:21:18:21:29 | searchParams | tst.js:21:18:21:41 | searchP ... 'name') |
 | tst.js:21:18:21:29 | searchParams | tst.js:21:18:21:41 | searchP ... 'name') |
 | tst.js:21:18:21:41 | searchP ... 'name') | tst.js:21:18:21:41 | searchP ... 'name') |
@@ -666,7 +687,9 @@ edges
 | tst.js:65:25:65:48 | documen ... .search | tst.js:65:25:65:48 | documen ... .search |
 | tst.js:68:16:68:20 | bar() | tst.js:68:16:68:20 | bar() |
 | tst.js:70:1:70:27 | [,docum ... search] | tst.js:70:46:70:46 | x |
+| tst.js:70:1:70:27 | [,docum ... search] [$arrayElement$] | tst.js:70:46:70:46 | x |
 | tst.js:70:3:70:26 | documen ... .search | tst.js:70:1:70:27 | [,docum ... search] |
+| tst.js:70:3:70:26 | documen ... .search | tst.js:70:1:70:27 | [,docum ... search] [$arrayElement$] |
 | tst.js:70:3:70:26 | documen ... .search | tst.js:70:3:70:26 | documen ... .search |
 | tst.js:70:46:70:46 | x | tst.js:73:20:73:20 | x |
 | tst.js:73:20:73:20 | x | tst.js:73:20:73:20 | x |
@@ -779,6 +802,23 @@ edges
 | tst.js:288:59:288:65 | tainted | tst.js:288:59:288:65 | tainted |
 | tst.js:316:35:316:42 | location | tst.js:316:35:316:42 | location |
 | tst.js:316:35:316:42 | location | tst.js:316:35:316:42 | location |
+| tst.js:327:10:327:35 | new URL ... cation) [searchParams] | tst.js:331:16:331:30 | getTaintedUrl() [searchParams] |
+| tst.js:327:18:327:34 | document.location | tst.js:327:10:327:35 | new URL ... cation) [searchParams] |
+| tst.js:327:18:327:34 | document.location | tst.js:327:18:327:34 | document.location |
+| tst.js:331:16:331:30 | getTaintedUrl() [searchParams] | tst.js:331:16:331:43 | getTain ... hParams |
+| tst.js:331:16:331:43 | getTain ... hParams | tst.js:332:18:332:23 | params |
+| tst.js:332:18:332:23 | params | tst.js:332:18:332:35 | params.get('name') |
+| tst.js:332:18:332:23 | params | tst.js:332:18:332:35 | params.get('name') |
+| tst.js:332:18:332:35 | params.get('name') | tst.js:332:18:332:35 | params.get('name') |
+| tst.js:332:18:332:35 | params.get('name') | tst.js:332:18:332:35 | params.get('name') |
+| tst.js:341:12:341:37 | new URL ... cation) [hash] | tst.js:343:5:343:12 | getUrl() [hash] |
+| tst.js:341:20:341:36 | document.location | tst.js:341:12:341:37 | new URL ... cation) [hash] |
+| tst.js:341:20:341:36 | document.location | tst.js:341:20:341:36 | document.location |
+| tst.js:343:5:343:12 | getUrl() [hash] | tst.js:343:5:343:17 | getUrl().hash |
+| tst.js:343:5:343:17 | getUrl().hash | tst.js:343:5:343:30 | getUrl( ... ring(1) |
+| tst.js:343:5:343:17 | getUrl().hash | tst.js:343:5:343:30 | getUrl( ... ring(1) |
+| tst.js:343:5:343:30 | getUrl( ... ring(1) | tst.js:343:5:343:30 | getUrl( ... ring(1) |
+| tst.js:343:5:343:30 | getUrl( ... ring(1) | tst.js:343:5:343:30 | getUrl( ... ring(1) |
 | tst.js:348:16:348:39 | documen ... .search | tst.js:348:16:348:39 | documen ... .search |
 | tst.js:348:16:348:39 | documen ... .search | tst.js:349:12:349:17 | target |
 | tst.js:349:12:349:17 | target | tst.js:349:12:349:17 | target |
@@ -1521,6 +1561,19 @@ nodes
 | trusted-types.js:13:20:13:30 | window.name | semmle.label | window.name |
 | trusted-types.js:13:20:13:30 | window.name | semmle.label | window.name |
 | trusted-types.js:13:20:13:30 | window.name | semmle.label | window.name |
+| tst3.js:2:42:2:63 | window. ... .search | semmle.label | window. ... .search |
+| tst3.js:2:42:2:63 | window. ... .search | semmle.label | window. ... .search |
+| tst3.js:2:42:2:73 | window. ... bstr(1) | semmle.label | window. ... bstr(1) |
+| tst3.js:4:25:4:32 | data.src | semmle.label | data.src |
+| tst3.js:4:25:4:32 | data.src | semmle.label | data.src |
+| tst3.js:5:26:5:31 | data.p | semmle.label | data.p |
+| tst3.js:5:26:5:31 | data.p | semmle.label | data.p |
+| tst3.js:7:32:7:37 | data.p | semmle.label | data.p |
+| tst3.js:7:32:7:37 | data.p | semmle.label | data.p |
+| tst3.js:9:37:9:42 | data.p | semmle.label | data.p |
+| tst3.js:9:37:9:42 | data.p | semmle.label | data.p |
+| tst3.js:10:38:10:43 | data.p | semmle.label | data.p |
+| tst3.js:10:38:10:43 | data.p | semmle.label | data.p |
 | tst.js:2:16:2:39 | documen ... .search | semmle.label | documen ... .search |
 | tst.js:2:16:2:39 | documen ... .search | semmle.label | documen ... .search |
 | tst.js:5:18:5:23 | target | semmle.label | target |
@@ -1535,6 +1588,15 @@ nodes
 | tst.js:12:5:12:42 | '<div s ...  'px">' | semmle.label | '<div s ...  'px">' |
 | tst.js:12:5:12:42 | '<div s ...  'px">' | semmle.label | '<div s ...  'px">' |
 | tst.js:12:28:12:33 | target | semmle.label | target |
+| tst.js:17:16:17:43 | (new UR ... ation)) [searchParams] | semmle.label | (new UR ... ation)) [searchParams] |
+| tst.js:17:16:17:56 | (new UR ... hParams | semmle.label | (new UR ... hParams |
+| tst.js:17:17:17:42 | new URL ... cation) [searchParams] | semmle.label | new URL ... cation) [searchParams] |
+| tst.js:17:25:17:41 | document.location | semmle.label | document.location |
+| tst.js:17:25:17:41 | document.location | semmle.label | document.location |
+| tst.js:18:18:18:23 | params | semmle.label | params |
+| tst.js:18:18:18:35 | params.get('name') | semmle.label | params.get('name') |
+| tst.js:18:18:18:35 | params.get('name') | semmle.label | params.get('name') |
+| tst.js:18:18:18:35 | params.get('name') | semmle.label | params.get('name') |
 | tst.js:21:18:21:29 | searchParams | semmle.label | searchParams |
 | tst.js:21:18:21:41 | searchP ... 'name') | semmle.label | searchP ... 'name') |
 | tst.js:21:18:21:41 | searchP ... 'name') | semmle.label | searchP ... 'name') |
@@ -1593,6 +1655,7 @@ nodes
 | tst.js:68:16:68:20 | bar() | semmle.label | bar() |
 | tst.js:68:16:68:20 | bar() | semmle.label | bar() |
 | tst.js:70:1:70:27 | [,docum ... search] | semmle.label | [,docum ... search] |
+| tst.js:70:1:70:27 | [,docum ... search] [$arrayElement$] | semmle.label | [,docum ... search] [$arrayElement$] |
 | tst.js:70:3:70:26 | documen ... .search | semmle.label | documen ... .search |
 | tst.js:70:3:70:26 | documen ... .search | semmle.label | documen ... .search |
 | tst.js:70:46:70:46 | x | semmle.label | x |
@@ -1719,6 +1782,23 @@ nodes
 | tst.js:316:35:316:42 | location | semmle.label | location |
 | tst.js:316:35:316:42 | location | semmle.label | location |
 | tst.js:316:35:316:42 | location | semmle.label | location |
+| tst.js:327:10:327:35 | new URL ... cation) [searchParams] | semmle.label | new URL ... cation) [searchParams] |
+| tst.js:327:18:327:34 | document.location | semmle.label | document.location |
+| tst.js:327:18:327:34 | document.location | semmle.label | document.location |
+| tst.js:331:16:331:30 | getTaintedUrl() [searchParams] | semmle.label | getTaintedUrl() [searchParams] |
+| tst.js:331:16:331:43 | getTain ... hParams | semmle.label | getTain ... hParams |
+| tst.js:332:18:332:23 | params | semmle.label | params |
+| tst.js:332:18:332:35 | params.get('name') | semmle.label | params.get('name') |
+| tst.js:332:18:332:35 | params.get('name') | semmle.label | params.get('name') |
+| tst.js:332:18:332:35 | params.get('name') | semmle.label | params.get('name') |
+| tst.js:341:12:341:37 | new URL ... cation) [hash] | semmle.label | new URL ... cation) [hash] |
+| tst.js:341:20:341:36 | document.location | semmle.label | document.location |
+| tst.js:341:20:341:36 | document.location | semmle.label | document.location |
+| tst.js:343:5:343:12 | getUrl() [hash] | semmle.label | getUrl() [hash] |
+| tst.js:343:5:343:17 | getUrl().hash | semmle.label | getUrl().hash |
+| tst.js:343:5:343:30 | getUrl( ... ring(1) | semmle.label | getUrl( ... ring(1) |
+| tst.js:343:5:343:30 | getUrl( ... ring(1) | semmle.label | getUrl( ... ring(1) |
+| tst.js:343:5:343:30 | getUrl( ... ring(1) | semmle.label | getUrl( ... ring(1) |
 | tst.js:348:16:348:39 | documen ... .search | semmle.label | documen ... .search |
 | tst.js:348:16:348:39 | documen ... .search | semmle.label | documen ... .search |
 | tst.js:349:12:349:17 | target | semmle.label | target |
@@ -2047,9 +2127,15 @@ subpaths
 | translate.js:9:27:9:50 | searchP ... 'term') | translate.js:6:16:6:39 | documen ... .search | translate.js:9:27:9:50 | searchP ... 'term') | Cross-site scripting vulnerability due to $@. | translate.js:6:16:6:39 | documen ... .search | user-provided value |
 | trusted-types-lib.js:2:12:2:12 | x | trusted-types.js:13:20:13:30 | window.name | trusted-types-lib.js:2:12:2:12 | x | Cross-site scripting vulnerability due to $@. | trusted-types.js:13:20:13:30 | window.name | user-provided value |
 | trusted-types.js:3:67:3:67 | x | trusted-types.js:4:20:4:30 | window.name | trusted-types.js:3:67:3:67 | x | Cross-site scripting vulnerability due to $@. | trusted-types.js:4:20:4:30 | window.name | user-provided value |
+| tst3.js:4:25:4:32 | data.src | tst3.js:2:42:2:63 | window. ... .search | tst3.js:4:25:4:32 | data.src | Cross-site scripting vulnerability due to $@. | tst3.js:2:42:2:63 | window. ... .search | user-provided value |
+| tst3.js:5:26:5:31 | data.p | tst3.js:2:42:2:63 | window. ... .search | tst3.js:5:26:5:31 | data.p | Cross-site scripting vulnerability due to $@. | tst3.js:2:42:2:63 | window. ... .search | user-provided value |
+| tst3.js:7:32:7:37 | data.p | tst3.js:2:42:2:63 | window. ... .search | tst3.js:7:32:7:37 | data.p | Cross-site scripting vulnerability due to $@. | tst3.js:2:42:2:63 | window. ... .search | user-provided value |
+| tst3.js:9:37:9:42 | data.p | tst3.js:2:42:2:63 | window. ... .search | tst3.js:9:37:9:42 | data.p | Cross-site scripting vulnerability due to $@. | tst3.js:2:42:2:63 | window. ... .search | user-provided value |
+| tst3.js:10:38:10:43 | data.p | tst3.js:2:42:2:63 | window. ... .search | tst3.js:10:38:10:43 | data.p | Cross-site scripting vulnerability due to $@. | tst3.js:2:42:2:63 | window. ... .search | user-provided value |
 | tst.js:5:18:5:23 | target | tst.js:2:16:2:39 | documen ... .search | tst.js:5:18:5:23 | target | Cross-site scripting vulnerability due to $@. | tst.js:2:16:2:39 | documen ... .search | user-provided value |
 | tst.js:8:18:8:126 | "<OPTIO ... PTION>" | tst.js:8:37:8:58 | documen ... on.href | tst.js:8:18:8:126 | "<OPTIO ... PTION>" | Cross-site scripting vulnerability due to $@. | tst.js:8:37:8:58 | documen ... on.href | user-provided value |
 | tst.js:12:5:12:42 | '<div s ...  'px">' | tst.js:2:16:2:39 | documen ... .search | tst.js:12:5:12:42 | '<div s ...  'px">' | Cross-site scripting vulnerability due to $@. | tst.js:2:16:2:39 | documen ... .search | user-provided value |
+| tst.js:18:18:18:35 | params.get('name') | tst.js:17:25:17:41 | document.location | tst.js:18:18:18:35 | params.get('name') | Cross-site scripting vulnerability due to $@. | tst.js:17:25:17:41 | document.location | user-provided value |
 | tst.js:21:18:21:41 | searchP ... 'name') | tst.js:2:16:2:39 | documen ... .search | tst.js:21:18:21:41 | searchP ... 'name') | Cross-site scripting vulnerability due to $@. | tst.js:2:16:2:39 | documen ... .search | user-provided value |
 | tst.js:26:18:26:23 | target | tst.js:28:5:28:28 | documen ... .search | tst.js:26:18:26:23 | target | Cross-site scripting vulnerability due to $@. | tst.js:28:5:28:28 | documen ... .search | user-provided value |
 | tst.js:34:16:34:20 | bar() | tst.js:31:10:31:33 | documen ... .search | tst.js:34:16:34:20 | bar() | Cross-site scripting vulnerability due to $@. | tst.js:31:10:31:33 | documen ... .search | user-provided value |
@@ -2098,6 +2184,8 @@ subpaths
 | tst.js:280:22:280:29 | location | tst.js:280:22:280:29 | location | tst.js:280:22:280:29 | location | Cross-site scripting vulnerability due to $@. | tst.js:280:22:280:29 | location | user-provided value |
 | tst.js:288:59:288:65 | tainted | tst.js:285:19:285:29 | window.name | tst.js:288:59:288:65 | tainted | Cross-site scripting vulnerability due to $@. | tst.js:285:19:285:29 | window.name | user-provided value |
 | tst.js:316:35:316:42 | location | tst.js:316:35:316:42 | location | tst.js:316:35:316:42 | location | Cross-site scripting vulnerability due to $@. | tst.js:316:35:316:42 | location | user-provided value |
+| tst.js:332:18:332:35 | params.get('name') | tst.js:327:18:327:34 | document.location | tst.js:332:18:332:35 | params.get('name') | Cross-site scripting vulnerability due to $@. | tst.js:327:18:327:34 | document.location | user-provided value |
+| tst.js:343:5:343:30 | getUrl( ... ring(1) | tst.js:341:20:341:36 | document.location | tst.js:343:5:343:30 | getUrl( ... ring(1) | Cross-site scripting vulnerability due to $@. | tst.js:341:20:341:36 | document.location | user-provided value |
 | tst.js:349:12:349:17 | target | tst.js:348:16:348:39 | documen ... .search | tst.js:349:12:349:17 | target | Cross-site scripting vulnerability due to $@. | tst.js:348:16:348:39 | documen ... .search | user-provided value |
 | tst.js:356:16:356:21 | target | tst.js:355:19:355:42 | documen ... .search | tst.js:356:16:356:21 | target | Cross-site scripting vulnerability due to $@. | tst.js:355:19:355:42 | documen ... .search | user-provided value |
 | tst.js:360:21:360:26 | target | tst.js:355:19:355:42 | documen ... .search | tst.js:360:21:360:26 | target | Cross-site scripting vulnerability due to $@. | tst.js:355:19:355:42 | documen ... .search | user-provided value |
