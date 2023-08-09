@@ -1,5 +1,3 @@
-| query-tests/Security/CWE-079/DomBasedXss/encodeuri.js:3 | did not expect an alert, but found an alert for HtmlInjection | OK |  |
-| query-tests/Security/CWE-079/DomBasedXss/sanitiser.js:18 | did not expect an alert, but found an alert for HtmlInjection | OK |  |
-| query-tests/Security/CWE-079/DomBasedXss/sanitiser.js:19 | expected consistency issue, but found no such issue (NOT OK, but not flagged - [INCONSISTENCY]) | NOT OK, but not flagged - [INCONSISTENCY] |  |
-| query-tests/Security/CWE-079/DomBasedXss/tst.js:322 | did not expect an alert, but found an alert for HtmlInjection | OK |  |
-| query-tests/Security/CWE-079/DomBasedXss/tst.js:432 | did not expect an alert, but found an alert for HtmlInjection | OK |  |
+| query-tests/Security/CWE-079/DomBasedXss/react-use-router.js:14 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
+| query-tests/Security/CWE-079/DomBasedXss/tst.js:303 | expected an alert, but found none | NOT OK | ConsistencyConfig |
+| query-tests/Security/CWE-079/DomBasedXss/tst.js:311 | expected an alert, but found none | NOT OK | ConsistencyConfig |
