@@ -17,10 +17,7 @@ import DataFlow
  */
 signature module FullStateConfigSig {
   bindingset[this]
-  class FlowState {
-    bindingset[this]
-    string toString();
-  }
+  class FlowState;
 
   /**
    * Holds if `source` is a relevant data flow source with the given initial
@@ -3049,9 +3046,7 @@ module Impl<FullStateConfigSig Config> {
     }
 
     /** Gets a textual representation of this element. */
-    string toString() {
-      result = this.getNodeEx().toString() + this.ppAp() + " " + this.getState().toString()
-    }
+    string toString() { result = this.getNodeEx().toString() + this.ppAp() }
 
     /**
      * Gets a textual representation of this element, including a textual
