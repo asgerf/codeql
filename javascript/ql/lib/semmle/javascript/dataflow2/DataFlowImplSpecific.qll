@@ -205,6 +205,8 @@ module Private {
     or
     FlowSteps::globalFlowStep(node1, node2)
     or
+    FlowSteps::localExceptionStep(node1, node2)
+    or
     exists(DataFlow::Node pred, DataFlow::Node succ, string prop |
       DataFlow::SharedFlowStep::loadStoreStep(pred, succ, prop)
     |
