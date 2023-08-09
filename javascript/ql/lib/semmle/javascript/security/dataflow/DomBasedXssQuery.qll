@@ -77,6 +77,8 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
     or
     isOptionallySanitizedNode(node) and
     lbl = [DataFlow::FlowLabel::taint(), prefixLabel(), TaintedUrlSuffix::label()]
+    or
+    TaintedUrlSuffix::isBarrier(node, lbl)
   }
 
   predicate isAdditionalFlowStep(
@@ -90,11 +92,6 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
       state1 = TaintedUrlSuffix::label() and
       state2.isTaint()
     )
-    or
-    // inherit all ordinary taint steps for prefixLabel
-    state1 = prefixLabel() and
-    state2 = prefixLabel() and
-    TaintTracking::sharedTaintStep(node1, node2)
     or
     // steps out of taintedSuffixlabel to taint-label are also a steps to prefixLabel.
     TaintedUrlSuffix::step(node1, node2, TaintedUrlSuffix::label(), DataFlow::FlowLabel::taint()) and
@@ -149,6 +146,14 @@ deprecated class Configuration extends TaintTracking::Configuration {
     DataFlow::FlowLabel state2
   ) {
     ConfigurationArgs::isAdditionalFlowStep(node1, state1, node2, state2)
+    or
+    // inherit all ordinary taint steps for the prefix label
+    state1 = prefixLabel() and
+    state2 = prefixLabel() and
+    TaintTracking::sharedTaintStep(node1, node2)
+    or
+    // inherit some ordinary taint steps for tainted-url-suffix label
+    TaintedUrlSuffix::preservingTaintStep(node1, node2, state1, state2)
   }
 }
 

@@ -35,7 +35,7 @@ module TaintedUrlSuffix {
     result.getKind().isUrl()
   }
 
-  /** Holds for `pred -> succ` is a step of form `x -> x.p` */
+  /** Holds if `read` accesses a property is not tainted by the query/fragment part of the URL. */
   private predicate isSafeLocationProp(DataFlow::PropRead read) {
     // Ignore properties that refer to the scheme, domain, port, auth, or path.
     read.getPropertyName() =
@@ -46,17 +46,35 @@ module TaintedUrlSuffix {
   }
 
   /**
-   * Holds if there is a flow step `src -> dst` involving the URL suffix taint label.
-   *
-   * This handles steps through string operations, promises, URL parsers, and URL accessors.
+   * Holds if `node` should be a barrier for flow into the given `label` (which is always bound to the tainted-url-suffix label).
    */
-  predicate step(Node src, Node dst, FlowLabel srclbl, FlowLabel dstlbl) {
+  predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel label) {
+    isSafeLocationProp(node) and label = label()
+  }
+
+  /**
+   * DEPRECATED. Should only be used with the legacy `DataFlow::Configuration` class.
+   *
+   * Holds if the taint step `src -> dst` should preserve the tainted-url-suffix label.
+   *
+   * This predicate is unnecessary with the new data flow library, because flow states in a taint-tracking configuration
+   * include all taint steps by default.
+   */
+  pragma[inline]
+  deprecated predicate preservingTaintStep(Node src, Node dst, FlowLabel srclbl, FlowLabel dstlbl) {
     // Inherit all ordinary taint steps except `x -> x.p` steps
     srclbl = label() and
     dstlbl = label() and
     TaintTracking::sharedTaintStep(src, dst) and
     not isSafeLocationProp(dst)
-    or
+  }
+
+  /**
+   * Holds if there is a flow step `src -> dst` involving the URL suffix taint label.
+   *
+   * This handles steps through string operations, promises, URL parsers, and URL accessors.
+   */
+  predicate step(Node src, Node dst, FlowLabel srclbl, FlowLabel dstlbl) {
     // Transition from URL suffix to full taint when extracting the query/fragment part.
     srclbl = label() and
     dstlbl.isTaint() and
