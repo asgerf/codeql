@@ -93,7 +93,7 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
       state2.isTaint()
     )
     or
-    // steps out of taintedSuffixlabel to taint-label are also a steps to prefixLabel.
+    // steps out of taintedSuffixlabel to taint-label are also steps to prefixLabel.
     TaintedUrlSuffix::step(node1, node2, TaintedUrlSuffix::label(), DataFlow::FlowLabel::taint()) and
     state1 = TaintedUrlSuffix::label() and
     state2 = prefixLabel()
