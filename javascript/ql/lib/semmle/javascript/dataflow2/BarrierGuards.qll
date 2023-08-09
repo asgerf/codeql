@@ -159,15 +159,15 @@ private class BarrierGuardFunction extends Function {
       |
         exists(SsaExplicitDefinition ssa |
           ssa.getDef().getSource() = returnExpr and
-          ssa.getVariable().getAUse() = getAReturnedExpr()
+          ssa.getVariable().getAUse() = this.getAReturnedExpr()
         )
         or
-        returnExpr = getAReturnedExpr()
+        returnExpr = this.getAReturnedExpr()
       ) and
       sanitizedParameter.flowsToExpr(e) and
       barrierGuardBlocksExpr(guard, guardOutcome, e, label)
     ) and
-    sanitizedParameter.getParameter() = getParameter(paramIndex)
+    sanitizedParameter.getParameter() = this.getParameter(paramIndex)
   }
 
   /**
