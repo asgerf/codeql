@@ -1,3 +1,2 @@
-| query-tests/Security/CWE-079/DomBasedXss/react-use-router.js:14 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
 | query-tests/Security/CWE-079/DomBasedXss/tst.js:303 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | query-tests/Security/CWE-079/DomBasedXss/tst.js:311 | expected an alert, but found none | NOT OK | ConsistencyConfig |

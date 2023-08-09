@@ -44,6 +44,8 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
     barrierGuardBlocksNode(node, label)
     or
     barrierGuardBlocksNode(node, "") and exists(label)
+    or
+    deduplicationBarrier(node, label)
   }
 
   // predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) { guard instanceof BarrierGuardNode }

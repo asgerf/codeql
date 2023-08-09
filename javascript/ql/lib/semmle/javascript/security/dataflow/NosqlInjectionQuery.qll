@@ -34,6 +34,8 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
     node instanceof Sanitizer and state.isTaint()
     or
     barrierGuardBlocksNode(node, _) and state.isTaint()
+    or
+    deduplicationBarrier(node, state)
   }
 
   predicate isAdditionalFlowStep(

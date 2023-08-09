@@ -79,6 +79,8 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
     lbl = [DataFlow::FlowLabel::taint(), prefixLabel(), TaintedUrlSuffix::label()]
     or
     TaintedUrlSuffix::isBarrier(node, lbl)
+    or
+    deduplicationBarrier(node, lbl)
   }
 
   predicate isAdditionalFlowStep(

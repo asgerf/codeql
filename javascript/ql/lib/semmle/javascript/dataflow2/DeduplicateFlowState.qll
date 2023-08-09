@@ -31,6 +31,15 @@ module MakeDeduplicateFlowState<nodeAndFlowState/2 sources, nodeAndFlowState/2 s
     state = sinkState()
   }
 
+  /**
+   * Marks all nodes that aren't sources/sinks as barriers for the synthetic source/sink states.
+   */
+  predicate deduplicationBarrier(DataFlow::Node node, DataFlow::FlowLabel state) {
+    not sources(node, _) and state = sourceState()
+    or
+    not sinks(node, _) and state = sinkState()
+  }
+
   predicate deduplicationStep(
     DataFlow::Node node1, DataFlow::FlowLabel state1, DataFlow::Node node2,
     DataFlow::FlowLabel state2
