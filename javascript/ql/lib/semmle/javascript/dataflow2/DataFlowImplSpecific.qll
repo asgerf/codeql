@@ -57,12 +57,38 @@ module Private {
 
   class CastNode extends DataFlow::Node instanceof EmptyType { }
 
-  class DataFlowCallable = StmtContainer;
+  private newtype TDataFlowCallable = MkSourceCallable(StmtContainer container)
+
+  /**
+   * A callable entity.
+   */
+  class DataFlowCallable extends TDataFlowCallable {
+    string toString() { none() } // Overridden in subclass
+
+    Location getLocation() { none() } // Overridden in subclass
+
+    /** Gets the corresponding `StmtContainer` if this is a source callable. */
+    StmtContainer asSourceCallable() { this = MkSourceCallable(result) }
+  }
+
+  /** A `StmtContainer` seen as a dataflow callable. */
+  class SourceCallable extends DataFlowCallable, MkSourceCallable {
+    private StmtContainer container;
+
+    SourceCallable() { this = MkSourceCallable(container) }
+
+    /** Gets the container. */
+    StmtContainer getContainer() { result = container }
+
+    override string toString() { result = container.toString() }
+
+    override Location getLocation() { result = container.getLocation() }
+  }
 
   predicate isParameterNode(Node p, DataFlowCallable c, ParameterPosition pos) {
-    p = c.(Function).getParameter(pos).flow()
+    p = c.asSourceCallable().(Function).getParameter(pos).flow()
     or
-    pos = -1 and p = TThisNode(c) and c instanceof Function
+    pos = -1 and p = TThisNode(c.asSourceCallable().(Function))
   }
 
   predicate isArgumentNode(Node n, DataFlowCall call, ArgumentPosition pos) {
@@ -77,7 +103,9 @@ module Private {
     exists(int boundArgs | n = call.asBoundCall(boundArgs).getArgument(pos - boundArgs))
   }
 
-  DataFlowCallable nodeGetEnclosingCallable(Node node) { result = node.getContainer() }
+  DataFlowCallable nodeGetEnclosingCallable(Node node) {
+    result.asSourceCallable() = node.getContainer()
+  }
 
   class DataFlowType = Unit;
 
@@ -125,7 +153,9 @@ module Private {
 
     DataFlow::InvokeNode getNode() { result = node }
 
-    override DataFlowCallable getEnclosingCallable() { result = node.getContainer() }
+    override DataFlowCallable getEnclosingCallable() {
+      result.asSourceCallable() = node.getContainer()
+    }
 
     override string toString() { result = node.toString() }
   }
@@ -137,7 +167,9 @@ module Private {
 
     DataFlow::PartialInvokeNode getNode() { result = node }
 
-    override DataFlowCallable getEnclosingCallable() { result = node.getContainer() }
+    override DataFlowCallable getEnclosingCallable() {
+      result.asSourceCallable() = node.getContainer()
+    }
 
     override string toString() { result = node.toString() + " (as partial invocation)" }
   }
@@ -148,7 +180,9 @@ module Private {
 
     BoundCall() { this = MkBoundCall(node, boundArgs) }
 
-    override DataFlowCallable getEnclosingCallable() { result = node.getContainer() }
+    override DataFlowCallable getEnclosingCallable() {
+      result.asSourceCallable() = node.getContainer()
+    }
 
     override string toString() {
       result = node.toString() + " (as call with " + boundArgs + " bound arguments)"
@@ -169,14 +203,15 @@ module Private {
   predicate parameterMatch(ParameterPosition ppos, ArgumentPosition apos) { ppos = apos }
 
   pragma[inline]
-  Function viableCallable(DataFlowCall node) {
-    result = node.asOrdinaryCall().getACallee()
+  DataFlowCallable viableCallable(DataFlowCall node) {
+    result.asSourceCallable() = node.asOrdinaryCall().getACallee()
     or
-    result = node.asPartialCall().getACallbackNode().getAFunctionValue().getFunction()
+    result.asSourceCallable() =
+      node.asPartialCall().getACallbackNode().getAFunctionValue().getFunction()
     or
     exists(DataFlow::InvokeNode invoke, int boundArgs |
       invoke = node.asBoundCall(boundArgs) and
-      FlowSteps::callsBound(invoke, result, boundArgs)
+      FlowSteps::callsBound(invoke, result.asSourceCallable(), boundArgs)
     )
   }
 
