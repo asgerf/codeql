@@ -7,14 +7,14 @@ module Private {
   private import Public
 
   newtype TReturnKind =
-    MkNormalReturn() or
-    MkExceptionalReturn()
+    MkNormalReturnKind() or
+    MkExceptionalReturnKind()
 
   class ReturnKind extends TReturnKind {
     string toString() {
-      this = MkNormalReturn() and result = "normal return"
+      this = MkNormalReturnKind() and result = "normal return"
       or
-      this = MkExceptionalReturn() and result = "exceptional return"
+      this = MkExceptionalReturnKind() and result = "exceptional return"
     }
   }
 
@@ -22,9 +22,9 @@ module Private {
 
   class ReturnNode extends DataFlow::Node, TReturnNode {
     ReturnKind getKind() {
-      this instanceof TFunctionReturnNode and result = MkNormalReturn()
+      this instanceof TFunctionReturnNode and result = MkNormalReturnKind()
       or
-      this instanceof TExceptionalFunctionReturnNode and result = MkExceptionalReturn()
+      this instanceof TExceptionalFunctionReturnNode and result = MkExceptionalReturnKind()
     }
   }
 
@@ -37,13 +37,13 @@ module Private {
   }
 
   OutNode getAnOutNode(DataFlowCall call, ReturnKind kind) {
-    kind = MkNormalReturn() and result = call.asOrdinaryCall()
+    kind = MkNormalReturnKind() and result = call.asOrdinaryCall()
     or
-    kind = MkExceptionalReturn() and result = call.asOrdinaryCall().getExceptionalReturn()
+    kind = MkExceptionalReturnKind() and result = call.asOrdinaryCall().getExceptionalReturn()
     or
-    kind = MkNormalReturn() and result = call.asBoundCall(_)
+    kind = MkNormalReturnKind() and result = call.asBoundCall(_)
     or
-    kind = MkExceptionalReturn() and result = call.asBoundCall(_).getExceptionalReturn()
+    kind = MkExceptionalReturnKind() and result = call.asBoundCall(_).getExceptionalReturn()
   }
 
   /**
