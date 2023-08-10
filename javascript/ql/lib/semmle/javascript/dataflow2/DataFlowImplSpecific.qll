@@ -57,32 +57,41 @@ module Private {
 
   class CastNode extends DataFlow::Node instanceof EmptyType { }
 
-  private newtype TDataFlowCallable = MkSourceCallable(StmtContainer container)
+  private newtype TDataFlowCallable =
+    MkSourceCallable(StmtContainer container) or
+    MkLibraryCallable(LibraryCallable callable)
 
   /**
-   * A callable entity.
+   * A callable entity. This is a wrapper around either a `StmtContainer` or a `LibraryCallable`.
    */
   class DataFlowCallable extends TDataFlowCallable {
-    string toString() { none() } // Overridden in subclass
+    /** Gets a string representation of this callable. */
+    string toString() {
+      result = this.asSourceCallable().toString()
+      or
+      result = this.asLibraryCallable()
+    }
 
-    Location getLocation() { none() } // Overridden in subclass
+    /** Gets the location of this callable, if it is present in the source code. */
+    Location getLocation() { result = this.asSourceCallable().getLocation() }
 
     /** Gets the corresponding `StmtContainer` if this is a source callable. */
     StmtContainer asSourceCallable() { this = MkSourceCallable(result) }
+
+    /** Gets the corresponding `LibraryCallable` if this is a library callable. */
+    LibraryCallable asLibraryCallable() { this = MkLibraryCallable(result) }
   }
 
-  /** A `StmtContainer` seen as a dataflow callable. */
-  class SourceCallable extends DataFlowCallable, MkSourceCallable {
-    private StmtContainer container;
+  /** A callable defined in library code, identified by a unique string. */
+  abstract class LibraryCallable extends string {
+    bindingset[this]
+    LibraryCallable() { any() }
 
-    SourceCallable() { this = MkSourceCallable(container) }
+    /** Gets a call to this library callable. */
+    DataFlow::InvokeNode getACall() { none() }
 
-    /** Gets the container. */
-    StmtContainer getContainer() { result = container }
-
-    override string toString() { result = container.toString() }
-
-    override Location getLocation() { result = container.getLocation() }
+    /** Same as `getACall()` except this does not depend on the call graph or API graph. */
+    DataFlow::InvokeNode getACallSimple() { none() }
   }
 
   predicate isParameterNode(Node p, DataFlowCallable c, ParameterPosition pos) {
