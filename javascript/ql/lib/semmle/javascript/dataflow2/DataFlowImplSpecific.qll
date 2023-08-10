@@ -2,6 +2,7 @@ private import javascript
 private import semmle.javascript.dataflow.internal.DataFlowNode
 private import semmle.javascript.dataflow.internal.StepSummary
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
+private import FlowSummaryImpl as FlowSummaryImpl
 
 module Private {
   private import Public
@@ -57,7 +58,7 @@ module Private {
 
   class CastNode extends DataFlow::Node instanceof EmptyType { }
 
-  private newtype TDataFlowCallable =
+  newtype TDataFlowCallable =
     MkSourceCallable(StmtContainer container) or
     MkLibraryCallable(LibraryCallable callable)
 
@@ -116,7 +117,13 @@ module Private {
     result.asSourceCallable() = node.getContainer()
   }
 
-  class DataFlowType = Unit;
+  private newtype TDataFlowType =
+    TTodoDataFlowType() or
+    TTodoDataFlowType2() // Add a dummy value to prevent bad functionality-induced joins arising from a type of size 1.
+
+  class DataFlowType extends TDataFlowType {
+    string toString() { result = "" }
+  }
 
   DataFlowType getNodeType(Node node) { any() }
 
@@ -141,6 +148,11 @@ module Private {
     MkPartialCall(DataFlow::PartialInvokeNode node) or
     MkBoundCall(DataFlow::InvokeNode node, int boundArgs) {
       FlowSteps::callsBound(node, _, boundArgs)
+    } or
+    MkSummaryCall(
+      FlowSummaryImpl::Public::SummarizedCallable c, FlowSummaryImpl::Private::SummaryNode receiver
+    ) {
+      FlowSummaryImpl::Private::summaryCallbackRange(c, receiver)
     }
 
   class DataFlowCall extends TDataFlowCall {
@@ -153,6 +165,13 @@ module Private {
     DataFlow::PartialInvokeNode asPartialCall() { this = MkPartialCall(result) }
 
     DataFlow::InvokeNode asBoundCall(int boundArgs) { this = MkBoundCall(result, boundArgs) }
+
+    predicate isSummaryCall(
+      FlowSummaryImpl::Public::SummarizedCallable enclosingCallable,
+      FlowSummaryImpl::Private::SummaryNode receiver
+    ) {
+      this = MkSummaryCall(enclosingCallable, receiver)
+    }
   }
 
   private class OrdinaryCall extends DataFlowCall, MkOrdinaryCall {
@@ -198,9 +217,44 @@ module Private {
     }
   }
 
-  class ParameterPosition = int;
+  class SummaryCall extends DataFlowCall, MkSummaryCall {
+    private FlowSummaryImpl::Public::SummarizedCallable enclosingCallable;
+    private FlowSummaryImpl::Private::SummaryNode receiver;
 
-  class ArgumentPosition = int;
+    SummaryCall() { this = MkSummaryCall(enclosingCallable, receiver) }
+
+    override DataFlowCallable getEnclosingCallable() {
+      result.asLibraryCallable() = enclosingCallable
+    }
+
+    override string toString() {
+      result = "[summary] call to " + receiver + " in " + enclosingCallable
+    }
+
+    /** Gets the receiver node. */
+    FlowSummaryImpl::Private::SummaryNode getReceiver() { result = receiver }
+  }
+
+  private int getMaxArity() {
+    result =
+      max(int n |
+        n = any(DataFlow::InvokeNode node).getNumArgument() or
+        n = any(Function f).getNumParameter() or
+        n = 10
+      )
+  }
+
+  class ParameterPosition extends int {
+    ParameterPosition() {
+      this = [0 .. getMaxArity()]
+      or
+      this = -1 // receiver
+    }
+  }
+
+  class ArgumentPosition extends int {
+    ArgumentPosition() { this instanceof ParameterPosition }
+  }
 
   class DataFlowExpr = Expr;
 
