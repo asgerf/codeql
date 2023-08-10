@@ -15,4 +15,4 @@ predicate defaultTaintSanitizer(DataFlow::Node node) { none() }
 bindingset[node]
 predicate defaultImplicitTaintRead(DataFlow::Node node, DataFlow2::ContentSet c) { none() }
 
-predicate defaultAdditionalTaintStep = TaintTracking::sharedTaintStep/2;
+predicate defaultAdditionalTaintStep = DataFlowI2::Private::defaultAdditionalTaintStep/2;
