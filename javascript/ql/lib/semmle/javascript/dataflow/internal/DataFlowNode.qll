@@ -42,11 +42,15 @@ newtype TNode =
 /**
  * A data-flow node that is not a flow summary node.
  *
- * Imports are needed for pruning irrelevant flow summaries, and imports can therefore not depend on
- * TFlowSummaryNode.
+ * This node exists to avoid an unwanted dependency on flow summaries in some parts of the codebase
+ * that should not depend on them.
  *
- * This node should thus only be used for the purpose of computing imports without creating a dependency on
- * TFlowSummaryNode.
+ * In particular, this dependency chain must not result in negative recursion:
+ * - Flow summaries can only be created after pruning irrelevant flow summaries
+ * - To prune irrelevant flow summaries, we must know which packages are imported
+ * - To know which packages are imported, module systems must be evaluated
+ * - The AMD and NodeJS module systems rely on data flow to find calls to `require` and similar.
+ *   These module systems must therefore use `TEarlyStageNode` instead of `DataFlow::Node`.
  */
 class TEarlyStageNode =
   TValueNode or TSsaDefNode or TCapturedVariableNode or TPropNode or TRestPatternNode or
