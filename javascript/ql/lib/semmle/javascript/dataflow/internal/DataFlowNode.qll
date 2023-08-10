@@ -5,6 +5,7 @@
  */
 
 private import javascript
+private import semmle.javascript.dataflow2.FlowSummaryImpl as FlowSummaryImpl
 
 /**
  * The raw data type underlying `DataFlow::Node`.
@@ -37,3 +38,19 @@ newtype TNode =
   TSynthExpectPromiseNode(InvokeExpr e, string prop) {
     prop = [Promises::valueProp(), Promises::errorProp()]
   }
+
+/**
+ * A data-flow node that is not a flow summary node.
+ *
+ * Imports are needed for pruning irrelevant flow summaries, and imports can therefore not depend on
+ * TFlowSummaryNode.
+ *
+ * This node should thus only be used for the purpose of computing imports without creating a dependency on
+ * TFlowSummaryNode.
+ */
+class TEarlyStageNode =
+  TValueNode or TSsaDefNode or TCapturedVariableNode or TPropNode or TRestPatternNode or
+      TElementPatternNode or TElementNode or TReflectiveCallNode or TThisNode or
+      TDestructuredModuleImportNode or THtmlAttributeNode or TFunctionReturnNode or
+      TExceptionalFunctionReturnNode or TExceptionalInvocationReturnNode or TGlobalAccessPathRoot or
+      TTemplatePlaceholderTag or TReflectiveParametersNode or TSynthExpectPromiseNode;
