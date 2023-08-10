@@ -30,28 +30,15 @@ module Private {
     }
   }
 
-  private class TReturnNode = TFunctionReturnNode or TExceptionalFunctionReturnNode;
-
-  class ReturnNode extends DataFlow::Node, TReturnNode {
-    ReturnKind getKind() {
-      this instanceof TFunctionReturnNode and result = MkNormalReturnKind()
-      or
-      this instanceof TExceptionalFunctionReturnNode and result = MkExceptionalReturnKind()
-    }
+  private predicate returnNodeImpl(DataFlow::Node node, ReturnKind kind) {
+    node instanceof TFunctionReturnNode and kind = MkNormalReturnKind()
+    or
+    node instanceof TExceptionalFunctionReturnNode and kind = MkExceptionalReturnKind()
+    or
+    FlowSummaryImpl::Private::summaryReturnNode(node.(FlowSummaryNode).getSummaryNode(), kind)
   }
 
-  /** A node that receives an output from a call. */
-  class OutNode extends DataFlow::Node {
-    OutNode() {
-      this instanceof DataFlow::InvokeNode
-      or
-      this instanceof TExceptionalInvocationReturnNode
-      or
-      FlowSummaryImpl::Private::summaryOutNode(_, this.(FlowSummaryNode).getSummaryNode(), _)
-    }
-  }
-
-  OutNode getAnOutNode(DataFlowCall call, ReturnKind kind) {
+  private DataFlow::Node getAnOutNodeImpl(DataFlowCall call, ReturnKind kind) {
     kind = MkNormalReturnKind() and result = call.asOrdinaryCall()
     or
     kind = MkExceptionalReturnKind() and result = call.asOrdinaryCall().getExceptionalReturn()
@@ -62,6 +49,19 @@ module Private {
     or
     FlowSummaryImpl::Private::summaryOutNode(call, result.(FlowSummaryNode).getSummaryNode(), kind)
   }
+
+  class ReturnNode extends DataFlow::Node {
+    ReturnNode() { returnNodeImpl(this, _) }
+
+    ReturnKind getKind() { returnNodeImpl(this, result) }
+  }
+
+  /** A node that receives an output from a call. */
+  class OutNode extends DataFlow::Node {
+    OutNode() { this = getAnOutNodeImpl(_, _) }
+  }
+
+  OutNode getAnOutNode(DataFlowCall call, ReturnKind kind) { result = getAnOutNodeImpl(call, kind) }
 
   /**
    * Base class for classes that should be empty.
@@ -115,6 +115,8 @@ module Private {
     p = c.asSourceCallable().(Function).getParameter(pos).flow()
     or
     pos = -1 and p = TThisNode(c.asSourceCallable().(Function))
+    or
+    FlowSummaryImpl::Private::summaryParameterNode(p.(FlowSummaryNode).getSummaryNode(), pos)
   }
 
   predicate isArgumentNode(Node n, DataFlowCall call, ArgumentPosition pos) {
@@ -127,6 +129,8 @@ module Private {
     pos = -1 and n = call.asPartialCall().getBoundReceiver()
     or
     exists(int boundArgs | n = call.asBoundCall(boundArgs).getArgument(pos - boundArgs))
+    or
+    FlowSummaryImpl::Private::summaryArgumentNode(call, n.(FlowSummaryNode).getSummaryNode(), pos)
   }
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) {
@@ -143,9 +147,13 @@ module Private {
     string toString() { result = "" }
   }
 
-  DataFlowType getNodeType(Node node) { any() }
+  DataFlowType getNodeType(Node node) { result = TTodoDataFlowType() and exists(node) }
 
-  predicate nodeIsHidden(Node node) { DataFlow::PathNode::shouldNodeBeHidden(node) }
+  predicate nodeIsHidden(Node node) {
+    DataFlow::PathNode::shouldNodeBeHidden(node)
+    or
+    node instanceof FlowSummaryNode
+  }
 
   string ppReprType(DataFlowType t) { none() }
 
@@ -268,6 +276,7 @@ module Private {
   }
 
   private int getMaxArity() {
+    // TODO: account for flow summaries
     result =
       max(int n |
         n = any(InvokeExpr e).getNumArgument() or
@@ -308,6 +317,11 @@ module Private {
       invoke = node.asBoundCall(boundArgs) and
       FlowSteps::callsBound(invoke, result.asSourceCallable(), boundArgs)
     )
+    or
+    exists(LibraryCallable callable |
+      result = MkLibraryCallable(callable) and
+      node.asOrdinaryCall() = [callable.getACall(), callable.getACallSimple()]
+    )
   }
 
   /**
@@ -337,6 +351,9 @@ module Private {
     or
     FlowSteps::localExceptionStep(node1, node2)
     or
+    FlowSummaryImpl::Private::Steps::summaryLocalStep(node1.(FlowSummaryNode).getSummaryNode(),
+      node2.(FlowSummaryNode).getSummaryNode(), true)
+    or
     exists(DataFlow::Node pred, DataFlow::Node succ, string prop |
       DataFlow::SharedFlowStep::loadStoreStep(pred, succ, prop)
     |
@@ -350,7 +367,8 @@ module Private {
 
   predicate simpleLocalFlowStep(Node node1, Node node2) {
     valuePreservingStep(node1, node2) and
-    pragma[only_bind_out](node1).getContainer() = pragma[only_bind_out](node2).getContainer()
+    nodeGetEnclosingCallable(pragma[only_bind_out](node1)) =
+      nodeGetEnclosingCallable(pragma[only_bind_out](node2))
   }
 
   /**
@@ -361,6 +379,9 @@ module Private {
   predicate jumpStep(Node node1, Node node2) {
     valuePreservingStep(node1, node2) and
     node1.getContainer() != node2.getContainer()
+    or
+    FlowSummaryImpl::Private::Steps::summaryJumpStep(node1.(FlowSummaryNode).getSummaryNode(),
+      node2.(FlowSummaryNode).getSummaryNode())
   }
 
   /**
@@ -376,6 +397,9 @@ module Private {
     )
     or
     DataFlow::SharedFlowStep::loadStep(node1, node2, c)
+    or
+    FlowSummaryImpl::Private::Steps::summaryReadStep(node1.(FlowSummaryNode).getSummaryNode(), c,
+      node2.(FlowSummaryNode).getSummaryNode())
   }
 
   /**
@@ -391,6 +415,9 @@ module Private {
     )
     or
     DataFlow::SharedFlowStep::storeStep(node1, node2, c)
+    or
+    FlowSummaryImpl::Private::Steps::summaryStoreStep(node1.(FlowSummaryNode).getSummaryNode(), c,
+      node2.(FlowSummaryNode).getSummaryNode())
   }
 
   /**
@@ -398,13 +425,19 @@ module Private {
    * any value stored inside `f` is cleared at the pre-update node associated with `x`
    * in `x.f = newValue`.
    */
-  predicate clearsContent(Node n, ContentSet c) { none() }
+  predicate clearsContent(Node n, ContentSet c) {
+    FlowSummaryImpl::Private::Steps::summaryClearsContent(n.(FlowSummaryNode).getSummaryNode(), c)
+  }
 
   /**
    * Holds if the value that is being tracked is expected to be stored inside content `c`
    * at node `n`.
    */
-  predicate expectsContent(Node n, ContentSet c) { n = TSynthExpectPromiseNode(_, c) }
+  predicate expectsContent(Node n, ContentSet c) {
+    n = TSynthExpectPromiseNode(_, c)
+    or
+    FlowSummaryImpl::Private::Steps::summaryExpectsContent(n.(FlowSummaryNode).getSummaryNode(), c)
+  }
 
   /**
    * Holds if the node `n` is unreachable when the call context is `call`.
@@ -463,8 +496,11 @@ module Private {
   }
 
   // TODO stub
-  predicate defaultAdditionalTaintStep(DataFlow::Node pred, DataFlow::Node succ) {
-    TaintTracking::sharedTaintStep(pred, succ)
+  predicate defaultAdditionalTaintStep(DataFlow::Node node1, DataFlow::Node node2) {
+    TaintTracking::sharedTaintStep(node1, node2)
+    or
+    FlowSummaryImpl::Private::Steps::summaryLocalStep(node1.(FlowSummaryNode).getSummaryNode(),
+      node2.(FlowSummaryNode).getSummaryNode(), false)
   }
 }
 
