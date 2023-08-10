@@ -7,6 +7,17 @@ private import FlowSummaryImpl as FlowSummaryImpl
 module Private {
   private import Public
 
+  class FlowSummaryNode extends DataFlow::Node, TFlowSummaryNode {
+    FlowSummaryImpl::Private::SummaryNode getSummaryNode() { this = TFlowSummaryNode(result) }
+
+    /** Gets the summarized callable that this node belongs to. */
+    FlowSummaryImpl::Public::SummarizedCallable getSummarizedCallable() {
+      result = this.getSummaryNode().getSummarizedCallable()
+    }
+
+    override string toString() { result = this.getSummaryNode().toString() }
+  }
+
   newtype TReturnKind =
     MkNormalReturnKind() or
     MkExceptionalReturnKind()
@@ -29,11 +40,14 @@ module Private {
     }
   }
 
+  /** A node that receives an output from a call. */
   class OutNode extends DataFlow::Node {
     OutNode() {
       this instanceof DataFlow::InvokeNode
       or
       this instanceof TExceptionalInvocationReturnNode
+      or
+      FlowSummaryImpl::Private::summaryOutNode(_, this.(FlowSummaryNode).getSummaryNode(), _)
     }
   }
 
@@ -45,6 +59,8 @@ module Private {
     kind = MkNormalReturnKind() and result = call.asBoundCall(_)
     or
     kind = MkExceptionalReturnKind() and result = call.asBoundCall(_).getExceptionalReturn()
+    or
+    FlowSummaryImpl::Private::summaryOutNode(call, result.(FlowSummaryNode).getSummaryNode(), kind)
   }
 
   /**
@@ -115,6 +131,8 @@ module Private {
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) {
     result.asSourceCallable() = node.getContainer()
+    or
+    result.asLibraryCallable() = node.(FlowSummaryNode).getSummarizedCallable()
   }
 
   private newtype TDataFlowType =
@@ -134,7 +152,21 @@ module Private {
   pragma[inline]
   predicate compatibleTypes(DataFlowType t1, DataFlowType t2) { any() }
 
-  class Content extends PropertyName { }
+  class Content extends string {
+    Content() {
+      this = any(PropAccess access).getPropertyName()
+      or
+      this = any(PropertyPattern p).getName()
+      or
+      this = any(GlobalVariable v).getName()
+      or
+      this =
+        [
+          DataFlow::PseudoProperties::arrayElement(), DataFlow::PseudoProperties::mapValueAll(),
+          Promises::valueProp(), Promises::errorProp()
+        ]
+    }
+  }
 
   predicate forceHighPrecision(Content c) { none() }
 
@@ -238,7 +270,7 @@ module Private {
   private int getMaxArity() {
     result =
       max(int n |
-        n = any(DataFlow::InvokeNode node).getNumArgument() or
+        n = any(InvokeExpr e).getNumArgument() or
         n = any(Function f).getNumParameter() or
         n = 10
       )

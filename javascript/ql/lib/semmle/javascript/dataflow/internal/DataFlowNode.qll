@@ -37,7 +37,8 @@ newtype TNode =
   /** A synthesized node to decompose load-store steps into two steps through an intermediate expectsContent node. */
   TSynthExpectPromiseNode(InvokeExpr e, string prop) {
     prop = [Promises::valueProp(), Promises::errorProp()]
-  }
+  } or
+  TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn)
 
 /**
  * A data-flow node that is not a flow summary node.
