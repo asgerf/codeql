@@ -116,7 +116,11 @@ module Private {
     or
     pos = -1 and p = TThisNode(c.asSourceCallable().(Function))
     or
-    FlowSummaryImpl::Private::summaryParameterNode(p.(FlowSummaryNode).getSummaryNode(), pos)
+    exists(FlowSummaryNode summaryNode |
+      summaryNode = p and
+      FlowSummaryImpl::Private::summaryParameterNode(summaryNode.getSummaryNode(), pos) and
+      c.asLibraryCallable() = summaryNode.getSummarizedCallable()
+    )
   }
 
   predicate isArgumentNode(Node n, DataFlowCall call, ArgumentPosition pos) {
