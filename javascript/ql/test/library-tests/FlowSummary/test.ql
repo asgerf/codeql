@@ -101,3 +101,29 @@ class FlowOutOfPromise extends SimpleSummarizedCallable {
     input = "Argument[0].Awaited" and output = "ReturnValue" and preservesValue = true
   }
 }
+
+class FlowOutOfCallback extends SimpleSummarizedCallable {
+  FlowOutOfCallback() { this = "flowOutOfCallback" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    input = "Argument[0].ReturnValue" and output = "ReturnValue" and preservesValue = true
+  }
+}
+
+class FlowIntoCallback extends SimpleSummarizedCallable {
+  FlowIntoCallback() { this = "flowIntoCallback" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    input = "Argument[0]" and output = "Argument[1].Parameter[0]" and preservesValue = true
+  }
+}
+
+class FlowThroughCallback extends SimpleSummarizedCallable {
+  FlowThroughCallback() { this = "flowThroughCallback" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    input = "Argument[0]" and output = "Argument[1].Parameter[0]" and preservesValue = true
+    or
+    input = "Argument[1].ReturnValue" and output = "ReturnValue" and preservesValue = true
+  }
+}

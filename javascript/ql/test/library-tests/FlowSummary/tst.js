@@ -53,3 +53,22 @@ function m7() {
   }
   sink(t.flowOutOfPromise(makePromise())); // NOT OK
 }
+
+function m8() {
+  sink(t.flowOutOfCallback(() => source())); // NOT OK
+  sink(t.flowOutOfCallback((source))); // OK
+}
+
+function m9() {
+  sink(t.flowIntoCallback(source(), x => sink(x))); // NOT OK
+  sink(t.flowIntoCallback("safe", x => sink(x))); // OK
+  sink(t.flowIntoCallback(source(), x => ignore(x))); // OK
+  sink(t.flowIntoCallback("safe", x => ignore(x))); // OK
+}
+
+function m9() {
+  sink(t.flowThroughCallback(source(), x => x)); // NOT OK
+  sink(t.flowThroughCallback(source(), x => "safe")); // OK
+  sink(t.flowThroughCallback("safe", x => x)); // OK
+  sink(t.flowThroughCallback("safe", x => "safe")); // OK
+}
