@@ -523,12 +523,16 @@ module Private {
     ParameterNode() { isParameterNode(this, _, _) }
   }
 
-  // TODO stub
   predicate defaultAdditionalTaintStep(DataFlow::Node node1, DataFlow::Node node2) {
     TaintTracking::sharedTaintStep(node1, node2)
     or
     FlowSummaryImpl::Private::Steps::summaryLocalStep(node1.(FlowSummaryNode).getSummaryNode(),
       node2.(FlowSummaryNode).getSummaryNode(), false)
+    //
+    // Note: the JS taint-tracking library has steps that treat store/read as taint steps in many cases,
+    // e.g. pushing to an array taints the whole array, and a promise of a tainted value is itself considered tainted.
+    // However, we never induce taint steps from store/read steps in flow summaries; instead there must be explicit
+    // flow summaries with the corresponding taint steps (if desired).
   }
 }
 
