@@ -88,3 +88,23 @@ class FlowIntoArrayElement extends SummarizedCallable {
     input = "Argument[0]" and output = "ReturnValue.ArrayElement" and preservesValue = true
   }
 }
+
+class FlowIntoPromise extends SummarizedCallable {
+  FlowIntoPromise() { this = "flowIntoPromise" }
+
+  override DataFlow::InvokeNode getACall() { result = getACall("flowIntoPromise") }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    input = "Argument[0]" and output = "ReturnValue.Awaited" and preservesValue = true
+  }
+}
+
+class FlowOutOfPromise extends SummarizedCallable {
+  FlowOutOfPromise() { this = "flowOutOfPromise" }
+
+  override DataFlow::InvokeNode getACall() { result = getACall("flowOutOfPromise") }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    input = "Argument[0].Awaited" and output = "ReturnValue" and preservesValue = true
+  }
+}

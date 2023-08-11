@@ -36,3 +36,20 @@ function m5() {
   sink(t.flowThroughTaint(source() + "x")); // NOT OK
   sink(t.flowThroughTaint("x")); // OK
 }
+
+async function m6() {
+  sink(await t.flowIntoPromise(source())); // NOT OK
+  t.flowIntoPromise(source()).then(value => sink(value)); // NOT OK
+}
+
+function m7() {
+  sink(t.flowOutOfPromise(Promise.resolve(source()))); // NOT OK
+  sink(t.flowOutOfPromise(Promise.resolve("safe").then(x => source()))); // NOT OK
+  sink(t.flowOutOfPromise(Promise.resolve("safe").then(x => "safe"))); // OK
+  sink(t.flowOutOfPromise(Promise.resolve(source()).then(x => "safe"))); // OK
+
+  async function makePromise() {
+    return source();
+  }
+  sink(t.flowOutOfPromise(makePromise())); // NOT OK
+}
