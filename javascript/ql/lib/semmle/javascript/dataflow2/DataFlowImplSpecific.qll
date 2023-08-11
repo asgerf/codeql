@@ -212,6 +212,12 @@ module Private {
     ) {
       this = MkSummaryCall(enclosingCallable, receiver)
     }
+
+    predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      none() // Overridden in subclass
+    }
   }
 
   private class OrdinaryCall extends DataFlowCall, MkOrdinaryCall {
@@ -226,6 +232,12 @@ module Private {
     }
 
     override string toString() { result = node.toString() }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      node.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
   }
 
   private class PartialCall extends DataFlowCall, MkPartialCall {
@@ -240,6 +252,12 @@ module Private {
     }
 
     override string toString() { result = node.toString() + " (as partial invocation)" }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      node.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
   }
 
   private class BoundCall extends DataFlowCall, MkBoundCall {
@@ -254,6 +272,12 @@ module Private {
 
     override string toString() {
       result = node.toString() + " (as call with " + boundArgs + " bound arguments)"
+    }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      node.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
     }
   }
 
