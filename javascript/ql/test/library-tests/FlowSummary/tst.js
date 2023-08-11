@@ -57,6 +57,11 @@ function m7() {
 function m8() {
   sink(t.flowOutOfCallback(() => source())); // NOT OK
   sink(t.flowOutOfCallback((source))); // OK
+
+  function sourceCallback() {
+    return source();
+  }
+  sink(t.flowOutOfCallback(sourceCallback)); // NOT OK
 }
 
 function m9() {
@@ -66,7 +71,7 @@ function m9() {
   sink(t.flowIntoCallback("safe", x => ignore(x))); // OK
 }
 
-function m9() {
+function m10() {
   sink(t.flowThroughCallback(source(), x => x)); // NOT OK
   sink(t.flowThroughCallback(source(), x => "safe")); // OK
   sink(t.flowThroughCallback("safe", x => x)); // OK
