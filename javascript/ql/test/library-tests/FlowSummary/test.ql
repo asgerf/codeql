@@ -39,70 +39,63 @@ class ConsistencyConfig extends ConsistencyConfiguration {
   override DataFlow::Node getAnAlert() { Configuration::flow(_, result) }
 }
 
-class FlowThrough extends SummarizedCallable {
-  FlowThrough() { this = "flowThrough" }
+abstract class SimpleSummarizedCallable extends SummarizedCallable {
+  bindingset[this]
+  SimpleSummarizedCallable() { any() }
 
-  override DataFlow::InvokeNode getACall() { result = getACall("flowThrough") }
+  override DataFlow::InvokeNode getACall() { result = getACall(this) }
+}
+
+class FlowThrough extends SimpleSummarizedCallable {
+  FlowThrough() { this = "flowThrough" }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     input = "Argument[0]" and output = "ReturnValue" and preservesValue = true
   }
 }
 
-class FlowThroughTaint extends SummarizedCallable {
+class FlowThroughTaint extends SimpleSummarizedCallable {
   FlowThroughTaint() { this = "flowThroughTaint" }
-
-  override DataFlow::InvokeNode getACall() { result = getACall("flowThroughTaint") }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     input = "Argument[0]" and output = "ReturnValue" and preservesValue = false
   }
 }
 
-class FlowIntoProp extends SummarizedCallable {
+class FlowIntoProp extends SimpleSummarizedCallable {
   FlowIntoProp() { this = "flowIntoProp" }
-
-  override DataFlow::InvokeNode getACall() { result = getACall("flowIntoProp") }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     input = "Argument[0]" and output = "ReturnValue.Member[prop]" and preservesValue = true
   }
 }
 
-class FlowOutOfProp extends SummarizedCallable {
+class FlowOutOfProp extends SimpleSummarizedCallable {
   FlowOutOfProp() { this = "flowOutOfProp" }
-
-  override DataFlow::InvokeNode getACall() { result = getACall("flowOutOfProp") }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     input = "Argument[0].Member[prop]" and output = "ReturnValue" and preservesValue = true
   }
 }
 
-class FlowIntoArrayElement extends SummarizedCallable {
+class FlowIntoArrayElement extends SimpleSummarizedCallable {
   FlowIntoArrayElement() { this = "flowIntoArrayElement" }
-
-  override DataFlow::InvokeNode getACall() { result = getACall("flowIntoArrayElement") }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     input = "Argument[0]" and output = "ReturnValue.ArrayElement" and preservesValue = true
   }
 }
 
-class FlowIntoPromise extends SummarizedCallable {
+class FlowIntoPromise extends SimpleSummarizedCallable {
   FlowIntoPromise() { this = "flowIntoPromise" }
-
-  override DataFlow::InvokeNode getACall() { result = getACall("flowIntoPromise") }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     input = "Argument[0]" and output = "ReturnValue.Awaited" and preservesValue = true
   }
 }
 
-class FlowOutOfPromise extends SummarizedCallable {
+class FlowOutOfPromise extends SimpleSummarizedCallable {
   FlowOutOfPromise() { this = "flowOutOfPromise" }
-
-  override DataFlow::InvokeNode getACall() { result = getACall("flowOutOfPromise") }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     input = "Argument[0].Awaited" and output = "ReturnValue" and preservesValue = true
