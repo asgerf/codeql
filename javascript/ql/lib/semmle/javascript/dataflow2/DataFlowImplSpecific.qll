@@ -491,10 +491,14 @@ module Private {
   class LambdaCallKind = Unit; // TODO: not sure about this
 
   /** Holds if `creation` is an expression that creates a lambda of kind `kind` for `c`. */
-  predicate lambdaCreation(Node creation, LambdaCallKind kind, DataFlowCallable c) { none() }
+  predicate lambdaCreation(Node creation, LambdaCallKind kind, DataFlowCallable c) {
+    creation.(DataFlow::FunctionNode).getFunction() = c.asSourceCallable() and exists(kind)
+  }
 
   /** Holds if `call` is a lambda call of kind `kind` where `receiver` is the lambda expression. */
-  predicate lambdaCall(DataFlowCall call, LambdaCallKind kind, Node receiver) { none() }
+  predicate lambdaCall(DataFlowCall call, LambdaCallKind kind, Node receiver) {
+    call.isSummaryCall(_, receiver.(FlowSummaryNode).getSummaryNode()) and exists(kind)
+  }
 
   /** Extra data-flow steps needed for lambda flow analysis. */
   predicate additionalLambdaFlowStep(Node nodeFrom, Node nodeTo, boolean preservesValue) { none() }
