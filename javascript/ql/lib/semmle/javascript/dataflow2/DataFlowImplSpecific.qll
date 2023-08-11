@@ -420,11 +420,11 @@ module Private {
   predicate readStep(Node node1, ContentSet c, Node node2) {
     exists(DataFlow::PropRead read |
       node1 = read.getBase() and
-      c = read.getPropertyName() and
+      c.asSingleton() = read.getPropertyName() and
       node2 = read
     )
     or
-    DataFlow::SharedFlowStep::loadStep(node1, node2, c)
+    DataFlow::SharedFlowStep::loadStep(node1, node2, c.asSingleton())
     or
     FlowSummaryImpl::Private::Steps::summaryReadStep(node1.(FlowSummaryNode).getSummaryNode(), c,
       node2.(FlowSummaryNode).getSummaryNode())
@@ -438,11 +438,11 @@ module Private {
   predicate storeStep(Node node1, ContentSet c, Node node2) {
     exists(DataFlow::PropWrite write |
       node1 = write.getRhs() and
-      c = write.getPropertyName() and
+      c.asSingleton() = write.getPropertyName() and
       node2 = write.getBase().getALocalSource() // TODO
     )
     or
-    DataFlow::SharedFlowStep::storeStep(node1, node2, c)
+    DataFlow::SharedFlowStep::storeStep(node1, node2, c.asSingleton())
     or
     FlowSummaryImpl::Private::Steps::summaryStoreStep(node1.(FlowSummaryNode).getSummaryNode(), c,
       node2.(FlowSummaryNode).getSummaryNode())
@@ -462,7 +462,7 @@ module Private {
    * at node `n`.
    */
   predicate expectsContent(Node n, ContentSet c) {
-    n = TSynthExpectPromiseNode(_, c)
+    n = TSynthExpectPromiseNode(_, c.asSingleton())
     or
     FlowSummaryImpl::Private::Steps::summaryExpectsContent(n.(FlowSummaryNode).getSummaryNode(), c)
   }
@@ -538,6 +538,8 @@ module Private {
     // However, we never induce taint steps from store/read steps in flow summaries; instead there must be explicit
     // flow summaries with the corresponding taint steps (if desired).
   }
+
+  newtype TContentSet = MkSingletonContent(Content content)
 }
 
 module Public {
@@ -551,13 +553,22 @@ module Public {
    * The set may be interpreted differently depending on whether it is
    * stored into (`getAStoreContent`) or read from (`getAReadContent`).
    */
-  class ContentSet extends Private::Content {
+  class ContentSet extends Private::TContentSet {
     /** Gets a content that may be stored into when storing into this set. */
     pragma[inline]
-    Private::Content getAStoreContent() { result = this }
+    Private::Content getAStoreContent() { result = this.asSingleton() }
 
     /** Gets a content that may be read from when reading from this set. */
     pragma[inline]
-    Private::Content getAReadContent() { result = this }
+    Private::Content getAReadContent() { result = this.asSingleton() }
+
+    Private::Content asSingleton() { this = Private::MkSingletonContent(result) }
+
+    string toString() { result = this.asSingleton() }
+  }
+
+  module ContentSet {
+    pragma[inline]
+    ContentSet singleton(Private::Content content) { result.asSingleton() = content }
   }
 }

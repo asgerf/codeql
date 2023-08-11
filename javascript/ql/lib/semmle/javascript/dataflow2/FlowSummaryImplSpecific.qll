@@ -71,17 +71,24 @@ predicate summaryElement(
 predicate neutralSummaryElement(FlowSummary::SummarizedCallable c, string provenance) { none() }
 
 pragma[inline]
-private SummaryComponent makeContentComponts(
-  Private::AccessPathToken token, string name, string content
+private SummaryComponent makeContentComponents(
+  Private::AccessPathToken token, string name, ContentSet contents
 ) {
   token.getName() = name and
-  result = FlowSummary::SummaryComponent::content(content)
+  result = FlowSummary::SummaryComponent::content(contents)
   or
   token.getName() = "With" + name and
-  result = FlowSummary::SummaryComponent::withContent(content)
+  result = FlowSummary::SummaryComponent::withContent(contents)
   or
   token.getName() = "Without" + name and
-  result = FlowSummary::SummaryComponent::withoutContent(content)
+  result = FlowSummary::SummaryComponent::withoutContent(contents)
+}
+
+pragma[inline]
+private SummaryComponent makeSingletonContentComponents(
+  Private::AccessPathToken token, string name, Content content
+) {
+  result = makeContentComponents(token, name, ContentSet::singleton(content))
 }
 
 /**
@@ -102,50 +109,39 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
     ppos = [AccessPathSyntax::AccessPath::parseLowerBound(arg) .. 10]
   )
   or
-  result = makeContentComponts(c, "Member", c.getAnArgument())
+  result = makeSingletonContentComponents(c, "Member", c.getAnArgument())
   or
-  result = makeContentComponts(c, "ArrayElement", DataFlow::PseudoProperties::arrayElement())
+  result =
+    makeSingletonContentComponents(c, "ArrayElement", DataFlow::PseudoProperties::arrayElement())
   or
-  result = makeContentComponts(c, "MapValue", DataFlow::PseudoProperties::mapValueAll())
+  result = makeSingletonContentComponents(c, "MapValue", DataFlow::PseudoProperties::mapValueAll())
   or
-  result = makeContentComponts(c, "Awaited", Promises::valueProp())
+  result = makeSingletonContentComponents(c, "Awaited", Promises::valueProp())
   or
-  result = makeContentComponts(c, "AwaitedError", Promises::errorProp())
+  result = makeSingletonContentComponents(c, "AwaitedError", Promises::errorProp())
 }
 
-private string getContentSpecificAux(Content c) {
-  c = DataFlow::PseudoProperties::arrayElement() and result = "ArrayElement"
+private string getMadStringFromContentSetAux(ContentSet cs) {
+  cs.asSingleton() = DataFlow::PseudoProperties::arrayElement() and result = "ArrayElement"
   or
-  c = DataFlow::PseudoProperties::mapValueAll() and result = "MapValue"
+  cs.asSingleton() = DataFlow::PseudoProperties::mapValueAll() and result = "MapValue"
   or
-  c = Promises::valueProp() and result = "Awaited"
+  cs.asSingleton() = Promises::valueProp() and result = "Awaited"
   or
-  c = Promises::errorProp() and result = "AwaitedError"
+  cs.asSingleton() = Promises::errorProp() and result = "AwaitedError"
 }
 
-private string getContentSpecific(Content c) {
-  result = getContentSpecificAux(c)
+private string getMadStringFromContentSet(ContentSet cs) {
+  result = getMadStringFromContentSetAux(cs)
   or
-  not exists(getContentSpecificAux(c)) and
-  result = "Member[" + c + "]"
+  not exists(getMadStringFromContentSetAux(cs)) and
+  result = "Member[" + cs.asSingleton() + "]"
 }
-
-private string getContentSetSpecific(ContentSet cs) { result = getContentSpecific(cs) }
 
 /** Gets the textual representation of a summary component in the format used for MaD models. */
 string getMadRepresentationSpecific(SummaryComponent sc) {
   exists(ContentSet cs |
-    sc = Private::TContentSummaryComponent(cs) and result = getContentSetSpecific(cs)
-  )
-  or
-  exists(ContentSet cs |
-    sc = Private::TWithoutContentSummaryComponent(cs) and
-    result = "WithoutElement[" + getContentSetSpecific(cs) + "]"
-  )
-  or
-  exists(ContentSet cs |
-    sc = Private::TWithContentSummaryComponent(cs) and
-    result = "WithElement[" + getContentSetSpecific(cs) + "]"
+    sc = Private::TContentSummaryComponent(cs) and result = getMadStringFromContentSet(cs)
   )
   or
   exists(ReturnKind rk |

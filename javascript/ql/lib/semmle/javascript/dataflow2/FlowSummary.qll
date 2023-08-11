@@ -30,7 +30,7 @@ module SummaryComponent {
 
   /** Gets a summary component that represents an element in a collection at an unknown index. */
   SummaryComponent arrayElement() {
-    result = SC::content(DataFlow::PseudoProperties::arrayElement())
+    result = SC::content(ContentSet::singleton(DataFlow::PseudoProperties::arrayElement()))
   }
 
   /** Gets a summary component that represents the return value of a call. */
