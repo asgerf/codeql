@@ -70,6 +70,8 @@ predicate summaryElement(
  */
 predicate neutralSummaryElement(FlowSummary::SummarizedCallable c, string provenance) { none() }
 
+private predicate isFilterContent(ContentSet cs) { cs.isPromiseFilter() }
+
 pragma[inline]
 private SummaryComponent makeContentComponents(
   Private::AccessPathToken token, string name, ContentSet contents
@@ -89,6 +91,19 @@ private SummaryComponent makeSingletonContentComponents(
   Private::AccessPathToken token, string name, Content content
 ) {
   result = makeContentComponents(token, name, ContentSet::singleton(content))
+}
+
+pragma[inline]
+private SummaryComponent makeFilterOnlyContentComponents(
+  Private::AccessPathToken token, string name, ContentSet contents
+) {
+  exists(DataFlow::Node node, string suffix |
+    token.getName() = "As" + name and
+    result = FlowSummary::SummaryComponent::withContent(contents)
+    or
+    token.getName() = "AsNon" + name and
+    result = FlowSummary::SummaryComponent::withoutContent(contents)
+  )
 }
 
 /**
@@ -119,6 +134,8 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   result = makeSingletonContentComponents(c, "Awaited", Promises::valueProp())
   or
   result = makeSingletonContentComponents(c, "AwaitedError", Promises::errorProp())
+  or
+  result = makeFilterOnlyContentComponents(c, "Promise", ContentSet::promiseFilter())
 }
 
 private string getMadStringFromContentSetAux(ContentSet cs) {
@@ -129,6 +146,8 @@ private string getMadStringFromContentSetAux(ContentSet cs) {
   cs.asSingleton() = Promises::valueProp() and result = "Awaited"
   or
   cs.asSingleton() = Promises::errorProp() and result = "AwaitedError"
+  or
+  cs.isPromiseFilter() and result = "Promise"
 }
 
 private string getMadStringFromContentSet(ContentSet cs) {
@@ -142,6 +161,20 @@ private string getMadStringFromContentSet(ContentSet cs) {
 string getMadRepresentationSpecific(SummaryComponent sc) {
   exists(ContentSet cs |
     sc = Private::TContentSummaryComponent(cs) and result = getMadStringFromContentSet(cs)
+    or
+    sc = Private::TWithContentSummaryComponent(cs) and
+    (
+      if isFilterContent(cs)
+      then result = "As" + getMadStringFromContentSet(cs)
+      else result = "With" + getMadStringFromContentSet(cs)
+    )
+    or
+    sc = Private::TWithoutContentSummaryComponent(cs) and
+    (
+      if isFilterContent(cs)
+      then result = "As" + getMadStringFromContentSet(cs)
+      else result = "Without" + getMadStringFromContentSet(cs)
+    )
   )
   or
   exists(ReturnKind rk |
