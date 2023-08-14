@@ -24,9 +24,9 @@ module Private {
 
   class ReturnKind extends TReturnKind {
     string toString() {
-      this = MkNormalReturnKind() and result = "normal return"
+      this = MkNormalReturnKind() and result = "return"
       or
-      this = MkExceptionalReturnKind() and result = "exceptional return"
+      this = MkExceptionalReturnKind() and result = "exception"
     }
   }
 
