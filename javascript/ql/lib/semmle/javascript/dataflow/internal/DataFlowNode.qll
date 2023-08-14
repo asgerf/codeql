@@ -5,7 +5,9 @@
  */
 
 private import javascript
+private import semmle.javascript.dataflow2.DataFlowImplSpecific::Private as DataFlowPrivate
 private import semmle.javascript.dataflow2.FlowSummaryImpl as FlowSummaryImpl
+private import semmle.javascript.dataflow2.FlowSummaryImplSpecific as FlowSummaryImplSpecific
 
 /**
  * The raw data type underlying `DataFlow::Node`.
@@ -38,7 +40,17 @@ newtype TNode =
   TSynthExpectPromiseNode(InvokeExpr e, string prop) {
     prop = [Promises::valueProp(), Promises::errorProp()]
   } or
-  TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn)
+  TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) or
+  TFlowSummaryIntermediateClearContentNode(
+    FlowSummaryImpl::Private::SummaryNode sn, DataFlowPrivate::TContentSet cs
+  ) {
+    DataFlowPrivate::isSpecialContentSet(cs) and
+    (
+      FlowSummaryImpl::Private::Steps::summaryStoreStep(sn, cs, _)
+      or
+      FlowSummaryImpl::Private::Steps::summaryReadStep(sn, cs, _)
+    )
+  }
 
 /**
  * A data-flow node that is not a flow summary node.

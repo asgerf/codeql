@@ -116,9 +116,18 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   or
   result = makeSingletonContentComponents(c, "MapValue", DataFlow::PseudoProperties::mapValueAll())
   or
-  result = makeSingletonContentComponents(c, "Awaited", Promises::valueProp())
+  // Awaited! and AwaitedError! map to the raw content component
+  result = makeSingletonContentComponents(c, "Awaited!", Promises::valueProp())
   or
-  result = makeSingletonContentComponents(c, "AwaitedError", Promises::errorProp())
+  result = makeSingletonContentComponents(c, "AwaitedError!", Promises::errorProp())
+  or
+  // Awaited and AwaitedError happen to be encoded as content components, but don't behave exactly that way.
+  // They are mapped down to a combination steps that handle coercion and promise-flattening.
+  c.getName() = "Awaited" and
+  result = SummaryComponent::content(MkAwaited())
+  or
+  c.getName() = "AwaitedError" and
+  result = SummaryComponent::content(MkAwaitedError())
 }
 
 private string getMadStringFromContentSetAux(ContentSet cs) {

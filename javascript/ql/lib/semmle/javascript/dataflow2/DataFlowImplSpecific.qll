@@ -18,6 +18,27 @@ module Private {
     override string toString() { result = this.getSummaryNode().toString() }
   }
 
+  class FlowSummaryIntermediateClearContentNode extends DataFlow::Node,
+    TFlowSummaryIntermediateClearContentNode
+  {
+    FlowSummaryImpl::Private::SummaryNode getSummaryNode() {
+      this = TFlowSummaryIntermediateClearContentNode(result, _)
+    }
+
+    ContentSet getContentSet() { this = TFlowSummaryIntermediateClearContentNode(_, result) }
+
+    /** Gets the summarized callable that this node belongs to. */
+    FlowSummaryImpl::Public::SummarizedCallable getSummarizedCallable() {
+      result = this.getSummaryNode().getSummarizedCallable()
+    }
+
+    override string toString() {
+      result =
+        this.getSummaryNode().toString() + " [intermediate node for clearing content " +
+          this.getContentSet() + "]"
+    }
+  }
+
   newtype TReturnKind =
     MkNormalReturnKind() or
     MkExceptionalReturnKind()
@@ -157,6 +178,8 @@ module Private {
     DataFlow::PathNode::shouldNodeBeHidden(node)
     or
     node instanceof FlowSummaryNode
+    or
+    node instanceof FlowSummaryIntermediateClearContentNode
   }
 
   string ppReprType(DataFlowType t) { none() }
@@ -397,6 +420,11 @@ module Private {
     valuePreservingStep(node1, node2) and
     nodeGetEnclosingCallable(pragma[only_bind_out](node1)) =
       nodeGetEnclosingCallable(pragma[only_bind_out](node2))
+    or
+    exists(FlowSummaryImpl::Private::SummaryNode sn |
+      node1 = TFlowSummaryNode(sn) and
+      node2 = TFlowSummaryIntermediateClearContentNode(sn, _)
+    )
   }
 
   /**
@@ -426,8 +454,19 @@ module Private {
     or
     DataFlow::SharedFlowStep::loadStep(node1, node2, c.asSingleton())
     or
-    FlowSummaryImpl::Private::Steps::summaryReadStep(node1.(FlowSummaryNode).getSummaryNode(), c,
-      node2.(FlowSummaryNode).getSummaryNode())
+    exists(ContentSet contentSet |
+      FlowSummaryImpl::Private::Steps::summaryReadStep(node1.(FlowSummaryNode).getSummaryNode(),
+        contentSet, node2.(FlowSummaryNode).getSummaryNode())
+    |
+      not isSpecialContentSet(contentSet) and
+      c = contentSet
+      or
+      contentSet = MkAwaited() and
+      c = ContentSet::singleton(Promises::valueProp())
+      or
+      contentSet = MkAwaitedError() and
+      c = ContentSet::singleton(Promises::errorProp())
+    )
   }
 
   /**
@@ -445,7 +484,21 @@ module Private {
     DataFlow::SharedFlowStep::storeStep(node1, node2, c.asSingleton())
     or
     FlowSummaryImpl::Private::Steps::summaryStoreStep(node1.(FlowSummaryNode).getSummaryNode(), c,
-      node2.(FlowSummaryNode).getSummaryNode())
+      node2.(FlowSummaryNode).getSummaryNode()) and
+    not isSpecialContentSet(c)
+    or
+    // Store into Awaited or AwaitedError
+    exists(FlowSummaryImpl::Private::SummaryNode pred, FlowSummaryImpl::Private::SummaryNode succ |
+      FlowSummaryImpl::Private::Steps::summaryStoreStep(pred, MkAwaited(), succ) and
+      node1 = TFlowSummaryIntermediateClearContentNode(pred, MkAwaited()) and
+      node2 = TFlowSummaryNode(succ) and
+      c = ContentSet::singleton(Promises::valueProp())
+      or
+      FlowSummaryImpl::Private::Steps::summaryStoreStep(pred, MkAwaitedError(), succ) and
+      node1 = TFlowSummaryIntermediateClearContentNode(pred, MkAwaitedError()) and
+      node2 = TFlowSummaryNode(succ) and
+      c = ContentSet::singleton(Promises::errorProp())
+    )
   }
 
   /**
@@ -455,6 +508,19 @@ module Private {
    */
   predicate clearsContent(Node n, ContentSet c) {
     FlowSummaryImpl::Private::Steps::summaryClearsContent(n.(FlowSummaryNode).getSummaryNode(), c)
+    or
+    exists(TContentSet specialContent |
+      n = TFlowSummaryIntermediateClearContentNode(_, specialContent)
+    |
+      // Promises never contain another promise in their value, so disallow both promise-related contents
+      // from flowing into a promise values.
+      specialContent = MkAwaited() and
+      c = ContentSet::promiseFilter()
+      or
+      // Promises errors are flattening, but a failed promise may contain a succesful promise.
+      specialContent = MkAwaitedError() and
+      c = ContentSet::promiseError()
+    )
   }
 
   /**
@@ -465,6 +531,10 @@ module Private {
     n = TSynthExpectPromiseNode(_, c.asSingleton())
     or
     FlowSummaryImpl::Private::Steps::summaryExpectsContent(n.(FlowSummaryNode).getSummaryNode(), c)
+    or
+    FlowSummaryImpl::Private::Steps::summaryStoreStep(_, MkAwaited(),
+      n.(FlowSummaryNode).getSummaryNode()) and
+    c = ContentSet::promiseFilter()
   }
 
   /**
@@ -541,7 +611,18 @@ module Private {
 
   newtype TContentSet =
     MkSingletonContent(Content content) or
-    MkPromiseFilter()
+    MkPromiseFilter() or
+    // MkAwaited and MkAwaitedError are used exclusively as an intermediate value in flow summaries.
+    // 'Awaited' and 'AwaitedError' are each encoded as a ContentSummaryComponent, although the flow graph we
+    // generate is different than an ordinary content component. These special content sets should never appear in a step.
+    MkAwaited() or
+    MkAwaitedError()
+
+  /**
+   * Holds if `cs` is used to encode a special operation as a content component, but should not
+   * be treated as an ordinary content component.
+   */
+  predicate isSpecialContentSet(ContentSet cs) { cs = MkAwaited() or cs = MkAwaitedError() }
 }
 
 module Public {
@@ -577,6 +658,10 @@ module Public {
       result = this.asSingleton()
       or
       this.isPromiseFilter() and result = "promiseFilter()"
+      or
+      this = Private::MkAwaited() and result = "Awaited (with coercion)"
+      or
+      this = Private::MkAwaitedError() and result = "AwaitedError (with coercion)"
     }
   }
 
@@ -589,5 +674,15 @@ module Public {
      * matches the two promise-related contents, `Awaited` and `AwaitedError`.
      */
     ContentSet promiseFilter() { result = Private::MkPromiseFilter() }
+
+    /**
+     * A content set describing the result of a resolved promise.
+     */
+    ContentSet promiseValue() { result = singleton(Promises::valueProp()) }
+
+    /**
+     * A content set describing the error stored in a rejected promise.
+     */
+    ContentSet promiseError() { result = singleton(Promises::errorProp()) }
   }
 }
