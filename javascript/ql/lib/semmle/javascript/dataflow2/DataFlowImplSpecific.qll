@@ -612,7 +612,7 @@ module Private {
   newtype TContentSet =
     MkSingletonContent(Content content) or
     MkPromiseFilter() or
-    // MkAwaited and MkAwaitedError are used exclusively as an intermediate value in flow summaries.
+    // MkAwaited and MkAwaitedError are used exclusively as intermediate values in flow summaries.
     // 'Awaited' and 'AwaitedError' are each encoded as a ContentSummaryComponent, although the flow graph we
     // generate is different than an ordinary content component. These special content sets should never appear in a step.
     MkAwaited() or
