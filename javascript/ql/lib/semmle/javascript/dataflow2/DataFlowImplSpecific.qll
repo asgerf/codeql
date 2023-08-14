@@ -539,7 +539,9 @@ module Private {
     // flow summaries with the corresponding taint steps (if desired).
   }
 
-  newtype TContentSet = MkSingletonContent(Content content)
+  newtype TContentSet =
+    MkSingletonContent(Content content) or
+    MkPromiseFilter()
 }
 
 module Public {
@@ -559,16 +561,33 @@ module Public {
     Private::Content getAStoreContent() { result = this.asSingleton() }
 
     /** Gets a content that may be read from when reading from this set. */
-    pragma[inline]
-    Private::Content getAReadContent() { result = this.asSingleton() }
+    pragma[nomagic]
+    Private::Content getAReadContent() {
+      result = this.asSingleton()
+      or
+      this.isPromiseFilter() and
+      result = [Promises::valueProp(), Promises::errorProp()]
+    }
 
     Private::Content asSingleton() { this = Private::MkSingletonContent(result) }
 
-    string toString() { result = this.asSingleton() }
+    predicate isPromiseFilter() { this = ContentSet::promiseFilter() }
+
+    string toString() {
+      result = this.asSingleton()
+      or
+      this.isPromiseFilter() and result = "promiseFilter()"
+    }
   }
 
   module ContentSet {
     pragma[inline]
     ContentSet singleton(Private::Content content) { result.asSingleton() = content }
+
+    /**
+     * A content set that should only be used in `withContent` and `withoutContent` steps, which
+     * matches the two promise-related contents, `Awaited` and `AwaitedError`.
+     */
+    ContentSet promiseFilter() { result = Private::MkPromiseFilter() }
   }
 }
