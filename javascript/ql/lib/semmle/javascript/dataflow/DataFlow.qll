@@ -1371,26 +1371,6 @@ module DataFlow {
   }
 
   /**
-   * A synthetic node to model promise flow with an expectContent node.
-   */
-  private class SynthExpectPromiseNode extends DataFlow::Node, TSynthExpectPromiseNode {
-    private InvokeExpr expr;
-    private string prop;
-
-    SynthExpectPromiseNode() { this = TSynthExpectPromiseNode(expr, prop) }
-
-    override StmtContainer getContainer() { result = expr.getContainer() }
-
-    override predicate hasLocationInfo(
-      string filepath, int startline, int startcolumn, int endline, int endcolumn
-    ) {
-      expr.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
-    }
-
-    override string toString() { result = "SynthExpectPromiseNode(" + expr + ", " + prop + ")" }
-  }
-
-  /**
    * INTERNAL. DO NOT USE.
    *
    * Gets a data flow node representing the given captured variable.

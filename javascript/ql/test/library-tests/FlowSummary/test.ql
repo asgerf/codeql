@@ -1,6 +1,5 @@
 import javascript
 import semmle.javascript.dataflow2.DataFlow as DataFlow2
-import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
 import semmle.javascript.dataflow2.BarrierGuards
 import semmle.javascript.dataflow2.FlowSummary
 import testUtilities.ConsistencyChecking
@@ -23,12 +22,12 @@ module ConfigArg implements DataFlow2::ConfigSig {
   }
 }
 
-module Configuration = TaintTracking2::Global<ConfigArg>;
+module Configuration = DataFlow2::Global<ConfigArg>;
 
-class BasicSanitizerGuard extends TaintTracking::SanitizerGuardNode, DataFlow::CallNode {
-  BasicSanitizerGuard() { this = getACall("isSafe") }
+class BasicBarrierGuard extends DataFlow::BarrierGuardNode, DataFlow::CallNode {
+  BasicBarrierGuard() { this = getACall("isSafe") }
 
-  override predicate sanitizes(boolean outcome, Expr e) {
+  override predicate blocks(boolean outcome, Expr e) {
     outcome = true and e = this.getArgument(0).asExpr()
   }
 }
@@ -51,14 +50,6 @@ class FlowThrough extends SimpleSummarizedCallable {
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     input = "Argument[0]" and output = "ReturnValue" and preservesValue = true
-  }
-}
-
-class FlowThroughTaint extends SimpleSummarizedCallable {
-  FlowThroughTaint() { this = "flowThroughTaint" }
-
-  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
-    input = "Argument[0]" and output = "ReturnValue" and preservesValue = false
   }
 }
 

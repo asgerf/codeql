@@ -119,15 +119,12 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   // Awaited! and AwaitedError! map to the raw content component
   result = makeSingletonContentComponents(c, "Awaited!", Promises::valueProp())
   or
-  result = makeSingletonContentComponents(c, "AwaitedError!", Promises::errorProp())
+  result = makeSingletonContentComponents(c, "AwaitedError", Promises::errorProp())
   or
-  // Awaited and AwaitedError happen to be encoded as content components, but don't behave exactly that way.
-  // They are mapped down to a combination steps that handle coercion and promise-flattening.
+  // Awaited happens to be encoded as content components, but doesn't behave exactly that way.
+  // It is mapped down to a combination steps that handle coercion and promise-flattening.
   c.getName() = "Awaited" and
   result = SummaryComponent::content(MkAwaited())
-  or
-  c.getName() = "AwaitedError" and
-  result = SummaryComponent::content(MkAwaitedError())
 }
 
 private string getMadStringFromContentSetAux(ContentSet cs) {
@@ -135,9 +132,11 @@ private string getMadStringFromContentSetAux(ContentSet cs) {
   or
   cs.asSingleton() = DataFlow::PseudoProperties::mapValueAll() and result = "MapValue"
   or
-  cs.asSingleton() = Promises::valueProp() and result = "Awaited"
+  cs.asSingleton() = Promises::valueProp() and result = "Awaited!"
   or
   cs.asSingleton() = Promises::errorProp() and result = "AwaitedError"
+  or
+  cs = MkAwaited() and result = "Awaited"
 }
 
 private string getMadStringFromContentSet(ContentSet cs) {

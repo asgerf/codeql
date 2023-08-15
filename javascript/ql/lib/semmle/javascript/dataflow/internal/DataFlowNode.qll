@@ -36,20 +36,9 @@ newtype TNode =
   TGlobalAccessPathRoot() or
   TTemplatePlaceholderTag(Templating::TemplatePlaceholderTag tag) or
   TReflectiveParametersNode(Function f) or
-  /** A synthesized node to decompose load-store steps into two steps through an intermediate expectsContent node. */
-  TSynthExpectPromiseNode(InvokeExpr e, string prop) {
-    prop = [Promises::valueProp(), Promises::errorProp()]
-  } or
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) or
-  TFlowSummaryIntermediateClearContentNode(
-    FlowSummaryImpl::Private::SummaryNode sn, DataFlowPrivate::TContentSet cs
-  ) {
-    DataFlowPrivate::isSpecialContentSet(cs) and
-    (
-      FlowSummaryImpl::Private::Steps::summaryStoreStep(sn, cs, _)
-      or
-      FlowSummaryImpl::Private::Steps::summaryReadStep(sn, cs, _)
-    )
+  TFlowSummaryIntermediateAwaitStoreNode(FlowSummaryImpl::Private::SummaryNode sn) {
+    FlowSummaryImpl::Private::Steps::summaryStoreStep(sn, DataFlowPrivate::MkAwaited(), _)
   }
 
 /**
@@ -70,4 +59,4 @@ class TEarlyStageNode =
       TElementPatternNode or TElementNode or TReflectiveCallNode or TThisNode or
       TDestructuredModuleImportNode or THtmlAttributeNode or TFunctionReturnNode or
       TExceptionalFunctionReturnNode or TExceptionalInvocationReturnNode or TGlobalAccessPathRoot or
-      TTemplatePlaceholderTag or TReflectiveParametersNode or TSynthExpectPromiseNode;
+      TTemplatePlaceholderTag or TReflectiveParametersNode;
