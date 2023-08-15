@@ -6,7 +6,9 @@ import javascript
 private import dataflow.internal.StepSummary
 
 /**
- * A definition of a `Promise` object.
+ * A call to the `Promise` constructor, such as `new Promise((resolve, reject) => { ... })`.
+ *
+ * This includes calls to the built-in `Promise` constructor as well as promise implementations from known libraries, such as `bluebird`.
  */
 abstract class PromiseDefinition extends DataFlow::SourceNode {
   /** Gets the executor function of this promise object. */
