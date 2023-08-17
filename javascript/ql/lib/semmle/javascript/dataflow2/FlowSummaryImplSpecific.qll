@@ -91,13 +91,20 @@ private SummaryComponent makeSingletonContentComponents(
   result = makeContentComponents(token, name, ContentSet::singleton(content))
 }
 
+pragma[inline]
+private SummaryComponent makePropertyContentComponents(
+  Private::AccessPathToken token, string name, PropertyName content
+) {
+  result = makeContentComponents(token, name, ContentSet::property(content))
+}
+
 /**
  * Gets the content corresponding to `Awaited[arg]`.
  */
 private Content getPromiseContent(string arg) {
-  arg = "value" and result = Promises::valueProp()
+  arg = "value" and result.asPropertyName() = Promises::valueProp()
   or
-  arg = "error" and result = Promises::errorProp()
+  arg = "error" and result.asPropertyName() = Promises::errorProp()
 }
 
 /**
@@ -118,14 +125,14 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
     ppos = [AccessPathSyntax::AccessPath::parseLowerBound(arg) .. 10]
   )
   or
-  result = makeSingletonContentComponents(c, "Member", c.getAnArgument())
+  result = makePropertyContentComponents(c, "Member", c.getAnArgument())
   or
   result =
-    makeSingletonContentComponents(c, "ArrayElement", DataFlow::PseudoProperties::arrayElement())
+    makePropertyContentComponents(c, "ArrayElement", DataFlow::PseudoProperties::arrayElement())
   or
-  result = makeSingletonContentComponents(c, "MapValue", DataFlow::PseudoProperties::mapValueAll())
+  result = makePropertyContentComponents(c, "MapValue", DataFlow::PseudoProperties::mapValueAll())
   or
-  result = makeSingletonContentComponents(c, "PromiseValue", Promises::valueProp())
+  result = makePropertyContentComponents(c, "PromiseValue", Promises::valueProp())
   or
   result = makeSingletonContentComponents(c, "Awaited", getPromiseContent(c.getAnArgument()))
   or
@@ -141,9 +148,9 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
 }
 
 private string getMadStringFromContentSetAux(ContentSet cs) {
-  cs.asSingleton() = DataFlow::PseudoProperties::arrayElement() and result = "ArrayElement"
+  cs.asPropertyName() = DataFlow::PseudoProperties::arrayElement() and result = "ArrayElement"
   or
-  cs.asSingleton() = DataFlow::PseudoProperties::mapValueAll() and result = "MapValue"
+  cs.asPropertyName() = DataFlow::PseudoProperties::mapValueAll() and result = "MapValue"
   or
   exists(string awaitedArg |
     cs.asSingleton() = getPromiseContent(awaitedArg) and

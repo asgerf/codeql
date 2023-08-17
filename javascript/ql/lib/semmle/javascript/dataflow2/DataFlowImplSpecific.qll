@@ -215,8 +215,8 @@ module Private {
 
   private import semmle.javascript.frameworks.data.internal.AccessPathSyntax as AccessPathSyntax
 
-  class Content extends string {
-    Content() {
+  class PropertyName extends string {
+    PropertyName() {
       this = any(PropAccess access).getPropertyName()
       or
       this = any(PropertyPattern p).getName()
@@ -235,6 +235,14 @@ module Private {
         tok.getName() = "Member" and this = tok.getAnArgument()
       )
     }
+  }
+
+  private newtype TContent = MkPropertyNameContent(PropertyName name)
+
+  class Content extends TContent {
+    string toString() { result = this.asPropertyName() }
+
+    string asPropertyName() { this = MkPropertyNameContent(result) }
   }
 
   predicate forceHighPrecision(Content c) { none() }
@@ -507,11 +515,11 @@ module Private {
   predicate readStep(Node node1, ContentSet c, Node node2) {
     exists(DataFlow::PropRead read |
       node1 = read.getBase() and
-      c.asSingleton() = read.getPropertyName() and
+      c.asPropertyName() = read.getPropertyName() and
       node2 = read
     )
     or
-    DataFlow::SharedFlowStep::loadStep(node1, node2, c.asSingleton()) and
+    DataFlow::SharedFlowStep::loadStep(node1, node2, c.asPropertyName()) and
     // Exclude promise-related steps because we want these to be entirely modelled with flow summaries now
     not isPromiseProperty(c)
     or
@@ -523,15 +531,15 @@ module Private {
       c = contentSet
       or
       contentSet = MkAwaited() and
-      c = ContentSet::singleton(Promises::valueProp())
+      c = ContentSet::property(Promises::valueProp())
     )
     or
     exists(AwaitExpr await | node1 = await.getOperand().flow() |
       node2 = await.flow() and
-      c.asSingleton() = Promises::valueProp()
+      c.asPropertyName() = Promises::valueProp()
       or
       node2 = await.getExceptionTarget() and
-      c.asSingleton() = Promises::errorProp()
+      c.asPropertyName() = Promises::errorProp()
     )
   }
 
@@ -560,7 +568,7 @@ module Private {
   predicate storeStep(Node node1, ContentSet c, Node node2) {
     exists(DataFlow::PropWrite write |
       node1 = write.getRhs() and
-      c.asSingleton() = write.getPropertyName() and
+      c.asPropertyName() = write.getPropertyName() and
       // Target the post-update node if one exists (for object literals we do not generate post-update nodes)
       node2 = tryGetPostUpdate(write.getBase())
     )
@@ -570,11 +578,11 @@ module Private {
       node2 = array
     |
       if i = [0 .. 9]
-      then c.asSingleton() = i.toString()
-      else c.asSingleton() = DataFlow::PseudoProperties::arrayElement()
+      then c.asPropertyName() = i.toString()
+      else c.asPropertyName() = DataFlow::PseudoProperties::arrayElement()
     )
     or
-    DataFlow::SharedFlowStep::storeStep(node1, node2, c.asSingleton()) and
+    DataFlow::SharedFlowStep::storeStep(node1, node2, c.asPropertyName()) and
     // Exclude promise-related steps because we want these to be entirely modelled with flow summaries now
     not isPromiseProperty(c)
     or
@@ -589,14 +597,14 @@ module Private {
       FlowSummaryImpl::Private::Steps::summaryStoreStep(input, MkAwaited(), output) and
       node1 = TFlowSummaryIntermediateAwaitStoreNode(input) and
       node2 = TFlowSummaryNode(output) and
-      c = ContentSet::singleton(Promises::valueProp())
+      c.asPropertyName() = Promises::valueProp()
     )
     or
     exists(Function f |
       f.isAsync() and
       node1 = TAsyncFunctionIntermediateStoreReturnNode(f) and
       node2 = TFunctionReturnNode(f) and
-      c.asSingleton() = Promises::valueProp()
+      c.asPropertyName() = Promises::valueProp()
     )
   }
 
@@ -756,15 +764,17 @@ module Public {
       result = this.asSingleton()
       or
       this.isPromiseFilter() and
-      result = [Promises::valueProp(), Promises::errorProp()]
+      result.asPropertyName() = [Promises::valueProp(), Promises::errorProp()]
     }
 
     Private::Content asSingleton() { this = Private::MkSingletonContent(result) }
 
+    PropertyName asPropertyName() { result = this.asSingleton().asPropertyName() }
+
     predicate isPromiseFilter() { this = ContentSet::promiseFilter() }
 
     string toString() {
-      result = this.asSingleton()
+      result = this.asSingleton().toString()
       or
       this.isPromiseFilter() and result = "promiseFilter()"
       or
@@ -776,6 +786,9 @@ module Public {
     pragma[inline]
     ContentSet singleton(Private::Content content) { result.asSingleton() = content }
 
+    pragma[inline]
+    ContentSet property(Private::PropertyName name) { result.asSingleton().asPropertyName() = name }
+
     /**
      * A content set that should only be used in `withContent` and `withoutContent` steps, which
      * matches the two promise-related contents, `Awaited` and `AwaitedError`.
@@ -785,12 +798,12 @@ module Public {
     /**
      * A content set describing the result of a resolved promise.
      */
-    ContentSet promiseValue() { result = singleton(Promises::valueProp()) }
+    ContentSet promiseValue() { result = property(Promises::valueProp()) }
 
     /**
      * A content set describing the error stored in a rejected promise.
      */
-    ContentSet promiseError() { result = singleton(Promises::errorProp()) }
+    ContentSet promiseError() { result = property(Promises::errorProp()) }
   }
 }
 
