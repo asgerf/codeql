@@ -134,6 +134,10 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   c.getName() = "Awaited" and
   c.getNumArgument() = 0 and
   result = SummaryComponent::content(MkAwaited())
+  or
+  c.getName() = "ReturnValue" and
+  c.getAnArgument() = "exception" and
+  result = SummaryComponent::return(MkExceptionalReturnKind())
 }
 
 private string getMadStringFromContentSetAux(ContentSet cs) {
