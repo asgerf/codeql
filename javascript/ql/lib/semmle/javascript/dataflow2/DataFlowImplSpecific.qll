@@ -215,6 +215,8 @@ module Private {
       or
       this = any(GlobalVariable v).getName()
       or
+      this = [0 .. 9].toString()
+      or
       this =
         [
           DataFlow::PseudoProperties::arrayElement(), DataFlow::PseudoProperties::mapValueAll(),
@@ -526,6 +528,15 @@ module Private {
       c.asSingleton() = write.getPropertyName() and
       // Target the post-update node if one exists (for object literals we do not generate post-update nodes)
       node2 = tryGetPostUpdate(write.getBase())
+    )
+    or
+    exists(DataFlow::ArrayCreationNode array, int i |
+      node1 = array.getElement(i) and
+      node2 = array
+    |
+      if i = [0 .. 9]
+      then c.asSingleton() = i.toString()
+      else c.asSingleton() = DataFlow::PseudoProperties::arrayElement()
     )
     or
     DataFlow::SharedFlowStep::storeStep(node1, node2, c.asSingleton()) and

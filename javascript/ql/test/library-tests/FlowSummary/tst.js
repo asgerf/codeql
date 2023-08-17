@@ -32,7 +32,7 @@ function m4() {
 }
 
 function m5() {
-  sink(t.flowOutOfInnerCallback(cb => { cb(source()); })); // NOT OK
+  sink(t.flowOutOfInnerCallback(cb => { cb(source()); })); // NOT OK [INCONSISTENCY]
 }
 
 async function m6() {
@@ -52,6 +52,35 @@ async function m7() {
   sink(t.flowOutOfPromise(Promise.resolve("safe").then(x => "safe"))); // OK
   sink(t.flowOutOfPromise(Promise.resolve(source()).then(x => "safe"))); // OK
 
+  sink(t.flowOutOfPromise(Promise.reject(source()))); // OK
+  sink(t.flowOutOfPromise(Promise.reject(source()).then(x => "safe", y => y))); // NOT OK
+  sink(t.flowOutOfPromise(Promise.reject(source()).then(x => x, y => "safe"))); // OK
+  sink(t.flowOutOfPromise(Promise.reject("safe").then(x => x, y => y))); // OK
+
+  sink(t.flowOutOfPromise(Promise.reject(source()))); // OK
+  sink(t.flowOutOfPromise(Promise.reject(source()).catch(err => err))); // NOT OK
+  sink(t.flowOutOfPromise(Promise.reject(source()).catch(err => "safe"))); // OK
+  sink(t.flowOutOfPromise(Promise.reject("safe").catch(err => err))); // OK
+
+  sink(t.flowOutOfPromise(Promise.reject(source()).then(x => "safe").catch(err => err))); // NOT OK
+
+  sink(t.flowOutOfPromise(Promise.reject(source()).finally(() => "safe").catch(err => err))); // NOT OK
+  sink(t.flowOutOfPromise(Promise.resolve(source()).finally(() => "safe").then(err => err))); // NOT OK
+  sink(t.flowOutOfPromise(Promise.reject("safe").finally(() => { throw source() }).catch(err => err))); // NOT OK
+
+  Promise.resolve("safe")
+    .then(x => { throw source(); })
+    .catch(err => {
+      sink(err); // NOT OK
+    });
+
+  Promise.resolve("safe")
+    .then(x => { throw source(); })
+    .then(x => "safe")
+    .catch(err => {
+      sink(err); // NOT OK
+    });
+
   sink(await t.flowIntoPromise(source())); // NOT OK [INCONSISTENCY]
   t.flowIntoPromise(source()).then(value => sink(value)); // NOT OK
   sink(await t.flowIntoPromise(t.flowIntoPromise(source()))); // NOT OK [INCONSISTENCY]
@@ -62,12 +91,12 @@ async function m7() {
   sink(t.flowOutOfPromise(makePromise())); // NOT OK [INCONSISTENCY]
 
   let taintedPromise = new Promise((resolve, reject) => resolve(source()));
-  sink(t.flowOutOfPromise(taintedPromise)); // NOT OK
+  sink(t.flowOutOfPromise(taintedPromise)); // NOT OK [INCONSISTENCY]
 
-  new Promise((resolve, reject) => resolve(source())).then(x => sink(x)); // NOT OK
+  new Promise((resolve, reject) => resolve(source())).then(x => sink(x)); // NOT OK [INCONSISTENCY]
   new Promise((resolve, reject) => resolve(source())).catch(err => sink(err)); // OK
   new Promise((resolve, reject) => reject(source())).then(x => sink(x)); // OK
-  new Promise((resolve, reject) => reject(source())).catch(err => sink(err)); // NOT OK
+  new Promise((resolve, reject) => reject(source())).catch(err => sink(err)); // NOT OK [INCONSISTENCY]
 }
 
 function m8() {
@@ -106,4 +135,16 @@ function m11() {
   let obj = {};
   manullyWritten(obj);
   sink(obj.prop); // NOT OK
+}
+
+function m12() {
+  Promise.all([
+    t.flowIntoPromise(source()),
+    source(),
+    "safe"
+  ]).then(([x1, x2, x3]) => {
+    sink(x1); // NOT OK
+    sink(x2); // NOT OK
+    sink(x3); // OK
+  });
 }
