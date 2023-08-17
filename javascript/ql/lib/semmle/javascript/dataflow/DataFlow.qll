@@ -1038,6 +1038,40 @@ module DataFlow {
   }
 
   /**
+   * A data flow node representing the non-promise values about to be boxed in a fresh promise object before being returned by an async function.
+   *
+   * The data flow library will block flows of promise-values into this node.
+   */
+  class AsyncFunctionIntermediateStoreReturnNode extends DataFlow::Node,
+    TAsyncFunctionIntermediateStoreReturnNode
+  {
+    private Function function;
+
+    AsyncFunctionIntermediateStoreReturnNode() {
+      this = TAsyncFunctionIntermediateStoreReturnNode(function)
+    }
+
+    override string toString() {
+      result = "[async function intermediate store-return] " + function.describe()
+    }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      function.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    override StmtContainer getContainer() { result = function }
+
+    /**
+     * Gets the function corresponding to this return node.
+     */
+    Function getFunction() { result = function }
+
+    override File getFile() { result = function.getFile() }
+  }
+
+  /**
    * A data flow node representing the arguments object given to a function.
    */
   class ReflectiveParametersNode extends DataFlow::Node, TReflectiveParametersNode {

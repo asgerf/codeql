@@ -81,14 +81,14 @@ async function m7() {
       sink(err); // NOT OK
     });
 
-  sink(await t.flowIntoPromise(source())); // NOT OK [INCONSISTENCY]
+  sink(await t.flowIntoPromise(source())); // NOT OK
   t.flowIntoPromise(source()).then(value => sink(value)); // NOT OK
-  sink(await t.flowIntoPromise(t.flowIntoPromise(source()))); // NOT OK [INCONSISTENCY]
+  sink(await t.flowIntoPromise(t.flowIntoPromise(source()))); // NOT OK
 
   async function makePromise() {
     return source();
   }
-  sink(t.flowOutOfPromise(makePromise())); // NOT OK [INCONSISTENCY]
+  sink(t.flowOutOfPromise(makePromise())); // NOT OK
 
   let taintedPromise = new Promise((resolve, reject) => resolve(source()));
   sink(t.flowOutOfPromise(taintedPromise)); // NOT OK

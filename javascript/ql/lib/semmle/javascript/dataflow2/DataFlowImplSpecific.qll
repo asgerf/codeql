@@ -51,7 +51,11 @@ module Private {
   private predicate returnNodeImpl(DataFlow::Node node, ReturnKind kind) {
     node instanceof TFunctionReturnNode and kind = MkNormalReturnKind()
     or
-    node instanceof TExceptionalFunctionReturnNode and kind = MkExceptionalReturnKind()
+    exists(Function fun |
+      node = TExceptionalFunctionReturnNode(fun) and
+      kind = MkExceptionalReturnKind() and
+      not fun.isAsyncOrGenerator() // exception is not thrown, but will be stored on the returned promise object
+    )
     or
     FlowSummaryImpl::Private::summaryReturnNode(node.(FlowSummaryNode).getSummaryNode(), kind)
   }
@@ -465,6 +469,21 @@ module Private {
       node1 = TFlowSummaryNode(input) and
       node2 = TFlowSummaryNode(output)
     )
+    or
+    exists(AwaitExpr await |
+      // Allow non-promise values to propagate through await. The target node has clearsContent.
+      node1 = await.getOperand().flow() and
+      node2 = await.flow()
+    )
+    or
+    exists(Function f |
+      f.isAsync() and
+      node1 = f.getAReturnedExpr().flow()
+    |
+      node2 = TAsyncFunctionIntermediateStoreReturnNode(f) // clears promise-content
+      or
+      node2 = TFunctionReturnNode(f) // expects promise-content
+    )
   }
 
   /**
@@ -505,6 +524,14 @@ module Private {
       or
       contentSet = MkAwaited() and
       c = ContentSet::singleton(Promises::valueProp())
+    )
+    or
+    exists(AwaitExpr await | node1 = await.getOperand().flow() |
+      node2 = await.flow() and
+      c.asSingleton() = Promises::valueProp()
+      or
+      node2 = await.getExceptionTarget() and
+      c.asSingleton() = Promises::errorProp()
     )
   }
 
@@ -564,6 +591,13 @@ module Private {
       node2 = TFlowSummaryNode(output) and
       c = ContentSet::singleton(Promises::valueProp())
     )
+    or
+    exists(Function f |
+      f.isAsync() and
+      node1 = TAsyncFunctionIntermediateStoreReturnNode(f) and
+      node2 = TFunctionReturnNode(f) and
+      c.asSingleton() = Promises::valueProp()
+    )
   }
 
   /**
@@ -582,6 +616,15 @@ module Private {
     FlowSummaryImpl::Private::Steps::summaryReadStep(_, MkAwaited(),
       n.(FlowSummaryNode).getSummaryNode()) and
     c = ContentSet::promiseFilter()
+    or
+    // Result of 'await' cannot be a promise; needed for the local flow step into 'await'
+    exists(AwaitExpr await |
+      n = await.flow() and
+      c = MkPromiseFilter()
+    )
+    or
+    n = TAsyncFunctionIntermediateStoreReturnNode(_) and
+    c = MkPromiseFilter()
   }
 
   /**
@@ -596,6 +639,12 @@ module Private {
     FlowSummaryImpl::Private::Steps::summaryStoreStep(_, MkAwaited(),
       n.(FlowSummaryNode).getSummaryNode()) and
     c = ContentSet::promiseFilter()
+    or
+    exists(Function f |
+      f.isAsync() and
+      n = TFunctionReturnNode(f) and
+      c = MkPromiseFilter()
+    )
   }
 
   /**
