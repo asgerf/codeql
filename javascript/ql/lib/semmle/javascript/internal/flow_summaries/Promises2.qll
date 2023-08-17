@@ -1,18 +1,31 @@
 private import javascript
 private import semmle.javascript.dataflow2.FlowSummary
 
+private DataFlow::SourceNode promiseConstructorRef() {
+  result = Promises::promiseConstructorRef()
+  or
+  result = DataFlow::moduleImport("bluebird")
+  or
+  result = DataFlow::moduleMember(["q", "kew", "bluebird"], "Promise") // note: bluebird.Promise == bluebird
+  or
+  result = Closure::moduleImport("goog.Promise")
+}
+
 //
 // Note that the 'Awaited' token has a special interpretation.
 // See a write-up here: https://github.com/github/codeql-javascript-team/issues/423
 //
-private class PromiseCreation extends SummarizedCallable {
-  PromiseCreation() { this = "new Promise()" }
+private class PromiseConstructor extends SummarizedCallable {
+  PromiseConstructor() { this = "new Promise()" }
 
-  override DataFlow::InvokeNode getACallSimple() { result instanceof PromiseDefinition }
+  override DataFlow::InvokeNode getACallSimple() {
+    result = promiseConstructorRef().getAnInstantiation()
+  }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     (
+      // TODO: not currently supported by FlowSummaryImpl.qll
       // resolve(value)
       input = "Argument[0].Parameter[0].Argument[0]" and output = "ReturnValue.Awaited"
       or
@@ -54,8 +67,8 @@ private class PromiseThen1Argument extends SummarizedCallable {
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
-    input = "Argument[this].Awaited[error]" and
-    output = "ReturnValue.Awaited[error]"
+    input = "Argument[this].WithAwaited[error]" and
+    output = "ReturnValue"
   }
 }
 
@@ -98,11 +111,147 @@ private class PromiseFinally extends SummarizedCallable {
 private class PromiseResolve extends SummarizedCallable {
   PromiseResolve() { this = "Promise.resolve()" }
 
-  override DataFlow::MethodCallNode getACallSimple() { result instanceof ResolvedPromiseDefinition }
+  override DataFlow::MethodCallNode getACallSimple() {
+    result = promiseConstructorRef().getAMemberCall("resolve")
+  }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     input = "Argument[0]" and
     output = "ReturnValue.Awaited"
+  }
+}
+
+private class PromiseReject extends SummarizedCallable {
+  PromiseReject() { this = "Promise.reject()" }
+
+  override DataFlow::MethodCallNode getACallSimple() {
+    result = promiseConstructorRef().getAMemberCall("reject")
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    input = "Argument[0]" and
+    output = "ReturnValue.Awaited[error]"
+  }
+}
+
+private int getARelevantArrayIndex() { result = [0 .. 9] }
+
+private string getAnArrayContent() {
+  // TODO: update all uses of this predicate when we distinguish more clearly between unknown and known array indices
+  result = "Member[" + getARelevantArrayIndex() + "]"
+  or
+  result = "ArrayElement"
+}
+
+private class PromiseAll extends SummarizedCallable {
+  PromiseAll() { this = "Promise.all()" }
+
+  override DataFlow::InvokeNode getACallSimple() {
+    result = promiseConstructorRef().getAMemberCall("all")
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    exists(string content | content = getAnArrayContent() |
+      input = "Argument[0]." + content + ".Awaited" and
+      output = "ReturnValue.Awaited[value]." + content
+      or
+      input = "Argument[0]." + content + ".Awaited[error]" and
+      output = "ReturnValue.Awaited[error]"
+    )
+  }
+}
+
+private class PromiseAnyLike extends SummarizedCallable {
+  PromiseAnyLike() { this = "Promise.any() or Promise.race()" }
+
+  override DataFlow::InvokeNode getACallSimple() {
+    result = promiseConstructorRef().getAMemberCall(["any", "race", "firstFulfilled"])
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    exists(string content | content = getAnArrayContent() |
+      input = "Argument[0]." + content and
+      output = "ReturnValue.Awaited"
+    )
+  }
+}
+
+private class PromiseAllSettled extends SummarizedCallable {
+  PromiseAllSettled() { this = "Promise.allSettled()" }
+
+  override DataFlow::InvokeNode getACallSimple() {
+    result = promiseConstructorRef().getAMemberCall("allSettled")
+    or
+    result = DataFlow::moduleImport("promise.allsettled").getACall()
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    exists(string content | content = getAnArrayContent() |
+      input = "Argument[0]." + content + ".Awaited" and
+      output = "ReturnValue.Awaited[value]." + content + ".Member[value]"
+      or
+      input = "Argument[0]." + content + ".Awaited[error]" and
+      output = "ReturnValue.Awaited[value]." + content + ".Member[reason]"
+    )
+  }
+}
+
+private class BluebirdMapSeries extends SummarizedCallable {
+  BluebirdMapSeries() { this = "bluebird.mapSeries" }
+
+  override DataFlow::InvokeNode getACallSimple() {
+    result = promiseConstructorRef().getAMemberCall("mapSeries")
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      exists(string content | content = getAnArrayContent() |
+        input = "Argument[0].Awaited." + content + ".Awaited" and
+        output = "Argument[1].Parameter[0]"
+        or
+        input = "Argument[0].Awaited." + content + ".Awaited[error]" and
+        output = "ReturnValue.Awaited[error]"
+      )
+      or
+      input = "Argument[0].WithAwaited[error]" and
+      output = "ReturnValue"
+      or
+      input = "Argument[1].ReturnValue.Awaited" and
+      output = "ReturnValue.Awaited.ArrayElement"
+      or
+      input = "Argument[1].ReturnValue.Awaited[error]" and
+      output = "ReturnValue.Awaited[error]"
+    )
+  }
+}
+
+/**
+ * - `Promise.withResolvers`, a method pending standardization,
+ * - `goog.Closure.withResolver()` (non-plural spelling)
+ * - `bluebird.Promise.defer()`
+ */
+private class PromiseWithResolversLike extends SummarizedCallable {
+  PromiseWithResolversLike() { this = "Promise.withResolvers()" }
+
+  override DataFlow::InvokeNode getACallSimple() {
+    result = promiseConstructorRef().getAMemberCall(["withResolver", "withResolvers", "defer"])
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      // TODO: not currently supported by FlowSummaryImpl.qll
+      input = "ReturnValue.Member[resolve].Argument[0]" and
+      output = "ReturnValue.Member[promise].Awaited"
+      or
+      input = "ReturnValue.Member[reject].Argument[0]" and
+      output = "ReturnValue.Member[promise].Awaited[error]"
+    )
   }
 }

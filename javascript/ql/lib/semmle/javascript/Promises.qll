@@ -198,6 +198,8 @@ module Promises {
 
     override string getAProperty() { result = [valueProp(), errorProp()] }
   }
+
+  predicate promiseConstructorRef = getAPromiseObject/0;
 }
 
 /**
