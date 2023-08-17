@@ -17,10 +17,10 @@ private class PromiseCreation extends SummarizedCallable {
       input = "Argument[0].Parameter[0].Argument[0]" and output = "ReturnValue.Awaited"
       or
       // reject(value)
-      input = "Argument[0].Parameter[1].Argument[0]" and output = "ReturnValue.AwaitedError"
+      input = "Argument[0].Parameter[1].Argument[0]" and output = "ReturnValue.Awaited[error]"
       or
       // throw from executor
-      input = "Argument[0].ReturnValue[exception]" and output = "ReturnValue.AwaitedError"
+      input = "Argument[0].ReturnValue[exception]" and output = "ReturnValue.Awaited[error]"
     )
   }
 }
@@ -35,11 +35,11 @@ private class PromiseThen extends SummarizedCallable {
     (
       input = "Argument[0,1].ReturnValue" and output = "ReturnValue.Awaited"
       or
-      input = "Argument[0,1].ReturnValue[exception]" and output = "ReturnValue.AwaitedError"
+      input = "Argument[0,1].ReturnValue[exception]" and output = "ReturnValue.Awaited[error]"
       or
-      input = "Argument[this].PromiseValue" and output = "Argument[0].Parameter[0]"
+      input = "Argument[this].Awaited[value]" and output = "Argument[0].Parameter[0]"
       or
-      input = "Argument[this].AwaitedError" and output = "Argument[1].Parameter[0]"
+      input = "Argument[this].Awaited[error]" and output = "Argument[1].Parameter[0]"
     )
   }
 }
@@ -54,8 +54,8 @@ private class PromiseThen1Argument extends SummarizedCallable {
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
-    input = "Argument[this].AwaitedError" and
-    output = "ReturnValue.AwaitedError"
+    input = "Argument[this].Awaited[error]" and
+    output = "ReturnValue.Awaited[error]"
   }
 }
 
@@ -69,11 +69,11 @@ private class PromiseCatch extends SummarizedCallable {
     (
       input = "Argument[0].ReturnValue" and output = "ReturnValue.Awaited"
       or
-      input = "Argument[0].ReturnValue[exception]" and output = "ReturnValue.AwaitedError"
+      input = "Argument[0].ReturnValue[exception]" and output = "ReturnValue.Awaited[error]"
       or
-      input = "Argument[this].PromiseValue" and output = "ReturnValue.PromiseValue"
+      input = "Argument[this].Awaited[value]" and output = "ReturnValue.Awaited[value]"
       or
-      input = "Argument[this].AwaitedError" and output = "Argument[0].Parameter[0]"
+      input = "Argument[this].Awaited[error]" and output = "Argument[0].Parameter[0]"
     )
   }
 }
@@ -86,13 +86,11 @@ private class PromiseFinally extends SummarizedCallable {
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     (
-      input = "Argument[0].ReturnValue.AwaitedError" and output = "ReturnValue.AwaitedError"
+      input = "Argument[0].ReturnValue.Awaited[error]" and output = "ReturnValue.Awaited[error]"
       or
-      input = "Argument[0].ReturnValue[exception]" and output = "ReturnValue.AwaitedError"
+      input = "Argument[0].ReturnValue[exception]" and output = "ReturnValue.Awaited[error]"
       or
-      input = "Argument[this].PromiseValue" and output = "ReturnValue.PromiseValue"
-      or
-      input = "Argument[this].AwaitedError" and output = "ReturnValue.AwaitedError"
+      input = "Argument[this].WithAwaited[value,error]" and output = "ReturnValue"
     )
   }
 }

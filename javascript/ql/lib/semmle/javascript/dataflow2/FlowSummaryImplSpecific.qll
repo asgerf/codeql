@@ -92,6 +92,15 @@ private SummaryComponent makeSingletonContentComponents(
 }
 
 /**
+ * Gets the content corresponding to `Awaited[arg]`.
+ */
+private Content getPromiseContent(string arg) {
+  arg = "value" and result = Promises::valueProp()
+  or
+  arg = "error" and result = Promises::errorProp()
+}
+
+/**
  * Gets the summary component for specification component `c`, if any.
  *
  * This covers all the Ruby-specific components of a flow summary.
@@ -118,11 +127,12 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   or
   result = makeSingletonContentComponents(c, "PromiseValue", Promises::valueProp())
   or
-  result = makeSingletonContentComponents(c, "AwaitedError", Promises::errorProp())
+  result = makeSingletonContentComponents(c, "Awaited", getPromiseContent(c.getAnArgument()))
   or
-  // Awaited happens to be encoded as content components, but doesn't behave exactly that way.
+  // 'Awaited' is a special operator that we encode as content components, but it doesn't behave exactly that way.
   // It is mapped down to a combination steps that handle coercion and promise-flattening.
   c.getName() = "Awaited" and
+  c.getNumArgument() = 0 and
   result = SummaryComponent::content(MkAwaited())
 }
 
@@ -131,9 +141,10 @@ private string getMadStringFromContentSetAux(ContentSet cs) {
   or
   cs.asSingleton() = DataFlow::PseudoProperties::mapValueAll() and result = "MapValue"
   or
-  cs.asSingleton() = Promises::valueProp() and result = "PromiseValue"
-  or
-  cs.asSingleton() = Promises::errorProp() and result = "AwaitedError"
+  exists(string awaitedArg |
+    cs.asSingleton() = getPromiseContent(awaitedArg) and
+    result = "Awaited[" + awaitedArg + "]"
+  )
   or
   cs = MkAwaited() and result = "Awaited"
 }
