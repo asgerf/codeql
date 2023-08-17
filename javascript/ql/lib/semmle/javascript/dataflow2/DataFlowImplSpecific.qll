@@ -86,8 +86,26 @@ module Private {
    */
   abstract private class EmptyType extends DataFlow::Node { }
 
-  class PostUpdateNode extends DataFlow::Node instanceof EmptyType {
-    DataFlow::Node getPreUpdateNode() { none() }
+  abstract class PostUpdateNode extends DataFlow::Node {
+    abstract DataFlow::Node getPreUpdateNode();
+  }
+
+  private class ExplicitPostUpdateAsPostUpdate extends PostUpdateNode instanceof DataFlow::ExplicitPostUpdateNode
+  {
+    override DataFlow::Node getPreUpdateNode() {
+      result = this.(DataFlow::ExplicitPostUpdateNode).getPreUpdateNode()
+    }
+  }
+
+  class SummaryPostUpdateNode extends FlowSummaryNode, PostUpdateNode {
+    private FlowSummaryNode preUpdateNode;
+
+    SummaryPostUpdateNode() {
+      FlowSummaryImpl::Private::summaryPostUpdateNode(this.getSummaryNode(),
+        preUpdateNode.getSummaryNode())
+    }
+
+    override DataFlow::Node getPreUpdateNode() { result = preUpdateNode }
   }
 
   class CastNode extends DataFlow::Node instanceof EmptyType { }
@@ -153,6 +171,8 @@ module Private {
     exists(int boundArgs | n = call.asBoundCall(boundArgs).getArgument(pos - boundArgs))
     or
     FlowSummaryImpl::Private::summaryArgumentNode(call, n.(FlowSummaryNode).getSummaryNode(), pos)
+    or
+    n = call.asOrdinaryCall().getCalleeNode() and pos = -2
   }
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) {
@@ -341,6 +361,8 @@ module Private {
       this = [0 .. getMaxArity()]
       or
       this = -1 // receiver
+      or
+      this = -2 // function
     }
   }
 
@@ -404,6 +426,13 @@ module Private {
     or
     FlowSummaryImpl::Private::Steps::summaryLocalStep(node1.(FlowSummaryNode).getSummaryNode(),
       node2.(FlowSummaryNode).getSummaryNode(), true)
+    or
+    // Step from post-update nodes to local sources of the pre-update node. This emulates how JS usually tracks side effects.
+    exists(DataFlow::ExplicitPostUpdateNode postUpdate |
+      node1 = postUpdate and
+      node2 = postUpdate.getPreUpdateNode().getALocalSource() and
+      node1 != node2 // exclude trivial edges
+    )
   }
 
   predicate simpleLocalFlowStep(Node node1, Node node2) {
@@ -474,6 +503,18 @@ module Private {
     cs = [ContentSet::promiseValue(), ContentSet::promiseError()]
   }
 
+  /** Gets the post-update node for which `node` is the corresponding pre-update node. */
+  private Node getPostUpdate(Node node) { result.(PostUpdateNode).getPreUpdateNode() = node }
+
+  /** Gets the post-update node for which node is the pre-update node, if one exists, otherwise gets `node` itself. */
+  pragma[inline]
+  private Node tryGetPostUpdate(Node node) {
+    result = getPostUpdate(node)
+    or
+    not exists(getPostUpdate(node)) and
+    result = node
+  }
+
   /**
    * Holds if data can flow from `node1` to `node2` via a store into `c`.  Thus,
    * `node2` references an object with a content `c.getAStoreContent()` that
@@ -483,7 +524,8 @@ module Private {
     exists(DataFlow::PropWrite write |
       node1 = write.getRhs() and
       c.asSingleton() = write.getPropertyName() and
-      node2 = write.getBase().getALocalSource() // TODO
+      // Target the post-update node if one exists (for object literals we do not generate post-update nodes)
+      node2 = tryGetPostUpdate(write.getBase())
     )
     or
     DataFlow::SharedFlowStep::storeStep(node1, node2, c.asSingleton()) and
@@ -555,7 +597,7 @@ module Private {
    */
   // predicate allowParameterReturnInSelf(ParameterNode p);
   predicate allowParameterReturnInSelf(Node p) {
-    none() // TODO: not sure what this means for JS
+    FlowSummaryImpl::Private::summaryAllowParameterReturnInSelf(p)
   }
 
   class LambdaCallKind = Unit; // TODO: not sure about this
@@ -681,5 +723,19 @@ module Public {
      * A content set describing the error stored in a rejected promise.
      */
     ContentSet promiseError() { result = singleton(Promises::errorProp()) }
+  }
+}
+
+private import semmle.javascript.dataflow2.FlowSummary
+
+class FlowFromSideEffectOnParameter extends SummarizedCallable {
+  FlowFromSideEffectOnParameter() { this = "flowFromSideEffectOnParameter" }
+
+  override DataFlow::MethodCallNode getACallSimple() { result.getMethodName() = this }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    input = "Argument[0].Parameter[0].Member[prop]" and
+    output = "ReturnValue" and
+    preservesValue = true
   }
 }

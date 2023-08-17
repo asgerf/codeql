@@ -31,6 +31,10 @@ function m4() {
   sink(t.flowIntoArrayElement(source()).prop); // OK
 }
 
+function m5() {
+  sink(t.flowOutOfInnerCallback(cb => { cb(source()); })); // NOT OK
+}
+
 async function m6() {
   sink(t.flowOutOfPromise(t.flowIntoPromise(source()))); // NOT OK (although the synchronous flow is technically not possible)
 
@@ -49,13 +53,21 @@ async function m7() {
   sink(t.flowOutOfPromise(Promise.resolve(source()).then(x => "safe"))); // OK
 
   sink(await t.flowIntoPromise(source())); // NOT OK [INCONSISTENCY]
-  t.flowIntoPromise(source()).then(value => sink(value)); // NOT OK [INCONSISTENCY]
+  t.flowIntoPromise(source()).then(value => sink(value)); // NOT OK
   sink(await t.flowIntoPromise(t.flowIntoPromise(source()))); // NOT OK [INCONSISTENCY]
 
   async function makePromise() {
     return source();
   }
   sink(t.flowOutOfPromise(makePromise())); // NOT OK [INCONSISTENCY]
+
+  let taintedPromise = new Promise((resolve, reject) => resolve(source()));
+  sink(t.flowOutOfPromise(taintedPromise)); // NOT OK
+
+  new Promise((resolve, reject) => resolve(source())).then(x => sink(x)); // NOT OK
+  new Promise((resolve, reject) => resolve(source())).catch(err => sink(err)); // OK
+  new Promise((resolve, reject) => reject(source())).then(x => sink(x)); // OK
+  new Promise((resolve, reject) => reject(source())).catch(err => sink(err)); // NOT OK
 }
 
 function m8() {
@@ -80,4 +92,18 @@ function m10() {
   sink(t.flowThroughCallback(source(), x => "safe")); // OK
   sink(t.flowThroughCallback("safe", x => x)); // OK
   sink(t.flowThroughCallback("safe", x => "safe")); // OK
+}
+
+function m11() {
+  let data = t.flowFromSideEffectOnParameter(param => {
+    param.prop = source();
+  });
+  sink(data); // NOT OK
+
+  function manullyWritten(param) {
+    param.prop = source();
+  }
+  let obj = {};
+  manullyWritten(obj);
+  sink(obj.prop); // NOT OK
 }

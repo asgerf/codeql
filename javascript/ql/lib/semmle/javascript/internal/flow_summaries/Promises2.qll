@@ -37,7 +37,7 @@ private class PromiseThen extends SummarizedCallable {
       or
       input = "Argument[0,1].ReturnValue[exception]" and output = "ReturnValue.AwaitedError"
       or
-      input = "Argument[this].Awaited!" and output = "Argument[0].Parameter[0]"
+      input = "Argument[this].PromiseValue" and output = "Argument[0].Parameter[0]"
       or
       input = "Argument[this].AwaitedError" and output = "Argument[1].Parameter[0]"
     )
@@ -56,6 +56,44 @@ private class PromiseThen1Argument extends SummarizedCallable {
     preservesValue = true and
     input = "Argument[this].AwaitedError" and
     output = "ReturnValue.AwaitedError"
+  }
+}
+
+private class PromiseCatch extends SummarizedCallable {
+  PromiseCatch() { this = "Promise#catch()" }
+
+  override DataFlow::MethodCallNode getACallSimple() { result.getMethodName() = "catch" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[0].ReturnValue" and output = "ReturnValue.Awaited"
+      or
+      input = "Argument[0].ReturnValue[exception]" and output = "ReturnValue.AwaitedError"
+      or
+      input = "Argument[this].PromiseValue" and output = "ReturnValue.PromiseValue"
+      or
+      input = "Argument[this].AwaitedError" and output = "Argument[0].Parameter[0]"
+    )
+  }
+}
+
+private class PromiseFinally extends SummarizedCallable {
+  PromiseFinally() { this = "Promise#finally()" }
+
+  override DataFlow::MethodCallNode getACallSimple() { result.getMethodName() = "finally" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[0].ReturnValue.AwaitedError" and output = "ReturnValue.AwaitedError"
+      or
+      input = "Argument[0].ReturnValue[exception]" and output = "ReturnValue.AwaitedError"
+      or
+      input = "Argument[this].PromiseValue" and output = "ReturnValue.PromiseValue"
+      or
+      input = "Argument[this].AwaitedError" and output = "ReturnValue.AwaitedError"
+    )
   }
 }
 

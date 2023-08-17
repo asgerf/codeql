@@ -26,6 +26,7 @@ newtype TNode =
     (kind = "call" or kind = "apply")
   } or
   TThisNode(StmtContainer f) { f.(Function).getThisBinder() = f or f instanceof TopLevel } or
+  TFunctionSelfReferenceNode(Function f) or
   TDestructuredModuleImportNode(ImportDeclaration decl) {
     exists(decl.getASpecifier().getImportedName())
   } or
@@ -36,6 +37,10 @@ newtype TNode =
   TGlobalAccessPathRoot() or
   TTemplatePlaceholderTag(Templating::TemplatePlaceholderTag tag) or
   TReflectiveParametersNode(Function f) or
+  TPostUpdateNode(Expr e) {
+    e = any(InvokeExpr invoke).getAnArgument() or
+    e = any(PropAccess access).getBase()
+  } or
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) or
   TFlowSummaryIntermediateAwaitStoreNode(FlowSummaryImpl::Private::SummaryNode sn) {
     FlowSummaryImpl::Private::Steps::summaryStoreStep(sn, DataFlowPrivate::MkAwaited(), _)
@@ -57,6 +62,7 @@ newtype TNode =
 class TEarlyStageNode =
   TValueNode or TSsaDefNode or TCapturedVariableNode or TPropNode or TRestPatternNode or
       TElementPatternNode or TElementNode or TReflectiveCallNode or TThisNode or
-      TDestructuredModuleImportNode or THtmlAttributeNode or TFunctionReturnNode or
-      TExceptionalFunctionReturnNode or TExceptionalInvocationReturnNode or TGlobalAccessPathRoot or
-      TTemplatePlaceholderTag or TReflectiveParametersNode;
+      TFunctionSelfReferenceNode or TDestructuredModuleImportNode or THtmlAttributeNode or
+      TFunctionReturnNode or TExceptionalFunctionReturnNode or TExceptionalInvocationReturnNode or
+      TGlobalAccessPathRoot or TTemplatePlaceholderTag or TReflectiveParametersNode or
+      TPostUpdateNode;

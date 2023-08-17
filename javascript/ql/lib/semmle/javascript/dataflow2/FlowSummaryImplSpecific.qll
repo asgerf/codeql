@@ -116,8 +116,7 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   or
   result = makeSingletonContentComponents(c, "MapValue", DataFlow::PseudoProperties::mapValueAll())
   or
-  // Awaited! and AwaitedError! map to the raw content component
-  result = makeSingletonContentComponents(c, "Awaited!", Promises::valueProp())
+  result = makeSingletonContentComponents(c, "PromiseValue", Promises::valueProp())
   or
   result = makeSingletonContentComponents(c, "AwaitedError", Promises::errorProp())
   or
@@ -132,7 +131,7 @@ private string getMadStringFromContentSetAux(ContentSet cs) {
   or
   cs.asSingleton() = DataFlow::PseudoProperties::mapValueAll() and result = "MapValue"
   or
-  cs.asSingleton() = Promises::valueProp() and result = "Awaited!"
+  cs.asSingleton() = Promises::valueProp() and result = "PromiseValue"
   or
   cs.asSingleton() = Promises::errorProp() and result = "AwaitedError"
   or
@@ -165,6 +164,8 @@ string getParameterPosition(ParameterPosition pos) {
   pos >= 0 and result = pos.toString()
   or
   pos = -1 and result = "this"
+  or
+  pos = -2 and result = "function"
 }
 
 /** Gets the textual representation of an argument position in the format used for flow summaries. */
@@ -173,6 +174,8 @@ string getArgumentPosition(ArgumentPosition pos) {
   pos >= 0 and result = pos.toString()
   or
   pos = -1 and result = "this"
+  or
+  pos = -2 and result = "function"
 }
 
 /** Holds if input specification component `c` needs a reference. */
@@ -235,6 +238,8 @@ import UnusedSourceSinkInterpretation
 bindingset[s]
 ArgumentPosition parseParamBody(string s) {
   s = "this" and result = -1
+  or
+  s = "function" and result = -2
   or
   result = AccessPathSyntax::AccessPath::parseInt(s) and result >= 0
 }

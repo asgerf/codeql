@@ -1371,6 +1371,45 @@ module DataFlow {
   }
 
   /**
+   * A node representing the hidden parameter of a function by which a function can refer to itself.
+   */
+  class FunctionSelfReferenceNode extends DataFlow::Node, TFunctionSelfReferenceNode {
+    private Function function;
+
+    FunctionSelfReferenceNode() { this = TFunctionSelfReferenceNode(function) }
+
+    /** Gets the function. */
+    Function getFunction() { result = function }
+
+    override StmtContainer getContainer() { result = function }
+
+    override BasicBlock getBasicBlock() { result = function.getEntryBB() }
+  }
+
+  /**
+   * A post-update node that is not part of a flow summary.
+   */
+  class ExplicitPostUpdateNode extends DataFlow::Node, TPostUpdateNode {
+    private Expr expr;
+
+    ExplicitPostUpdateNode() { this = TPostUpdateNode(expr) }
+
+    Expr getExpr() { result = expr }
+
+    DataFlow::Node getPreUpdateNode() { result = TValueNode(expr) }
+
+    override StmtContainer getContainer() { result = expr.getContainer() }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      expr.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    override string toString() { result = "[post update] " + expr.toString() }
+  }
+
+  /**
    * INTERNAL. DO NOT USE.
    *
    * Gets a data flow node representing the given captured variable.

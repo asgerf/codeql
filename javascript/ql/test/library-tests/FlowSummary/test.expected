@@ -1,0 +1,4 @@
+| library-tests/FlowSummary/tst.js:35 | expected an alert, but found none | NOT OK | ConsistencyConfig |
+| library-tests/FlowSummary/tst.js:65 | expected an alert, but found none | NOT OK | ConsistencyConfig |
+| library-tests/FlowSummary/tst.js:67 | expected an alert, but found none | NOT OK | ConsistencyConfig |
+| library-tests/FlowSummary/tst.js:70 | expected an alert, but found none | NOT OK | ConsistencyConfig |
