@@ -38,6 +38,61 @@ private class PromiseConstructor extends SummarizedCallable {
   }
 }
 
+/**
+ * A workaround to the `PromiseConstructor`, to be used until FlowSummaryImpl.qll has sufficient support
+ * for callbacks.
+ */
+module PromiseConstructorWorkaround {
+  class ResolveSummary extends SummarizedCallable {
+    ResolveSummary() { this = "new Promise() resolve callback" }
+
+    override DataFlow::InvokeNode getACallSimple() {
+      result =
+        promiseConstructorRef().getAnInstantiation().getCallback(0).getParameter(0).getACall()
+    }
+
+    override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+      preservesValue = true and
+      input = "Argument[0]" and
+      output = "Argument[function].Member[resolve-value]"
+    }
+  }
+
+  class RejectCallback extends SummarizedCallable {
+    RejectCallback() { this = "new Promise() reject callback" }
+
+    override DataFlow::InvokeNode getACallSimple() {
+      result =
+        promiseConstructorRef().getAnInstantiation().getCallback(0).getParameter(1).getACall()
+    }
+
+    override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+      preservesValue = true and
+      input = "Argument[0]" and
+      output = "Argument[function].Member[reject-value]"
+    }
+  }
+
+  class ConstructorSummary extends SummarizedCallable {
+    ConstructorSummary() { this = "new Promise() workaround" }
+
+    override DataFlow::InvokeNode getACallSimple() {
+      result = promiseConstructorRef().getAnInstantiation()
+    }
+
+    override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+      preservesValue = true and
+      (
+        input = "Argument[0].Parameter[0].Member[resolve-value]" and
+        output = "ReturnValue.Awaited"
+        or
+        input = "Argument[0].Parameter[1].Member[reject-value]" and
+        output = "ReturnValue.Awaited[error]"
+      )
+    }
+  }
+}
+
 private class PromiseThen extends SummarizedCallable {
   PromiseThen() { this = "Promise#then()" }
 

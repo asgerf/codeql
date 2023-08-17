@@ -226,6 +226,7 @@ module Private {
           DataFlow::PseudoProperties::arrayElement(), DataFlow::PseudoProperties::mapValueAll(),
           Promises::valueProp(), Promises::errorProp()
         ]
+      or
       exists(AccessPathSyntax::AccessPathToken tok |
         tok.getName() = "Member" and this = tok.getAnArgument()
       )
