@@ -207,6 +207,8 @@ module Private {
   pragma[inline]
   predicate compatibleTypes(DataFlowType t1, DataFlowType t2) { any() }
 
+  private import semmle.javascript.frameworks.data.internal.AccessPathSyntax as AccessPathSyntax
+
   class Content extends string {
     Content() {
       this = any(PropAccess access).getPropertyName()
@@ -222,6 +224,9 @@ module Private {
           DataFlow::PseudoProperties::arrayElement(), DataFlow::PseudoProperties::mapValueAll(),
           Promises::valueProp(), Promises::errorProp()
         ]
+      exists(AccessPathSyntax::AccessPathToken tok |
+        tok.getName() = "Member" and this = tok.getAnArgument()
+      )
     }
   }
 
