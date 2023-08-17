@@ -152,6 +152,8 @@ module Private {
     or
     pos = -1 and p = TThisNode(c.asSourceCallable().(Function))
     or
+    pos = -2 and p = TFunctionSelfReferenceNode(c.asSourceCallable())
+    or
     exists(FlowSummaryNode summaryNode |
       summaryNode = p and
       FlowSummaryImpl::Private::summaryParameterNode(summaryNode.getSummaryNode(), pos) and

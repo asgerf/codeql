@@ -1384,6 +1384,14 @@ module DataFlow {
     override StmtContainer getContainer() { result = function }
 
     override BasicBlock getBasicBlock() { result = function.getEntryBB() }
+
+    override string toString() { result = "[function self-reference] " + function.toString() }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      function.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
   }
 
   /**

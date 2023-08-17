@@ -39,7 +39,8 @@ newtype TNode =
   TReflectiveParametersNode(Function f) or
   TPostUpdateNode(Expr e) {
     e = any(InvokeExpr invoke).getAnArgument() or
-    e = any(PropAccess access).getBase()
+    e = any(PropAccess access).getBase() or
+    e = any(InvokeExpr invoke).getCallee()
   } or
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) or
   TFlowSummaryIntermediateAwaitStoreNode(FlowSummaryImpl::Private::SummaryNode sn) {
