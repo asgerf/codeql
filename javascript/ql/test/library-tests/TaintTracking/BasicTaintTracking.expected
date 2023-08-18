@@ -3,6 +3,7 @@ consistencyIssue
 | library-tests/TaintTracking/constructor-calls.js:40 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/constructor-calls.js:44 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/exceptions.js:54 | expected an alert, but found none | NOT OK |  |
+| library-tests/TaintTracking/getters-and-setters.js:53 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/nested-props.js:15 | expected an alert, but found none | NOT OK - but not found |  |
 | library-tests/TaintTracking/nested-props.js:20 | expected an alert, but found none | NOT OK - but not found |  |
 | library-tests/TaintTracking/nested-props.js:28 | expected an alert, but found none | NOT OK - but not found |  |

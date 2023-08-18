@@ -50,7 +50,7 @@ function testFlowThroughGetter() {
     function getX(c) {
         return c.x;
     }
-    sink(getX(new C(source()))); // NOT OK - but not flagged [INCONSISTENCY]
+    sink(getX(new C(source()))); // NOT OK
     getX(null);
 }
 

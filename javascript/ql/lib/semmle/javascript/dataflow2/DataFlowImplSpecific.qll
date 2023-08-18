@@ -69,6 +69,8 @@ module Private {
     or
     kind = MkExceptionalReturnKind() and result = call.asBoundCall(_).getExceptionalReturn()
     or
+    kind = MkNormalReturnKind() and result = call.asAccessorCall().(DataFlow::PropRead)
+    or
     FlowSummaryImpl::Private::summaryOutNode(call, result.(FlowSummaryNode).getSummaryNode(), kind)
   }
 
@@ -193,6 +195,12 @@ module Private {
     // For now, treat all spread argument as flowing into the 'arguments' array, regardless of preceding arguments
     n = call.asOrdinaryCall().getASpreadArgument() and
     pos = -3
+    or
+    // receiver of accessor call
+    pos = -1 and n = call.asAccessorCall().getBase()
+    or
+    // argument to setter (TODO: this has no post-update node)
+    pos = 0 and n = call.asAccessorCall().(DataFlow::PropWrite).getRhs()
   }
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) {
@@ -272,6 +280,7 @@ module Private {
     MkBoundCall(DataFlow::InvokeNode node, int boundArgs) {
       FlowSteps::callsBound(node, _, boundArgs)
     } or
+    MkAccessorCall(DataFlow::PropRef node) or
     MkSummaryCall(
       FlowSummaryImpl::Public::SummarizedCallable c, FlowSummaryImpl::Private::SummaryNode receiver
     ) {
@@ -284,6 +293,8 @@ module Private {
     string toString() { none() } // Overridden in subclass
 
     DataFlow::InvokeNode asOrdinaryCall() { this = MkOrdinaryCall(result) }
+
+    DataFlow::PropRef asAccessorCall() { this = MkAccessorCall(result) }
 
     DataFlow::PartialInvokeNode asPartialCall() { this = MkPartialCall(result) }
 
@@ -428,6 +439,8 @@ module Private {
       invoke = node.asBoundCall(boundArgs) and
       FlowSteps::callsBound(invoke, result.asSourceCallable(), boundArgs)
     )
+    or
+    result.asSourceCallable() = node.asAccessorCall().getAnAccessorCallee().getFunction()
     or
     exists(LibraryCallable callable |
       result = MkLibraryCallable(callable) and

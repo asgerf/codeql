@@ -8,16 +8,6 @@
 | library-tests/TaintTracking/callbacks.js:47 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/callbacks.js:48 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/capture-flow.js:30 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
-| library-tests/TaintTracking/getters-and-setters.js:9 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/getters-and-setters.js:13 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/getters-and-setters.js:23 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/getters-and-setters.js:45 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/getters-and-setters.js:63 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/getters-and-setters.js:66 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/getters-and-setters.js:82 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/getters-and-setters.js:88 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/getters-and-setters.js:92 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/getters-and-setters.js:100 | expected an alert, but found none | NOT OK - but not flagged | ConsistencyConfig |
 | library-tests/TaintTracking/object-bypass-sanitizer.js:23 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/object-bypass-sanitizer.js:28 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/sanitizer-guards.js:64 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
