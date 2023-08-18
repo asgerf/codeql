@@ -618,12 +618,12 @@ module Private {
     or
     // Clear promise content before storing into promise value, to avoid creating nested promises
     n = TFlowSummaryIntermediateAwaitStoreNode(_) and
-    c = ContentSet::promiseFilter()
+    c = MkPromiseFilter()
     or
     // After reading from Awaited, the output must not be stored in a promise content
     FlowSummaryImpl::Private::Steps::summaryReadStep(_, MkAwaited(),
       n.(FlowSummaryNode).getSummaryNode()) and
-    c = ContentSet::promiseFilter()
+    c = MkPromiseFilter()
     or
     // Result of 'await' cannot be a promise; needed for the local flow step into 'await'
     exists(AwaitExpr await |
@@ -646,7 +646,7 @@ module Private {
     // There is a value step from the input directly to this node, hence the need for expectsContent.
     FlowSummaryImpl::Private::Steps::summaryStoreStep(_, MkAwaited(),
       n.(FlowSummaryNode).getSummaryNode()) and
-    c = ContentSet::promiseFilter()
+    c = MkPromiseFilter()
     or
     exists(Function f |
       f.isAsync() and
