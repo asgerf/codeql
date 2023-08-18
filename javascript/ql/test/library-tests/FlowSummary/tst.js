@@ -148,3 +148,19 @@ function m12() {
     sink(x3); // OK
   });
 }
+
+async function m13() {
+  async function testStoreBack(x) {
+    (await x).prop = source();
+  }
+  const obj = {};
+  const promise = Promise.resolve(obj);
+  testStoreBack(promise);
+  sink(obj.prop); // NOT OK [INCONSISTENCY]
+  sink(promise.prop); // OK [INCONSISTENCY]
+  sink((await promise).prop); // NOT OK
+
+  const obj2 = {};
+  testStoreBack(obj2);
+  sink(obj2.prop);; // NOT OK
+}

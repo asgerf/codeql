@@ -468,7 +468,8 @@ module Private {
       FlowSummaryImpl::Private::Steps::summaryStoreStep(input, MkAwaited(), output) and
       node1 = TFlowSummaryNode(input) and
       (
-        node2 = TFlowSummaryNode(output)
+        node2 = TFlowSummaryNode(output) and
+        not node2 instanceof PostUpdateNode // When doing a store-back, do not add the local flow edge
         or
         node2 = TFlowSummaryIntermediateAwaitStoreNode(input)
       )
