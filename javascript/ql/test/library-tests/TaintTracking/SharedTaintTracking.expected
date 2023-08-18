@@ -1,11 +1,5 @@
 | library-tests/TaintTracking/bound-function.js:30 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/call-apply.js:24 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/call-apply.js:32 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/call-apply.js:33 | expected consistency issue, but found no such issue (OK [INCONSISTENCY]) | OK [INCONSISTENCY] | ConsistencyConfig |
-| library-tests/TaintTracking/call-apply.js:34 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/call-apply.js:55 | expected consistency issue, but found no such issue (NOT OK - but not flagged [INCONSISTENCY]) | NOT OK - but not flagged [INCONSISTENCY] | ConsistencyConfig |
-| library-tests/TaintTracking/call-apply.js:59 | expected consistency issue, but found no such issue (OK [INCONSISTENCY]) | OK [INCONSISTENCY] | ConsistencyConfig |
-| library-tests/TaintTracking/call-apply.js:62 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/callbacks.js:30 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/callbacks.js:34 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/callbacks.js:35 | expected an alert, but found none | NOT OK | ConsistencyConfig |

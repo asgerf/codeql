@@ -164,6 +164,8 @@ module Private {
     or
     pos = -2 and p = TFunctionSelfReferenceNode(c.asSourceCallable())
     or
+    pos = -3 and p = TReflectiveParametersNode(c.asSourceCallable())
+    or
     exists(FlowSummaryNode summaryNode |
       summaryNode = p and
       FlowSummaryImpl::Private::summaryParameterNode(summaryNode.getSummaryNode(), pos) and
@@ -187,6 +189,10 @@ module Private {
     n = call.asOrdinaryCall().getCalleeNode() and pos = -2
     or
     pos = -1 and n = TConstructorThisArgumentNode(call.asOrdinaryCall().asExpr())
+    or
+    // For now, treat all spread argument as flowing into the 'arguments' array, regardless of preceding arguments
+    n = call.asOrdinaryCall().getASpreadArgument() and
+    pos = -3
   }
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) {
@@ -393,6 +399,8 @@ module Private {
       this = -1 // receiver
       or
       this = -2 // function
+      or
+      this = -3 // reflective parameters
     }
   }
 
