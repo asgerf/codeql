@@ -25,6 +25,7 @@ private import internal.DataFlowNode
 private import internal.AnalyzedParameters
 private import internal.PreCallGraphStep
 private import semmle.javascript.internal.CachedStages
+private import semmle.javascript.dataflow2.DataFlowImplSpecific as DataFlowImplSpecific
 
 module DataFlow {
   /**
@@ -1131,6 +1132,25 @@ module DataFlow {
   }
 
   /**
+   * A node representing the value passed as `this` argument in a `new` call or a `super` call.
+   */
+  class ConstructorThisArgumentNode extends TConstructorThisArgumentNode, DataFlow::Node {
+    private InvokeExpr expr;
+
+    ConstructorThisArgumentNode() { this = TConstructorThisArgumentNode(expr) }
+
+    override string toString() { result = "implicit 'this' argument of " + expr }
+
+    override StmtContainer getContainer() { result = expr.getContainer() }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      expr.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+  }
+
+  /**
    * INTERNAL. DO NOT USE.
    *
    * Gets a pseudo-node representing the root of a global access path.
@@ -1429,16 +1449,16 @@ module DataFlow {
   }
 
   /**
-   * A post-update node that is not part of a flow summary.
+   * A post-update node whose pre-node corresponds to an expression.
    */
-  class ExplicitPostUpdateNode extends DataFlow::Node, TPostUpdateNode {
+  class ExprPostUpdateNode extends DataFlow::Node, TExprPostUpdateNode,
+    DataFlowImplSpecific::Private::PostUpdateNode
+  {
     private Expr expr;
 
-    ExplicitPostUpdateNode() { this = TPostUpdateNode(expr) }
+    ExprPostUpdateNode() { this = TExprPostUpdateNode(expr) }
 
     Expr getExpr() { result = expr }
-
-    DataFlow::Node getPreUpdateNode() { result = TValueNode(expr) }
 
     override StmtContainer getContainer() { result = expr.getContainer() }
 
@@ -1756,6 +1776,12 @@ module DataFlow {
     exists(Function f |
       pred = TReflectiveParametersNode(f) and
       succ = TValueNode(f.getArgumentsVariable().getAnAccess())
+    )
+    or
+    // Pass 'this' into super calls
+    exists(SuperCall call |
+      pred = TThisNode(call.getBinder()) and
+      succ = TConstructorThisArgumentNode(call)
     )
   }
 

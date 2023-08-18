@@ -90,26 +90,32 @@ module Private {
    */
   abstract private class EmptyType extends DataFlow::Node { }
 
-  abstract class PostUpdateNode extends DataFlow::Node {
-    abstract DataFlow::Node getPreUpdateNode();
+  private predicate postUpdatePair(Node pre, Node post) {
+    exists(Expr expr |
+      pre = TValueNode(expr) and
+      post = TExprPostUpdateNode(expr)
+    )
+    or
+    exists(NewExpr expr |
+      pre = TConstructorThisArgumentNode(expr) and
+      post = TValueNode(expr)
+    )
+    or
+    exists(SuperCall call |
+      // Note: this step can cross function boundaries in absurd cases where super
+      // appears in a closure. We ignore this corner case for now.
+      pre = TConstructorThisArgumentNode(call) and
+      post = TThisNode(call.getBinder())
+    )
+    or
+    FlowSummaryImpl::Private::summaryPostUpdateNode(post.(FlowSummaryNode).getSummaryNode(),
+      pre.(FlowSummaryNode).getSummaryNode())
   }
 
-  private class ExplicitPostUpdateAsPostUpdate extends PostUpdateNode instanceof DataFlow::ExplicitPostUpdateNode
-  {
-    override DataFlow::Node getPreUpdateNode() {
-      result = this.(DataFlow::ExplicitPostUpdateNode).getPreUpdateNode()
-    }
-  }
+  class PostUpdateNode extends DataFlow::Node {
+    PostUpdateNode() { postUpdatePair(_, this) }
 
-  class SummaryPostUpdateNode extends FlowSummaryNode, PostUpdateNode {
-    private FlowSummaryNode preUpdateNode;
-
-    SummaryPostUpdateNode() {
-      FlowSummaryImpl::Private::summaryPostUpdateNode(this.getSummaryNode(),
-        preUpdateNode.getSummaryNode())
-    }
-
-    override DataFlow::Node getPreUpdateNode() { result = preUpdateNode }
+    final DataFlow::Node getPreUpdateNode() { postUpdatePair(result, this) }
   }
 
   class CastNode extends DataFlow::Node instanceof EmptyType { }
@@ -179,6 +185,8 @@ module Private {
     FlowSummaryImpl::Private::summaryArgumentNode(call, n.(FlowSummaryNode).getSummaryNode(), pos)
     or
     n = call.asOrdinaryCall().getCalleeNode() and pos = -2
+    or
+    pos = -1 and n = TConstructorThisArgumentNode(call.asOrdinaryCall().asExpr())
   }
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) {
@@ -450,7 +458,7 @@ module Private {
       node2.(FlowSummaryNode).getSummaryNode(), true)
     or
     // Step from post-update nodes to local sources of the pre-update node. This emulates how JS usually tracks side effects.
-    exists(DataFlow::ExplicitPostUpdateNode postUpdate |
+    exists(PostUpdateNode postUpdate |
       node1 = postUpdate and
       node2 = postUpdate.getPreUpdateNode().getALocalSource() and
       node1 != node2 // exclude trivial edges

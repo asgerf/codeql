@@ -38,11 +38,12 @@ newtype TNode =
   TGlobalAccessPathRoot() or
   TTemplatePlaceholderTag(Templating::TemplatePlaceholderTag tag) or
   TReflectiveParametersNode(Function f) or
-  TPostUpdateNode(Expr e) {
+  TExprPostUpdateNode(Expr e) {
     e = any(InvokeExpr invoke).getAnArgument() or
     e = any(PropAccess access).getBase() or
     e = any(InvokeExpr invoke).getCallee()
   } or
+  TConstructorThisArgumentNode(InvokeExpr e) { e instanceof NewExpr or e instanceof SuperCall } or
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) or
   TFlowSummaryIntermediateAwaitStoreNode(FlowSummaryImpl::Private::SummaryNode sn) {
     FlowSummaryImpl::Private::Steps::summaryStoreStep(sn, DataFlowPrivate::MkAwaited(), _)
@@ -67,4 +68,4 @@ class TEarlyStageNode =
       TFunctionSelfReferenceNode or TDestructuredModuleImportNode or THtmlAttributeNode or
       TFunctionReturnNode or TExceptionalFunctionReturnNode or TExceptionalInvocationReturnNode or
       TGlobalAccessPathRoot or TTemplatePlaceholderTag or TReflectiveParametersNode or
-      TPostUpdateNode;
+      TExprPostUpdateNode or TConstructorThisArgumentNode;
