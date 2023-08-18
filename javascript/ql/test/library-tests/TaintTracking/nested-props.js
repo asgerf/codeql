@@ -12,12 +12,12 @@ function storeStoreLoadLoadFlow(obj) {
 
 function loadStoreFlow(obj) {
     obj.x.y = source();
-    sink(obj.x.y); // NOT OK - but not found [INCONSISTENCY]
+    sink(obj.x.y); // NOT OK - but not found
 }
 
 function loadLoadStoreFlow(obj) {
     obj.x.y.z = source();
-    sink(obj.x.y.z); // NOT OK - but not found [INCONSISTENCY]
+    sink(obj.x.y.z); // NOT OK - but not found
 }
 
 function doStore(obj, x) {
@@ -25,7 +25,7 @@ function doStore(obj, x) {
 }
 function callStoreBackcallFlow(obj) {
     doStore(obj, source());
-    sink(obj.x); // NOT OK - but not found [INCONSISTENCY]
+    sink(obj.x); // NOT OK - but not found
 }
 
 function doLoad(obj) {
@@ -49,7 +49,7 @@ function doLoadStore(obj, val) {
 }
 function callStoreBackloadBackcallLoadLoad(obj) {
     doLoadStore(obj, source());
-    sink(obj.x.y); // NOT OK - but not found [INCONSISTENCY]
+    sink(obj.x.y); // NOT OK - but not found
 }
 
 function doLoadLoad(obj) {

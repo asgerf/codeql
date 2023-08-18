@@ -51,7 +51,7 @@ function test(unsafe, safe) {
   }
 
   throwAsync(source()).catch(e => {
-    sink(e); // NOT OK - but not flagged [INCONSISTENCY]
+    sink(e); // NOT OK
   });
 
   async function asyncTester() {

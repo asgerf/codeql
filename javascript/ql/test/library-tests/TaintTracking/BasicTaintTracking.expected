@@ -1,4 +1,9 @@
 consistencyIssue
+| library-tests/TaintTracking/exceptions.js:54 | expected an alert, but found none | NOT OK |  |
+| library-tests/TaintTracking/nested-props.js:15 | expected an alert, but found none | NOT OK - but not found |  |
+| library-tests/TaintTracking/nested-props.js:20 | expected an alert, but found none | NOT OK - but not found |  |
+| library-tests/TaintTracking/nested-props.js:28 | expected an alert, but found none | NOT OK - but not found |  |
+| library-tests/TaintTracking/nested-props.js:52 | expected an alert, but found none | NOT OK - but not found |  |
 typeInferenceMismatch
 | call-apply.js:27:14:27:21 | source() | call-apply.js:3:1:5:1 | 'arguments' object of function foo1 |
 | call-apply.js:27:14:27:21 | source() | call-apply.js:7:1:9:1 | 'arguments' object of function foo2 |

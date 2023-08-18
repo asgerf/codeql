@@ -444,7 +444,7 @@ module Private {
     or
     FlowSteps::globalFlowStep(node1, node2)
     or
-    FlowSteps::localExceptionStep(node1, node2)
+    node2 = FlowSteps::getThrowTarget(node1)
     or
     FlowSummaryImpl::Private::Steps::summaryLocalStep(node1.(FlowSummaryNode).getSummaryNode(),
       node2.(FlowSummaryNode).getSummaryNode(), true)
@@ -601,11 +601,15 @@ module Private {
       c.asPropertyName() = Promises::valueProp()
     )
     or
-    exists(Function f |
-      f.isAsync() and
+    exists(Function f | f.isAsync() |
       node1 = TAsyncFunctionIntermediateStoreReturnNode(f) and
       node2 = TFunctionReturnNode(f) and
       c.asPropertyName() = Promises::valueProp()
+      or
+      // Store thrown exceptions in the promise-error
+      node1 = TExceptionalFunctionReturnNode(f) and
+      node2 = TFunctionReturnNode(f) and
+      c.asPropertyName() = Promises::errorProp()
     )
   }
 
