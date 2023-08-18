@@ -19,16 +19,16 @@ module ConfigArg implements DataFlow2::ConfigSig {
   predicate isBarrier(DataFlow::Node node) {
     node.(DataFlow::InvokeNode).getCalleeName().matches("sanitizer_%")
     or
-    barrierGuardBlocksNode(node, _)
+    barrierGuardBlocksNodeIncludeHeuristicCheck(node, _)
   }
 }
 
 module Configuration = TaintTracking2::Global<ConfigArg>;
 
-class BasicSanitizerGuard extends TaintTracking::SanitizerGuardNode, DataFlow::CallNode {
-  BasicSanitizerGuard() { this = getACall("isSafe") }
+class BasicBarrierGuard extends DataFlow::BarrierGuardNode, DataFlow::CallNode {
+  BasicBarrierGuard() { this = getACall("isSafe") }
 
-  override predicate sanitizes(boolean outcome, Expr e) {
+  override predicate blocks(boolean outcome, Expr e) {
     outcome = true and e = this.getArgument(0).asExpr()
   }
 }
