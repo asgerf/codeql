@@ -1,0 +1,32 @@
+uniqueEnclosingCallable
+uniqueCallEnclosingCallable
+uniqueType
+uniqueNodeLocation
+missingLocation
+uniqueNodeToString
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+missingToString
+| Nodes without toString: 4 |
+parameterCallable
+localFlowIsLocal
+readStepIsLocal
+storeStepIsLocal
+compatibleTypesReflexive
+unreachableNodeCCtx
+localCallNodes
+postIsNotPre
+postHasUniquePre
+uniquePostUpdate
+postIsInSameCallable
+reverseRead
+| tst.js:84:14:84:40 | t.flowI ... urce()) | Origin of readStep is missing a PostUpdateNode. |
+| tst.js:86:14:86:59 | t.flowI ... rce())) | Origin of readStep is missing a PostUpdateNode. |
+argHasPostUpdate
+postWithInFlow
+viableImplInCallContextTooLarge
+uniqueParameterNodeAtPosition
+uniqueParameterNodePosition
+uniqueContentApprox
