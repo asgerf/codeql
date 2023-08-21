@@ -1,5 +1,6 @@
 consistencyIssue
 | library-tests/TaintTracking/call-apply.js:55 | expected an alert, but found none | NOT OK |  |
+| library-tests/TaintTracking/capture-flow.js:44 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/constructor-calls.js:39 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/constructor-calls.js:40 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/constructor-calls.js:44 | expected an alert, but found none | NOT OK |  |

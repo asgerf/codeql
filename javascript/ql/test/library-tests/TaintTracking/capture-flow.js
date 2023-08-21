@@ -29,3 +29,17 @@ function confuse(x) {
 
 sink(confuse('safe')); // OK
 sink(confuse(source())); // NOT OK
+
+function test3(param) {
+    var x;
+    function one() {
+        x = param;
+    }
+    function two() {
+        return one();
+    }
+    return two();
+}
+
+sink(test3(source())); // NOT OK
+sink(test3("safe")); // OK

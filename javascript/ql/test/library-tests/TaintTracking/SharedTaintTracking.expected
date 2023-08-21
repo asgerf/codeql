@@ -7,6 +7,7 @@
 | library-tests/TaintTracking/callbacks.js:47 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/callbacks.js:48 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/capture-flow.js:30 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
+| library-tests/TaintTracking/capture-flow.js:44 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/object-bypass-sanitizer.js:23 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/object-bypass-sanitizer.js:28 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/sanitizer-guards.js:64 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
