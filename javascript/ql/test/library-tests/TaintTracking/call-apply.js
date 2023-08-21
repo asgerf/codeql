@@ -52,7 +52,7 @@ function foo(x) {
 function bar(x) {
   return x.foo;
 }
-sink(foo(obj)); // NOT OK - but not flagged [INCONSISTENCY]
+sink(foo(obj)); // NOT OK
 
 function argumentsObject() {
   function sinkArguments1() {
