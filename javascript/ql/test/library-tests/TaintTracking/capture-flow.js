@@ -44,3 +44,14 @@ function test3(param) {
 
 sink(test3(source())); // NOT OK
 sink(test3("safe")); // OK
+
+function test4() {
+    var x = source();
+    return () => x;
+}
+sink(test4()()); // NOT OK
+
+function test5(x) {
+    return () => x;
+}
+sink(test5(source())()); // NOT OK
