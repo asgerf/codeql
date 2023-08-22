@@ -17,7 +17,7 @@ class SummarizedCallableBase = string;
 DataFlowCallable inject(SummarizedCallable c) { result.asLibraryCallable() = c }
 
 /** Gets the parameter position representing a callback itself, if any. */
-ArgumentPosition callbackSelfParameterPosition() { result = -2 }
+ArgumentPosition callbackSelfParameterPosition() { result.isFunctionSelfReference() }
 
 /** Gets the synthesized data-flow call for `receiver`. */
 SummaryCall summaryDataFlowCall(Private::SummaryNode receiver) { receiver = result.getReceiver() }
@@ -120,9 +120,9 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   |
     // TODO: convert ParameterPosition to a newtype and then update this
     arg = "any" and
-    ppos = [0 .. 10]
+    ppos.isPositional()
     or
-    ppos = [AccessPathSyntax::AccessPath::parseLowerBound(arg) .. 10]
+    ppos.asPositional() = [AccessPathSyntax::AccessPath::parseLowerBound(arg) .. 10]
   )
   or
   result = makePropertyContentComponents(c, "Member", c.getAnArgument())
@@ -183,21 +183,21 @@ string getMadRepresentationSpecific(SummaryComponent sc) {
 /** Gets the textual representation of a parameter position in the format used for flow summaries. */
 bindingset[pos]
 string getParameterPosition(ParameterPosition pos) {
-  pos >= 0 and result = pos.toString()
+  result = pos.asPositional().toString()
   or
-  pos = -1 and result = "this"
+  pos.isThis() and result = "this"
   or
-  pos = -2 and result = "function"
+  pos.isFunctionSelfReference() and result = "function"
 }
 
 /** Gets the textual representation of an argument position in the format used for flow summaries. */
 bindingset[pos]
 string getArgumentPosition(ArgumentPosition pos) {
-  pos >= 0 and result = pos.toString()
+  result = pos.asPositional().toString()
   or
-  pos = -1 and result = "this"
+  pos.isThis() and result = "this"
   or
-  pos = -2 and result = "function"
+  pos.isFunctionSelfReference() and result = "function"
 }
 
 /** Holds if input specification component `c` needs a reference. */
@@ -259,11 +259,11 @@ import UnusedSourceSinkInterpretation
 /** Gets the argument position obtained by parsing `X` in `Parameter[X]`. */
 bindingset[s]
 ArgumentPosition parseParamBody(string s) {
-  s = "this" and result = -1
+  s = "this" and result.isThis()
   or
-  s = "function" and result = -2
+  s = "function" and result.isFunctionSelfReference()
   or
-  result = AccessPathSyntax::AccessPath::parseInt(s) and result >= 0
+  result.asPositional() = AccessPathSyntax::AccessPath::parseInt(s)
 }
 
 /** Gets the parameter position obtained by parsing `X` in `Argument[X]`. */

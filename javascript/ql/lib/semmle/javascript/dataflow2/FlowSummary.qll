@@ -26,7 +26,7 @@ module SummaryComponent {
   class SyntheticGlobal = SC::SyntheticGlobal;
 
   /** Gets a summary component that represents a receiver. */
-  SummaryComponent receiver() { result = argument(-1) }
+  SummaryComponent receiver() { result = argument(MkThisParameter()) }
 
   /** Gets a summary component that represents an element in a collection at an unknown index. */
   SummaryComponent arrayElement() {

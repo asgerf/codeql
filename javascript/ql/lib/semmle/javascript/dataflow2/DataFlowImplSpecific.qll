@@ -161,13 +161,13 @@ module Private {
   }
 
   predicate isParameterNode(Node p, DataFlowCallable c, ParameterPosition pos) {
-    p = c.asSourceCallable().(Function).getParameter(pos).flow()
+    p = c.asSourceCallable().(Function).getParameter(pos.asPositional()).flow()
     or
-    pos = -1 and p = TThisNode(c.asSourceCallable().(Function))
+    pos.isThis() and p = TThisNode(c.asSourceCallable().(Function))
     or
-    pos = -2 and p = TFunctionSelfReferenceNode(c.asSourceCallable())
+    pos.isFunctionSelfReference() and p = TFunctionSelfReferenceNode(c.asSourceCallable())
     or
-    pos = -3 and p = TReflectiveParametersNode(c.asSourceCallable())
+    pos.isArgumentsArray() and p = TReflectiveParametersNode(c.asSourceCallable())
     or
     exists(FlowSummaryNode summaryNode |
       summaryNode = p and
@@ -177,31 +177,33 @@ module Private {
   }
 
   predicate isArgumentNode(Node n, DataFlowCall call, ArgumentPosition pos) {
-    n = call.asOrdinaryCall().getArgument(pos)
+    n = call.asOrdinaryCall().getArgument(pos.asPositional())
     or
-    pos = -1 and n = call.asOrdinaryCall().(DataFlow::CallNode).getReceiver()
+    pos.isThis() and n = call.asOrdinaryCall().(DataFlow::CallNode).getReceiver()
     or
-    call.asPartialCall().isPartialArgument(_, n, pos)
+    call.asPartialCall().isPartialArgument(_, n, pos.asPositional())
     or
-    pos = -1 and n = call.asPartialCall().getBoundReceiver()
+    pos.isThis() and n = call.asPartialCall().getBoundReceiver()
     or
-    exists(int boundArgs | n = call.asBoundCall(boundArgs).getArgument(pos - boundArgs))
+    exists(int boundArgs |
+      n = call.asBoundCall(boundArgs).getArgument(pos.asPositional() - boundArgs)
+    )
     or
     FlowSummaryImpl::Private::summaryArgumentNode(call, n.(FlowSummaryNode).getSummaryNode(), pos)
     or
-    n = call.asOrdinaryCall().getCalleeNode() and pos = -2
+    pos.isFunctionSelfReference() and n = call.asOrdinaryCall().getCalleeNode()
     or
-    pos = -1 and n = TConstructorThisArgumentNode(call.asOrdinaryCall().asExpr())
+    pos.isThis() and n = TConstructorThisArgumentNode(call.asOrdinaryCall().asExpr())
     or
     // For now, treat all spread argument as flowing into the 'arguments' array, regardless of preceding arguments
     n = call.asOrdinaryCall().getASpreadArgument() and
-    pos = -3
+    pos.isArgumentsArray()
     or
     // receiver of accessor call
-    pos = -1 and n = call.asAccessorCall().getBase()
+    pos.isThis() and n = call.asAccessorCall().getBase()
     or
     // argument to setter (TODO: this has no post-update node)
-    pos = 0 and n = call.asAccessorCall().(DataFlow::PropWrite).getRhs()
+    pos.asPositional() = 0 and n = call.asAccessorCall().(DataFlow::PropWrite).getRhs()
   }
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) {
@@ -422,21 +424,35 @@ module Private {
       )
   }
 
-  class ParameterPosition extends int {
-    ParameterPosition() {
-      this = [0 .. getMaxArity()]
+  newtype TParameterPosition =
+    MkPositionalParameter(int n) { n = [0 .. getMaxArity()] } or
+    MkThisParameter() or
+    MkFunctionSelfReferenceParameter() or
+    MkArgumentsArrayParameter()
+
+  class ParameterPosition extends TParameterPosition {
+    predicate isPositional() { this instanceof MkPositionalParameter }
+
+    int asPositional() { this = MkPositionalParameter(result) }
+
+    predicate isThis() { this = MkThisParameter() }
+
+    predicate isFunctionSelfReference() { this = MkFunctionSelfReferenceParameter() }
+
+    predicate isArgumentsArray() { this = MkArgumentsArrayParameter() }
+
+    string toString() {
+      result = this.asPositional().toString()
       or
-      this = -1 // receiver
+      this.isThis() and result = "this"
       or
-      this = -2 // function
+      this.isFunctionSelfReference() and result = "function"
       or
-      this = -3 // reflective parameters
+      this.isArgumentsArray() and result = "arguments-array"
     }
   }
 
-  class ArgumentPosition extends int {
-    ArgumentPosition() { this instanceof ParameterPosition }
-  }
+  class ArgumentPosition extends ParameterPosition { }
 
   class DataFlowExpr = Expr;
 
