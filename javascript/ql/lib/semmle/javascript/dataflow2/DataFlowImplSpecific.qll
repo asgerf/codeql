@@ -5,6 +5,7 @@ private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 private import FlowSummaryImpl as FlowSummaryImpl
 private import semmle.javascript.internal.flow_summaries.Promises2
 private import semmle.javascript.internal.flow_summaries.Strings2
+private import VariableCaptureSpecific
 
 module Private {
   private import Public
@@ -34,6 +35,25 @@ module Private {
 
     override string toString() {
       result = this.getSummaryNode().toString() + " [intermediate node for Awaited store]"
+    }
+  }
+
+  class CaptureNode extends DataFlow::Node, TSynthCaptureNode {
+    private VariableCaptureOutput::SynthesizedCaptureNode node;
+
+    CaptureNode() { this = TSynthCaptureNode(node) }
+
+    /** Gets the underlying node from the variable-capture library. */
+    VariableCaptureOutput::SynthesizedCaptureNode getNode() { result = node }
+
+    override StmtContainer getContainer() { result = node.getEnclosingCallable() }
+
+    override string toString() { result = node.toString() }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      node.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
     }
   }
 
@@ -113,6 +133,8 @@ module Private {
     or
     FlowSummaryImpl::Private::summaryPostUpdateNode(post.(FlowSummaryNode).getSummaryNode(),
       pre.(FlowSummaryNode).getSummaryNode())
+    or
+    VariableCaptureOutput::capturePostUpdateNode(getClosureNode(post), getClosureNode(pre))
   }
 
   class PostUpdateNode extends DataFlow::Node {
@@ -231,6 +253,8 @@ module Private {
     node instanceof FlowSummaryNode
     or
     node instanceof FlowSummaryIntermediateAwaitStoreNode
+    or
+    node instanceof CaptureNode
   }
 
   string ppReprType(DataFlowType t) { none() }
@@ -262,12 +286,20 @@ module Private {
     }
   }
 
-  private newtype TContent = MkPropertyNameContent(PropertyName name)
+  private newtype TContent =
+    MkPropertyNameContent(PropertyName name) or
+    MkCapturedContent(LocalVariable v) { v.isCaptured() }
 
   class Content extends TContent {
-    string toString() { result = this.asPropertyName() }
+    string toString() {
+      result = this.asPropertyName()
+      or
+      result = this.asCapturedVariable().getName()
+    }
 
     string asPropertyName() { this = MkPropertyNameContent(result) }
+
+    LocalVariable asCapturedVariable() { this = MkCapturedContent(result) }
   }
 
   predicate forceHighPrecision(Content c) { none() }
@@ -500,7 +532,9 @@ module Private {
    * be cross function boundaries.
    */
   private predicate valuePreservingStep(Node node1, Node node2) {
-    node1.getASuccessor() = node2
+    node1.getASuccessor() = node2 and
+    not node1 instanceof TCapturedVariableNode and
+    not node2 instanceof TCapturedVariableNode
     or
     DataFlow::SharedFlowStep::step(node1, node2)
     or
@@ -557,6 +591,8 @@ module Private {
       or
       node2 = TFunctionReturnNode(f) // expects promise-content
     )
+    or
+    VariableCaptureOutput::localFlowStep(getClosureNode(node1), getClosureNode(node2))
   }
 
   /**
@@ -605,6 +641,11 @@ module Private {
       or
       node2 = await.getExceptionTarget() and
       c.asPropertyName() = Promises::errorProp()
+    )
+    or
+    exists(LocalVariable variable |
+      VariableCaptureOutput::readStep(getClosureNode(node1), variable, getClosureNode(node2)) and
+      c.asSingleton() = MkCapturedContent(variable)
     )
   }
 
@@ -675,6 +716,11 @@ module Private {
       node2 = TFunctionReturnNode(f) and
       c.asPropertyName() = Promises::errorProp()
     )
+    or
+    exists(LocalVariable variable |
+      VariableCaptureOutput::storeStep(getClosureNode(node1), variable, getClosureNode(node2)) and
+      c.asSingleton() = MkCapturedContent(variable)
+    )
   }
 
   /**
@@ -743,6 +789,11 @@ module Private {
   // predicate allowParameterReturnInSelf(ParameterNode p);
   predicate allowParameterReturnInSelf(Node p) {
     FlowSummaryImpl::Private::summaryAllowParameterReturnInSelf(p)
+    or
+    exists(Function f |
+      VariableCaptureOutput::heuristicAllowInstanceParameterReturnInSelf(f) and
+      p = TFunctionSelfReferenceNode(f)
+    )
   }
 
   class LambdaCallKind = Unit; // TODO: not sure about this

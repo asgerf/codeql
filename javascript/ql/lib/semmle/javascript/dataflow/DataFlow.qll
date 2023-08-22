@@ -1570,7 +1570,7 @@ module DataFlow {
    */
   Node lvalueNode(BindingPattern lvalue) { result = lvalueNodeInternal(lvalue) }
 
-  private TEarlyStageNode lvalueNodeInternal(BindingPattern lvalue) {
+  TEarlyStageNode lvalueNodeInternal(BindingPattern lvalue) {
     exists(SsaExplicitDefinition ssa |
       ssa.defines(lvalue.(LValue).getDefNode(), lvalue.(VarRef).getVariable()) and
       result = TSsaDefNode(ssa)
