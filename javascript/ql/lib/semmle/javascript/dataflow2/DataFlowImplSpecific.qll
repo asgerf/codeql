@@ -5,6 +5,7 @@ private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 private import FlowSummaryImpl as FlowSummaryImpl
 private import semmle.javascript.internal.flow_summaries.Promises2
 private import semmle.javascript.internal.flow_summaries.Strings2
+private import VariableCapture
 
 module Private {
   private import Public
@@ -34,6 +35,25 @@ module Private {
 
     override string toString() {
       result = this.getSummaryNode().toString() + " [intermediate node for Awaited store]"
+    }
+  }
+
+  class LambdaCreationSynthOutNode extends DataFlow::Node, TLambdaCreationSynthOutNode {
+    private Function function;
+    private ReturnKind returnKind;
+
+    LambdaCreationSynthOutNode() { this = TLambdaCreationSynthOutNode(function, returnKind) }
+
+    override StmtContainer getContainer() { result = function.getEnclosingContainer() }
+
+    override string toString() {
+      result = "[LambdaCreationSynthOutNode] " + function + ", " + returnKind
+    }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      function.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
     }
   }
 
@@ -71,6 +91,11 @@ module Private {
     kind = MkExceptionalReturnKind() and result = call.asBoundCall(_).getExceptionalReturn()
     or
     kind = MkNormalReturnKind() and result = call.asAccessorCall().(DataFlow::PropRead)
+    or
+    exists(Function fun |
+      call = MkLambdaCreationSynthCall(fun) and
+      result = TLambdaCreationSynthOutNode(fun, kind)
+    )
     or
     FlowSummaryImpl::Private::summaryOutNode(call, result.(FlowSummaryNode).getSummaryNode(), kind)
   }
@@ -113,6 +138,9 @@ module Private {
     or
     FlowSummaryImpl::Private::summaryPostUpdateNode(post.(FlowSummaryNode).getSummaryNode(),
       pre.(FlowSummaryNode).getSummaryNode())
+    or
+    pre instanceof TScopedCapturedVariableNode and
+    pre = post
   }
 
   class PostUpdateNode extends DataFlow::Node {
@@ -174,6 +202,13 @@ module Private {
       FlowSummaryImpl::Private::summaryParameterNode(summaryNode.getSummaryNode(), pos) and
       c.asLibraryCallable() = summaryNode.getSummarizedCallable()
     )
+    or
+    exists(Function fun, LocalVariable v |
+      c.asSourceCallable() = fun and
+      p = TScopedCapturedVariableNode(v, fun) and
+      pos = MkLiftedCapturedParameter(v) and
+      not fun = v.getDeclaringContainer()
+    )
   }
 
   predicate isArgumentNode(Node n, DataFlowCall call, ArgumentPosition pos) {
@@ -204,6 +239,13 @@ module Private {
     or
     // argument to setter (TODO: this has no post-update node)
     pos.asPositional() = 0 and n = call.asAccessorCall().(DataFlow::PropWrite).getRhs()
+    or
+    exists(Function fun, LocalVariable v |
+      viableCallable(call).asSourceCallable() = fun and
+      captures(fun, v) and
+      n = TScopedCapturedVariableNode(v, call.getEnclosingCallable().asSourceCallable()) and
+      pos = MkLiftedCapturedParameter(v)
+    )
   }
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) {
@@ -262,12 +304,18 @@ module Private {
     }
   }
 
-  private newtype TContent = MkPropertyNameContent(PropertyName name)
+  private newtype TContent =
+    MkPropertyNameContent(PropertyName name) or
+    MkReturnContent(ReturnKind kind)
 
   class Content extends TContent {
-    string toString() { result = this.asPropertyName() }
+    string toString() {
+      result = this.asPropertyName() or result = "ReturnValue[" + this.asReturnKind() + "]"
+    }
 
     string asPropertyName() { this = MkPropertyNameContent(result) }
+
+    ReturnKind asReturnKind() { this = MkReturnContent(result) }
   }
 
   predicate forceHighPrecision(Content c) { none() }
@@ -288,7 +336,8 @@ module Private {
       FlowSummaryImpl::Public::SummarizedCallable c, FlowSummaryImpl::Private::SummaryNode receiver
     ) {
       FlowSummaryImpl::Private::summaryCallbackRange(c, receiver)
-    }
+    } or
+    MkLambdaCreationSynthCall(Function fun) { captures(fun, _) }
 
   class DataFlowCall extends TDataFlowCall {
     DataFlowCallable getEnclosingCallable() { none() } // Overridden in subclass
@@ -302,6 +351,8 @@ module Private {
     DataFlow::PartialInvokeNode asPartialCall() { this = MkPartialCall(result) }
 
     DataFlow::InvokeNode asBoundCall(int boundArgs) { this = MkBoundCall(result, boundArgs) }
+
+    Function asLambdaCreationSyntheticCall() { this = MkLambdaCreationSynthCall(result) }
 
     predicate isSummaryCall(
       FlowSummaryImpl::Public::SummarizedCallable enclosingCallable,
@@ -396,6 +447,24 @@ module Private {
     }
   }
 
+  private class LambdaCreationSynthCall extends DataFlowCall, MkLambdaCreationSynthCall {
+    private Function function;
+
+    LambdaCreationSynthCall() { this = MkLambdaCreationSynthCall(function) }
+
+    override string toString() { result = "[LambdaCreationSynthCall] " + function }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      function.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    override DataFlowCallable getEnclosingCallable() {
+      result.asSourceCallable() = function.getEnclosingContainer()
+    }
+  }
+
   class SummaryCall extends DataFlowCall, MkSummaryCall {
     private FlowSummaryImpl::Public::SummarizedCallable enclosingCallable;
     private FlowSummaryImpl::Private::SummaryNode receiver;
@@ -428,7 +497,8 @@ module Private {
     MkPositionalParameter(int n) { n = [0 .. getMaxArity()] } or
     MkThisParameter() or
     MkFunctionSelfReferenceParameter() or
-    MkArgumentsArrayParameter()
+    MkArgumentsArrayParameter() or
+    MkLiftedCapturedParameter(LocalVariable v) { v.isCaptured() }
 
   class ParameterPosition extends TParameterPosition {
     predicate isPositional() { this instanceof MkPositionalParameter }
@@ -441,6 +511,8 @@ module Private {
 
     predicate isArgumentsArray() { this = MkArgumentsArrayParameter() }
 
+    LocalVariable asCapturedVariable() { this = MkLiftedCapturedParameter(result) }
+
     string toString() {
       result = this.asPositional().toString()
       or
@@ -449,6 +521,8 @@ module Private {
       this.isFunctionSelfReference() and result = "function"
       or
       this.isArgumentsArray() and result = "arguments-array"
+      or
+      result = "captured " + this.asCapturedVariable().toString()
     }
   }
 
@@ -481,6 +555,11 @@ module Private {
       result = MkLibraryCallable(callable) and
       node.asOrdinaryCall() = [callable.getACall(), callable.getACallSimple()]
     )
+    or
+    exists(Function fun |
+      node = MkLambdaCreationSynthCall(fun) and
+      result.asSourceCallable() = fun
+    )
   }
 
   /**
@@ -495,12 +574,33 @@ module Private {
    */
   DataFlowCallable viableImplInCallContext(DataFlowCall call, DataFlowCall ctx) { none() }
 
+  private predicate scopedCaptureFlow(Node node1, Node node2) {
+    // From an assignment or implicit initialization of a captured variable to its flow-insensitive node.
+    exists(SsaDefinition predDef |
+      node1 = TSsaDefNode(predDef) and
+      node2 = TScopedCapturedVariableNode(predDef.getSourceVariable(), predDef.getContainer())
+    |
+      predDef instanceof SsaExplicitDefinition or
+      predDef instanceof SsaImplicitInit
+    )
+    or
+    // From a captured variable node to its flow-sensitive capture nodes
+    exists(SsaVariableCapture ssaCapture |
+      node1 = TScopedCapturedVariableNode(ssaCapture.getSourceVariable(), ssaCapture.getContainer()) and
+      node2 = TSsaDefNode(ssaCapture)
+    )
+  }
+
   /**
    * Holds if there is a value-preserving steps `node1` -> `node2` that might
    * be cross function boundaries.
    */
   private predicate valuePreservingStep(Node node1, Node node2) {
-    node1.getASuccessor() = node2
+    node1.getASuccessor() = node2 and
+    not node1 instanceof TCapturedVariableNode and
+    not node2 instanceof TCapturedVariableNode
+    or
+    scopedCaptureFlow(node1, node2)
     or
     DataFlow::SharedFlowStep::step(node1, node2)
     or
@@ -606,6 +706,14 @@ module Private {
       node2 = await.getExceptionTarget() and
       c.asPropertyName() = Promises::errorProp()
     )
+    or
+    exists(DataFlow::InvokeNode call | node1 = call.getCalleeNode() |
+      node2 = call and
+      c.asSingleton().asReturnKind() = MkNormalReturnKind()
+      or
+      node2 = call.getExceptionalReturn() and
+      c.asSingleton().asReturnKind() = MkExceptionalReturnKind()
+    )
   }
 
   pragma[nomagic]
@@ -674,6 +782,12 @@ module Private {
       node1 = TExceptionalFunctionReturnNode(f) and
       node2 = TFunctionReturnNode(f) and
       c.asPropertyName() = Promises::errorProp()
+    )
+    or
+    exists(Function fun, ReturnKind kind |
+      node1 = TLambdaCreationSynthOutNode(fun, kind) and
+      c.asSingleton().asReturnKind() = kind and
+      node2 = TValueNode(fun)
     )
   }
 

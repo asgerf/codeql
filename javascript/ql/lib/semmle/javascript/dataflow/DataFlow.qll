@@ -1386,7 +1386,7 @@ module DataFlow {
   }
 
   /**
-   * A data flow node representing a captured variable.
+   * A data flow node representing a captured variable, with flow across function boundaries.
    */
   private class CapturedVariableNode extends Node, TCapturedVariableNode {
     LocalVariable variable;
@@ -1402,6 +1402,30 @@ module DataFlow {
     }
 
     override string toString() { result = variable.getName() }
+  }
+
+  /**
+   * A data flow node representing a captured variable.
+   */
+  private class ScopedCapturedVariableNode extends Node, TScopedCapturedVariableNode {
+    private LocalVariable variable;
+    private StmtContainer container;
+
+    ScopedCapturedVariableNode() { this = TScopedCapturedVariableNode(variable, container) }
+
+    override StmtContainer getContainer() { result = container }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      container.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    override string toString() {
+      result =
+        "[capture-node] " + variable.getName() + " scoped to " +
+          container.getLocation().getStartLine() + ":" + container.getLocation().getStartColumn()
+    }
   }
 
   /** A data flow node representing the value plugged into a template tag. */
