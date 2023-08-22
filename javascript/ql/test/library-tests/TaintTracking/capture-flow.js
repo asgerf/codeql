@@ -36,7 +36,8 @@ function test3(param) {
         x = param;
     }
     function two() {
-        return one();
+        one();
+        return x;
     }
     return two();
 }
