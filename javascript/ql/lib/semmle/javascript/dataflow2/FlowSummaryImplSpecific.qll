@@ -17,7 +17,7 @@ class SummarizedCallableBase = string;
 DataFlowCallable inject(SummarizedCallable c) { result.asLibraryCallable() = c }
 
 /** Gets the parameter position representing a callback itself, if any. */
-ArgumentPosition callbackSelfParameterPosition() { none() } // disables implicit summary flow to `self` for callbacks
+ArgumentPosition callbackSelfParameterPosition() { result = -2 }
 
 /** Gets the synthesized data-flow call for `receiver`. */
 SummaryCall summaryDataFlowCall(Private::SummaryNode receiver) { receiver = result.getReceiver() }
