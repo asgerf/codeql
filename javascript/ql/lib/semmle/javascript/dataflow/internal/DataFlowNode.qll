@@ -8,6 +8,7 @@ private import javascript
 private import semmle.javascript.dataflow2.DataFlowImplSpecific::Private as DataFlowPrivate
 private import semmle.javascript.dataflow2.FlowSummaryImpl as FlowSummaryImpl
 private import semmle.javascript.dataflow2.FlowSummaryImplSpecific as FlowSummaryImplSpecific
+private import semmle.javascript.dataflow2.VariableCaptureSpecific as VariableCapture
 
 /**
  * The raw data type underlying `DataFlow::Node`.
@@ -47,7 +48,8 @@ newtype TNode =
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) or
   TFlowSummaryIntermediateAwaitStoreNode(FlowSummaryImpl::Private::SummaryNode sn) {
     FlowSummaryImpl::Private::Steps::summaryStoreStep(sn, DataFlowPrivate::MkAwaited(), _)
-  }
+  } or
+  TSynthCaptureNode(VariableCapture::VariableCaptureOutput::SynthesizedCaptureNode node)
 
 /**
  * A data-flow node that is not a flow summary node.

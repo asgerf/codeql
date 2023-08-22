@@ -1,4 +1,6 @@
 | library-tests/TaintTracking/bound-function.js:30 | expected an alert, but found none | NOT OK | ConsistencyConfig |
+| library-tests/TaintTracking/call-apply.js:59 | expected consistency issue, but found no such issue (OK [INCONSISTENCY]) | OK [INCONSISTENCY] | ConsistencyConfig |
+| library-tests/TaintTracking/call-apply.js:62 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/callbacks.js:30 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/callbacks.js:34 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/callbacks.js:35 | expected an alert, but found none | NOT OK | ConsistencyConfig |
@@ -6,9 +8,11 @@
 | library-tests/TaintTracking/callbacks.js:41 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/callbacks.js:47 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/callbacks.js:48 | expected an alert, but found none | NOT OK | ConsistencyConfig |
-| library-tests/TaintTracking/capture-flow.js:30 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
-| library-tests/TaintTracking/capture-flow.js:44 | expected an alert, but found none | NOT OK | ConsistencyConfig |
+| library-tests/TaintTracking/capture-flow.js:45 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/object-bypass-sanitizer.js:23 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/object-bypass-sanitizer.js:28 | expected an alert, but found none | NOT OK | ConsistencyConfig |
 | library-tests/TaintTracking/sanitizer-guards.js:64 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
 | library-tests/TaintTracking/sanitizer-guards.js:86 | did not expect an alert, but found an alert | OK | ConsistencyConfig |
+| library-tests/TaintTracking/string-replace.js:6 | did not expect an alert, but found an alert | OK - can only be the value 'foo' | ConsistencyConfig |
+| library-tests/TaintTracking/string-replace.js:10 | did not expect an alert, but found an alert | OK - can only be digits | ConsistencyConfig |
+| library-tests/TaintTracking/tst.js:44 | expected an alert, but found none | NOT OK | ConsistencyConfig |

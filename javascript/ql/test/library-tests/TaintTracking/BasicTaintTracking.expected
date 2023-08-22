@@ -1,6 +1,5 @@
 consistencyIssue
 | library-tests/TaintTracking/call-apply.js:55 | expected an alert, but found none | NOT OK |  |
-| library-tests/TaintTracking/capture-flow.js:44 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/constructor-calls.js:39 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/constructor-calls.js:40 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/constructor-calls.js:44 | expected an alert, but found none | NOT OK |  |
@@ -88,6 +87,7 @@ typeInferenceMismatch
 | capture-flow.js:9:11:9:18 | source() | capture-flow.js:14:10:14:16 | outer() |
 | capture-flow.js:9:11:9:18 | source() | capture-flow.js:19:6:19:16 | outerMost() |
 | capture-flow.js:31:14:31:21 | source() | capture-flow.js:31:6:31:22 | confuse(source()) |
+| capture-flow.js:45:12:45:19 | source() | capture-flow.js:45:6:45:20 | test3(source()) |
 | captured-sanitizer.js:25:3:25:10 | source() | captured-sanitizer.js:15:10:15:10 | x |
 | case.js:2:16:2:23 | source() | case.js:5:8:5:35 | changeC ... source) |
 | case.js:2:16:2:23 | source() | case.js:8:8:8:24 | camelCase(source) |
