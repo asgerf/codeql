@@ -25,24 +25,7 @@ reverseRead
 | tst.js:84:14:84:40 | t.flowI ... urce()) | Origin of readStep is missing a PostUpdateNode. |
 | tst.js:86:14:86:59 | t.flowI ... rce())) | Origin of readStep is missing a PostUpdateNode. |
 argHasPostUpdate
-| tst.js:16:32:16:39 | source() | ArgumentNode is missing PostUpdateNode. |
-| tst.js:17:33:17:40 | source() | ArgumentNode is missing PostUpdateNode. |
-| tst.js:21:14:21:21 | source() | ArgumentNode is missing PostUpdateNode. |
-| tst.js:41:14:41:31 | { prop: source() } | ArgumentNode is missing PostUpdateNode. |
-| tst.js:41:22:41:29 | source() | ArgumentNode is missing PostUpdateNode. |
-| tst.js:128:18:128:25 | source() | ArgumentNode is missing PostUpdateNode. |
-| tst.js:133:18:133:25 | source() | ArgumentNode is missing PostUpdateNode. |
-| tst.js:142:5:142:31 | t.flowI ... urce()) | ArgumentNode is missing PostUpdateNode. |
-| tst.js:143:5:143:12 | source() | ArgumentNode is missing PostUpdateNode. |
-| tst.js:144:5:144:10 | "safe" | ArgumentNode is missing PostUpdateNode. |
-| tst.js:145:12:145:23 | [x1, x2, x3] | ArgumentNode is missing PostUpdateNode. |
-| tst.js:154:22:154:29 | source() | ArgumentNode is missing PostUpdateNode. |
 postWithInFlow
-| tst.js:93:24:93:74 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |
-| tst.js:96:3:96:53 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |
-| tst.js:97:3:97:53 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |
-| tst.js:98:3:98:52 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |
-| tst.js:99:3:99:52 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |
 viableImplInCallContextTooLarge
 uniqueParameterNodeAtPosition
 uniqueParameterNodePosition
