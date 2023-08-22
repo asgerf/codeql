@@ -375,6 +375,24 @@ module Private {
     }
   }
 
+  private class AccessorCall extends DataFlowCall, MkAccessorCall {
+    private DataFlow::PropRef ref;
+
+    AccessorCall() { this = MkAccessorCall(ref) }
+
+    override DataFlowCallable getEnclosingCallable() {
+      result.asSourceCallable() = ref.getContainer()
+    }
+
+    override string toString() { result = ref.toString() + " (as accessor call)" }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      ref.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+  }
+
   class SummaryCall extends DataFlowCall, MkSummaryCall {
     private FlowSummaryImpl::Public::SummarizedCallable enclosingCallable;
     private FlowSummaryImpl::Private::SummaryNode receiver;
