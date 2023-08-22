@@ -8,7 +8,6 @@ private import javascript
 private import semmle.javascript.dataflow2.DataFlowImplSpecific::Private as DataFlowPrivate
 private import semmle.javascript.dataflow2.FlowSummaryImpl as FlowSummaryImpl
 private import semmle.javascript.dataflow2.FlowSummaryImplSpecific as FlowSummaryImplSpecific
-private import semmle.javascript.dataflow2.VariableCapture as VariableCapture
 
 /**
  * The raw data type underlying `DataFlow::Node`.
@@ -18,11 +17,6 @@ newtype TNode =
   TValueNode(AST::ValueNode nd) or
   TSsaDefNode(SsaDefinition d) or
   TCapturedVariableNode(LocalVariable v) { v.isCaptured() } or
-  TScopedCapturedVariableNode(LocalVariable v, StmtContainer scope) {
-    v.isCaptured() and scope = v.getDeclaringContainer()
-    or
-    VariableCapture::captures(scope, v)
-  } or
   TPropNode(@property p) or
   TRestPatternNode(DestructuringPattern dp, Expr rest) { rest = dp.getRest() } or
   TElementPatternNode(ArrayPattern ap, Expr p) { p = ap.getElement(_) } or
@@ -53,9 +47,6 @@ newtype TNode =
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) or
   TFlowSummaryIntermediateAwaitStoreNode(FlowSummaryImpl::Private::SummaryNode sn) {
     FlowSummaryImpl::Private::Steps::summaryStoreStep(sn, DataFlowPrivate::MkAwaited(), _)
-  } or
-  TLambdaCreationSynthOutNode(Function fun, DataFlowPrivate::ReturnKind returnKind) {
-    not fun.getTopLevel().isExterns()
   }
 
 /**
