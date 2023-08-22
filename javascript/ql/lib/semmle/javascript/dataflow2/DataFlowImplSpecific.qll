@@ -4,6 +4,7 @@ private import semmle.javascript.dataflow.internal.StepSummary
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 private import FlowSummaryImpl as FlowSummaryImpl
 private import semmle.javascript.internal.flow_summaries.Promises2
+private import semmle.javascript.internal.flow_summaries.Strings2
 
 module Private {
   private import Public
