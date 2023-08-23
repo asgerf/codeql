@@ -551,7 +551,11 @@ module Private {
     exists(PostUpdateNode postUpdate |
       node1 = postUpdate and
       node2 = postUpdate.getPreUpdateNode().getALocalSource() and
-      node1 != node2 // exclude trivial edges
+      node1 != node2 and // exclude trivial edges
+      // Exclude post-update nodes arising from capture flow. Such edges can cross function boundaries,
+      // resulting in jump-steps that interfere with what the capture library is doing.
+      // Also, the capture library implements use-use flow, making the backward step unnecessary.
+      not VariableCaptureOutput::capturePostUpdateNode(getClosureNode(postUpdate), _)
     )
   }
 

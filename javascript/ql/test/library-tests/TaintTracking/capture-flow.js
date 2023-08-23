@@ -45,6 +45,34 @@ function test3(param) {
 sink(test3(source())); // NOT OK
 sink(test3("safe")); // OK
 
+function test3a(param) {
+    var x;
+    function one() {
+        x = param;
+    }
+    one();
+    function two() {
+        return x;
+    }
+    return two();
+}
+
+sink(test3a(source())); // NOT OK
+sink(test3a("safe")); // OK
+
+function test3b(param) {
+    function one() {
+        return param;
+    }
+    function two() {
+        return one();
+    }
+    return two();
+}
+
+sink(test3b(source())); // NOT OK
+sink(test3b("safe")); // OK
+
 function test4() {
     var x = source();
     return () => x;
@@ -55,3 +83,4 @@ function test5(x) {
     return () => x;
 }
 sink(test5(source())()); // NOT OK
+sink(test5("safe")()); // OK

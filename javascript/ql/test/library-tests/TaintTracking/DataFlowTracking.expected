@@ -40,8 +40,10 @@
 | capture-flow.js:9:11:9:18 | source() | capture-flow.js:19:6:19:16 | outerMost() |
 | capture-flow.js:31:14:31:21 | source() | capture-flow.js:31:6:31:22 | confuse(source()) |
 | capture-flow.js:45:12:45:19 | source() | capture-flow.js:45:6:45:20 | test3(source()) |
-| capture-flow.js:49:13:49:20 | source() | capture-flow.js:52:6:52:14 | test4()() |
-| capture-flow.js:57:12:57:19 | source() | capture-flow.js:57:6:57:22 | test5(source())() |
+| capture-flow.js:60:13:60:20 | source() | capture-flow.js:60:6:60:21 | test3a(source()) |
+| capture-flow.js:77:13:77:20 | source() | capture-flow.js:80:6:80:14 | test4()() |
+| capture-flow.js:85:12:85:19 | source() | capture-flow.js:85:6:85:22 | test5(source())() |
+| capture-flow.js:85:12:85:19 | source() | capture-flow.js:86:6:86:20 | test5("safe")() |
 | captured-sanitizer.js:25:3:25:10 | source() | captured-sanitizer.js:15:10:15:10 | x |
 | constructor-calls.js:4:18:4:25 | source() | constructor-calls.js:24:8:24:14 | c.taint |
 | constructor-calls.js:4:18:4:25 | source() | constructor-calls.js:28:8:28:19 | c_safe.taint |
