@@ -61,6 +61,22 @@ sink(test3a(source())); // NOT OK
 sink(test3a("safe")); // OK
 
 function test3b(param) {
+    var x;
+    function one() {
+        x = param;
+    }
+    one();
+    function two() {
+        one();
+        return x;
+    }
+    return two();
+}
+
+sink(test3b(source())); // NOT OK
+sink(test3b("safe")); // OK
+
+function test3c(param) {
     function one() {
         return param;
     }
@@ -70,8 +86,8 @@ function test3b(param) {
     return two();
 }
 
-sink(test3b(source())); // NOT OK
-sink(test3b("safe")); // OK
+sink(test3c(source())); // NOT OK
+sink(test3c("safe")); // OK
 
 function test4() {
     var x = source();

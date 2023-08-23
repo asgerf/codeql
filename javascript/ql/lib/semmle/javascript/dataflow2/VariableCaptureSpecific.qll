@@ -64,7 +64,18 @@ private module VariableCaptureArg implements InputSig {
 
   class Expr extends js::AST::ValueNode {
     /** Holds if the `i`th node of basic block `bb` evaluates this expression. */
-    predicate hasCfgNode(BasicBlock bb, int i) { bb.getNode(i) = this }
+    predicate hasCfgNode(BasicBlock bb, int i) {
+      // Note: this is overridden for FunctionDeclStmt
+      bb.getNode(i) = this
+    }
+  }
+
+  private class FunctionDeclStmtAsExpr extends Expr, js::FunctionDeclStmt {
+    override predicate hasCfgNode(BasicBlock bb, int i) {
+      // All FunctionDeclStmts are evaluated at index 0, where all implicit inits have already occurred (at index -1)
+      // but their corresponding VariableWrites have not yet occurred.
+      i = 0 and bb = this.getEnclosingContainer().getEntryBB()
+    }
   }
 
   class VariableRead extends Expr instanceof js::VarAccess {
@@ -108,6 +119,14 @@ private module VariableCaptureArg implements InputSig {
     predicate hasCfgNode(BasicBlock bb, int i) { none() } // Overridden in subclass
   }
 
+  private predicate closureBB(
+    js::FunctionDeclStmt fun, BasicBlock bb, int i, BasicBlock bb2, int i2, BasicBlock bb3, int i3
+  ) {
+    fun.(Expr).hasCfgNode(bb, i) and
+    MkExplicitVariableWrite(fun.getIdentifier()).(VariableWrite).hasCfgNode(bb2, i2) and
+    MkImplicitVariableInit(fun.getIdentifier().getVariable()).(VariableWrite).hasCfgNode(bb3, i3)
+  }
+
   additional class ExplicitVariableWrite extends VariableWrite, MkExplicitVariableWrite {
     private js::VarRef pattern;
 
@@ -149,7 +168,9 @@ private module VariableCaptureArg implements InputSig {
     override CapturedVariable getVariable() { result = variable }
 
     override predicate hasCfgNode(BasicBlock bb, int i) {
-      any(js::SsaImplicitInit def).definesAt(bb, i, variable)
+      // 'i' would normally be bound to 0, but we lower it to -1 so FunctionDeclStmts can be evaluated
+      // at index 0.
+      any(js::SsaImplicitInit def).definesAt(bb, _, variable) and i = -1
     }
   }
 
