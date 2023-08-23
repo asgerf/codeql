@@ -215,6 +215,8 @@ module Private {
     or
     pos.isFunctionSelfReference() and n = call.asOrdinaryCall().getCalleeNode()
     or
+    pos.isFunctionSelfReference() and n = call.asImpliedLambdaCall().flow()
+    or
     pos.isThis() and n = TConstructorThisArgumentNode(call.asOrdinaryCall().asExpr())
     or
     // For now, treat all spread argument as flowing into the 'arguments' array, regardless of preceding arguments
@@ -316,6 +318,7 @@ module Private {
       FlowSteps::callsBound(node, _, boundArgs)
     } or
     MkAccessorCall(DataFlow::PropRef node) or
+    MkImpliedLambdaCall(Function f) { captures(f, _) } or
     MkSummaryCall(
       FlowSummaryImpl::Public::SummarizedCallable c, FlowSummaryImpl::Private::SummaryNode receiver
     ) {
@@ -334,6 +337,8 @@ module Private {
     DataFlow::PartialInvokeNode asPartialCall() { this = MkPartialCall(result) }
 
     DataFlow::InvokeNode asBoundCall(int boundArgs) { this = MkBoundCall(result, boundArgs) }
+
+    Function asImpliedLambdaCall() { this = MkImpliedLambdaCall(result) }
 
     predicate isSummaryCall(
       FlowSummaryImpl::Public::SummarizedCallable enclosingCallable,
@@ -428,6 +433,24 @@ module Private {
     }
   }
 
+  private class ImpliedLambdaCall extends DataFlowCall, MkImpliedLambdaCall {
+    private Function function;
+
+    ImpliedLambdaCall() { this = MkImpliedLambdaCall(function) }
+
+    override string toString() { result = "[implied lambda call] " + function }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      function.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    override DataFlowCallable getEnclosingCallable() {
+      result.asSourceCallable() = function.getEnclosingContainer()
+    }
+  }
+
   class SummaryCall extends DataFlowCall, MkSummaryCall {
     private FlowSummaryImpl::Public::SummarizedCallable enclosingCallable;
     private FlowSummaryImpl::Private::SummaryNode receiver;
@@ -513,6 +536,8 @@ module Private {
       result = MkLibraryCallable(callable) and
       node.asOrdinaryCall() = [callable.getACall(), callable.getACallSimple()]
     )
+    or
+    result.asSourceCallable() = node.asImpliedLambdaCall()
   }
 
   /**

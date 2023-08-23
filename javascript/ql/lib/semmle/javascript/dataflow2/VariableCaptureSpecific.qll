@@ -15,7 +15,7 @@ private js::Function getLambdaFromVariable(js::LocalVariable variable) {
   )
 }
 
-private predicate captures(js::Function fun, js::LocalVariable variable) {
+predicate captures(js::Function fun, js::LocalVariable variable) {
   (
     variable.getAnAccess().getContainer().getFunctionBoundary() = fun
     or
