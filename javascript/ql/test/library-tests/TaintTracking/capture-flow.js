@@ -84,3 +84,19 @@ function test5(x) {
 }
 sink(test5(source())()); // NOT OK
 sink(test5("safe")()); // OK
+
+function testEscape(x) {
+    function escapingFunction() {
+        sink(x); // NOT OK
+    }
+    global.doEscape(escapingFunction);
+}
+testEscape(source());
+
+function testEscapeViaReturn(x) {
+    function escapingFunction() {
+        sink(x); // NOT OK
+    }
+    return escapingFunction;
+}
+global.doEscape(testEscapeViaReturn(source()));
