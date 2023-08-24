@@ -86,6 +86,10 @@ private module VariableCaptureArg implements InputSig {
     CapturedVariable getVariable() { result = variable }
   }
 
+  private predicate readBB(VariableRead read, BasicBlock bb, int i) { read.hasCfgNode(bb, i) }
+
+  private predicate writeBB(VariableWrite write, BasicBlock bb, int i) { write.hasCfgNode(bb, i) }
+
   class ClosureExpr extends Expr {
     ClosureExpr() { captures(this, _) }
 
@@ -115,9 +119,10 @@ private module VariableCaptureArg implements InputSig {
 
     Location getLocation() { none() } // Overridden in subclass
 
-    Expr getSource() { none() } // Overridden in subclass
-
     predicate hasCfgNode(BasicBlock bb, int i) { none() } // Overridden in subclass
+
+    // note: langauge-specific
+    js::DataFlow::Node getSource() { none() } // Overridden in subclass
   }
 
   additional class ExplicitVariableWrite extends VariableWrite, MkExplicitVariableWrite {
@@ -132,11 +137,11 @@ private module VariableCaptureArg implements InputSig {
     /** Gets the location of this write. */
     override Location getLocation() { result = pattern.getLocation() }
 
-    override Expr getSource() {
+    override js::DataFlow::Node getSource() {
       // Note: there is not always an expression corresponding to the RHS of the assignment.
       // We do however have a data-flow node for this purpose (the lvalue-node).
       // We use the pattern as a placeholder here, to be mapped to a data-flow node with `DataFlow::lvalueNode`.
-      result = pattern
+      result = js::DataFlow::lvalueNodeInternal(pattern)
     }
 
     /** Holds if the `i`th node of basic block `bb` evaluates this expression. */
@@ -153,8 +158,6 @@ private module VariableCaptureArg implements InputSig {
     override string toString() { result = "[implicit init] " + variable }
 
     override Location getLocation() { result = variable.getLocation() }
-
-    override Expr getSource() { none() } // TODO: is this needed
 
     override CapturedVariable getVariable() { result = variable }
 
@@ -186,12 +189,7 @@ predicate missingNode(VariableCaptureOutput::ClosureNode closureNode) {
 }
 
 js::DataFlow::Node getNodeFromClosureNode(VariableCaptureOutput::ClosureNode node) {
-  exists(js::AST::ValueNode astNode | astNode = node.(VariableCaptureOutput::ExprNode).getExpr() |
-    result = js::DataFlow::lvalueNodeInternal(astNode)
-    or
-    not exists(js::DataFlow::lvalueNodeInternal(astNode)) and
-    result = TValueNode(astNode)
-  )
+  result = TValueNode(node.(VariableCaptureOutput::ExprNode).getExpr())
   or
   result = TValueNode(node.(VariableCaptureOutput::ParameterNode).getParameter().getADeclaration()) // TODO: is this subsumed by the ExprNode case?
   or
@@ -202,6 +200,8 @@ js::DataFlow::Node getNodeFromClosureNode(VariableCaptureOutput::ClosureNode nod
   result = TFunctionSelfReferenceNode(node.(VariableCaptureOutput::ThisParameterNode).getCallable())
   or
   result = TSynthCaptureNode(node.(VariableCaptureOutput::SynthesizedCaptureNode))
+  or
+  result = node.(VariableCaptureOutput::VariableWriteSourceNode).getVariableWrite().getSource()
   // or
   // result = TConstructorThisArgumentNode(node.(VariableCaptureOutput::MallocNode).getClosureExpr())
 }
@@ -212,4 +212,8 @@ VariableCaptureOutput::ClosureNode getClosureNode(js::DataFlow::Node node) {
 
 module Debug {
   predicate localFlowStep = VariableCaptureOutput::localFlowStep/2;
+
+  predicate localFlowStepMapped(js::DataFlow::Node node1, js::DataFlow::Node node2) {
+    localFlowStep(getClosureNode(node1), getClosureNode(node2))
+  }
 }
