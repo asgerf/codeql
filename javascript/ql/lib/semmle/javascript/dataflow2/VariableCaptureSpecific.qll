@@ -119,14 +119,6 @@ private module VariableCaptureArg implements InputSig {
     predicate hasCfgNode(BasicBlock bb, int i) { none() } // Overridden in subclass
   }
 
-  private predicate closureBB(
-    js::FunctionDeclStmt fun, BasicBlock bb, int i, BasicBlock bb2, int i2, BasicBlock bb3, int i3
-  ) {
-    fun.(Expr).hasCfgNode(bb, i) and
-    MkExplicitVariableWrite(fun.getIdentifier()).(VariableWrite).hasCfgNode(bb2, i2) and
-    MkImplicitVariableInit(fun.getIdentifier().getVariable()).(VariableWrite).hasCfgNode(bb3, i3)
-  }
-
   additional class ExplicitVariableWrite extends VariableWrite, MkExplicitVariableWrite {
     private js::VarRef pattern;
 
