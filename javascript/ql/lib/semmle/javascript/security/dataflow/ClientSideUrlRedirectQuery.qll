@@ -39,7 +39,11 @@ module ConfigurationArg implements DataFlow2::StateConfigSig {
     state instanceof DocumentUrl
   }
 
-  predicate isBarrierOut(DataFlow::Node node) { hostnameSanitizingPrefixEdge(node, _) }
+  predicate isBarrierOut(DataFlow::Node node) {
+    hostnameSanitizingPrefixEdge(node, _)
+    or
+    isSink(node, _) // TODO: support for out-barriers with flow state
+  }
 
   predicate isAdditionalFlowStep(
     DataFlow::Node node1, FlowState state1, DataFlow::Node node2, FlowState state2
