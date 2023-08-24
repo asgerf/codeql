@@ -211,9 +211,18 @@ VariableCaptureOutput::ClosureNode getClosureNode(js::DataFlow::Node node) {
 }
 
 module Debug {
-  predicate localFlowStep = VariableCaptureOutput::localFlowStep/2;
+  predicate relevantContainer(js::StmtContainer container) {
+    container.getEnclosingContainer*().(js::Function).getName() = "exists"
+  }
+
+  predicate localFlowStep(
+    VariableCaptureOutput::ClosureNode node1, VariableCaptureOutput::ClosureNode node2
+  ) {
+    VariableCaptureOutput::localFlowStep(node1, node2)
+  }
 
   predicate localFlowStepMapped(js::DataFlow::Node node1, js::DataFlow::Node node2) {
-    localFlowStep(getClosureNode(node1), getClosureNode(node2))
+    localFlowStep(getClosureNode(node1), getClosureNode(node2)) and
+    relevantContainer(node1.getContainer())
   }
 }
