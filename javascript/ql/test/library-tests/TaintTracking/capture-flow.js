@@ -203,3 +203,23 @@ function destructuredLoop(data) {
     }
 }
 destructuredLoop([{ x: source() }]);
+
+
+function testPromise(arg) {
+    function transform(x) {
+        return { prop: x };
+    }
+    class Foo {
+        updatePrVisibility(y) {
+            const { prop: variable } = transform(y);
+            this.exists(variable).then(() => {
+                transform(variable);
+            });
+        }
+        exists(fileOrDir) {
+            return new Promise(resolve => fs.sink(fileOrDir, err => resolve(!err))); // NOT OK
+        }
+    }
+    new Foo().updatePrVisibility(arg);
+}
+testPromise(source());
