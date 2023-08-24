@@ -720,9 +720,11 @@ module Flow<InputSig Input> implements OutputSig<Input> {
   class ClosureNode extends TClosureNode {
     /** Gets a textual representation of this node. */
     string toString() {
-      exists(CapturedVariable v | this = TSynthRead(v, _, _, _) and result = v.toString())
+      exists(CapturedVariable v |
+        this = TSynthRead(v, _, _, _) and result = "TSynthRead " + v.toString()
+      )
       or
-      result = "this" and this = TSynthThisQualifier(_, _, _)
+      result = "TSynthThisQualifier" and this = TSynthThisQualifier(_, _, _)
       or
       exists(CaptureSsa::DefinitionExt phi, CaptureContainer cc |
         this = TSynthPhi(phi) and
@@ -731,14 +733,14 @@ module Flow<InputSig Input> implements OutputSig<Input> {
       )
       or
       exists(Expr expr, boolean isPost | this = TExprNode(expr, isPost) |
-        isPost = false and result = expr.toString()
+        isPost = false and result = "TExprNode " + expr.toString()
         or
-        isPost = true and result = expr.toString() + " [postupdate]"
+        isPost = true and result = "TExprNode " + expr.toString() + " [postupdate]"
       )
       or
-      exists(CapturedParameter p | this = TParamNode(p) and result = p.toString())
+      exists(CapturedParameter p | this = TParamNode(p) and result = "TParamNode " + p.toString())
       or
-      result = "this" and this = TThisParamNode(_)
+      result = "TThisParamNode" and this = TThisParamNode(_)
       or
       result = "malloc" and this = TMallocNode(_)
       or

@@ -209,3 +209,7 @@ js::DataFlow::Node getNodeFromClosureNode(VariableCaptureOutput::ClosureNode nod
 VariableCaptureOutput::ClosureNode getClosureNode(js::DataFlow::Node node) {
   node = getNodeFromClosureNode(result)
 }
+
+module Debug {
+  predicate localFlowStep = VariableCaptureOutput::localFlowStep/2;
+}
