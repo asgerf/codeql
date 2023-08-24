@@ -78,7 +78,7 @@ private module VariableCaptureArg implements InputSig {
     }
   }
 
-  class VariableRead extends Expr instanceof js::VarAccess {
+  class VariableRead extends Expr instanceof js::VarAccess, js::RValue {
     private CapturedVariable variable;
 
     VariableRead() { this = variable.getAnAccess() }
@@ -102,8 +102,9 @@ private module VariableCaptureArg implements InputSig {
   }
 
   private newtype TVariableWrite =
-    MkExplicitVariableWrite(js::BindingPattern pattern) {
-      exists(js::DataFlow::lvalueNodeInternal(pattern))
+    MkExplicitVariableWrite(js::VarRef pattern) {
+      exists(js::DataFlow::lvalueNodeInternal(pattern)) and
+      pattern.getVariable() instanceof CapturedVariable
     } or
     MkImplicitVariableInit(CapturedVariable v) { not v instanceof CapturedParameter }
 
@@ -140,9 +141,7 @@ private module VariableCaptureArg implements InputSig {
 
     /** Holds if the `i`th node of basic block `bb` evaluates this expression. */
     override predicate hasCfgNode(BasicBlock bb, int i) {
-      // Note: this is slightly inaccurate in case of simultaneous assignments due to destructuring.
-      // The assignment takes effect at the corresponding VarDef CFG node. In practice it's unlikely to matter, though.
-      bb.getNode(i) = pattern
+      bb.getNode(i) = pattern.(js::LValue).getDefNode()
     }
   }
 

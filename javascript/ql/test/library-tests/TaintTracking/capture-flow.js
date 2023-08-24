@@ -130,3 +130,28 @@ function ordering() {
     });
 }
 ordering();
+
+function makeSafe(x) {
+    console.log(x);
+    return "safe";
+}
+function flowSensitiveParamUpdate(x) {
+    x = makeSafe(x);
+    function captureX() {
+        console.log(x);
+    }
+    captureX();
+    sink(x); // OK
+}
+flowSensitiveParamUpdate(source());
+
+function flowSensitiveLocalUpdate() {
+    let x = source();
+    x = makeSafe(x);
+    function captureX() {
+        console.log(x);
+    }
+    captureX();
+    sink(x); // OK
+}
+flowSensitiveLocalUpdate();
