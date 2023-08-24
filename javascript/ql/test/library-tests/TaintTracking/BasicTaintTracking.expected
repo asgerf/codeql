@@ -2,6 +2,7 @@ consistencyIssue
 | library-tests/TaintTracking/call-apply.js:55 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/capture-flow.js:89 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/capture-flow.js:102 | did not expect an alert, but found an alert for BasicConfig | OK |  |
+| library-tests/TaintTracking/capture-flow.js:123 | expected consistency issue, but found no such issue (NOT OK [INCONSISTENCY]) | NOT OK [INCONSISTENCY] |  |
 | library-tests/TaintTracking/constructor-calls.js:39 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/constructor-calls.js:40 | expected an alert, but found none | NOT OK |  |
 | library-tests/TaintTracking/constructor-calls.js:44 | expected an alert, but found none | NOT OK |  |
@@ -97,6 +98,8 @@ typeInferenceMismatch
 | capture-flow.js:101:12:101:19 | source() | capture-flow.js:102:6:102:20 | test5("safe")() |
 | capture-flow.js:110:12:110:19 | source() | capture-flow.js:106:14:106:14 | x |
 | capture-flow.js:118:37:118:44 | source() | capture-flow.js:114:14:114:14 | x |
+| capture-flow.js:126:25:126:32 | source() | capture-flow.js:123:14:123:26 | orderingTaint |
+| capture-flow.js:126:25:126:32 | source() | capture-flow.js:129:14:129:26 | orderingTaint |
 | captured-sanitizer.js:25:3:25:10 | source() | captured-sanitizer.js:15:10:15:10 | x |
 | case.js:2:16:2:23 | source() | case.js:5:8:5:35 | changeC ... source) |
 | case.js:2:16:2:23 | source() | case.js:8:8:8:24 | camelCase(source) |

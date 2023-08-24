@@ -116,3 +116,17 @@ function testEscapeViaReturn(x) {
     return escapingFunction;
 }
 global.doEscape(testEscapeViaReturn(source()));
+
+function ordering() {
+    var orderingTaint;
+    global.addEventListener('click', () => {
+        sink(orderingTaint); // NOT OK [INCONSISTENCY]
+    });
+    global.addEventListener('load', () => {
+        orderingTaint = source();
+    });
+    global.addEventListener('click', () => {
+        sink(orderingTaint); // NOT OK
+    });
+}
+ordering();
