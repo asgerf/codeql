@@ -166,3 +166,40 @@ function flowSensitiveLocalIncrement() {
     sink(x); // OK
 }
 flowSensitiveLocalIncrement();
+
+function destructuredVarDecl(param) {
+    let { x } = param;
+    function inner() {
+        sink(x); // NOT OK
+    }
+    inner();
+}
+destructuredVarDecl({ x: source() });
+
+function destructuredLocalAssignment(param) {
+    let x;
+    ({ x } = param);
+    function inner() {
+        sink(x); // NOT OK
+    }
+    inner();
+}
+destructuredLocalAssignment({ x: source() });
+
+function destructuredParam({ x }) {
+    function inner() {
+        sink(x); // NOT OK
+    }
+    inner();
+}
+destructuredParam({ x: source() });
+
+function destructuredLoop(data) {
+    for (let { x } of data) {
+        function inner() {
+            sink(x); // NOT OK
+        }
+        inner();
+    }
+}
+destructuredLoop([{ x: source() }]);
