@@ -552,6 +552,12 @@ module Private {
    */
   DataFlowCallable viableImplInCallContext(DataFlowCall call, DataFlowCall ctx) { none() }
 
+  bindingset[node1, node2]
+  pragma[inline_late]
+  private predicate sameContainer(Node node1, Node node2) {
+    node1.getContainer() = node2.getContainer()
+  }
+
   /**
    * Holds if there is a value-preserving steps `node1` -> `node2` that might
    * be cross function boundaries.
@@ -577,7 +583,7 @@ module Private {
       node1 = postUpdate and
       node2 = postUpdate.getPreUpdateNode().getALocalSource() and
       node1 != node2 and // exclude trivial edges
-      pragma[only_bind_out](node1).getContainer() = pragma[only_bind_out](node2).getContainer()
+      sameContainer(node1, node2)
       // Exclude post-update nodes arising from capture flow. Such edges can cross function boundaries,
       // resulting in jump-steps that interfere with what the capture library is doing.
       // Also, the capture library implements use-use flow, making the backward step unnecessary.
