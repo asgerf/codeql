@@ -155,3 +155,14 @@ function flowSensitiveLocalUpdate() {
     sink(x); // OK
 }
 flowSensitiveLocalUpdate();
+
+function flowSensitiveLocalIncrement() {
+    let x = source();
+    ++x;
+    function captureX() {
+        console.log(x);
+    }
+    captureX();
+    sink(x); // OK
+}
+flowSensitiveLocalIncrement();
