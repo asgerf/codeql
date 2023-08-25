@@ -795,6 +795,8 @@ module DataFlow {
     override Node getRhs() { result = TValueNode(prop.getParameter()) }
 
     override ControlFlowNode getWriteNode() { result = prop.getParameter() }
+
+    override StmtContainer getContainer() { parameter_fields(prop, result, _) }
   }
 
   /**
@@ -1454,11 +1456,11 @@ module DataFlow {
   class ExprPostUpdateNode extends DataFlow::Node, TExprPostUpdateNode,
     DataFlowImplSpecific::Private::PostUpdateNode
   {
-    private Expr expr;
+    private AST::ValueNode expr;
 
     ExprPostUpdateNode() { this = TExprPostUpdateNode(expr) }
 
-    Expr getExpr() { result = expr }
+    AST::ValueNode getExpr() { result = expr }
 
     override StmtContainer getContainer() { result = expr.getContainer() }
 

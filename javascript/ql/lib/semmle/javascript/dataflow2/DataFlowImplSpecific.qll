@@ -114,7 +114,7 @@ module Private {
   abstract private class EmptyType extends DataFlow::Node { }
 
   private predicate postUpdatePair(Node pre, Node post) {
-    exists(Expr expr |
+    exists(AST::ValueNode expr |
       pre = TValueNode(expr) and
       post = TExprPostUpdateNode(expr)
     )
@@ -317,7 +317,12 @@ module Private {
     MkBoundCall(DataFlow::InvokeNode node, int boundArgs) {
       FlowSteps::callsBound(node, _, boundArgs)
     } or
-    MkAccessorCall(DataFlow::PropRef node) or
+    MkAccessorCall(DataFlow::PropRef node) {
+      // Some PropRefs can't result in an accessor call, such as Object.defineProperty.
+      // Restrict to PropRefs that can result in an accessor call.
+      node = TValueNode(any(PropAccess p)) or
+      node = TPropNode(any(PropertyPattern p))
+    } or
     MkImpliedLambdaCall(Function f) { captures(f, _) } or
     MkSummaryCall(
       FlowSummaryImpl::Public::SummarizedCallable c, FlowSummaryImpl::Private::SummaryNode receiver
