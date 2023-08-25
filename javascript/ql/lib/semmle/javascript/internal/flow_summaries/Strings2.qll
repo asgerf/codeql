@@ -13,7 +13,7 @@ private predicate hasWildcardReplaceRegExp(StringReplaceCall call) {
 private class StringReplace extends SummarizedCallable {
   StringReplace() { this = "String#replace" }
 
-  override StringReplaceCall getACall() { any() }
+  override StringReplaceCall getACall() { not hasWildcardReplaceRegExp(result) }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = false and
@@ -41,10 +41,24 @@ private class StringReplaceWithWildcard extends SummarizedCallable {
     preservesValue = false and
     (
       input = "Argument[this]" and
-      output = "Argument[1].Parameter[0]"
+      output = ["ReturnValue", "Argument[1].Parameter[0]"]
       or
       input = "Argument[1].ReturnValue" and
       output = "ReturnValue"
     )
+  }
+}
+
+class StringSplit extends SummarizedCallable {
+  StringSplit() { this = "String#split" }
+
+  override DataFlow::MethodCallNode getACallSimple() {
+    result.getMethodName() = "split" and result.getNumArgument() = 1
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = false and
+    input = "Argument[this]" and
+    output = "ReturnValue.ArrayElement"
   }
 }
