@@ -223,3 +223,15 @@ function testPromise(arg) {
     new Foo().updatePrVisibility(arg);
 }
 testPromise(source());
+
+function sinkInner() {
+    var x = "safe";
+    console.log(x);
+    x = source();
+    console.log(x);
+    function inner() {
+        sink(x); // NOT OK
+    }
+    inner();
+}
+sinkInner();

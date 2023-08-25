@@ -71,14 +71,13 @@ private module VariableCaptureArg implements InputSig {
     }
   }
 
-  private class FunctionDeclStmtAsExpr extends Expr, js::FunctionDeclStmt {
-    override predicate hasCfgNode(BasicBlock bb, int i) {
-      // All FunctionDeclStmts are evaluated at index 0, where all implicit inits have already occurred (at index -1)
-      // but their corresponding VariableWrites have not yet occurred.
-      i = 0 and bb = this.getEnclosingContainer().getEntryBB()
-    }
-  }
-
+  // private class FunctionDeclStmtAsExpr extends Expr, js::FunctionDeclStmt {
+  //   override predicate hasCfgNode(BasicBlock bb, int i) {
+  //     // All FunctionDeclStmts are evaluated at index 0, where all implicit inits have already occurred (at index -1)
+  //     // but their corresponding VariableWrites have not yet occurred.
+  //     i = 0 and bb = this.getEnclosingContainer().getEntryBB()
+  //   }
+  // }
   class VariableRead extends Expr instanceof js::VarAccess, js::RValue {
     private CapturedVariable variable;
 

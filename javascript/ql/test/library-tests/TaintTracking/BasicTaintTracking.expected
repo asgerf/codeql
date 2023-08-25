@@ -105,6 +105,7 @@ typeInferenceMismatch
 | capture-flow.js:195:24:195:31 | source() | capture-flow.js:191:14:191:14 | x |
 | capture-flow.js:205:24:205:31 | source() | capture-flow.js:200:18:200:18 | x |
 | capture-flow.js:225:13:225:20 | source() | capture-flow.js:220:51:220:59 | fileOrDir |
+| capture-flow.js:230:9:230:16 | source() | capture-flow.js:233:14:233:14 | x |
 | captured-sanitizer.js:25:3:25:10 | source() | captured-sanitizer.js:15:10:15:10 | x |
 | case.js:2:16:2:23 | source() | case.js:5:8:5:35 | changeC ... source) |
 | case.js:2:16:2:23 | source() | case.js:8:8:8:24 | camelCase(source) |
