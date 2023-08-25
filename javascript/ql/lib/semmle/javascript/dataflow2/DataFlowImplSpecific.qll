@@ -166,6 +166,13 @@ module Private {
     /** Gets the corresponding `StmtContainer` if this is a source callable. */
     StmtContainer asSourceCallable() { this = MkSourceCallable(result) }
 
+    /** Gets the corresponding `StmtContainer` if this is a source callable. */
+    pragma[nomagic]
+    StmtContainer asSourceCallableNotExterns() {
+      this = MkSourceCallable(result) and
+      not result.inExternsFile()
+    }
+
     /** Gets the corresponding `LibraryCallable` if this is a library callable. */
     LibraryCallable asLibraryCallable() { this = MkLibraryCallable(result) }
   }
@@ -525,24 +532,26 @@ module Private {
 
   pragma[inline]
   DataFlowCallable viableCallable(DataFlowCall node) {
-    result.asSourceCallable() = node.asOrdinaryCall().getACallee()
+    // Note: we never include call edges externs here, as it negatively affects the field-flow branch limit,
+    // particularly when the call can also target a flow summary.
+    result.asSourceCallableNotExterns() = node.asOrdinaryCall().getACallee()
     or
-    result.asSourceCallable() =
+    result.asSourceCallableNotExterns() =
       node.asPartialCall().getACallbackNode().getAFunctionValue().getFunction()
     or
     exists(DataFlow::InvokeNode invoke, int boundArgs |
       invoke = node.asBoundCall(boundArgs) and
-      FlowSteps::callsBound(invoke, result.asSourceCallable(), boundArgs)
+      FlowSteps::callsBound(invoke, result.asSourceCallableNotExterns(), boundArgs)
     )
     or
-    result.asSourceCallable() = node.asAccessorCall().getAnAccessorCallee().getFunction()
+    result.asSourceCallableNotExterns() = node.asAccessorCall().getAnAccessorCallee().getFunction()
     or
     exists(LibraryCallable callable |
       result = MkLibraryCallable(callable) and
       node.asOrdinaryCall() = [callable.getACall(), callable.getACallSimple()]
     )
     or
-    result.asSourceCallable() = node.asImpliedLambdaCall()
+    result.asSourceCallableNotExterns() = node.asImpliedLambdaCall()
   }
 
   /**

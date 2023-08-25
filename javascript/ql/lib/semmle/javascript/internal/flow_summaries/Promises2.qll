@@ -19,7 +19,9 @@ private class PromiseConstructor extends SummarizedCallable {
   PromiseConstructor() { this = "new Promise()" }
 
   override DataFlow::InvokeNode getACallSimple() {
-    result = promiseConstructorRef().getAnInstantiation()
+    // Disabled for now. The field-flow branch limit will be negatively affected by having
+    // calls to multiple variants of `new Promise()`.
+    none()
   }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
