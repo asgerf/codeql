@@ -51,7 +51,8 @@ private module VariableCaptureArg implements InputSig {
 
   class CapturedVariable extends js::LocalVariable {
     CapturedVariable() {
-      this.isCaptured()
+      this.isCaptured() and
+      not exists(getLambdaFromVariable(this))
       // TODO: exclude top-level variables as they are singletons, and can safely be modelled with jump steps
     }
 
