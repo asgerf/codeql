@@ -15,19 +15,24 @@ private js::Function getLambdaFromVariable(js::LocalVariable variable) {
   )
 }
 
+private predicate containsReferenceTo(js::Function fun, js::Function other) {
+  other.getEnclosingContainer() = fun
+  or
+  exists(js::LocalVariable variable |
+    other = getLambdaFromVariable(variable) and
+    variable.getAnAccess().getEnclosingFunction() = fun and
+    fun.getEnclosingContainer() = other.getEnclosingContainer().getEnclosingContainer*() and
+    other != fun
+  )
+}
+
 predicate captures(js::Function fun, js::LocalVariable variable) {
   (
     variable.getAnAccess().getContainer().getFunctionBoundary() = fun
     or
     exists(js::Function inner |
       captures(inner, variable) and
-      fun = inner.getEnclosingContainer().getFunctionBoundary()
-    )
-    or
-    // if capturing another function, include the captures of that function
-    exists(js::LocalVariable otherLambdaVar |
-      captures(fun, otherLambdaVar) and
-      captures(getLambdaFromVariable(otherLambdaVar), variable)
+      containsReferenceTo(fun, inner)
     )
   ) and
   not variable.getDeclaringContainer() = fun
