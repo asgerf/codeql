@@ -33,6 +33,48 @@ predicate captures(js::Function fun, js::LocalVariable variable) {
   not variable.getDeclaringContainer() = fun
 }
 
+private js::Function getACapturingFunctionInTree(js::AstNode e) {
+  result = e and
+  captures(e, _)
+  or
+  not e instanceof js::Function and
+  result = getACapturingFunctionInTree(e.getAChild())
+}
+
+/**
+ * Holds if `decl` declares a variable that is captured by its own initializer, that is, the initializer of `decl`.
+ *
+ * For example, the declaration of `obj` below captures itself in its initializer:
+ * ```js
+ * const obj = {
+ *   method: () => { ...obj... }
+ * }
+ * ```
+ *
+ * The lambda can only observe values of `obj` at one of the aliases of that lambda. Due to limited aliases analysis,
+ * the only alias we can see is the lambda itself. However, at this stage the `obj` variable is still unassigned, so it
+ * just sees its implicit initialization, thus failing to capture any real flows through `obj`.
+ *
+ * Consider that the similar example does not have this problem:
+ *
+ * ```js
+ * const obj = {};
+ * obj.method = () => { ...obj... };
+ * ```
+ *
+ * In this case, `obj` has already been assigned at the point of the lambda creation, so we propagate the correct value
+ * into the lambda.
+ *
+ * Our workaround is to make the first example look like the second one, by placing the assignment of
+ * `obj` before the object literal. We do this whenever a variable captures itself in its initializer.
+ */
+private predicate isCapturedByOwnInitializer(js::VariableDeclarator decl) {
+  exists(js::Function function |
+    function = getACapturingFunctionInTree(decl.getInit()) and
+    captures(function, decl.getBindingPattern().(js::VarDecl).getVariable())
+  )
+}
+
 private module VariableCaptureArg implements InputSig {
   class BasicBlock extends js::BasicBlock {
     Callable getEnclosingCallable() { result = this.getContainer().getFunctionBoundary() }
@@ -71,13 +113,6 @@ private module VariableCaptureArg implements InputSig {
     }
   }
 
-  // private class FunctionDeclStmtAsExpr extends Expr, js::FunctionDeclStmt {
-  //   override predicate hasCfgNode(BasicBlock bb, int i) {
-  //     // All FunctionDeclStmts are evaluated at index 0, where all implicit inits have already occurred (at index -1)
-  //     // but their corresponding VariableWrites have not yet occurred.
-  //     i = 0 and bb = this.getEnclosingContainer().getEntryBB()
-  //   }
-  // }
   class VariableRead extends Expr instanceof js::VarAccess, js::RValue {
     private CapturedVariable variable;
 
@@ -144,8 +179,22 @@ private module VariableCaptureArg implements InputSig {
       result = js::DataFlow::lvalueNodeInternal(pattern)
     }
 
+    /**
+     * Gets a CFG node that should act at the place where this variable write happens, overriding its "true" CFG node.
+     */
+    private js::ControlFlowNode getCfgNodeOverride() {
+      exists(js::VariableDeclarator decl |
+        decl.getBindingPattern() = pattern and
+        isCapturedByOwnInitializer(decl) and
+        result = decl.getInit().getFirstControlFlowNode()
+      )
+    }
+
     /** Holds if the `i`th node of basic block `bb` evaluates this expression. */
     override predicate hasCfgNode(BasicBlock bb, int i) {
+      bb.getNode(i) = this.getCfgNodeOverride()
+      or
+      not exists(this.getCfgNodeOverride()) and
       bb.getNode(i) = pattern.(js::LValue).getDefNode()
     }
   }

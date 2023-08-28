@@ -55,6 +55,11 @@
 | capture-flow.js:205:24:205:31 | source() | capture-flow.js:200:18:200:18 | x |
 | capture-flow.js:225:13:225:20 | source() | capture-flow.js:220:51:220:59 | fileOrDir |
 | capture-flow.js:230:9:230:16 | source() | capture-flow.js:233:14:233:14 | x |
+| capture-flow.js:259:23:259:30 | source() | capture-flow.js:243:18:243:40 | objectW ... s.field |
+| capture-flow.js:259:23:259:30 | source() | capture-flow.js:247:18:247:40 | objectW ... s.field |
+| capture-flow.js:259:23:259:30 | source() | capture-flow.js:248:18:248:27 | this.field |
+| capture-flow.js:259:23:259:30 | source() | capture-flow.js:252:14:252:36 | objectW ... s.field |
+| capture-flow.js:259:23:259:30 | source() | capture-flow.js:253:14:253:23 | this.field |
 | captured-sanitizer.js:25:3:25:10 | source() | captured-sanitizer.js:15:10:15:10 | x |
 | constructor-calls.js:4:18:4:25 | source() | constructor-calls.js:24:8:24:14 | c.taint |
 | constructor-calls.js:4:18:4:25 | source() | constructor-calls.js:28:8:28:19 | c_safe.taint |

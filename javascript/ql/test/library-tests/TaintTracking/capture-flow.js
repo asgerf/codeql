@@ -235,3 +235,25 @@ function sinkInner() {
     inner();
 }
 sinkInner();
+
+function testObjectWithMethods(taint) {
+    const objectWithMethods = {
+        field: taint,
+        arrowFunction: () => {
+            sink(objectWithMethods.field); // NOT OK
+            sink(this.field); // OK - refers to outer 'this'
+        },
+        regularFunction() {
+            sink(objectWithMethods.field); // NOT OK
+            sink(this.field); // NOT OK
+        },
+    };
+    objectWithMethods.functionAddedLater = function() {
+        sink(objectWithMethods.field); // NOT OK
+        sink(this.field); // NOT OK
+    };
+    objectWithMethods.arrowFunction();
+    objectWithMethods.regularFunction();
+    objectWithMethods.functionAddedLater();
+}
+testObjectWithMethods(source());
