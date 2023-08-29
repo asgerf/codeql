@@ -4,6 +4,12 @@ import semmle.javascript.dataflow2.BarrierGuards
 import testUtilities.ConsistencyChecking
 import Summaries
 
+DataFlow::CallNode getACall(string name) {
+  result.getCalleeName() = name
+  or
+  result.getCalleeNode().getALocalSource() = DataFlow::globalVarRef(name)
+}
+
 module ConfigArg implements DataFlow2::ConfigSig {
   predicate isSource(DataFlow::Node node) { node = getACall("source") }
 
