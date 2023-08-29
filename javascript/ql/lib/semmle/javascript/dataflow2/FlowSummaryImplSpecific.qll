@@ -107,23 +107,25 @@ private Content getPromiseContent(string arg) {
   arg = "error" and result.asPropertyName() = Promises::errorProp()
 }
 
+bindingset[operand]
+private ParameterPosition parsePosition(string operand) {
+  operand = "any" and
+  result.asPositionalLowerBound() = 0
+  or
+  result.asPositionalLowerBound() = AccessPathSyntax::AccessPath::parseLowerBound(operand)
+}
+
 /**
  * Gets the summary component for specification component `c`, if any.
  *
  * This covers all the Ruby-specific components of a flow summary.
  */
 SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
-  exists(string arg, ParameterPosition ppos |
-    c.getName() = "Argument" and
-    arg = c.getAnArgument() and
-    result = FlowSummary::SummaryComponent::argument(ppos)
-  |
-    // TODO: convert ParameterPosition to a newtype and then update this
-    arg = "any" and
-    ppos.isPositional()
-    or
-    ppos.asPositional() = [AccessPathSyntax::AccessPath::parseLowerBound(arg) .. 10]
-  )
+  c.getName() = "Argument" and
+  result = FlowSummary::SummaryComponent::argument(parsePosition(c.getAnArgument()))
+  or
+  c.getName() = "Parameter" and
+  result = FlowSummary::SummaryComponent::parameter(parsePosition(c.getAnArgument()))
   or
   result = makePropertyContentComponents(c, "Member", c.getAnArgument())
   or

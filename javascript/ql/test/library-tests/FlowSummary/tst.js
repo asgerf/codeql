@@ -177,3 +177,29 @@ async function m13() {
   testStoreBack(obj2);
   sink(obj2.prop);; // NOT OK
 }
+
+function m14() {
+  const flowOutOfAnyArgument = mkSummary("Argument[0..]", "ReturnValue");
+  sink(flowOutOfAnyArgument(source())); // NOT OK
+  sink(flowOutOfAnyArgument(source(), "safe", "safe")); // NOT OK
+  sink(flowOutOfAnyArgument("safe", source(), "safe")); // NOT OK
+  sink(flowOutOfAnyArgument("safe", "safe", source())); // NOT OK
+  sink(flowOutOfAnyArgument("safe", "safe", "safe")); // OK
+
+  const flowOutOfAnyArgumentExceptFirst = mkSummary("Argument[1..]", "ReturnValue");
+  sink(flowOutOfAnyArgumentExceptFirst(source())); // OK
+  sink(flowOutOfAnyArgumentExceptFirst(source(), "safe", "safe")); // OK
+  sink(flowOutOfAnyArgumentExceptFirst("safe", source(), "safe")); // NOT OK
+  sink(flowOutOfAnyArgumentExceptFirst("safe", "safe", source())); // NOT OK
+  sink(flowOutOfAnyArgumentExceptFirst("safe", "safe", "safe")); // OK
+
+  const flowIntoAnyParameter = mkSummary("Argument[0]", "Argument[1].Parameter[0..]");
+  flowIntoAnyParameter(source(), (x1, x2, x3) => sink(x1)); // NOT OK
+  flowIntoAnyParameter(source(), (x1, x2, x3) => sink(x2)); // NOT OK
+  flowIntoAnyParameter(source(), (x1, x2, x3) => sink(x3)); // NOT OK
+
+  const flowIntoAnyParameterExceptFirst = mkSummary("Argument[0]", "Argument[1].Parameter[1..]");
+  flowIntoAnyParameterExceptFirst(source(), (x1, x2, x3) => sink(x1)); // OK
+  flowIntoAnyParameterExceptFirst(source(), (x1, x2, x3) => sink(x2)); // NOT OK
+  flowIntoAnyParameterExceptFirst(source(), (x1, x2, x3) => sink(x3)); // NOT OK
+}
