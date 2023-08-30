@@ -750,8 +750,6 @@ module TaintedPath {
       )
     )
     or
-    TaintTracking::promiseStep(src, dst) and srclabel = dstlabel
-    or
     TaintTracking::persistentStorageStep(src, dst) and srclabel = dstlabel
     or
     exists(DataFlow::PropRead read | read = dst |
