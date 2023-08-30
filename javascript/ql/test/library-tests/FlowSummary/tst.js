@@ -203,3 +203,15 @@ function m14() {
   flowIntoAnyParameterExceptFirst(source(), (x1, x2, x3) => sink(x2)); // NOT OK
   flowIntoAnyParameterExceptFirst(source(), (x1, x2, x3) => sink(x3)); // NOT OK
 }
+
+function m15() {
+  const array = [];
+  array.push("safe", "safe", source());
+  sink(array.pop()); // NOT OK
+
+  const array2 = [];
+  array2.push(source());
+  array2.push("safe");
+  array2.push("safe");
+  array2.forEach(x => sink(x)); // NOT OK
+}
