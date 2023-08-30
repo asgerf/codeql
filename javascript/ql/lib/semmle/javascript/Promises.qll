@@ -463,7 +463,7 @@ module PromiseFlow {
   }
 }
 
-private class PromiseTaintStep extends TaintTracking::SharedTaintStep {
+private class PromiseTaintStep extends TaintTracking::LegacyTaintStep {
   override predicate promiseStep(DataFlow::Node pred, DataFlow::Node succ) {
     // from `x` to `new Promise((res, rej) => res(x))`
     pred = succ.(PromiseDefinition).getResolveParameter().getACall().getArgument(0)
@@ -552,7 +552,7 @@ private module AsyncReturnSteps {
   /**
    * A data-flow step for ordinary return from an async function in a taint configuration.
    */
-  private class AsyncTaintReturn extends TaintTracking::SharedTaintStep {
+  private class AsyncTaintReturn extends TaintTracking::LegacyTaintStep {
     override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
       exists(Function f |
         f.isAsync() and
@@ -669,7 +669,7 @@ private module ClosurePromise {
   /**
    * Taint steps through closure promise methods.
    */
-  private class ClosurePromiseTaintStep extends TaintTracking::SharedTaintStep {
+  private class ClosurePromiseTaintStep extends TaintTracking::LegacyTaintStep {
     override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
       // static methods in goog.Promise
       exists(DataFlow::CallNode call, string name |
