@@ -13,6 +13,7 @@ missingToString
 parameterCallable
 localFlowIsLocal
 readStepIsLocal
+| tst.js:216:3:216:8 | array2 | tst.js:216:18:216:18 | x | Read step does not preserve enclosing callable. |
 storeStepIsLocal
 compatibleTypesReflexive
 unreachableNodeCCtx
