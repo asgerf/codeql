@@ -271,7 +271,7 @@ private import semmle.javascript.dataflow.internal.PreCallGraphStep
  * These steps are for `await p`, `new Promise()`, `Promise.resolve()`,
  * `Promise.then()`, `Promise.catch()`, and `Promise.finally()`.
  */
-private class PromiseStep extends PreCallGraphStep {
+private class PromiseStep extends LegacyPreCallGraphStep {
   override predicate loadStep(DataFlow::Node obj, DataFlow::Node element, string prop) {
     PromiseFlow::loadStep(obj, element, prop)
   }
@@ -534,7 +534,7 @@ private module AsyncReturnSteps {
   /**
    * A data-flow step for ordinary and exceptional returns from async functions.
    */
-  private class AsyncReturn extends PreCallGraphStep {
+  private class AsyncReturn extends LegacyPreCallGraphStep {
     override predicate storeStep(DataFlow::Node pred, DataFlow::SourceNode succ, string prop) {
       exists(DataFlow::FunctionNode f | f.getFunction().isAsync() |
         // ordinary return
@@ -703,8 +703,9 @@ private module DynamicImportSteps {
    * let Foo = await import('./foo');
    * ```
    */
-  class DynamicImportStep extends PreCallGraphStep {
+  class DynamicImportStep extends LegacyPreCallGraphStep {
     override predicate storeStep(DataFlow::Node pred, DataFlow::SourceNode succ, string prop) {
+      // TODO: this step needs to be ported to dataflow2
       exists(DynamicImportExpr imprt |
         pred = imprt.getImportedModule().getAnExportedValue("default") and
         succ = imprt.flow() and

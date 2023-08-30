@@ -596,8 +596,6 @@ module Private {
     not node1 instanceof TCapturedVariableNode and
     not node2 instanceof TCapturedVariableNode
     or
-    DataFlow::SharedFlowStep::step(node1, node2)
-    or
     FlowSteps::propertyFlowStep(node1, node2)
     or
     FlowSteps::globalFlowStep(node1, node2)
@@ -658,6 +656,9 @@ module Private {
     )
     or
     VariableCaptureOutput::localFlowStep(getClosureNode(node1), getClosureNode(node2))
+    or
+    // NOTE: For consistency with readStep/storeStep, we do not translate these steps to jump steps automatically.
+    DataFlow::AdditionalFlowStep::step(node1, node2)
   }
 
   /**
@@ -671,6 +672,8 @@ module Private {
     or
     FlowSummaryImpl::Private::Steps::summaryJumpStep(node1.(FlowSummaryNode).getSummaryNode(),
       node2.(FlowSummaryNode).getSummaryNode())
+    or
+    DataFlow::AdditionalFlowStep::jumpStep(node1, node2)
   }
 
   /**
@@ -684,10 +687,6 @@ module Private {
       c.asPropertyName() = read.getPropertyName() and
       node2 = read
     )
-    or
-    DataFlow::SharedFlowStep::loadStep(node1, node2, c.asPropertyName()) and
-    // Exclude promise-related steps because we want these to be entirely modelled with flow summaries now
-    not isPromiseProperty(c)
     or
     exists(ContentSet contentSet |
       FlowSummaryImpl::Private::Steps::summaryReadStep(node1.(FlowSummaryNode).getSummaryNode(),
@@ -712,6 +711,8 @@ module Private {
       VariableCaptureOutput::readStep(getClosureNode(node1), variable, getClosureNode(node2)) and
       c.asSingleton() = MkCapturedContent(variable)
     )
+    or
+    DataFlow::AdditionalFlowStep::readStep(node1, c, node2)
   }
 
   pragma[nomagic]
@@ -753,10 +754,6 @@ module Private {
       else c.asPropertyName() = DataFlow::PseudoProperties::arrayElement()
     )
     or
-    DataFlow::SharedFlowStep::storeStep(node1, node2, c.asPropertyName()) and
-    // Exclude promise-related steps because we want these to be entirely modelled with flow summaries now
-    not isPromiseProperty(c)
-    or
     FlowSummaryImpl::Private::Steps::summaryStoreStep(node1.(FlowSummaryNode).getSummaryNode(), c,
       node2.(FlowSummaryNode).getSummaryNode()) and
     not isSpecialContentSet(c)
@@ -786,6 +783,8 @@ module Private {
       VariableCaptureOutput::storeStep(getClosureNode(node1), variable, getClosureNode(node2)) and
       c.asSingleton() = MkCapturedContent(variable)
     )
+    or
+    DataFlow::AdditionalFlowStep::storeStep(node1, c, node2)
   }
 
   /**
