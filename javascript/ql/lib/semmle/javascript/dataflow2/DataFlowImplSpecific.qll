@@ -900,7 +900,7 @@ module Private {
   }
 
   predicate defaultAdditionalTaintStep(DataFlow::Node node1, DataFlow::Node node2) {
-    TaintTracking::sharedTaintStep(node1, node2)
+    TaintTracking::AdditionalTaintStep::step(node1, node2)
     or
     FlowSummaryImpl::Private::Steps::summaryLocalStep(node1.(FlowSummaryNode).getSummaryNode(),
       node2.(FlowSummaryNode).getSummaryNode(), false)
