@@ -22,7 +22,7 @@ class Push extends SummarizedCallable {
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
-    input = "Argument[0]" and // TODO: support more arguments
+    input = "Argument[0..]" and
     output = "Argument[this].ArrayElement"
   }
 }
