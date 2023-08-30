@@ -1717,6 +1717,98 @@ edges
 | tainted-access-paths.js:49:10:49:13 | path | tainted-access-paths.js:49:10:49:13 | path |
 | tainted-access-paths.js:49:10:49:13 | path | tainted-access-paths.js:49:10:49:13 | path |
 | tainted-access-paths.js:49:10:49:13 | path | tainted-access-paths.js:49:10:49:13 | path |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | tainted-promise-steps.js:7:26:7:29 | path |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | tainted-promise-steps.js:7:26:7:29 | path |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | tainted-promise-steps.js:7:26:7:29 | path |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | tainted-promise-steps.js:7:26:7:29 | path |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:14:6:37 | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:24:6:30 | req.url |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:24:6:30 | req.url |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:24:6:30 | req.url |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:6:24:6:30 | req.url |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:7:26:7:29 | path |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:7:26:7:29 | path |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:7:26:7:29 | path |
+| tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:7:26:7:29 | path |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) | tainted-promise-steps.js:10:23:10:33 | pathPromise |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) | tainted-promise-steps.js:10:23:10:33 | pathPromise |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) | tainted-promise-steps.js:10:23:10:33 | pathPromise |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) | tainted-promise-steps.js:10:23:10:33 | pathPromise |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] | tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] | tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] | tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] | tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:26:7:29 | path | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:26:7:29 | path | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:26:7:29 | path | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:26:7:29 | path | tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | tainted-promise-steps.js:12:3:12:13 | pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | tainted-promise-steps.js:12:3:12:13 | pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | tainted-promise-steps.js:12:3:12:13 | pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | tainted-promise-steps.js:12:3:12:13 | pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:11:19:11:35 | await pathPromise | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:11:19:11:35 | await pathPromise | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:11:19:11:35 | await pathPromise | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:11:19:11:35 | await pathPromise | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:11:19:11:35 | await pathPromise |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise | tainted-promise-steps.js:12:20:12:23 | path |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise | tainted-promise-steps.js:12:20:12:23 | path |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise | tainted-promise-steps.js:12:20:12:23 | path |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise | tainted-promise-steps.js:12:20:12:23 | path |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:12:20:12:23 | path |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:12:20:12:23 | path |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:12:20:12:23 | path |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] | tainted-promise-steps.js:12:20:12:23 | path |
+| tainted-promise-steps.js:12:20:12:23 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:20:12:23 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:20:12:23 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:20:12:23 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:20:12:23 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:20:12:23 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:20:12:23 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:20:12:23 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:44:12:47 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:44:12:47 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:44:12:47 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:44:12:47 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:44:12:47 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:44:12:47 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:44:12:47 | path | tainted-promise-steps.js:12:44:12:47 | path |
+| tainted-promise-steps.js:12:44:12:47 | path | tainted-promise-steps.js:12:44:12:47 | path |
 | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") |
 | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") |
 | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") |
@@ -3018,6 +3110,69 @@ nodes
 | tainted-access-paths.js:49:10:49:13 | path | semmle.label | path |
 | tainted-access-paths.js:49:10:49:13 | path | semmle.label | path |
 | tainted-access-paths.js:49:10:49:13 | path | semmle.label | path |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | semmle.label | url.par ... , true) |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | semmle.label | url.par ... , true) |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | semmle.label | url.par ... , true) |
+| tainted-promise-steps.js:6:14:6:37 | url.par ... , true) | semmle.label | url.par ... , true) |
+| tainted-promise-steps.js:6:24:6:30 | req.url | semmle.label | req.url |
+| tainted-promise-steps.js:6:24:6:30 | req.url | semmle.label | req.url |
+| tainted-promise-steps.js:6:24:6:30 | req.url | semmle.label | req.url |
+| tainted-promise-steps.js:6:24:6:30 | req.url | semmle.label | req.url |
+| tainted-promise-steps.js:6:24:6:30 | req.url | semmle.label | req.url |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) | semmle.label | Promise ... e(path) |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) | semmle.label | Promise ... e(path) |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) | semmle.label | Promise ... e(path) |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) | semmle.label | Promise ... e(path) |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] | semmle.label | Promise ... e(path) [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] | semmle.label | Promise ... e(path) [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] | semmle.label | Promise ... e(path) [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:10:7:30 | Promise ... e(path) [$PromiseResolveField$] | semmle.label | Promise ... e(path) [$PromiseResolveField$] |
+| tainted-promise-steps.js:7:26:7:29 | path | semmle.label | path |
+| tainted-promise-steps.js:7:26:7:29 | path | semmle.label | path |
+| tainted-promise-steps.js:7:26:7:29 | path | semmle.label | path |
+| tainted-promise-steps.js:7:26:7:29 | path | semmle.label | path |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | semmle.label | pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | semmle.label | pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | semmle.label | pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise | semmle.label | pathPromise |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:10:23:10:33 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:11:19:11:35 | await pathPromise | semmle.label | await pathPromise |
+| tainted-promise-steps.js:11:19:11:35 | await pathPromise | semmle.label | await pathPromise |
+| tainted-promise-steps.js:11:19:11:35 | await pathPromise | semmle.label | await pathPromise |
+| tainted-promise-steps.js:11:19:11:35 | await pathPromise | semmle.label | await pathPromise |
+| tainted-promise-steps.js:11:19:11:35 | await pathPromise | semmle.label | await pathPromise |
+| tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:11:25:11:35 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise | semmle.label | pathPromise |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise | semmle.label | pathPromise |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise | semmle.label | pathPromise |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise | semmle.label | pathPromise |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:12:3:12:13 | pathPromise [$PromiseResolveField$] | semmle.label | pathPromise [$PromiseResolveField$] |
+| tainted-promise-steps.js:12:20:12:23 | path | semmle.label | path |
+| tainted-promise-steps.js:12:20:12:23 | path | semmle.label | path |
+| tainted-promise-steps.js:12:20:12:23 | path | semmle.label | path |
+| tainted-promise-steps.js:12:20:12:23 | path | semmle.label | path |
+| tainted-promise-steps.js:12:20:12:23 | path | semmle.label | path |
+| tainted-promise-steps.js:12:20:12:23 | path | semmle.label | path |
+| tainted-promise-steps.js:12:20:12:23 | path | semmle.label | path |
+| tainted-promise-steps.js:12:20:12:23 | path | semmle.label | path |
+| tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
+| tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
+| tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
+| tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
+| tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
+| tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
+| tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
+| tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
+| tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
 | tainted-require.js:7:19:7:37 | req.param("module") | semmle.label | req.param("module") |
 | tainted-require.js:7:19:7:37 | req.param("module") | semmle.label | req.param("module") |
 | tainted-require.js:7:19:7:37 | req.param("module") | semmle.label | req.param("module") |
@@ -3338,6 +3493,8 @@ subpaths
 | tainted-access-paths.js:31:23:31:30 | obj.sub4 | tainted-access-paths.js:6:24:6:30 | req.url | tainted-access-paths.js:31:23:31:30 | obj.sub4 | This path depends on a $@. | tainted-access-paths.js:6:24:6:30 | req.url | user-provided value |
 | tainted-access-paths.js:40:23:40:26 | path | tainted-access-paths.js:39:24:39:30 | req.url | tainted-access-paths.js:40:23:40:26 | path | This path depends on a $@. | tainted-access-paths.js:39:24:39:30 | req.url | user-provided value |
 | tainted-access-paths.js:49:10:49:13 | path | tainted-access-paths.js:48:24:48:30 | req.url | tainted-access-paths.js:49:10:49:13 | path | This path depends on a $@. | tainted-access-paths.js:48:24:48:30 | req.url | user-provided value |
+| tainted-promise-steps.js:11:19:11:35 | await pathPromise | tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:11:19:11:35 | await pathPromise | This path depends on a $@. | tainted-promise-steps.js:6:24:6:30 | req.url | user-provided value |
+| tainted-promise-steps.js:12:44:12:47 | path | tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:12:44:12:47 | path | This path depends on a $@. | tainted-promise-steps.js:6:24:6:30 | req.url | user-provided value |
 | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") | This path depends on a $@. | tainted-require.js:7:19:7:37 | req.param("module") | user-provided value |
 | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") | This path depends on a $@. | tainted-require.js:12:29:12:47 | req.param("module") | user-provided value |
 | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") | This path depends on a $@. | tainted-require.js:14:11:14:29 | req.param("module") | user-provided value |
