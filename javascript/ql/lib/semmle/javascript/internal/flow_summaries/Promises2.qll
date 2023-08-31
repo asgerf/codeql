@@ -96,10 +96,13 @@ module PromiseConstructorWorkaround {
   }
 }
 
-private class PromiseThen extends SummarizedCallable {
-  PromiseThen() { this = "Promise#then()" }
+private class PromiseThen2Arguments extends SummarizedCallable {
+  PromiseThen2Arguments() { this = "Promise#then() with 2 arguments" }
 
-  override InstanceCall getACallSimple() { result.getMethodName() = "then" }
+  override InstanceCall getACallSimple() {
+    result.getMethodName() = "then" and
+    result.getNumArgument() = 2
+  }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
@@ -125,8 +128,15 @@ private class PromiseThen1Argument extends SummarizedCallable {
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
-    input = "Argument[this].WithAwaited[error]" and
-    output = "ReturnValue"
+    (
+      input = "Argument[0].ReturnValue" and output = "ReturnValue.Awaited"
+      or
+      input = "Argument[0].ReturnValue[exception]" and output = "ReturnValue.Awaited[error]"
+      or
+      input = "Argument[this].Awaited[value]" and output = "Argument[0].Parameter[0]"
+      or
+      input = "Argument[this].WithAwaited[error]" and output = "ReturnValue"
+    )
   }
 }
 
