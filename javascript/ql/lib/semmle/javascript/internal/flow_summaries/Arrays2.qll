@@ -1,40 +1,484 @@
+/**
+ * Contains a summary for relevant methods on arrays, except Array.prototype.join which is currently special-cased in StringConcatenation.qll.
+ *
+ * Note that some of Array methods are modelled in `AmbiguousCoreMethods.qll`, and `join` and `toString` are special-cased elsewhere.
+ */
+
 private import javascript
 private import semmle.javascript.dataflow2.FlowSummary
+private import semmle.javascript.dataflow2.DataFlow as DataFlow2
+private import FlowSummaryUtil
 
-class ForEach extends SummarizedCallable {
-  ForEach() { this = "Array#forEach" }
+pragma[nomagic]
+DataFlow::SourceNode arrayConstructorRef() { result = DataFlow::globalVarRef("Array") }
 
-  override DataFlow::MethodCallNode getACallSimple() { result.getMethodName() = "forEach" }
+pragma[nomagic]
+private int firstSpreadIndex(ArrayExpr expr) {
+  result = min(int i | expr.getElement(i) instanceof SpreadElement)
+}
+
+/**
+ * Store and read steps for an array literal. Since literals are not seen as calls, this is not a flow summary.
+ *
+ * In case of spread eleements `[x, ...y]`, we generate a read from `y -> ...y` and then a store from `...y` into
+ * the array literal (to ensure constant-indices get broken up).
+ */
+class ArrayLiteralStep extends DataFlow::AdditionalFlowStep {
+  override predicate storeStep(
+    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
+  ) {
+    exists(ArrayExpr array, int i |
+      pred = array.getElement(i).flow() and
+      succ = array.flow()
+    |
+      if i >= firstSpreadIndex(array)
+      then contents.isArrayElement()
+      else contents.asPropertyName() = DataFlow::PseudoProperties::arrayElement(i)
+    )
+  }
+
+  override predicate readStep(
+    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
+  ) {
+    exists(SpreadElement spread |
+      spread = any(ArrayExpr array).getAnElement() and
+      pred = spread.getOperand().flow() and
+      succ = spread.flow() and
+      contents.isArrayElement()
+    )
+  }
+}
+
+class ArrayConstructorSummary extends SummarizedCallable {
+  ArrayConstructorSummary() { this = "Array constructor" }
+
+  override DataFlow::InvokeNode getACallSimple() {
+    result = arrayConstructorRef().getAnInvocation()
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[0..]" and
+      output = "ReturnValue.ArrayElement"
+      or
+      input = "Argument[arguments-array].WithArrayElement" and
+      output = "ReturnValue"
+    )
+  }
+}
+
+class CopyWithin extends SummarizedCallable {
+  CopyWithin() { this = "Array#copyWithin" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = "copyWithin" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    input = "Argument[this].WithArrayElement" and
+    output = "ReturnValue"
+  }
+}
+
+class FlowIntoCallback extends SummarizedCallable {
+  FlowIntoCallback() { this = "Array method with flow into callback" }
+
+  override InstanceCall getACallSimple() {
+    result.getMethodName() = ["every", "findIndex", "findLastIndex", "some"]
+  }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     (
       input = "Argument[this].ArrayElement" and
       output = "Argument[0].Parameter[0]"
+      or
+      input = "Argument[1]" and
+      output = "Argument[0].Parameter[this]"
     )
   }
 }
 
-class Push extends SummarizedCallable {
-  Push() { this = "Array#push" }
+class Filter extends SummarizedCallable {
+  Filter() { this = "Array#filter" }
 
-  override DataFlow::MethodCallNode getACallSimple() { result.getMethodName() = "push" }
+  override InstanceCall getACallSimple() { result.getMethodName() = "filter" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[this].ArrayElement" and
+      output = "Argument[0].Parameter[0]"
+      or
+      input = "Argument[1]" and
+      output = "Argument[0].Parameter[this]"
+      or
+      // Note: in case the filter condition acts as a barrier/sanitizer,
+      // it is up to the query to mark the 'filter' call as a barrier/sanitizer
+      input = "Argument[this].WithArrayElement" and
+      output = "ReturnValue"
+    )
+  }
+}
+
+class Fill extends SummarizedCallable {
+  Fill() { this = "Array#fill" } // TODO: clear contents if no interval is given
+
+  override InstanceCall getACallSimple() { result.getMethodName() = "fill" }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     input = "Argument[0..]" and
+    output = ["ReturnValue.ArrayElement", "Argument[this].ArrayElement"]
+  }
+}
+
+class FindLike extends SummarizedCallable {
+  FindLike() { this = "Array#find / Array#findLast" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = ["find", "findLast"] }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[this].ArrayElement" and
+      output = ["Argument[0].Parameter[0]", "ReturnValue"]
+      or
+      input = "Argument[1]" and
+      output = "Argument[0].Parameter[this]"
+    )
+  }
+}
+
+class FindLibrary extends SummarizedCallable {
+  FindLibrary() { this = "'array.prototype.find' / 'array-find'" }
+
+  override DataFlow::CallNode getACallSimple() {
+    result = DataFlow::moduleImport(["array.prototype.find", "array-find"]).getACall()
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[0].ArrayElement" and
+      output = ["Argument[1].Parameter[0]", "ReturnValue"]
+      or
+      input = "Argument[2]" and
+      output = "Argument[1].Parameter[this]"
+    )
+  }
+}
+
+class Flat extends SummarizedCallable {
+  private int depth;
+
+  Flat() { this = "Array#flat(" + depth + ")" and depth in [1 .. 3] }
+
+  override InstanceCall getACallSimple() {
+    result.getMethodName() = "flat" and
+    (
+      result.getNumArgument() = 1 and
+      result.getArgument(0).getIntValue() = depth
+      or
+      depth = 1 and
+      result.getNumArgument() = 0
+    )
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[this]" + concat(int n | n in [0 .. depth] | ".ArrayElement")
+      or
+      exists(int partialDepth | partialDepth in [1 .. depth - 1] |
+        input =
+          "Argument[this]" + concat(int n | n in [0 .. partialDepth] | ".ArrayElement") +
+            ".WithoutArrayElement"
+      )
+    ) and
+    output = "ReturnValue.ArrayElement"
+  }
+}
+
+class FlatMap extends SummarizedCallable {
+  FlatMap() { this = "Array#flatMap" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = "flatMap" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[this].ArrayElement" and
+      output = "Argument[0].Parameter[0]"
+      or
+      input = "Argument[this]" and
+      output = "Argument[0].Parameter[2]"
+      or
+      input = "Argument[1]" and
+      output = "Argument[0].Parameter[1]"
+      or
+      input = "Argument[0].ReturnValue." + ["ArrayElement", "WithoutArrayElement"] and
+      output = "ReturnValue.ArrayElement"
+    )
+  }
+}
+
+private DataFlow::CallNode arrayFromCall() {
+  // TODO: update fromAsync model when async iterators are supported
+  result = arrayConstructorRef().getAMemberCall(["from", "fromAsync"]) and
+  result.getNumArgument() = 1
+  or
+  result = DataFlow::moduleImport("array-from").getACall()
+}
+
+class From1Arg extends SummarizedCallable {
+  From1Arg() { this = "Array.from(arg)" }
+
+  override DataFlow::CallNode getACallSimple() {
+    result = arrayFromCall() and result.getNumArgument() = 1
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    // TODO: clarify if reading from Element implies ArrayElement
+    input = ["Argument[0].ArrayElement", "Argument[0].Element"] and
+    output = "ReturnValue.ArrayElement"
+  }
+}
+
+class FromManyArg extends SummarizedCallable {
+  FromManyArg() { this = "Array.from(arg, callback, [thisArg])" }
+
+  override DataFlow::CallNode getACallSimple() {
+    result = arrayFromCall() and
+    result.getNumArgument() > 1
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    // TODO: clarify if reading from Element implies ArrayElement
+    (
+      input = ["Argument[0].ArrayElement", "Argument[0].Element"] and
+      output = "Argument[1].Parameter[0]"
+      or
+      input = "Argument[1].ReturnValue" and
+      output = "ReturnValue.ArrayElement"
+      or
+      input = "Argument[2]" and
+      output = "Argument[1].Parameter[this]"
+    )
+  }
+}
+
+class Map extends SummarizedCallable {
+  Map() { this = "Array#map" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = "map" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[this].ArrayElement" and
+      output = "Argument[0].Parameter[0]"
+      or
+      input = "Argument[this]" and
+      output = "Argument[0].Parameter[2]"
+      or
+      input = "Argument[1]" and
+      output = "Argument[0].Parameter[this]"
+      or
+      input = "Argument[0].ReturnValue" and
+      output = "ReturnValue.ArrayElement"
+    )
+  }
+}
+
+class Of extends SummarizedCallable {
+  Of() { this = "Array.of" }
+
+  override DataFlow::CallNode getACallSimple() {
+    result = arrayConstructorRef().getAMemberCall("of")
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    input = "Argument[0..]" and
+    output = "ReturnValue.ArrayElement"
+  }
+}
+
+class Pop extends SummarizedCallable {
+  Pop() { this = "Array#pop" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = "pop" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    input = "Argument[this].ArrayElement" and
+    output = "ReturnValue"
+  }
+}
+
+class PushLike extends SummarizedCallable {
+  PushLike() { this = "Array#push / Array#unshift" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = ["push", "unshift"] }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    // TODO: make it so `arguments-array` is handled without needing to reference it explicitly in every flow-summary
+    input = ["Argument[0..]", "Argument[arguments-array].ArrayElement"] and
     output = "Argument[this].ArrayElement"
+  }
+}
+
+class ReduceLike extends SummarizedCallable {
+  ReduceLike() { this = "Array#reduce / Array#reduceRight" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = ["reduce", "reduceRight"] }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    /*
+     * Signatures:
+     *   reduce(callbackFn, thisArg)
+     *   callbackfn(accumulator, currentValue, index, array)
+     */
+
+    (
+      input = ["Argument[1]", "Argument[0].ReturnValue"] and
+      output = "Argument[0].Parameter[0]" // accumulator
+      or
+      input = "Argument[this].ArrayElement" and
+      output = "Argument[0].Parameter[1]" // currentValue
+      or
+      input = "Argument[this]" and
+      output = "Argument[0].Parameter[3]" // array
+      or
+      input = "Argument[1]" and // thisArg
+      output = "Argument[0].Parameter[this]"
+      or
+      input = "Argument[0].ReturnValue" and
+      output = "ReturnValue"
+    )
+  }
+}
+
+class Reverse extends SummarizedCallable {
+  Reverse() { this = "Array#reverse / Array#toReversed" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = ["reverse", "toReversed"] }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    input = "Argument[this].ArrayElement" and
+    output = "ReturnValue.ArrayElement"
   }
 }
 
 class Shift extends SummarizedCallable {
   Shift() { this = "Array#shift" }
 
-  override DataFlow::MethodCallNode getACallSimple() { result.getMethodName() = "shift" }
+  override InstanceCall getACallSimple() { result.getMethodName() = "shift" }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     input = "Argument[this].ArrayElement" and
+    output = "ReturnValue"
+  }
+}
+
+class Sort extends SummarizedCallable {
+  Sort() { this = "Array#sort / Array#toSorted" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = ["sort", "toSorted"] }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[this].ArrayElement" and
+      output = "ReturnValue.ArrayElement"
+      or
+      input = "Argument[this].ArrayElement" and
+      output = "Argument[0].Parameter[0,1]"
+    )
+  }
+}
+
+class Splice extends SummarizedCallable {
+  Splice() { this = "Array#splice" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = "splice" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[this].ArrayElement" and
+      output = "ReturnValue.ArrayElement"
+      or
+      input = "Argument[2..]" and
+      output = ["Argument[this].ArrayElement", "ReturnValue.ArrayElement"]
+    )
+  }
+}
+
+class ToSpliced extends SummarizedCallable {
+  ToSpliced() { this = "Array#toSpliced" }
+
+  override InstanceCall getACallSimple() { result.getMethodName() = "toSpliced" }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[this].ArrayElement" and
+      output = "ReturnValue.ArrayElement"
+      or
+      input = "Argument[2..]" and
+      output = "ReturnValue.ArrayElement"
+    )
+  }
+}
+
+class ArrayCoercionPackage extends FunctionalPackageSummary {
+  ArrayCoercionPackage() { this = "ArrayCoercionPackage" }
+
+  override string getAPackageName() { result = ["arrify", "array-ify"] }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[0].WithArrayElement" and
+      output = "ReturnValue"
+      or
+      input = "Argument[0].WithoutArrayElement" and
+      output = "ReturnValue.ArrayElement"
+    )
+  }
+}
+
+class ArrayCopyingPackage extends FunctionalPackageSummary {
+  ArrayCopyingPackage() { this = "ArrayCopyingPackage" }
+
+  override string getAPackageName() { result = ["array-union", "array-uniq", "uniq"] }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    input = "Argument[0..].ArrayElement" and
+    output = "ReturnValue.ArrayElement"
+  }
+}
+
+class ArrayFlatteningPackage extends FunctionalPackageSummary {
+  ArrayFlatteningPackage() { this = "ArrayFlatteningPackage" }
+
+  override string getAPackageName() {
+    result = ["array-flatten", "arr-flatten", "flatten", "array.prototype.flat"]
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    // TODO: properly support these. For the moment we're just adding parity with the old model
+    preservesValue = false and
+    input = "Argument[0..]" and
     output = "ReturnValue"
   }
 }

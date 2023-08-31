@@ -1,5 +1,6 @@
 private import javascript
 private import semmle.javascript.dataflow2.FlowSummary
+private import FlowSummaryUtil
 
 private DataFlow::SourceNode promiseConstructorRef() {
   result = Promises::promiseConstructorRef()
@@ -98,7 +99,7 @@ module PromiseConstructorWorkaround {
 private class PromiseThen extends SummarizedCallable {
   PromiseThen() { this = "Promise#then()" }
 
-  override DataFlow::MethodCallNode getACallSimple() { result.getMethodName() = "then" }
+  override InstanceCall getACallSimple() { result.getMethodName() = "then" }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
@@ -117,7 +118,7 @@ private class PromiseThen extends SummarizedCallable {
 private class PromiseThen1Argument extends SummarizedCallable {
   PromiseThen1Argument() { this = "Promise#then() with 1 argument" }
 
-  override DataFlow::MethodCallNode getACallSimple() {
+  override InstanceCall getACallSimple() {
     result.getMethodName() = "then" and
     result.getNumArgument() = 1
   }
@@ -132,7 +133,7 @@ private class PromiseThen1Argument extends SummarizedCallable {
 private class PromiseCatch extends SummarizedCallable {
   PromiseCatch() { this = "Promise#catch()" }
 
-  override DataFlow::MethodCallNode getACallSimple() { result.getMethodName() = "catch" }
+  override InstanceCall getACallSimple() { result.getMethodName() = "catch" }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
@@ -151,7 +152,7 @@ private class PromiseCatch extends SummarizedCallable {
 private class PromiseFinally extends SummarizedCallable {
   PromiseFinally() { this = "Promise#finally()" }
 
-  override DataFlow::MethodCallNode getACallSimple() { result.getMethodName() = "finally" }
+  override InstanceCall getACallSimple() { result.getMethodName() = "finally" }
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
@@ -168,7 +169,7 @@ private class PromiseFinally extends SummarizedCallable {
 private class PromiseResolve extends SummarizedCallable {
   PromiseResolve() { this = "Promise.resolve()" }
 
-  override DataFlow::MethodCallNode getACallSimple() {
+  override InstanceCall getACallSimple() {
     result = promiseConstructorRef().getAMemberCall("resolve")
   }
 
@@ -182,7 +183,7 @@ private class PromiseResolve extends SummarizedCallable {
 private class PromiseReject extends SummarizedCallable {
   PromiseReject() { this = "Promise.reject()" }
 
-  override DataFlow::MethodCallNode getACallSimple() {
+  override InstanceCall getACallSimple() {
     result = promiseConstructorRef().getAMemberCall("reject")
   }
 

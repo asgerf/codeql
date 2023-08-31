@@ -107,12 +107,33 @@ private Content getPromiseContent(string arg) {
   arg = "error" and result.asPropertyName() = Promises::errorProp()
 }
 
+pragma[nomagic]
+private predicate positionName(ParameterPosition pos, string operand) {
+  operand = pos.asPositional().toString()
+  or
+  pos.isThis() and operand = "this"
+  or
+  pos.isFunctionSelfReference() and operand = "function"
+  or
+  pos.isArgumentsArray() and operand = "arguments-array"
+  or
+  operand = pos.asPositionalLowerBound() + ".."
+}
+
+/**
+ * Holds if `operand` desugars to the given `pos`. Only used for parsing.
+ */
+bindingset[operand]
+private predicate desugaredPositionName(ParameterPosition pos, string operand) {
+  operand = "any" and
+  pos.asPositionalLowerBound() = 0
+  or
+  pos.asPositional() = AccessPathSyntax::AccessPath::parseInt(operand) // parse closed intervals
+}
+
 bindingset[operand]
 private ParameterPosition parsePosition(string operand) {
-  operand = "any" and
-  result.asPositionalLowerBound() = 0
-  or
-  result.asPositionalLowerBound() = AccessPathSyntax::AccessPath::parseLowerBound(operand)
+  positionName(result, operand) or desugaredPositionName(result, operand)
 }
 
 /**
@@ -184,23 +205,11 @@ string getMadRepresentationSpecific(SummaryComponent sc) {
 
 /** Gets the textual representation of a parameter position in the format used for flow summaries. */
 bindingset[pos]
-string getParameterPosition(ParameterPosition pos) {
-  result = pos.asPositional().toString()
-  or
-  pos.isThis() and result = "this"
-  or
-  pos.isFunctionSelfReference() and result = "function"
-}
+string getParameterPosition(ParameterPosition pos) { positionName(pos, result) and result != "any" }
 
 /** Gets the textual representation of an argument position in the format used for flow summaries. */
 bindingset[pos]
-string getArgumentPosition(ArgumentPosition pos) {
-  result = pos.asPositional().toString()
-  or
-  pos.isThis() and result = "this"
-  or
-  pos.isFunctionSelfReference() and result = "function"
-}
+string getArgumentPosition(ArgumentPosition pos) { positionName(pos, result) and result != "any" }
 
 /** Holds if input specification component `c` needs a reference. */
 predicate inputNeedsReferenceSpecific(string c) { none() }

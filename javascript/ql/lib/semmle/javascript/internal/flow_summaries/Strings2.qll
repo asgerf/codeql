@@ -8,10 +8,12 @@ private predicate hasWildcardReplaceRegExp(StringReplaceCall call) {
 }
 
 /**
- * Summary for calls to `.replace`.
+ * Summary for calls to `.replace` or `.replaceAll` (without a regexp pattern containing a wildcard).
  */
-private class StringReplace extends SummarizedCallable {
-  StringReplace() { this = "String#replace" }
+private class StringReplaceNoWildcard extends SummarizedCallable {
+  StringReplaceNoWildcard() {
+    this = "String#replace / String#replaceAll (without wildcard pattern)"
+  }
 
   override StringReplaceCall getACall() { not hasWildcardReplaceRegExp(result) }
 
@@ -28,12 +30,14 @@ private class StringReplace extends SummarizedCallable {
 }
 
 /**
- * Summary for calls to `.replace` with a regexp pattern containing a wildcard.
+ * Summary for calls to `.replace` or `.replaceAll` (with a regexp pattern containing a wildcard).
  *
  * In this case, the receiver is considered to flow into the callback.
  */
 private class StringReplaceWithWildcard extends SummarizedCallable {
-  StringReplaceWithWildcard() { this = "String#replace with wildcard pattern" }
+  StringReplaceWithWildcard() {
+    this = "String#replace / String#replaceAll (with wildcard pattern)"
+  }
 
   override StringReplaceCall getACall() { hasWildcardReplaceRegExp(result) }
 

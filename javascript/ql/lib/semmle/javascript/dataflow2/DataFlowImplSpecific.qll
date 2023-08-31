@@ -904,11 +904,19 @@ module Private {
     or
     FlowSummaryImpl::Private::Steps::summaryLocalStep(node1.(FlowSummaryNode).getSummaryNode(),
       node2.(FlowSummaryNode).getSummaryNode(), false)
+    or
+    // Convert steps into and out of array elements to plain taint steps
+    FlowSummaryImpl::Private::Steps::summaryReadStep(node1.(FlowSummaryNode).getSummaryNode(),
+      ContentSet::arrayElement(), node2.(FlowSummaryNode).getSummaryNode())
+    or
+    FlowSummaryImpl::Private::Steps::summaryStoreStep(node1.(FlowSummaryNode).getSummaryNode(),
+      ContentSet::arrayElement(), node2.(FlowSummaryNode).getSummaryNode())
+    //   and
+    // not postUpdatePair(_, node2) // ignore steps into post-update nodes; rely on ordinary content flow for storebacks
     //
     // Note: the JS taint-tracking library has steps that treat store/read as taint steps in many cases,
     // e.g. pushing to an array taints the whole array, and a promise of a tainted value is itself considered tainted.
-    // However, we never induce taint steps from store/read steps in flow summaries; instead there must be explicit
-    // flow summaries with the corresponding taint steps (if desired).
+    // Currently we only do this for arrays, not for promises.
   }
 
   newtype TContentSet =
@@ -957,6 +965,8 @@ module Public {
 
     predicate isPromiseFilter() { this = ContentSet::promiseFilter() }
 
+    predicate isArrayElement() { this = ContentSet::arrayElement() }
+
     string toString() {
       result = this.asSingleton().toString()
       or
@@ -988,19 +998,10 @@ module Public {
      * A content set describing the error stored in a rejected promise.
      */
     ContentSet promiseError() { result = property(Promises::errorProp()) }
-  }
-}
 
-private import semmle.javascript.dataflow2.FlowSummary
-
-class FlowFromSideEffectOnParameter extends SummarizedCallable {
-  FlowFromSideEffectOnParameter() { this = "flowFromSideEffectOnParameter" }
-
-  override DataFlow::MethodCallNode getACallSimple() { result.getMethodName() = this }
-
-  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
-    input = "Argument[0].Parameter[0].Member[prop]" and
-    output = "ReturnValue" and
-    preservesValue = true
+    /**
+     * A content set describing array elements.
+     */
+    ContentSet arrayElement() { result = property(DataFlow::PseudoProperties::arrayElement()) }
   }
 }

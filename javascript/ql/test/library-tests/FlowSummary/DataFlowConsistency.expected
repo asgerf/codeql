@@ -8,12 +8,29 @@ uniqueNodeToString
 | file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
 | file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
 | file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
+| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
 missingToString
-| Nodes without toString: 4 |
+| Nodes without toString: 17 |
 parameterCallable
 localFlowIsLocal
 readStepIsLocal
 | tst.js:216:3:216:8 | array2 | tst.js:216:18:216:18 | x | Read step does not preserve enclosing callable. |
+| tst.js:220:3:220:8 | array3 | tst.js:220:18:220:18 | x | Read step does not preserve enclosing callable. |
+| tst.js:226:3:226:12 | [source()] | tst.js:226:23:226:27 | value | Read step does not preserve enclosing callable. |
+| tst.js:228:3:228:8 | array5 | tst.js:228:19:228:23 | value | Read step does not preserve enclosing callable. |
+| tst.js:229:3:229:10 | ["safe"] | tst.js:229:21:229:25 | value | Read step does not preserve enclosing callable. |
 storeStepIsLocal
 compatibleTypesReflexive
 unreachableNodeCCtx
@@ -25,7 +42,17 @@ postIsInSameCallable
 reverseRead
 | tst.js:109:11:113:3 | 'arguments' object of anonymous function | Origin of readStep is missing a PostUpdateNode. |
 argHasPostUpdate
+| tst.js:219:18:219:27 | [source()] | ArgumentNode is missing PostUpdateNode. |
 postWithInFlow
+| file://:0:0:0:0 | [summary] to write: Argument[1] in Array method with flow into callback | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[1] in Array#filter | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[1] in Array#find / Array#findLast | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[1] in Array#flatMap | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[1] in Array#forEach / Map#forEach / Set#forEach | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[1] in Array#map | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[1] in Array#reduce / Array#reduceRight | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[2] in 'array.prototype.find' / 'array-find' | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[2] in Array.from(arg, callback, [thisArg]) | PostUpdateNode should not be the target of local flow. |
 | tst.js:97:24:97:74 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |
 | tst.js:100:3:100:53 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |
 | tst.js:101:3:101:53 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |

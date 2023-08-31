@@ -214,4 +214,17 @@ function m15() {
   array2.push("safe");
   array2.push("safe");
   array2.forEach(x => sink(x)); // NOT OK
+
+  const array3 = [];
+  array3.push(...[source()]);
+  array3.forEach(x => sink(x)); // NOT OK
+
+  const array4 = [source()];
+  array4 = Array.prototype.slice.call(array4);
+  sink(array4.pop()); // NOT OK
+
+  [source()].forEach((value, index, array) => { sink(array.pop()) }); // NOT OK
+  const array5 = [source()];
+  array5.forEach((value, index, array) => { sink(array.pop()) }); // NOT OK
+  ["safe"].forEach((value, index, array) => { sink(array.pop()) }); // OK
 }
