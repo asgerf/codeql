@@ -20,7 +20,7 @@ private int firstSpreadIndex(ArrayExpr expr) {
 /**
  * Store and read steps for an array literal. Since literals are not seen as calls, this is not a flow summary.
  *
- * In case of spread eleements `[x, ...y]`, we generate a read from `y -> ...y` and then a store from `...y` into
+ * In case of spread elements `[x, ...y]`, we generate a read from `y -> ...y` and then a store from `...y` into
  * the array literal (to ensure constant-indices get broken up).
  */
 class ArrayLiteralStep extends DataFlow::AdditionalFlowStep {
