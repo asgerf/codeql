@@ -72,8 +72,8 @@ private predicate isForLoopVariable(Variable v) {
 }
 
 private predicate isLikelyArrayIndex(Expr e) {
-  // Note: to mirror the old behavior, it must be a number AND be a for-loop variable.
-  // TODO: try to loosen this by changing it to an 'or'.
+  // Require that 'e' is of type number and refers to a for-loop variable.
+  // TODO: This is here to mirror the old behaviour. Experiment with turning the 'and' into an 'or'.
   TTNumber() = unique(InferredType type | type = e.flow().analyze().getAType()) and
   isForLoopVariable(e.(VarAccess).getVariable())
   or
