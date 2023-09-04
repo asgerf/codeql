@@ -20,9 +20,8 @@ uniqueNodeToString
 | file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
 | file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
 | file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
-| file://:0:0:0:0 | (no string representation) | Node should have one toString but has 0. |
 missingToString
-| Nodes without toString: 17 |
+| Nodes without toString: 16 |
 parameterCallable
 localFlowIsLocal
 readStepIsLocal
@@ -53,6 +52,10 @@ postWithInFlow
 | file://:0:0:0:0 | [summary] to write: Argument[1] in Array#reduce / Array#reduceRight | PostUpdateNode should not be the target of local flow. |
 | file://:0:0:0:0 | [summary] to write: Argument[2] in 'array.prototype.find' / 'array-find' | PostUpdateNode should not be the target of local flow. |
 | file://:0:0:0:0 | [summary] to write: Argument[2] in Array.from(arg, callback, [thisArg]) | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[this] in Array#flatMap | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[this] in Array#forEach / Map#forEach / Set#forEach | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[this] in Array#map | PostUpdateNode should not be the target of local flow. |
+| file://:0:0:0:0 | [summary] to write: Argument[this] in Array#reduce / Array#reduceRight | PostUpdateNode should not be the target of local flow. |
 | tst.js:97:24:97:74 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |
 | tst.js:100:3:100:53 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |
 | tst.js:101:3:101:53 | new Pro ... rce())) | PostUpdateNode should not be the target of local flow. |

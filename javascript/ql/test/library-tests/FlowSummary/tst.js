@@ -228,3 +228,20 @@ function m15() {
   array5.forEach((value, index, array) => { sink(array.pop()) }); // NOT OK
   ["safe"].forEach((value, index, array) => { sink(array.pop()) }); // OK
 }
+
+function m16() {
+  const array0 = [source(), 'safe', 'safe'];
+  sink(array0[0]); // NOT OK
+  sink(array0[1]); // OK
+  sink(array0[2]); // OK
+
+  const array1 = ['safe', source(), 'safe'];
+  sink(array1[0]); // OK
+  sink(array1[1]); // NOT OK
+  sink(array1[2]); // OK
+
+  const array2 = ['safe', 'safe', source()];
+  sink(array2[0]); // OK
+  sink(array2[1]); // OK
+  sink(array2[2]); // NOT OK
+}
