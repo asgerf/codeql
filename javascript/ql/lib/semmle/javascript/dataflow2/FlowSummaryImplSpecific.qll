@@ -158,15 +158,19 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   result = makeContentComponents(c, "ArrayElement", ContentSet::arrayElement())
   or
   c.getAnArgument() = "?" and
-  result = makeContentComponents(c, "ArrayElement", ContentSet::unknownArrayElement())
+  result = makeContentComponents(c, "ArrayElement", ContentSet::arrayElementUnknown())
   or
   exists(int n |
     n = c.getAnArgument().toInt() and
-    result = makeContentComponents(c, "ArrayElement", ContentSet::knownOrUnknownArrayElement(n))
+    result = makeContentComponents(c, "ArrayElement", ContentSet::arrayElementKnown(n))
     or
     // ArrayElement[n!] refers to index n, and never the unknown content
     c.getAnArgument().regexpCapture("(\\d+)!", 1).toInt() = n and
     result = makePropertyContentComponents(c, "ArrayElement", n.toString())
+    or
+    // ArrayElement[n..] refers to index n or greater
+    n = AccessPathSyntax::AccessPath::parseLowerBound(c.getAnArgument()) and
+    result = makeContentComponents(c, "ArrayElement", ContentSet::arrayElementLowerBoundFromInt(n))
   )
   or
   // result =
@@ -183,7 +187,24 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
 }
 
 private string getMadStringFromContentSetAux(ContentSet cs) {
-  cs.asPropertyName() = DataFlow::PseudoProperties::arrayElement() and result = "ArrayElement"
+  cs = ContentSet::arrayElement() and
+  result = "ArrayElement"
+  or
+  cs = ContentSet::arrayElementUnknown() and
+  result = "ArrayElement[?]"
+  or
+  exists(int n |
+    cs = ContentSet::arrayElementLowerBound(n) and
+    result = "ArrayElement[" + n + "..]" and
+    n > 0 // n=0 is just 'ArrayElement'
+    or
+    cs = ContentSet::arrayElementKnown(n) and
+    result = "ArrayElement[" + n + "]"
+    or
+    n = cs.asPropertyName().toInt() and
+    n >= 0 and
+    result = "ArrayElement[" + n + "!]"
+  )
   or
   cs.asPropertyName() = DataFlow::PseudoProperties::mapValueAll() and result = "MapValue"
   or

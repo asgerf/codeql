@@ -28,7 +28,7 @@ private class PromiseConstructor extends SummarizedCallable {
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     (
-      // TODO: not currently supported by FlowSummaryImpl.qll
+      // TODO: when FlowSummaryImpl.qll supports these summaries, remove the workaround in PromiseConstructorWorkaround
       // resolve(value)
       input = "Argument[0].Parameter[0].Argument[0]" and output = "ReturnValue.Awaited"
       or
@@ -204,15 +204,6 @@ private class PromiseReject extends SummarizedCallable {
   }
 }
 
-private int getARelevantArrayIndex() { result = [0 .. 9] }
-
-private string getAnArrayContent() {
-  // TODO: update all uses of this predicate when we distinguish more clearly between unknown and known array indices
-  result = "Member[" + getARelevantArrayIndex() + "]"
-  or
-  result = "ArrayElement"
-}
-
 private class PromiseAll extends SummarizedCallable {
   PromiseAll() { this = "Promise.all()" }
 
@@ -225,10 +216,11 @@ private class PromiseAll extends SummarizedCallable {
     exists(string content | content = getAnArrayContent() |
       input = "Argument[0]." + content + ".Awaited" and
       output = "ReturnValue.Awaited[value]." + content
-      or
-      input = "Argument[0]." + content + ".Awaited[error]" and
-      output = "ReturnValue.Awaited[error]"
     )
+    or
+    preservesValue = true and
+    input = "Argument[0].ArrayElement.WithAwaited[error]" and
+    output = "ReturnValue"
   }
 }
 
@@ -241,10 +233,8 @@ private class PromiseAnyLike extends SummarizedCallable {
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
-    exists(string content | content = getAnArrayContent() |
-      input = "Argument[0]." + content and
-      output = "ReturnValue.Awaited"
-    )
+    input = "Argument[0].ArrayElement" and
+    output = "ReturnValue.Awaited"
   }
 }
 
@@ -279,13 +269,11 @@ private class BluebirdMapSeries extends SummarizedCallable {
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     (
-      exists(string content | content = getAnArrayContent() |
-        input = "Argument[0].Awaited." + content + ".Awaited" and
-        output = "Argument[1].Parameter[0]"
-        or
-        input = "Argument[0].Awaited." + content + ".Awaited[error]" and
-        output = "ReturnValue.Awaited[error]"
-      )
+      input = "Argument[0].Awaited.ArrayElement.Awaited" and
+      output = "Argument[1].Parameter[0]"
+      or
+      input = "Argument[0].Awaited.ArrayElement.WithAwaited[error]" and
+      output = "ReturnValue"
       or
       input = "Argument[0].WithAwaited[error]" and
       output = "ReturnValue"
@@ -293,8 +281,8 @@ private class BluebirdMapSeries extends SummarizedCallable {
       input = "Argument[1].ReturnValue.Awaited" and
       output = "ReturnValue.Awaited.ArrayElement"
       or
-      input = "Argument[1].ReturnValue.Awaited[error]" and
-      output = "ReturnValue.Awaited[error]"
+      input = "Argument[1].ReturnValue.WithAwaited[error]" and
+      output = "ReturnValue"
     )
   }
 }

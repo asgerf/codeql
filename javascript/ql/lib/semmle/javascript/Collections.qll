@@ -49,7 +49,7 @@ private module CollectionDataFlow {
    * For sets and iterators the l-value are the elements of the set/iterator.
    * For maps the l-value is a tuple containing a key and a value.
    */
-  private class ForOfStep extends PreCallGraphStep {
+  private class ForOfStep extends LegacyPreCallGraphStep {
     override predicate loadStep(DataFlow::Node obj, DataFlow::Node e, string prop) {
       exists(ForOfStmt forOf |
         obj = forOf.getIterationDomain().flow() and

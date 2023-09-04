@@ -9,6 +9,11 @@ private import VariableCaptureSpecific
 module Private {
   private import Public
 
+  int getMaxPreciseArrayIndex() { result = 9 }
+
+  /** Gets an index which is tracked as a precise array index. */
+  int getAPreciseArrayIndex() { result = [0 .. getMaxPreciseArrayIndex()] }
+
   class FlowSummaryNode extends DataFlow::Node, TFlowSummaryNode {
     FlowSummaryImpl::Private::SummaryNode getSummaryNode() { this = TFlowSummaryNode(result) }
 
@@ -296,7 +301,7 @@ module Private {
 
   newtype TContent =
     MkPropertyNameContent(PropertyName name) or
-    MkUnknownArrayElement() or
+    MkArrayElementUnknown() or
     MkCapturedContent(LocalVariable v) { v.isCaptured() }
 
   class Content extends TContent {
@@ -316,7 +321,7 @@ module Private {
 
     LocalVariable asCapturedVariable() { this = MkCapturedContent(result) }
 
-    predicate isUnknownArrayElement() { this = MkUnknownArrayElement() }
+    predicate isUnknownArrayElement() { this = MkArrayElementUnknown() }
   }
 
   predicate forceHighPrecision(Content c) { none() }
@@ -930,8 +935,8 @@ module Private {
 
   newtype TContentSet =
     MkSingletonContent(Content content) or
-    MkArrayElement() or
-    MkKnownOrUnknownArrayElement(int index) { index = any(PropertyName n).toInt() and index >= 0 } or
+    MkArrayElementKnown(int index) { index = any(PropertyName name).toInt() and index >= 0 } or
+    MkArrayElementLowerBound(int index) { index = [0 .. getMaxPreciseArrayIndex() + 1] } or
     MkPromiseFilter() or
     // MkAwaited is used exclusively as an intermediate value in flow summaries.
     // 'Awaited' is encoded as a ContentSummaryComponent, although the flow graph we generate is different
@@ -962,11 +967,12 @@ module Public {
     Private::Content getAStoreContent() {
       result = this.asSingleton()
       or
-      this.isArrayElement() and
+      // For array element access with known lower bound, just store into the unknown array element
+      this = ContentSet::arrayElementLowerBound(_) and
       result.isUnknownArrayElement()
       or
       exists(int n |
-        this.isKnownOrUnknownArrayElement(n) and
+        this = ContentSet::arrayElementKnown(n) and
         result.asArrayIndex() = n
       )
     }
@@ -979,14 +985,13 @@ module Public {
       this.isPromiseFilter() and
       result.asPropertyName() = [Promises::valueProp(), Promises::errorProp()]
       or
-      this.isArrayElement() and
-      (
+      exists(int bound | this = ContentSet::arrayElementLowerBound(bound) |
         result.isUnknownArrayElement()
         or
-        exists(result.asArrayIndex())
+        result.asArrayIndex() >= bound
       )
       or
-      exists(int n | this.isKnownOrUnknownArrayElement(n) |
+      exists(int n | this = ContentSet::arrayElementKnown(n) |
         result.isUnknownArrayElement()
         or
         result.asArrayIndex() = n
@@ -1001,20 +1006,17 @@ module Public {
 
     predicate isArrayElement() { this = ContentSet::arrayElement() }
 
-    predicate isKnownOrUnknownArrayElement(int n) {
-      this = ContentSet::knownOrUnknownArrayElement(n)
-    }
-
-    predicate isUnkownArrayElement() { this = ContentSet::unknownArrayElement() }
-
     string toString() {
       result = this.asSingleton().toString()
       or
       this.isPromiseFilter() and result = "PromiseFilter"
       or
-      this.isArrayElement() and result = "ArrayElement"
+      exists(int bound |
+        this = ContentSet::arrayElementLowerBound(bound) and
+        result = "ArrayElement[" + bound + "..]"
+      )
       or
-      exists(int n | this.isKnownOrUnknownArrayElement(n) and result = "ArrayElement[" + n + "]")
+      exists(int n | this = ContentSet::arrayElementKnown(n) and result = "ArrayElement[" + n + "]")
       or
       this = Private::MkAwaited() and result = "Awaited (with coercion)"
     }
@@ -1044,20 +1046,57 @@ module Public {
     ContentSet promiseError() { result = property(Promises::errorProp()) }
 
     /**
-     * A content set describing array elements at an arbitrary index.
+     * A content set describing all array elements, regardless of their index in the array.
      */
-    ContentSet arrayElement() { result = Private::MkArrayElement() }
+    ContentSet arrayElement() { result = Private::MkArrayElementLowerBound(0) }
 
     /**
-     * A content set that reads from element `n` and the unknown element, and stores to index `n`.
+     * A content set describing array elements at index `bound` or greater.
+     *
+     * For `bound=0` this gets the same content set as `ContentSet::arrayElement()`, that is,
+     * the content set describing all array elements.
+     *
+     * For large values of `bound` this has no result - see `ContentSet::arrayElementLowerBoundFromInt`.
      */
-    ContentSet knownOrUnknownArrayElement(int n) {
-      result = Private::MkKnownOrUnknownArrayElement(n)
+    ContentSet arrayElementLowerBound(int bound) {
+      result = Private::MkArrayElementLowerBound(bound)
     }
+
+    /**
+     * A content set describing an access to array index `n`.
+     *
+     * This content set reads from element `n` and the unknown element, and stores to index `n`.
+     *
+     * For large values of `n` this has no result - see `ContentSet::arrayElementFromInt`.
+     */
+    ContentSet arrayElementKnown(int n) { result = Private::MkArrayElementKnown(n) }
 
     /**
      * The singleton content set describing array elements stored at an unknown index.
      */
-    ContentSet unknownArrayElement() { result = singleton(Private::MkUnknownArrayElement()) }
+    ContentSet arrayElementUnknown() { result = singleton(Private::MkArrayElementUnknown()) }
+
+    /**
+     * Gets a content set describing array elements at index `bound` or greater.
+     *
+     * If `bound` is too large, it is truncated to the greatest lower bound we can represent.
+     */
+    bindingset[bound]
+    ContentSet arrayElementLowerBoundFromInt(int bound) {
+      result = arrayElementLowerBound(bound.minimum(Private::getMaxPreciseArrayIndex() + 1))
+    }
+
+    /**
+     * Gets the content set describing an access to array index `n`.
+     *
+     * If `n` is too large, it is truncated to the greatest lower bound we can represent.
+     */
+    bindingset[n]
+    ContentSet arrayElementFromInt(int n) {
+      result = arrayElementKnown(n)
+      or
+      not exists(arrayElementKnown(n)) and
+      result = arrayElementLowerBoundFromInt(n)
+    }
   }
 }

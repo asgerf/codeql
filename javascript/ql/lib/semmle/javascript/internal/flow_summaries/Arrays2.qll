@@ -6,7 +6,9 @@
 
 private import javascript
 private import semmle.javascript.dataflow2.FlowSummary
+private import semmle.javascript.dataflow.InferredTypes
 private import semmle.javascript.dataflow2.DataFlow as DataFlow2
+private import semmle.javascript.dataflow2.DataFlowImplSpecific::Private as Private
 private import FlowSummaryUtil
 
 pragma[nomagic]
@@ -32,8 +34,8 @@ class ArrayLiteralStep extends DataFlow::AdditionalFlowStep {
       succ = array.flow()
     |
       if i >= firstSpreadIndex(array)
-      then contents.isArrayElement()
-      else contents.asPropertyName() = DataFlow::PseudoProperties::arrayElement(i)
+      then contents = DataFlow2::ContentSet::arrayElement() // after a spread operator, store into unknown indices
+      else contents = DataFlow2::ContentSet::arrayElementFromInt(i)
     )
   }
 
@@ -44,7 +46,60 @@ class ArrayLiteralStep extends DataFlow::AdditionalFlowStep {
       spread = any(ArrayExpr array).getAnElement() and
       pred = spread.getOperand().flow() and
       succ = spread.flow() and
-      contents.isArrayElement()
+      contents = DataFlow2::ContentSet::arrayElement()
+    )
+  }
+}
+
+class ForOfLoopStep extends DataFlow::AdditionalFlowStep {
+  override predicate readStep(
+    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
+  ) {
+    exists(ForOfStmt stmt |
+      pred = stmt.getIterationDomain().flow() and
+      succ = DataFlow::lvalueNode(stmt.getLValue()) and
+      contents = DataFlow2::ContentSet::arrayElement()
+    )
+  }
+}
+
+pragma[nomagic]
+private predicate isForLoopVariable(Variable v) {
+  v.getADeclarationStatement() = any(ForStmt stmt).getInit()
+  or
+  // Handle the somewhat rare case: `for (v; ...; ++v) { ... }`
+  v.getADeclaration() = any(ForStmt stmt).getInit()
+}
+
+private predicate isLikelyArrayIndex(Expr e) {
+  TTNumber() = unique(InferredType type | type = e.flow().analyze().getAType())
+  or
+  isForLoopVariable(e.(VarAccess).getVariable())
+  or
+  e.(PropAccess).getPropertyName() = "length"
+}
+
+/**
+ * A dynamic property store `obj[e] = rhs` seen as a potential array access.
+ *
+ * We need to restrict to cases where `e` is likely to be an array index, as
+ * propagating data between arbitrary unknown property accesses is too imprecise.
+ */
+class DynamicArrayStoreStep extends DataFlow::AdditionalFlowStep {
+  override predicate storeStep(
+    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
+  ) {
+    exists(Assignment assignment, IndexExpr lvalue |
+      lvalue = assignment.getLhs() and
+      not exists(lvalue.getPropertyName()) and
+      isLikelyArrayIndex(lvalue.getPropertyNameExpr()) and
+      contents = DataFlow2::ContentSet::arrayElement() and
+      succ.(DataFlow::ExprPostUpdateNode).getPreUpdateNode() = lvalue.getBase().flow()
+    |
+      pred = assignment.(Assignment).getRhs().flow()
+      or
+      // for compound assignments, use the result of the operator
+      pred = assignment.(CompoundAssignExpr).flow()
     )
   }
 }

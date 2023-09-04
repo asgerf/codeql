@@ -1,5 +1,6 @@
 private import javascript
 private import semmle.javascript.dataflow2.FlowSummary
+private import semmle.javascript.dataflow2.DataFlowImplSpecific::Private as Private
 
 /**
  * A method call or a reflective invocation (`call` or `apply`) that takes a receiver.
@@ -30,4 +31,21 @@ abstract class FunctionalPackageSummary extends SummarizedCallable {
   override DataFlow::InvokeNode getACall() {
     result = API::moduleImport(this.getAPackageName()).getAnInvocation()
   }
+}
+
+/**
+ * Gets a content from a set of contents that together represent all valid array indices.
+ *
+ * This can be used to generate flow summaries that should preserve precise array indices,
+ * in cases where `WithArrayElement` is not sufficient.
+ */
+string getAnArrayContent() {
+  // Values stored at a known, small index
+  result = "ArrayElement[" + Private::getAPreciseArrayIndex() + "!]"
+  or
+  // Values stored at a known, but large index
+  result = "ArrayElement[" + (Private::getMaxPreciseArrayIndex() + 1) + "..]"
+  or
+  // Values stored at an unknown index
+  result = "ArrayElement[?]"
 }
