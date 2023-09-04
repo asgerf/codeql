@@ -72,8 +72,9 @@ private predicate isForLoopVariable(Variable v) {
 }
 
 private predicate isLikelyArrayIndex(Expr e) {
-  TTNumber() = unique(InferredType type | type = e.flow().analyze().getAType())
-  or
+  // Note: to mirror the old behavior, it must be a number AND be a for-loop variable.
+  // TODO: try to loosen this by changing it to an 'or'.
+  TTNumber() = unique(InferredType type | type = e.flow().analyze().getAType()) and
   isForLoopVariable(e.(VarAccess).getVariable())
   or
   e.(PropAccess).getPropertyName() = "length"
