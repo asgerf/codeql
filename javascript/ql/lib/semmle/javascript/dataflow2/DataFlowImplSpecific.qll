@@ -294,8 +294,9 @@ module Private {
     }
   }
 
-  private newtype TContent =
+  newtype TContent =
     MkPropertyNameContent(PropertyName name) or
+    MkUnknownArrayElement() or
     MkCapturedContent(LocalVariable v) { v.isCaptured() }
 
   class Content extends TContent {
@@ -303,11 +304,19 @@ module Private {
       result = this.asPropertyName()
       or
       result = this.asCapturedVariable().getName()
+      or
+      this.isUnknownArrayElement() and
+      result = "ArrayElement[?]"
     }
 
     string asPropertyName() { this = MkPropertyNameContent(result) }
 
+    pragma[nomagic]
+    int asArrayIndex() { result = this.asPropertyName().toInt() and result >= 0 }
+
     LocalVariable asCapturedVariable() { this = MkCapturedContent(result) }
+
+    predicate isUnknownArrayElement() { this = MkUnknownArrayElement() }
   }
 
   predicate forceHighPrecision(Content c) { none() }
@@ -921,6 +930,8 @@ module Private {
 
   newtype TContentSet =
     MkSingletonContent(Content content) or
+    MkArrayElement() or
+    MkKnownOrUnknownArrayElement(int index) { index = any(PropertyName n).toInt() and index >= 0 } or
     MkPromiseFilter() or
     // MkAwaited is used exclusively as an intermediate value in flow summaries.
     // 'Awaited' is encoded as a ContentSummaryComponent, although the flow graph we generate is different
@@ -948,7 +959,17 @@ module Public {
   class ContentSet extends Private::TContentSet {
     /** Gets a content that may be stored into when storing into this set. */
     pragma[inline]
-    Private::Content getAStoreContent() { result = this.asSingleton() }
+    Private::Content getAStoreContent() {
+      result = this.asSingleton()
+      or
+      this.isArrayElement() and
+      result.isUnknownArrayElement()
+      or
+      exists(int n |
+        this.isKnownOrUnknownArrayElement(n) and
+        result.asArrayIndex() = n
+      )
+    }
 
     /** Gets a content that may be read from when reading from this set. */
     pragma[nomagic]
@@ -957,6 +978,19 @@ module Public {
       or
       this.isPromiseFilter() and
       result.asPropertyName() = [Promises::valueProp(), Promises::errorProp()]
+      or
+      this.isArrayElement() and
+      (
+        result.isUnknownArrayElement()
+        or
+        exists(result.asArrayIndex())
+      )
+      or
+      exists(int n | this.isKnownOrUnknownArrayElement(n) |
+        result.isUnknownArrayElement()
+        or
+        result.asArrayIndex() = n
+      )
     }
 
     Private::Content asSingleton() { this = Private::MkSingletonContent(result) }
@@ -967,10 +1001,20 @@ module Public {
 
     predicate isArrayElement() { this = ContentSet::arrayElement() }
 
+    predicate isKnownOrUnknownArrayElement(int n) {
+      this = ContentSet::knownOrUnknownArrayElement(n)
+    }
+
+    predicate isUnkownArrayElement() { this = ContentSet::unknownArrayElement() }
+
     string toString() {
       result = this.asSingleton().toString()
       or
-      this.isPromiseFilter() and result = "promiseFilter()"
+      this.isPromiseFilter() and result = "PromiseFilter"
+      or
+      this.isArrayElement() and result = "ArrayElement"
+      or
+      exists(int n | this.isKnownOrUnknownArrayElement(n) and result = "ArrayElement[" + n + "]")
       or
       this = Private::MkAwaited() and result = "Awaited (with coercion)"
     }
@@ -985,7 +1029,7 @@ module Public {
 
     /**
      * A content set that should only be used in `withContent` and `withoutContent` steps, which
-     * matches the two promise-related contents, `Awaited` and `AwaitedError`.
+     * matches the two promise-related contents, `Awaited[value]` and `Awaited[error]`.
      */
     ContentSet promiseFilter() { result = Private::MkPromiseFilter() }
 
@@ -1000,8 +1044,20 @@ module Public {
     ContentSet promiseError() { result = property(Promises::errorProp()) }
 
     /**
-     * A content set describing array elements.
+     * A content set describing array elements at an arbitrary index.
      */
-    ContentSet arrayElement() { result = property(DataFlow::PseudoProperties::arrayElement()) }
+    ContentSet arrayElement() { result = Private::MkArrayElement() }
+
+    /**
+     * A content set that reads from element `n` and the unknown element, and stores to index `n`.
+     */
+    ContentSet knownOrUnknownArrayElement(int n) {
+      result = Private::MkKnownOrUnknownArrayElement(n)
+    }
+
+    /**
+     * The singleton content set describing array elements stored at an unknown index.
+     */
+    ContentSet unknownArrayElement() { result = singleton(Private::MkUnknownArrayElement()) }
   }
 }

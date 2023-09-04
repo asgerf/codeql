@@ -150,15 +150,27 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   or
   result = makePropertyContentComponents(c, "Member", c.getAnArgument())
   or
-  result =
-    makePropertyContentComponents(c, "ArrayElement", DataFlow::PseudoProperties::arrayElement())
-  or
   result = makePropertyContentComponents(c, "MapValue", DataFlow::PseudoProperties::mapValueAll())
-  or
-  result = makePropertyContentComponents(c, "PromiseValue", Promises::valueProp())
   or
   result = makeSingletonContentComponents(c, "Awaited", getPromiseContent(c.getAnArgument()))
   or
+  c.getNumArgument() = 0 and
+  result = makeContentComponents(c, "ArrayElement", ContentSet::arrayElement())
+  or
+  c.getAnArgument() = "?" and
+  result = makeContentComponents(c, "ArrayElement", ContentSet::unknownArrayElement())
+  or
+  exists(int n |
+    n = c.getAnArgument().toInt() and
+    result = makeContentComponents(c, "ArrayElement", ContentSet::knownOrUnknownArrayElement(n))
+    or
+    // ArrayElement[n!] refers to index n, and never the unknown content
+    c.getAnArgument().regexpCapture("(\\d+)!", 1).toInt() = n and
+    result = makePropertyContentComponents(c, "ArrayElement", n.toString())
+  )
+  or
+  // result =
+  //   makePropertyContentComponents(c, "ArrayElement", DataFlow::PseudoProperties::arrayElement())
   // 'Awaited' is a special operator that we encode as content components, but it doesn't behave exactly that way.
   // It is mapped down to a combination steps that handle coercion and promise-flattening.
   c.getName() = "Awaited" and
