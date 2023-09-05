@@ -51,6 +51,7 @@ newtype TNode =
     e = any(Assignment asn | asn.getTarget() instanceof PropAccess).getRhs()
   } or
   TConstructorThisArgumentNode(InvokeExpr e) { e instanceof NewExpr or e instanceof SuperCall } or
+  TForOfSyntheticPairNode(ForOfStmt stmt, int index) { index = [0, 1] } or
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) or
   TFlowSummaryIntermediateAwaitStoreNode(FlowSummaryImpl::Private::SummaryNode sn) {
     FlowSummaryImpl::Private::Steps::summaryStoreStep(sn, DataFlowPrivate::MkAwaited(), _)

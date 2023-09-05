@@ -22,6 +22,8 @@
  */
 
 private import javascript
+private import semmle.javascript.dataflow2.DataFlow as DataFlow2
+private import semmle.javascript.dataflow.internal.DataFlowNode
 private import semmle.javascript.dataflow2.FlowSummary
 private import FlowSummaryUtil
 
@@ -147,5 +149,32 @@ class Values extends SummarizedCallable {
     preservesValue = true and
     input = "Argument[this]." + ["ArrayElement", "SetElement", "MapValue"] and
     output = "ReturnValue.IteratorElement"
+  }
+}
+
+class ForOfLoopStep extends DataFlow::AdditionalFlowStep {
+  override predicate readStep(
+    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
+  ) {
+    exists(ForOfStmt stmt | pred = stmt.getIterationDomain().flow() |
+      contents = [DataFlow2::ContentSet::arrayElement(), DataFlow2::ContentSet::setElement()] and
+      succ = DataFlow::lvalueNode(stmt.getLValue())
+      or
+      contents = DataFlow2::ContentSet::mapKey() and
+      succ = TForOfSyntheticPairNode(stmt, 0)
+      or
+      contents = DataFlow2::ContentSet::mapValueAll() and
+      succ = TForOfSyntheticPairNode(stmt, 1)
+    )
+  }
+
+  override predicate storeStep(
+    DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
+  ) {
+    exists(ForOfStmt stmt, int i |
+      pred = TForOfSyntheticPairNode(stmt, i) and
+      content.asPropertyName() = i.toString() and
+      succ = DataFlow::lvalueNode(stmt.getLValue())
+    )
   }
 }

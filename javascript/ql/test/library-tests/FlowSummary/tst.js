@@ -260,4 +260,11 @@ function m17() {
   sink(map2.get('foo')); // NOT OK
   sink(map2.get('bar')); // NOT OK
   sink(map2.get(getUnkown())); // NOT OK
+
+  const map3 = new Map();
+  map3.set('foo', source());
+  map3.forEach(value => sink(value)); // NOT OK
+  for (let [key, value] of map3) {
+    sink(value); // NOT OK
+  }
 }

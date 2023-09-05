@@ -51,19 +51,6 @@ class ArrayLiteralStep extends DataFlow::AdditionalFlowStep {
   }
 }
 
-class ForOfLoopStep extends DataFlow::AdditionalFlowStep {
-  override predicate readStep(
-    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
-  ) {
-    exists(ForOfStmt stmt |
-      pred = stmt.getIterationDomain().flow() and
-      succ = DataFlow::lvalueNode(stmt.getLValue()) and
-      contents = [DataFlow2::ContentSet::arrayElement(), DataFlow2::ContentSet::setElement()]
-      // TODO: map iteration; used to be a load-store step
-    )
-  }
-}
-
 pragma[nomagic]
 private predicate isForLoopVariable(Variable v) {
   v.getADeclarationStatement() = any(ForStmt stmt).getInit()
