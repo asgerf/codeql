@@ -299,9 +299,27 @@ module Private {
     }
   }
 
+  private predicate isKnownMapKey(string key) {
+    exists(MethodCallExpr call |
+      call.getMethodName() = "get" and
+      call.getNumArgument() = 1 and
+      call.getArgument(0).getStringValue() = key
+    )
+    or
+    exists(AccessPathSyntax::AccessPathToken token |
+      token.getName() = "MapValue" and
+      token.getAnArgument() = key
+    )
+  }
+
   newtype TContent =
     MkPropertyNameContent(PropertyName name) or
     MkArrayElementUnknown() or
+    MkMapValueWithUnknownKey() or
+    MkMapValueWithKnownKey(string key) { isKnownMapKey(key) } or
+    MkMapKey() or
+    MkSetElement() or
+    MkIteratorElement() or
     MkCapturedContent(LocalVariable v) { v.isCaptured() }
 
   class Content extends TContent {
@@ -312,6 +330,23 @@ module Private {
       or
       this.isUnknownArrayElement() and
       result = "ArrayElement[?]"
+      or
+      this = MkMapValueWithUnknownKey() and
+      result = "MapValue[?]"
+      or
+      exists(string key |
+        this = MkMapValueWithKnownKey(key) and
+        result = "MapValue[" + key + "]"
+      )
+      or
+      this = MkMapKey() and
+      result = "MapKey"
+      or
+      this = MkSetElement() and
+      result = "SetElement"
+      or
+      this = MkIteratorElement() and
+      result = "IteratorElement"
     }
 
     string asPropertyName() { this = MkPropertyNameContent(result) }
@@ -322,6 +357,10 @@ module Private {
     LocalVariable asCapturedVariable() { this = MkCapturedContent(result) }
 
     predicate isUnknownArrayElement() { this = MkArrayElementUnknown() }
+
+    predicate isMapValueWithUnknownKey() { this = MkMapValueWithUnknownKey() }
+
+    predicate isMapValueWithKnownKey(string key) { this = MkMapValueWithKnownKey(key) }
   }
 
   predicate forceHighPrecision(Content c) { none() }
@@ -937,6 +976,8 @@ module Private {
     MkSingletonContent(Content content) or
     MkArrayElementKnown(int index) { index = any(PropertyName name).toInt() and index >= 0 } or
     MkArrayElementLowerBound(int index) { index = [0 .. getMaxPreciseArrayIndex() + 1] } or
+    MkMapValueKnown(string key) { isKnownMapKey(key) } or
+    MkMapValueAll() or
     MkPromiseFilter() or
     // MkAwaited is used exclusively as an intermediate value in flow summaries.
     // 'Awaited' is encoded as a ContentSummaryComponent, although the flow graph we generate is different
@@ -975,6 +1016,14 @@ module Public {
         this = ContentSet::arrayElementKnown(n) and
         result.asArrayIndex() = n
       )
+      or
+      exists(string key |
+        this = ContentSet::mapValueWithKnownKey(key) and
+        result.isMapValueWithKnownKey(key)
+      )
+      or
+      this = ContentSet::mapValueAll() and
+      result.isMapValueWithUnknownKey()
     }
 
     /** Gets a content that may be read from when reading from this set. */
@@ -995,6 +1044,19 @@ module Public {
         result.isUnknownArrayElement()
         or
         result.asArrayIndex() = n
+      )
+      or
+      exists(string key | this = ContentSet::mapValueWithKnownKey(key) |
+        result.isMapValueWithUnknownKey()
+        or
+        result.isMapValueWithKnownKey(key)
+      )
+      or
+      this = ContentSet::mapValueAll() and
+      (
+        result.isMapValueWithUnknownKey()
+        or
+        result.isMapValueWithKnownKey(_)
       )
     }
 
@@ -1019,6 +1081,9 @@ module Public {
       exists(int n | this = ContentSet::arrayElementKnown(n) and result = "ArrayElement[" + n + "]")
       or
       this = Private::MkAwaited() and result = "Awaited (with coercion)"
+      or
+      this = ContentSet::mapValueAll() and
+      result = "MapValue"
     }
   }
 
@@ -1098,5 +1163,52 @@ module Public {
       not exists(arrayElementKnown(n)) and
       result = arrayElementLowerBoundFromInt(n)
     }
+
+    /** Gets the content set describing the keys of a `Map` object. */
+    ContentSet mapKey() { result = singleton(Private::MkMapKey()) }
+
+    /** Gets the content set describing the values of a `Map` object stored with an unknown key. */
+    ContentSet mapValueWithUnknownKey() { result = singleton(Private::MkMapValueWithUnknownKey()) }
+
+    /**
+     * Gets the content set describing the value of a `Map` object stored with the given known `key`.
+     *
+     * This has no result if `key` is not one of the keys we track precisely. See also `mapValueFromKey`.
+     */
+    ContentSet mapValueWithKnownKeyStrict(string key) { result = Private::MkMapValueKnown(key) }
+
+    /**
+     * Gets the content set describing an access to a map value with the given `key`.
+     *
+     * This content set also reads from a value stored with an unknown key. Use `mapValueWithKnownKeyStrict` to strictly
+     * refer to known keys.
+     *
+     * This has no result if `key` is not one of the keys we track precisely. See also `mapValueFromKey`.
+     */
+    ContentSet mapValueWithKnownKey(string key) {
+      result = singleton(Private::MkMapValueWithKnownKey(key))
+    }
+
+    /** Gets the content set describing all values in a map (with known or unknown key). */
+    ContentSet mapValueAll() { result = Private::MkMapValueAll() }
+
+    /**
+     * Gets the content set describing the value in a `Map` object stored at the given `key`.
+     *
+     * If `key` is not one of the keys we track precisely, this is mapped to the unknown key instead.
+     */
+    bindingset[key]
+    ContentSet mapValueFromKey(string key) {
+      result = mapValueWithKnownKey(key)
+      or
+      not exists(mapValueWithKnownKey(key)) and
+      result = mapValueWithUnknownKey()
+    }
+
+    /** Gets the content set describing the elements of a `Set` object. */
+    ContentSet setElement() { result = singleton(Private::MkSetElement()) }
+
+    /** Gets the content set describing the elements of an iterator object. */
+    ContentSet iteratorElement() { result = singleton(Private::MkIteratorElement()) }
   }
 }

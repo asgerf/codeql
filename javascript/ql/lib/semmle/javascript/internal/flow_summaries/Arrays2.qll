@@ -58,7 +58,8 @@ class ForOfLoopStep extends DataFlow::AdditionalFlowStep {
     exists(ForOfStmt stmt |
       pred = stmt.getIterationDomain().flow() and
       succ = DataFlow::lvalueNode(stmt.getLValue()) and
-      contents = DataFlow2::ContentSet::arrayElement()
+      contents = [DataFlow2::ContentSet::arrayElement(), DataFlow2::ContentSet::setElement()]
+      // TODO: map iteration; used to be a load-store step
     )
   }
 }
@@ -281,8 +282,7 @@ class FlatMap extends SummarizedCallable {
 
 private DataFlow::CallNode arrayFromCall() {
   // TODO: update fromAsync model when async iterators are supported
-  result = arrayConstructorRef().getAMemberCall(["from", "fromAsync"]) and
-  result.getNumArgument() = 1
+  result = arrayConstructorRef().getAMemberCall(["from", "fromAsync"])
   or
   result = DataFlow::moduleImport("array-from").getACall()
 }
@@ -296,9 +296,19 @@ class From1Arg extends SummarizedCallable {
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
-    // TODO: clarify if reading from Element implies ArrayElement
-    input = ["Argument[0].ArrayElement", "Argument[0].Element"] and
-    output = "ReturnValue.ArrayElement"
+    (
+      input = "Argument[0].WithArrayElement" and
+      output = "ReturnValue"
+      or
+      input = "Argument[0].SetElement" and
+      output = "ReturnValue.ArrayElement"
+      or
+      input = "Argument[0].MapKey" and
+      output = "ReturnValue.ArrayElement.Member[0]"
+      or
+      input = "Argument[0].MapValue" and
+      output = "ReturnValue.ArrayElement.Member[1]"
+    )
   }
 }
 
@@ -312,10 +322,15 @@ class FromManyArg extends SummarizedCallable {
 
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
-    // TODO: clarify if reading from Element implies ArrayElement
     (
-      input = ["Argument[0].ArrayElement", "Argument[0].Element"] and
+      input = ["Argument[0].ArrayElement", "Argument[0].SetElement"] and
       output = "Argument[1].Parameter[0]"
+      or
+      input = "Argument[0].MapKey" and
+      output = "Argument[1].Parameter[0].Member[0]"
+      or
+      input = "Argument[0].MapValue" and
+      output = "Argument[1].Parameter[0].Member[1]"
       or
       input = "Argument[1].ReturnValue" and
       output = "ReturnValue.ArrayElement"

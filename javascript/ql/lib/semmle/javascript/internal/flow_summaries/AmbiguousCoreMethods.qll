@@ -72,6 +72,26 @@ class Slice extends SummarizedCallable {
   }
 }
 
+class Entries extends SummarizedCallable {
+  Entries() { this = "Array#entries / Map#entries / Set#entries" }
+
+  override InstanceCall getACall() {
+    result.getMethodName() = "entries" and
+    result.getNumArgument() = 0
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    (
+      input = "Argument[this]." + ["MapKey", "SetElement"] and
+      output = "ReturnValue.IteratorElement.Member[0]"
+      or
+      input = "Argument[this]." + ["ArrayElement", "SetElement", "MapValue"] and
+      output = "ReturnValue.IteratorElement.Member[1]"
+    )
+  }
+}
+
 class ForEach extends SummarizedCallable {
   ForEach() { this = "Array#forEach / Map#forEach / Set#forEach" }
 
@@ -85,16 +105,47 @@ class ForEach extends SummarizedCallable {
      */
 
     (
-      input = "Argument[this].ArrayElement" and
+      input = "Argument[this]." + ["ArrayElement", "SetElement", "MapValue"] and
       output = "Argument[0].Parameter[0]"
       or
+      input = "Argument[this]." + ["MapKey", "SetElement"] and
+      output = "Argument[0].Parameter[1]"
+      or
       input = "Argument[this]" and
-      output = "Argument[0].Parameter[2]" // array
+      output = "Argument[0].Parameter[2]" // object being iterated over
       or
       input = "Argument[1]" and // thisArg
       output = "Argument[0].Parameter[this]"
-      //
-      // TODO: Map and Set flows
     )
+  }
+}
+
+class Keys extends SummarizedCallable {
+  Keys() { this = "Array#keys / Map#keys / Set#keys" }
+
+  override InstanceCall getACallSimple() {
+    result.getMethodName() = "keys" and
+    result.getNumArgument() = 0
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    input = "Argument[this]." + ["MapKey", "SetElement"] and
+    output = "ReturnValue.IteratorElement"
+  }
+}
+
+class Values extends SummarizedCallable {
+  Values() { this = "Array#values / Map#values / Set#values" }
+
+  override InstanceCall getACallSimple() {
+    result.getMethodName() = "values" and
+    result.getNumArgument() = 0
+  }
+
+  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
+    preservesValue = true and
+    input = "Argument[this]." + ["ArrayElement", "SetElement", "MapValue"] and
+    output = "ReturnValue.IteratorElement"
   }
 }

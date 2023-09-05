@@ -245,3 +245,19 @@ function m16() {
   sink(array2[1]); // OK
   sink(array2[2]); // NOT OK
 }
+
+function m17() {
+  const map = new Map();
+  map.set('foo', source());
+  map.set('bar', 'safe');
+
+  sink(map.get('foo')); // NOT OK
+  sink(map.get('bar')); // OK
+  sink(map.get(getUnkown())); // NOT OK
+
+  const map2 = new Map();
+  map2.set(getUnkown(), source());
+  sink(map2.get('foo')); // NOT OK
+  sink(map2.get('bar')); // NOT OK
+  sink(map2.get(getUnkown())); // NOT OK
+}

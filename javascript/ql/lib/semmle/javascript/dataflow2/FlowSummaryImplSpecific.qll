@@ -150,8 +150,6 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   or
   result = makePropertyContentComponents(c, "Member", c.getAnArgument())
   or
-  result = makePropertyContentComponents(c, "MapValue", DataFlow::PseudoProperties::mapValueAll())
-  or
   result = makeSingletonContentComponents(c, "Awaited", getPromiseContent(c.getAnArgument()))
   or
   c.getNumArgument() = 0 and
@@ -172,6 +170,18 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
     n = AccessPathSyntax::AccessPath::parseLowerBound(c.getAnArgument()) and
     result = makeContentComponents(c, "ArrayElement", ContentSet::arrayElementLowerBoundFromInt(n))
   )
+  or
+  c.getNumArgument() = 0 and
+  result = makeContentComponents(c, "SetElement", ContentSet::setElement())
+  or
+  c.getNumArgument() = 0 and
+  result = makeContentComponents(c, "MapKey", ContentSet::mapKey())
+  or
+  //
+  // Note: although it is supported internally, we currently do not expose a syntax for MapValue with a known key
+  //
+  c.getNumArgument() = 0 and
+  result = makeContentComponents(c, "MapValue", ContentSet::mapValueAll())
   or
   // result =
   //   makePropertyContentComponents(c, "ArrayElement", DataFlow::PseudoProperties::arrayElement())
@@ -206,7 +216,13 @@ private string getMadStringFromContentSetAux(ContentSet cs) {
     result = "ArrayElement[" + n + "!]"
   )
   or
-  cs.asPropertyName() = DataFlow::PseudoProperties::mapValueAll() and result = "MapValue"
+  cs = ContentSet::mapValueAll() and result = "MapValue"
+  or
+  cs = ContentSet::mapKey() and result = "MapKey"
+  or
+  cs = ContentSet::setElement() and result = "SetElement"
+  or
+  cs = ContentSet::iteratorElement() and result = "IteratorElement"
   or
   exists(string awaitedArg |
     cs.asSingleton() = getPromiseContent(awaitedArg) and
