@@ -11,6 +11,7 @@ uniqueWriteTarget
 uniqueWriteCfgNode
 uniqueReadVariable
 closureMustHaveBody
+closureAliasMustBeInSameScope
 variableAccessAstNesting
 uniqueCallableLocation
 consistencyOverview
