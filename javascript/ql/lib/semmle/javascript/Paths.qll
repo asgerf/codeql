@@ -443,11 +443,7 @@ abstract class PathExprCandidate extends Expr {
   }
 
   /**
-   * Gets an expression that is nested inside this expression.
-   *
-   * Equivalent to `getAChildExpr*()`, but useful to enforce a better join order (in spite of
-   * what the optimizer thinks, there are generally far fewer `PathExprCandidate`s than
-   * `ConstantString`s).
+   * Gets an expression that is depended on by an expression nested inside this expression.
    */
   pragma[nomagic]
   Expr getAPart() { TValueNode(result) = this.getAnAliasedPart1() }
