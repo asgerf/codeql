@@ -1177,6 +1177,14 @@ module DataFlow {
    */
   module Impl {
     /**
+     * INTERNAL. DO NOT USE.
+     *
+     * An alias for `Node.getImmediatePredecessor` that can be used at an earlier stage
+     * that does not depend on `DataFlow::Node`.
+     */
+    predicate earlyStageImmediateFlowStep = immediateFlowStep/2;
+
+    /**
      * A data flow node representing a function invocation, either explicitly or reflectively,
      * and either with or without `new`.
      */
