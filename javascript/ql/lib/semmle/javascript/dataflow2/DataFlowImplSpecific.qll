@@ -768,11 +768,6 @@ module Private {
     DataFlow::AdditionalFlowStep::readStep(node1, c, node2)
   }
 
-  pragma[nomagic]
-  private predicate isPromiseProperty(ContentSet cs) {
-    cs = [ContentSet::promiseValue(), ContentSet::promiseError()]
-  }
-
   /** Gets the post-update node for which `node` is the corresponding pre-update node. */
   private Node getPostUpdate(Node node) { result.(PostUpdateNode).getPreUpdateNode() = node }
 

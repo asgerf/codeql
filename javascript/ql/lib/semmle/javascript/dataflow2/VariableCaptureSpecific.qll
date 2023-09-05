@@ -126,10 +126,6 @@ private module VariableCaptureArg implements InputSig {
     CapturedVariable getVariable() { result = variable }
   }
 
-  private predicate readBB(VariableRead read, BasicBlock bb, int i) { read.hasCfgNode(bb, i) }
-
-  private predicate writeBB(VariableWrite write, BasicBlock bb, int i) { write.hasCfgNode(bb, i) }
-
   class ClosureExpr extends Expr {
     ClosureExpr() { captures(this, _) }
 
@@ -278,5 +274,15 @@ module Debug {
   predicate localFlowStepMapped(js::DataFlow::Node node1, js::DataFlow::Node node2) {
     localFlowStep(getClosureNode(node1), getClosureNode(node2)) and
     relevantContainer(node1.getContainer())
+  }
+
+  predicate readBB(VariableCaptureArg::VariableRead read, VariableCaptureArg::BasicBlock bb, int i) {
+    read.hasCfgNode(bb, i)
+  }
+
+  predicate writeBB(
+    VariableCaptureArg::VariableWrite write, VariableCaptureArg::BasicBlock bb, int i
+  ) {
+    write.hasCfgNode(bb, i)
   }
 }

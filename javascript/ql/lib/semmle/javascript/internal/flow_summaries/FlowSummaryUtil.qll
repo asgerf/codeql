@@ -8,7 +8,7 @@ private import semmle.javascript.dataflow2.DataFlowImplSpecific::Private as Priv
  * Note that `DataFlow::MethodCallNode` does not include reflective invocation.
  */
 class InstanceCall extends DataFlow::CallNode {
-  InstanceCall() { exists(getReceiver()) }
+  InstanceCall() { exists(this.getReceiver()) }
 
   /** Gets the name of method being invoked */
   string getMethodName() { result = this.getCalleeName() }
