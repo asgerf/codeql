@@ -310,6 +310,9 @@ class From1Arg extends SummarizedCallable {
       or
       input = "Argument[0].MapValue" and
       output = "ReturnValue.ArrayElement.Member[1]"
+      or
+      input = "Argument[0].IteratorError" and
+      output = "ReturnValue[exception]"
     )
     or
     // TODO: we currently convert ArrayElement read/store steps to taint steps, but this does not
@@ -347,6 +350,9 @@ class FromManyArg extends SummarizedCallable {
       or
       input = "Argument[2]" and
       output = "Argument[1].Parameter[this]"
+      or
+      input = "Argument[0].IteratorError" and
+      output = "ReturnValue[exception]"
     )
   }
 }

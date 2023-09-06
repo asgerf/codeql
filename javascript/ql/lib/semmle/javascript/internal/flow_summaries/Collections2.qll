@@ -179,22 +179,23 @@ class GeneratorFunctionStep extends DataFlow::AdditionalFlowStep {
     DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
   ) {
     // `yield x`. Store into the return value's iterator element.
-    exists(DataFlow::FunctionNode fun, YieldExpr yield |
-      fun.getFunction().isGenerator() and
+    exists(Function fun, YieldExpr yield | fun.isGenerator() |
       not yield.isDelegating() and
+      yield.getContainer() = fun and
       pred = yield.getOperand().flow() and
       content = DataFlow2::ContentSet::iteratorElement() and
-      succ = fun.getReturnNode()
+      DataFlow::functionReturnNode(succ, fun)
     )
   }
 
   override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
-    // `yield* x`. Flow into the return value, which has expectsContent, so only iterator elements can pass through.
-    exists(DataFlow::FunctionNode fun, YieldExpr yield |
-      fun.getFunction().isGenerator() and
+    // `yield* x`. Flow into the return value, which has expectsContent, so only iterator contents can pass through.
+    exists(Function fun, YieldExpr yield |
+      fun.isGenerator() and
+      yield.getContainer() = fun and
       yield.isDelegating() and
       pred = yield.getOperand().flow() and
-      succ = fun.getReturnNode()
+      DataFlow::functionReturnNode(succ, fun)
     )
   }
 }

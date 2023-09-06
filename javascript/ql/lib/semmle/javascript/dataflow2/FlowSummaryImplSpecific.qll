@@ -178,6 +178,9 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   result = makeContentComponents(c, "IteratorElement", ContentSet::iteratorElement())
   or
   c.getNumArgument() = 0 and
+  result = makeContentComponents(c, "IteratorError", ContentSet::iteratorError())
+  or
+  c.getNumArgument() = 0 and
   result = makeContentComponents(c, "MapKey", ContentSet::mapKey())
   or
   //
@@ -226,6 +229,8 @@ private string getMadStringFromContentSetAux(ContentSet cs) {
   cs = ContentSet::setElement() and result = "SetElement"
   or
   cs = ContentSet::iteratorElement() and result = "IteratorElement"
+  or
+  cs = ContentSet::iteratorError() and result = "IteratorError"
   or
   exists(string awaitedArg |
     cs.asSingleton() = getPromiseContent(awaitedArg) and

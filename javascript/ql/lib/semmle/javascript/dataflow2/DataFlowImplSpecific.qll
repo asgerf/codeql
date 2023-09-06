@@ -80,7 +80,7 @@ module Private {
     exists(Function fun |
       node = TExceptionalFunctionReturnNode(fun) and
       kind = MkExceptionalReturnKind() and
-      not fun.isAsyncOrGenerator() // exception is not thrown, but will be stored on the returned promise object
+      not fun.isAsyncOrGenerator() // exception is not thrown, but will be stored on the returned promise/iterator object
     )
     or
     FlowSummaryImpl::Private::summaryReturnNode(node.(FlowSummaryNode).getSummaryNode(), kind)
@@ -354,6 +354,7 @@ module Private {
     MkMapKey() or
     MkSetElement() or
     MkIteratorElement() or
+    MkIteratorError() or
     MkCapturedContent(LocalVariable v) { v.isCaptured() }
 
   class Content extends TContent {
@@ -387,6 +388,9 @@ module Private {
       or
       this = MkIteratorElement() and
       result = "IteratorElement"
+      or
+      this = MkIteratorError() and
+      result = "IteratorError"
     }
 
     string asPropertyName() { this = MkPropertyNameContent(result) }
@@ -875,6 +879,13 @@ module Private {
       c.asPropertyName() = Promises::errorProp()
     )
     or
+    exists(Function f | f.isGenerator() |
+      // Store thrown exceptions in the iterator-error
+      node1 = TExceptionalFunctionReturnNode(f) and
+      node2 = TFunctionReturnNode(f) and
+      c = ContentSet::iteratorError()
+    )
+    or
     exists(LocalVariable variable |
       VariableCaptureOutput::storeStep(getClosureNode(node1), variable, getClosureNode(node2)) and
       c.asSingleton() = MkCapturedContent(variable)
@@ -930,7 +941,7 @@ module Private {
       or
       f.isGenerator() and
       n = TFunctionReturnNode(f) and
-      c.asSingleton() = MkIteratorElement()
+      c = MkIteratorFilter()
     )
   }
 
@@ -1027,6 +1038,7 @@ module Private {
     MkMapValueKnown(string key) { isKnownMapKey(key) } or
     MkMapValueAll() or
     MkPromiseFilter() or
+    MkIteratorFilter() or
     // MkAwaited is used exclusively as an intermediate value in flow summaries.
     // 'Awaited' is encoded as a ContentSummaryComponent, although the flow graph we generate is different
     // than an ordinary content component. This special content set should never appear in a step.
@@ -1082,6 +1094,13 @@ module Public {
       this.isPromiseFilter() and
       result.asPropertyName() = [Promises::valueProp(), Promises::errorProp()]
       or
+      this.isIteratorFilter() and
+      (
+        result = Private::MkIteratorElement()
+        or
+        result = Private::MkIteratorError()
+      )
+      or
       exists(int bound | this = ContentSet::arrayElementLowerBound(bound) |
         result.isUnknownArrayElement()
         or
@@ -1113,6 +1132,8 @@ module Public {
     PropertyName asPropertyName() { result = this.asSingleton().asPropertyName() }
 
     predicate isPromiseFilter() { this = ContentSet::promiseFilter() }
+
+    predicate isIteratorFilter() { this = ContentSet::iteratorFilter() }
 
     predicate isArrayElement() { this = ContentSet::arrayElement() }
 
@@ -1150,6 +1171,12 @@ module Public {
      * matches the two promise-related contents, `Awaited[value]` and `Awaited[error]`.
      */
     ContentSet promiseFilter() { result = Private::MkPromiseFilter() }
+
+    /**
+     * A content set that should only be used in `withContent` and `withoutContent` steps, which
+     * matches the two iterator-related contents, `IteratorElement` and `IteratorError`.
+     */
+    ContentSet iteratorFilter() { result = Private::MkIteratorFilter() }
 
     /**
      * A content set describing the result of a resolved promise.
@@ -1261,5 +1288,8 @@ module Public {
 
     /** Gets the content set describing the elements of an iterator object. */
     ContentSet iteratorElement() { result = singleton(Private::MkIteratorElement()) }
+
+    /** Gets the content set describing the exception to be thrown when attempting to iterate over the given value. */
+    ContentSet iteratorError() { result = singleton(Private::MkIteratorError()) }
   }
 }
