@@ -9,14 +9,6 @@ private import VariableCaptureSpecific
 module Private {
   private import Public
 
-  predicate neverSkipInPathGraph(Node node) {
-    // Include the left-hand side of assignments
-    node = DataFlow::lvalueNode(_)
-    or
-    // Include the return-value expression
-    node.asExpr() = any(Function f).getAReturnedExpr()
-  }
-
   int getMaxPreciseArrayIndex() { result = 9 }
 
   /** Gets an index which is tracked as a precise array index. */
@@ -284,6 +276,24 @@ module Private {
     node instanceof FlowSummaryIntermediateAwaitStoreNode
     or
     node instanceof CaptureNode
+    or
+    // Hide function expression, as capture-flow causes them to appear in confusing ways
+    // TODO: Instead hide PathNodes with a capture content head
+    node.asExpr() instanceof Function
+  }
+
+  predicate neverSkipInPathGraph(Node node) {
+    // Include the left-hand side of assignments
+    node = DataFlow::lvalueNode(_)
+    or
+    // Include the return-value expression
+    node.asExpr() = any(Function f).getAReturnedExpr()
+    or
+    // Include calls (which may have been modelled as steps)
+    node.asExpr() instanceof InvokeExpr
+    or
+    // Include references to a variable
+    node.asExpr() instanceof VarRef
   }
 
   string ppReprType(DataFlowType t) { none() }
