@@ -323,6 +323,12 @@ module Private {
     MkCapturedContent(LocalVariable v) { v.isCaptured() }
 
   class Content extends TContent {
+    /**
+     * Gets a string representation of this content.
+     *
+     * Note that these strings are visible to the end-user,
+     * as they occur in the access path of path nodes.
+     */
     string toString() {
       result = this.asPropertyName()
       or
@@ -1063,6 +1069,9 @@ module Public {
 
     predicate isArrayElement() { this = ContentSet::arrayElement() }
 
+    /**
+     * Gets a string representation of this content set.
+     */
     string toString() {
       result = this.asSingleton().toString()
       or
