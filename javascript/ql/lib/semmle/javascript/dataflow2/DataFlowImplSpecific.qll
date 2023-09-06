@@ -2,6 +2,7 @@ private import javascript
 private import semmle.javascript.dataflow.internal.DataFlowNode
 private import semmle.javascript.dataflow.internal.StepSummary
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
+private import semmle.javascript.dataflow.internal.CallGraphs
 private import FlowSummaryImpl as FlowSummaryImpl
 private import semmle.javascript.internal.flow_summaries.AllFlowSummaries
 private import VariableCaptureSpecific
@@ -232,6 +233,13 @@ module Private {
     or
     pos.isFunctionSelfReference() and n = call.asImpliedLambdaCall().flow()
     or
+    exists(Function fun |
+      call.asImpliedLambdaCall() = fun and
+      CallGraph::impliedReceiverStep(n, TThisNode(fun)) and
+      sameContainerAsEnclosingContainer(n, fun) and
+      pos.isThis()
+    )
+    or
     pos.isThis() and n = TConstructorThisArgumentNode(call.asOrdinaryCall().asExpr())
     or
     // For now, treat all spread argument as flowing into the 'arguments' array, regardless of preceding arguments
@@ -414,7 +422,9 @@ module Private {
       node = TValueNode(any(PropAccess p)) or
       node = TPropNode(any(PropertyPattern p))
     } or
-    MkImpliedLambdaCall(Function f) { captures(f, _) } or
+    MkImpliedLambdaCall(Function f) {
+      captures(f, _) or CallGraph::impliedReceiverStep(_, TThisNode(f))
+    } or
     MkSummaryCall(
       FlowSummaryImpl::Public::SummarizedCallable c, FlowSummaryImpl::Private::SummaryNode receiver
     ) {
@@ -670,6 +680,12 @@ module Private {
   pragma[inline_late]
   private predicate sameContainer(Node node1, Node node2) {
     node1.getContainer() = node2.getContainer()
+  }
+
+  bindingset[node, fun]
+  pragma[inline_late]
+  private predicate sameContainerAsEnclosingContainer(Node node, Function fun) {
+    node.getContainer() = fun.getEnclosingContainer()
   }
 
   /**
