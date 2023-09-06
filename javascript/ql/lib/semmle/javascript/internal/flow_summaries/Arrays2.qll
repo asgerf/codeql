@@ -296,6 +296,14 @@ class From1Arg extends SummarizedCallable {
       input = "Argument[0].MapValue" and
       output = "ReturnValue.ArrayElement.Member[1]"
     )
+    or
+    // TODO: we currently convert ArrayElement read/store steps to taint steps, but this does not
+    // work for WithArrayElement because it's just an expectsContent node, and there's no way easy
+    // to omit the expectsContent restriction in taint tracking.
+    // Work around this for now.
+    preservesValue = false and
+    input = "Argument[0]" and
+    output = "ReturnValue"
   }
 }
 
