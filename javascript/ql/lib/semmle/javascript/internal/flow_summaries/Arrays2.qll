@@ -109,6 +109,11 @@ class ArrayConstructorSummary extends SummarizedCallable {
       input = "Argument[arguments-array].WithArrayElement" and
       output = "ReturnValue"
     )
+    or
+    // TODO: workaround for WithArrayElement not being converted to a taint step
+    preservesValue = false and
+    input = "Argument[arguments-array]" and
+    output = "ReturnValue"
   }
 }
 
@@ -120,6 +125,11 @@ class CopyWithin extends SummarizedCallable {
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     input = "Argument[this].WithArrayElement" and
+    output = "ReturnValue"
+    or
+    // TODO: workaround for WithArrayElement not being converted to a taint step
+    preservesValue = false and
+    input = "Argument[this]" and
     output = "ReturnValue"
   }
 }
@@ -162,6 +172,11 @@ class Filter extends SummarizedCallable {
       input = "Argument[this].WithArrayElement" and
       output = "ReturnValue"
     )
+    or
+    // TODO: workaround for WithArrayElement not being converted to a taint step
+    preservesValue = false and
+    input = "Argument[this]" and
+    output = "ReturnValue"
   }
 }
 
@@ -519,6 +534,11 @@ class ArrayCoercionPackage extends FunctionalPackageSummary {
       input = "Argument[0].WithoutArrayElement" and
       output = "ReturnValue.ArrayElement"
     )
+    or
+    // TODO: workaround for WithArrayElement not being converted to a taint step
+    preservesValue = false and
+    input = "Argument[0]" and
+    output = "ReturnValue"
   }
 }
 
