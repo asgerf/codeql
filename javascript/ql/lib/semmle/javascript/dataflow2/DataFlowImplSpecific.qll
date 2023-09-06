@@ -329,10 +329,10 @@ module Private {
       result = this.asCapturedVariable().getName()
       or
       this.isUnknownArrayElement() and
-      result = "ArrayElement[?]"
+      result = "ArrayElement"
       or
       this = MkMapValueWithUnknownKey() and
-      result = "MapValue[?]"
+      result = "MapValue"
       or
       exists(string key |
         this = MkMapValueWithKnownKey(key) and
