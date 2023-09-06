@@ -9,7 +9,13 @@ private import VariableCaptureSpecific
 module Private {
   private import Public
 
-  predicate neverSkipInPathGraph(Node node) { none() }
+  predicate neverSkipInPathGraph(Node node) {
+    // Include the left-hand side of assignments
+    node = DataFlow::lvalueNode(_)
+    or
+    // Include the return-value expression
+    node.asExpr() = any(Function f).getAReturnedExpr()
+  }
 
   int getMaxPreciseArrayIndex() { result = 9 }
 
