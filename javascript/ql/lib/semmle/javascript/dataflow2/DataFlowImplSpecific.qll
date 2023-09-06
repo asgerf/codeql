@@ -9,6 +9,8 @@ private import VariableCaptureSpecific
 module Private {
   private import Public
 
+  predicate neverSkipInPathGraph(Node node) { none() }
+
   int getMaxPreciseArrayIndex() { result = 9 }
 
   /** Gets an index which is tracked as a precise array index. */
@@ -193,7 +195,7 @@ module Private {
     DataFlow::InvokeNode getACallSimple() { none() }
   }
 
-  predicate isParameterNode(Node p, DataFlowCallable c, ParameterPosition pos) {
+  private predicate isParameterNodeImpl(Node p, DataFlowCallable c, ParameterPosition pos) {
     p = c.asSourceCallable().(Function).getParameter(pos.asPositional()).flow()
     or
     pos.isThis() and p = TThisNode(c.asSourceCallable().(Function))
@@ -209,7 +211,11 @@ module Private {
     )
   }
 
-  predicate isArgumentNode(Node n, DataFlowCall call, ArgumentPosition pos) {
+  predicate isParameterNode(ParameterNode p, DataFlowCallable c, ParameterPosition pos) {
+    isParameterNodeImpl(p, c, pos)
+  }
+
+  private predicate isArgumentNodeImpl(Node n, DataFlowCall call, ArgumentPosition pos) {
     n = call.asOrdinaryCall().getArgument(pos.asPositional())
     or
     pos.isThis() and n = call.asOrdinaryCall().(DataFlow::CallNode).getReceiver()
@@ -239,6 +245,10 @@ module Private {
     or
     // argument to setter (TODO: this has no post-update node)
     pos.asPositional() = 0 and n = call.asAccessorCall().(DataFlow::PropWrite).getRhs()
+  }
+
+  predicate isArgumentNode(ArgumentNode n, DataFlowCall call, ArgumentPosition pos) {
+    isArgumentNodeImpl(n, call, pos)
   }
 
   DataFlowCallable nodeGetEnclosingCallable(Node node) {
@@ -590,7 +600,7 @@ module Private {
 
   class DataFlowExpr = Expr;
 
-  predicate exprNode = DataFlow::exprNode/1;
+  Node exprNode(DataFlowExpr expr) { result = DataFlow::exprNode(expr) }
 
   pragma[nomagic]
   predicate parameterMatch(ParameterPosition ppos, ArgumentPosition apos) {
@@ -904,8 +914,7 @@ module Private {
    * One example would be to allow flow like `p.foo = p.bar;`, which is disallowed
    * by default as a heuristic.
    */
-  // predicate allowParameterReturnInSelf(ParameterNode p);
-  predicate allowParameterReturnInSelf(Node p) {
+  predicate allowParameterReturnInSelf(ParameterNode p) {
     FlowSummaryImpl::Private::summaryAllowParameterReturnInSelf(p)
     or
     exists(Function f |
@@ -936,21 +945,23 @@ module Private {
    *
    * Argument `arg` is part of a path from a source to a sink, and `p` is the target parameter.
    */
-  int getAdditionalFlowIntoCallNodeTerm(Node arg, Node p) { none() }
+  int getAdditionalFlowIntoCallNodeTerm(ArgumentNode arg, ParameterNode p) { none() }
 
   pragma[inline]
-  predicate golangSpecificParamArgFilter(DataFlowCall call, Node p, Node arg) { any() }
+  predicate golangSpecificParamArgFilter(DataFlowCall call, ParameterNode p, ArgumentNode arg) {
+    any()
+  }
 
   class ArgumentNode extends DataFlow::Node {
-    ArgumentNode() { isArgumentNode(this, _, _) }
+    ArgumentNode() { isArgumentNodeImpl(this, _, _) }
 
     predicate argumentOf(DataFlowCall call, ArgumentPosition pos) {
-      isArgumentNode(this, call, pos)
+      isArgumentNodeImpl(this, call, pos)
     }
   }
 
   class ParameterNode extends DataFlow::Node {
-    ParameterNode() { isParameterNode(this, _, _) }
+    ParameterNode() { isParameterNodeImpl(this, _, _) }
   }
 
   predicate defaultAdditionalTaintStep(DataFlow::Node node1, DataFlow::Node node2) {
