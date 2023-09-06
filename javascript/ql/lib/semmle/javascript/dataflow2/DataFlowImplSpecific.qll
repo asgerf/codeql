@@ -927,6 +927,10 @@ module Private {
       f.isAsync() and
       n = TFunctionReturnNode(f) and
       c = MkPromiseFilter()
+      or
+      f.isGenerator() and
+      n = TFunctionReturnNode(f) and
+      c.asSingleton() = MkIteratorElement()
     )
   }
 

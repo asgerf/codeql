@@ -302,7 +302,7 @@ class From1Arg extends SummarizedCallable {
       input = "Argument[0].WithArrayElement" and
       output = "ReturnValue"
       or
-      input = "Argument[0].SetElement" and
+      input = "Argument[0]." + ["SetElement", "IteratorElement"] and
       output = "ReturnValue.ArrayElement"
       or
       input = "Argument[0].MapKey" and
@@ -333,7 +333,7 @@ class FromManyArg extends SummarizedCallable {
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     (
-      input = ["Argument[0].ArrayElement", "Argument[0].SetElement"] and
+      input = "Argument[0]." + ["ArrayElement", "SetElement", "IteratorElement"] and
       output = "Argument[1].Parameter[0]"
       or
       input = "Argument[0].MapKey" and

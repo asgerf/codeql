@@ -36,10 +36,10 @@ class MapConstructor extends SummarizedCallable {
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     (
-      input = ["Argument[0].ArrayElement.Member[0]", "Argument[0].SetElement.Member[0]"] and
+      input = "Argument[0]." + ["ArrayElement", "SetElement", "IteratorElement"] + ".Member[0]" and
       output = "ReturnValue.MapKey"
       or
-      input = ["Argument[0].ArrayElement.Member[1]", "Argument[0].SetElement.Member[1]"] and
+      input = "Argument[0]." + ["ArrayElement", "SetElement", "IteratorElement"] + ".Member[1]" and
       output = "ReturnValue.MapValue"
       or
       input = ["Argument[0].WithMapKey", "Argument[0].WithMapValue"] and
@@ -147,7 +147,7 @@ class SetConstructor extends SummarizedCallable {
   override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
     preservesValue = true and
     (
-      input = ["Argument[0].ArrayElement", "Argument0].SetElement"] and
+      input = "Argument[0]." + ["ArrayElement", "SetElement", "IteratorElement"] and
       output = "ReturnValue.SetElement"
       or
       input = "Argument[0].MapKey" and
@@ -171,5 +171,30 @@ class SetAdd extends SummarizedCallable {
     preservesValue = true and
     input = "Argument[0]" and
     output = "Argument[this].SetElement"
+  }
+}
+
+class GeneratorFunctionStep extends DataFlow::AdditionalFlowStep {
+  override predicate storeStep(
+    DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
+  ) {
+    // `yield x`. Store into the return value's iterator element.
+    exists(DataFlow::FunctionNode fun, YieldExpr yield |
+      fun.getFunction().isGenerator() and
+      not yield.isDelegating() and
+      pred = yield.getOperand().flow() and
+      content = DataFlow2::ContentSet::iteratorElement() and
+      succ = fun.getReturnNode()
+    )
+  }
+
+  override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
+    // `yield* x`. Flow into the return value, which has expectsContent, so only iterator elements can pass through.
+    exists(DataFlow::FunctionNode fun, YieldExpr yield |
+      fun.getFunction().isGenerator() and
+      yield.isDelegating() and
+      pred = yield.getOperand().flow() and
+      succ = fun.getReturnNode()
+    )
   }
 }

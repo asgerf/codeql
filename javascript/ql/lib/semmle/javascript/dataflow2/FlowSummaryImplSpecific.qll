@@ -175,6 +175,9 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   result = makeContentComponents(c, "SetElement", ContentSet::setElement())
   or
   c.getNumArgument() = 0 and
+  result = makeContentComponents(c, "IteratorElement", ContentSet::iteratorElement())
+  or
+  c.getNumArgument() = 0 and
   result = makeContentComponents(c, "MapKey", ContentSet::mapKey())
   or
   //

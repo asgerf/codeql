@@ -157,7 +157,11 @@ class ForOfLoopStep extends DataFlow::AdditionalFlowStep {
     DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
   ) {
     exists(ForOfStmt stmt | pred = stmt.getIterationDomain().flow() |
-      contents = [DataFlow2::ContentSet::arrayElement(), DataFlow2::ContentSet::setElement()] and
+      contents =
+        [
+          DataFlow2::ContentSet::arrayElement(), DataFlow2::ContentSet::setElement(),
+          DataFlow2::ContentSet::iteratorElement()
+        ] and
       succ = DataFlow::lvalueNode(stmt.getLValue())
       or
       contents = DataFlow2::ContentSet::mapKey() and
