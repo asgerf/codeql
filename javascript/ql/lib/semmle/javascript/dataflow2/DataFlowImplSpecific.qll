@@ -99,7 +99,9 @@ module Private {
     exists(Function fun |
       node = TExceptionalFunctionReturnNode(fun) and
       kind = MkExceptionalReturnKind() and
-      not fun.isAsyncOrGenerator() // exception is not thrown, but will be stored on the returned promise/iterator object
+      // For async/generators, the exception is caught and wrapped in the returned promise/iterator object.
+      // See the models for AsyncAwait and Generator.
+      not fun.isAsyncOrGenerator()
     )
     or
     FlowSummaryImpl::Private::summaryReturnNode(node.(FlowSummaryNode).getSummaryNode(), kind)
@@ -766,21 +768,6 @@ module Private {
       node2 = TFlowSummaryNode(output)
     )
     or
-    exists(AwaitExpr await |
-      // Allow non-promise values to propagate through await. The target node has clearsContent.
-      node1 = await.getOperand().flow() and
-      node2 = await.flow()
-    )
-    or
-    exists(Function f |
-      f.isAsync() and
-      node1 = f.getAReturnedExpr().flow()
-    |
-      node2 = TAsyncFunctionIntermediateStoreReturnNode(f) // clears promise-content
-      or
-      node2 = TFunctionReturnNode(f) // expects promise-content
-    )
-    or
     VariableCaptureOutput::localFlowStep(getClosureNode(node1), getClosureNode(node2))
     or
     // NOTE: For consistency with readStep/storeStep, we do not translate these steps to jump steps automatically.
@@ -823,14 +810,6 @@ module Private {
       or
       contentSet = MkAwaited() and
       c = ContentSet::property(Promises::valueProp())
-    )
-    or
-    exists(AwaitExpr await | node1 = await.getOperand().flow() |
-      node2 = await.flow() and
-      c.asPropertyName() = Promises::valueProp()
-      or
-      node2 = await.getExceptionTarget() and
-      c.asPropertyName() = Promises::errorProp()
     )
     or
     exists(LocalVariable variable |
@@ -880,17 +859,6 @@ module Private {
       c.asPropertyName() = Promises::valueProp()
     )
     or
-    exists(Function f | f.isAsync() |
-      node1 = TAsyncFunctionIntermediateStoreReturnNode(f) and
-      node2 = TFunctionReturnNode(f) and
-      c.asPropertyName() = Promises::valueProp()
-      or
-      // Store thrown exceptions in the promise-error
-      node1 = TExceptionalFunctionReturnNode(f) and
-      node2 = TFunctionReturnNode(f) and
-      c.asPropertyName() = Promises::errorProp()
-    )
-    or
     exists(LocalVariable variable |
       VariableCaptureOutput::storeStep(getClosureNode(node1), variable, getClosureNode(node2)) and
       c.asSingleton() = MkCapturedContent(variable)
@@ -916,15 +884,6 @@ module Private {
       n.(FlowSummaryNode).getSummaryNode()) and
     c = MkPromiseFilter()
     or
-    // Result of 'await' cannot be a promise; needed for the local flow step into 'await'
-    exists(AwaitExpr await |
-      n = await.flow() and
-      c = MkPromiseFilter()
-    )
-    or
-    n = TAsyncFunctionIntermediateStoreReturnNode(_) and
-    c = MkPromiseFilter()
-    or
     any(AdditionalFlowInternal flow).clearsContent(n, c)
   }
 
@@ -940,12 +899,6 @@ module Private {
     FlowSummaryImpl::Private::Steps::summaryStoreStep(_, MkAwaited(),
       n.(FlowSummaryNode).getSummaryNode()) and
     c = MkPromiseFilter()
-    or
-    exists(Function f |
-      f.isAsync() and
-      n = TFunctionReturnNode(f) and
-      c = MkPromiseFilter()
-    )
     or
     any(AdditionalFlowInternal flow).expectsContent(n, c)
   }
