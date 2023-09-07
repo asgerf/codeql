@@ -866,15 +866,6 @@ module Private {
       node2 = tryGetPostUpdate(write.getBase())
     )
     or
-    exists(DataFlow::ArrayCreationNode array, int i |
-      node1 = array.getElement(i) and
-      node2 = array
-    |
-      if i = [0 .. 9]
-      then c.asPropertyName() = i.toString()
-      else c.asPropertyName() = DataFlow::PseudoProperties::arrayElement()
-    )
-    or
     FlowSummaryImpl::Private::Steps::summaryStoreStep(node1.(FlowSummaryNode).getSummaryNode(), c,
       node2.(FlowSummaryNode).getSummaryNode()) and
     not isSpecialContentSet(c)
