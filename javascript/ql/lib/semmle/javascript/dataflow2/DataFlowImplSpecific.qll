@@ -940,6 +940,8 @@ module Private {
     or
     n = TAsyncFunctionIntermediateStoreReturnNode(_) and
     c = MkPromiseFilter()
+    or
+    any(AdditionalFlowInternal flow).clearsContent(n, c)
   }
 
   /**
@@ -959,11 +961,9 @@ module Private {
       f.isAsync() and
       n = TFunctionReturnNode(f) and
       c = MkPromiseFilter()
-      or
-      f.isGenerator() and
-      n = TFunctionReturnNode(f) and
-      c = MkIteratorFilter()
     )
+    or
+    any(AdditionalFlowInternal flow).expectsContent(n, c)
   }
 
   /**

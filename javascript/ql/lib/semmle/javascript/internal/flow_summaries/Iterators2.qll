@@ -54,7 +54,15 @@ class ForOfLoopStep extends AdditionalFlowInternal {
   }
 }
 
-class GeneratorFunctionStep extends DataFlow::AdditionalFlowStep {
+class GeneratorFunctionStep extends AdditionalFlowInternal {
+  override predicate expectsContent(DataFlow::Node node, DataFlow2::ContentSet contents) {
+    exists(Function fun |
+      fun.isGenerator() and
+      DataFlow::functionReturnNode(node, fun) and
+      contents = DataFlow2::ContentSet::iteratorFilter()
+    )
+  }
+
   override predicate storeStep(
     DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
   ) {
