@@ -170,7 +170,6 @@ class ForOfLoopStep extends DataFlow::AdditionalFlowStep {
       contents = DataFlow2::ContentSet::mapValueAll() and
       succ = TForOfSyntheticPairNode(stmt, 1)
       or
-      // TODO: does not seem to work in generators.js test case. Fix.
       contents = DataFlow2::ContentSet::iteratorError() and
       succ = stmt.getIterationDomain().getExceptionTarget()
     )

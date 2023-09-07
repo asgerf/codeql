@@ -39,7 +39,9 @@
 
   const iterator = gen4();
   try {
-    for (let v of iterator) {}
+    for (let v of iterator) {
+      sink(v); // OK
+    }
   } catch (e) {
     sink(e); // NOT OK
   }
