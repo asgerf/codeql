@@ -900,13 +900,6 @@ module Private {
       c.asPropertyName() = Promises::errorProp()
     )
     or
-    exists(Function f | f.isGenerator() |
-      // Store thrown exceptions in the iterator-error
-      node1 = TExceptionalFunctionReturnNode(f) and
-      node2 = TFunctionReturnNode(f) and
-      c = ContentSet::iteratorError()
-    )
-    or
     exists(LocalVariable variable |
       VariableCaptureOutput::storeStep(getClosureNode(node1), variable, getClosureNode(node2)) and
       c.asSingleton() = MkCapturedContent(variable)

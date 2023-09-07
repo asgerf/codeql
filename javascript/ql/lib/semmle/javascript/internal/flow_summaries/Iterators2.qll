@@ -58,7 +58,7 @@ class GeneratorFunctionStep extends AdditionalFlowInternal {
   override predicate expectsContent(DataFlow::Node node, DataFlow2::ContentSet contents) {
     exists(Function fun |
       fun.isGenerator() and
-      DataFlow::functionReturnNode(node, fun) and
+      node = TFunctionReturnNode(fun) and
       contents = DataFlow2::ContentSet::iteratorFilter()
     )
   }
@@ -72,7 +72,14 @@ class GeneratorFunctionStep extends AdditionalFlowInternal {
       yield.getContainer() = fun and
       pred = yield.getOperand().flow() and
       content = DataFlow2::ContentSet::iteratorElement() and
-      DataFlow::functionReturnNode(succ, fun)
+      succ = TFunctionReturnNode(fun)
+    )
+    or
+    exists(Function f | f.isGenerator() |
+      // Store thrown exceptions in the iterator-error
+      pred = TExceptionalFunctionReturnNode(f) and
+      succ = TFunctionReturnNode(f) and
+      content = DataFlow2::ContentSet::iteratorError()
     )
   }
 
@@ -83,7 +90,7 @@ class GeneratorFunctionStep extends AdditionalFlowInternal {
       yield.getContainer() = fun and
       yield.isDelegating() and
       pred = yield.getOperand().flow() and
-      DataFlow::functionReturnNode(succ, fun)
+      succ = TFunctionReturnNode(fun)
     )
   }
 }
