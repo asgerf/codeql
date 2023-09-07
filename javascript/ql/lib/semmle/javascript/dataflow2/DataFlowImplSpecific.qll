@@ -3,6 +3,7 @@ private import semmle.javascript.dataflow.internal.DataFlowNode
 private import semmle.javascript.dataflow.internal.StepSummary
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
 private import semmle.javascript.dataflow.internal.CallGraphs
+private import semmle.javascript.dataflow2.AdditionalFlowInternal
 private import FlowSummaryImpl as FlowSummaryImpl
 private import semmle.javascript.internal.flow_summaries.AllFlowSummaries
 private import VariableCaptureSpecific
@@ -54,6 +55,24 @@ module Private {
     override StmtContainer getContainer() { result = node.getEnclosingCallable() }
 
     override string toString() { result = node.toString() }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      node.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+  }
+
+  class GenericSynthesizedNode extends DataFlow::Node, TGenericSynthesizedNode {
+    private AstNode node;
+    private string tag;
+    private StmtContainer container;
+
+    GenericSynthesizedNode() { this = TGenericSynthesizedNode(node, tag, container) }
+
+    override StmtContainer getContainer() { result = container }
+
+    override string toString() { result = "[synthetic node] " + tag }
 
     override predicate hasLocationInfo(
       string filepath, int startline, int startcolumn, int endline, int endcolumn
@@ -285,9 +304,11 @@ module Private {
     or
     node instanceof CaptureNode
     or
-    // Hide function expressions, as capture-flow causes them to appear in non-helpful ways
+    // Hide function expressions, as capture-flow causes them to appear in unhelpful ways
     // TODO: Instead hide PathNodes with a capture content as the head of its access path?
     node.asExpr() instanceof Function
+    or
+    node instanceof GenericSynthesizedNode
   }
 
   predicate neverSkipInPathGraph(Node node) {
@@ -1130,6 +1151,8 @@ module Public {
     Private::Content asSingleton() { this = Private::MkSingletonContent(result) }
 
     PropertyName asPropertyName() { result = this.asSingleton().asPropertyName() }
+
+    int asArrayIndex() { result = this.asSingleton().asArrayIndex() }
 
     predicate isPromiseFilter() { this = ContentSet::promiseFilter() }
 

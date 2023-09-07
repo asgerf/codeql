@@ -1763,8 +1763,6 @@ module PathNode {
     nd = DataFlow::capturedVariableNode(_)
     or
     nd instanceof DataFlow::FunctionSelfReferenceNode
-    or
-    nd instanceof DataFlow::ForOfSyntheticPairNode
   }
 }
 

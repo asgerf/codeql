@@ -1482,28 +1482,6 @@ module DataFlow {
   }
 
   /**
-   * A synthetic node inserted at a `for-of` loop to represent the `[key, value]` pair
-   * that gets created when iterating over a map.
-   */
-  class ForOfSyntheticPairNode extends DataFlow::Node, TForOfSyntheticPairNode {
-    private ForOfStmt stmt;
-
-    ForOfSyntheticPairNode() { this = TForOfSyntheticPairNode(stmt, _) }
-
-    override StmtContainer getContainer() { result = stmt.getContainer() }
-
-    override predicate hasLocationInfo(
-      string filepath, int startline, int startcolumn, int endline, int endcolumn
-    ) {
-      stmt.getLValue()
-          .getLocation()
-          .hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
-    }
-
-    override string toString() { result = "[for-of synthetic pair]" }
-  }
-
-  /**
    * INTERNAL. DO NOT USE.
    *
    * Gets a data flow node representing the given captured variable.

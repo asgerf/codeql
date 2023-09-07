@@ -9,6 +9,7 @@ private import semmle.javascript.dataflow2.DataFlowImplSpecific::Private as Data
 private import semmle.javascript.dataflow2.FlowSummaryImpl as FlowSummaryImpl
 private import semmle.javascript.dataflow2.FlowSummaryImplSpecific as FlowSummaryImplSpecific
 private import semmle.javascript.dataflow2.VariableCaptureSpecific as VariableCapture
+private import semmle.javascript.dataflow2.AdditionalFlowInternal
 
 /**
  * The raw data type underlying `DataFlow::Node`.
@@ -51,12 +52,14 @@ newtype TNode =
     e = any(Assignment asn | asn.getTarget() instanceof PropAccess).getRhs()
   } or
   TConstructorThisArgumentNode(InvokeExpr e) { e instanceof NewExpr or e instanceof SuperCall } or
-  TForOfSyntheticPairNode(ForOfStmt stmt, int index) { index = [0, 1] } or
   TFlowSummaryNode(FlowSummaryImpl::Private::SummaryNode sn) or
   TFlowSummaryIntermediateAwaitStoreNode(FlowSummaryImpl::Private::SummaryNode sn) {
     FlowSummaryImpl::Private::Steps::summaryStoreStep(sn, DataFlowPrivate::MkAwaited(), _)
   } or
-  TSynthCaptureNode(VariableCapture::VariableCaptureOutput::SynthesizedCaptureNode node)
+  TSynthCaptureNode(VariableCapture::VariableCaptureOutput::SynthesizedCaptureNode node) or
+  TGenericSynthesizedNode(AstNode node, string tag, StmtContainer container) {
+    any(AdditionalFlowInternal flow).needsSynthesizedNode(node, tag, container)
+  }
 
 /**
  * A data-flow node that is not a flow summary node.
