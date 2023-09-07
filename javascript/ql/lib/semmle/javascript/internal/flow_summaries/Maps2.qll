@@ -1,5 +1,5 @@
 /**
- * Contains flow summaries for maps, sets, and iterators.
+ * Contains flow summaries and steps modelling flow through `Map` objects.
  */
 
 private import javascript
@@ -8,23 +8,6 @@ private import semmle.javascript.dataflow2.FlowSummary
 private import FlowSummaryUtil
 
 private DataFlow::SourceNode mapConstructorRef() { result = DataFlow::globalVarRef("Map") }
-
-private DataFlow::SourceNode setConstructorRef() { result = DataFlow::globalVarRef("Set") }
-
-class IteratorNext extends SummarizedCallable {
-  IteratorNext() { this = "Iterator#next" }
-
-  override DataFlow::MethodCallNode getACallSimple() {
-    result.getMethodName() = "next" and
-    result.getNumArgument() = 0
-  }
-
-  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
-    preservesValue = true and
-    input = "Argument[this].IteratorElement" and
-    output = "ReturnValue.Member[value]"
-  }
-}
 
 class MapConstructor extends SummarizedCallable {
   MapConstructor() { this = "Map constructor" }
@@ -133,69 +116,6 @@ class MapSet extends SummarizedCallable {
       or
       input = "Argument[1]" and
       output = "Argument[this].MapValue"
-    )
-  }
-}
-
-class SetConstructor extends SummarizedCallable {
-  SetConstructor() { this = "Set constructor" }
-
-  override DataFlow::InvokeNode getACallSimple() {
-    result = setConstructorRef().getAnInstantiation()
-  }
-
-  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
-    preservesValue = true and
-    (
-      input = "Argument[0]." + ["ArrayElement", "SetElement", "IteratorElement"] and
-      output = "ReturnValue.SetElement"
-      or
-      input = "Argument[0].MapKey" and
-      output = "ReturnValue.SetElement.Member[0]"
-      or
-      input = "Argument[0].MapValue" and
-      output = "ReturnValue.SetElement.Member[1]"
-    )
-  }
-}
-
-class SetAdd extends SummarizedCallable {
-  SetAdd() { this = "Set#add" }
-
-  override DataFlow::MethodCallNode getACallSimple() {
-    result.getMethodName() = "add" and
-    result.getNumArgument() = 1
-  }
-
-  override predicate propagatesFlowExt(string input, string output, boolean preservesValue) {
-    preservesValue = true and
-    input = "Argument[0]" and
-    output = "Argument[this].SetElement"
-  }
-}
-
-class GeneratorFunctionStep extends DataFlow::AdditionalFlowStep {
-  override predicate storeStep(
-    DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
-  ) {
-    // `yield x`. Store into the return value's iterator element.
-    exists(Function fun, YieldExpr yield | fun.isGenerator() |
-      not yield.isDelegating() and
-      yield.getContainer() = fun and
-      pred = yield.getOperand().flow() and
-      content = DataFlow2::ContentSet::iteratorElement() and
-      DataFlow::functionReturnNode(succ, fun)
-    )
-  }
-
-  override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
-    // `yield* x`. Flow into the return value, which has expectsContent, so only iterator contents can pass through.
-    exists(Function fun, YieldExpr yield |
-      fun.isGenerator() and
-      yield.getContainer() = fun and
-      yield.isDelegating() and
-      pred = yield.getOperand().flow() and
-      DataFlow::functionReturnNode(succ, fun)
     )
   }
 }

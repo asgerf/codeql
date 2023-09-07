@@ -151,37 +151,3 @@ class Values extends SummarizedCallable {
     output = "ReturnValue.IteratorElement"
   }
 }
-
-class ForOfLoopStep extends DataFlow::AdditionalFlowStep {
-  override predicate readStep(
-    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
-  ) {
-    exists(ForOfStmt stmt | pred = stmt.getIterationDomain().flow() |
-      contents =
-        [
-          DataFlow2::ContentSet::arrayElement(), DataFlow2::ContentSet::setElement(),
-          DataFlow2::ContentSet::iteratorElement()
-        ] and
-      succ = DataFlow::lvalueNode(stmt.getLValue())
-      or
-      contents = DataFlow2::ContentSet::mapKey() and
-      succ = TForOfSyntheticPairNode(stmt, 0)
-      or
-      contents = DataFlow2::ContentSet::mapValueAll() and
-      succ = TForOfSyntheticPairNode(stmt, 1)
-      or
-      contents = DataFlow2::ContentSet::iteratorError() and
-      succ = stmt.getIterationDomain().getExceptionTarget()
-    )
-  }
-
-  override predicate storeStep(
-    DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
-  ) {
-    exists(ForOfStmt stmt, int i |
-      pred = TForOfSyntheticPairNode(stmt, i) and
-      content.asPropertyName() = i.toString() and
-      succ = DataFlow::lvalueNode(stmt.getLValue())
-    )
-  }
-}
