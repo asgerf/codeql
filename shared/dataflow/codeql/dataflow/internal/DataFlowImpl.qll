@@ -20,7 +20,10 @@ module MakeImpl<InputSig Lang> {
    */
   signature module FullStateConfigSig {
     bindingset[this]
-    class FlowState;
+    class FlowState {
+      bindingset[this]
+      string toString();
+    }
 
     /**
      * Holds if `source` is a relevant data flow source with the given initial
@@ -3280,17 +3283,23 @@ module MakeImpl<InputSig Lang> {
         result = " <" + this.(PathNodeMid).getSummaryCtx().toString() + ">"
       }
 
+      private string ppFlowState() {
+        exists(string state | state = this.getState().toString() |
+          if state = "unit" then result = "" else result = " [[" + state + "]]"
+        )
+      }
+
       /** Gets a textual representation of this element. */
       string toString() { result = this.getNodeEx().toString() + this.ppType() + this.ppAp() }
 
       /**
        * Gets a textual representation of this element, including a textual
-       * representation of the call context.
+       * representation of the call context, as well as the current flow state.
        */
       string toStringWithContext() {
         result =
           this.getNodeEx().toString() + this.ppType() + this.ppAp() + this.ppCtx() +
-            this.ppSummaryCtx()
+            this.ppSummaryCtx() + this.ppFlowState()
       }
 
       /**
