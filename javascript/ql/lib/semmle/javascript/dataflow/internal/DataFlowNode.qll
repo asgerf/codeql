@@ -34,7 +34,6 @@ newtype TNode =
   } or
   THtmlAttributeNode(HTML::Attribute attr) or
   TFunctionReturnNode(Function f) or
-  TAsyncFunctionIntermediateStoreReturnNode(Function f) { f.isAsync() } or
   TExceptionalFunctionReturnNode(Function f) or
   TExceptionalInvocationReturnNode(InvokeExpr e) or
   TGlobalAccessPathRoot() or
