@@ -1,3 +1,7 @@
+/**
+ * Contains flow summaries and steps modelling flow through `Promise` objects.
+ */
+
 private import javascript
 private import semmle.javascript.dataflow2.FlowSummary
 private import FlowSummaryUtil

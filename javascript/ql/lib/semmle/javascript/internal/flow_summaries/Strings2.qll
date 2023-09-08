@@ -1,3 +1,7 @@
+/**
+ * Contains flow summaries and steps modelling flow through string methods.
+ */
+
 private import javascript
 private import semmle.javascript.dataflow2.FlowSummary
 
