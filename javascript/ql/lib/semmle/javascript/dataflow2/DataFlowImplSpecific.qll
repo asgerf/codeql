@@ -364,11 +364,11 @@ module Private {
   }
 
   newtype TContent =
-    MkPropertyNameContent(PropertyName name) or
-    MkArrayElementUnknown() or
+    MkPropertyContent(PropertyName name) or
+    MkArrayElementUnknown() or // note: array elements with known index are just properties
+    MkMapKey() or
     MkMapValueWithUnknownKey() or
     MkMapValueWithKnownKey(string key) { isKnownMapKey(key) } or
-    MkMapKey() or
     MkSetElement() or
     MkIteratorElement() or
     MkIteratorError() or
@@ -386,10 +386,11 @@ module Private {
     string toString() {
       result = this.asPropertyName()
       or
-      result = this.asCapturedVariable().getName()
-      or
       this.isUnknownArrayElement() and
       result = "ArrayElement"
+      or
+      this = MkMapKey() and
+      result = "MapKey"
       or
       this = MkMapValueWithUnknownKey() and
       result = "MapValue"
@@ -398,9 +399,6 @@ module Private {
         this = MkMapValueWithKnownKey(key) and
         result = "MapValue[" + key + "]"
       )
-      or
-      this = MkMapKey() and
-      result = "MapKey"
       or
       this = MkSetElement() and
       result = "SetElement"
@@ -416,9 +414,11 @@ module Private {
       or
       this = MkPromiseError() and
       result = "PromiseError"
+      or
+      result = this.asCapturedVariable().getName()
     }
 
-    string asPropertyName() { this = MkPropertyNameContent(result) }
+    string asPropertyName() { this = MkPropertyContent(result) }
 
     pragma[nomagic]
     int asArrayIndex() { result = this.asPropertyName().toInt() and result >= 0 }
