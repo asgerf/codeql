@@ -342,13 +342,7 @@ module Private {
       or
       this = any(GlobalVariable v).getName()
       or
-      this = [0 .. 9].toString()
-      or
-      this =
-        [
-          DataFlow::PseudoProperties::arrayElement(), DataFlow::PseudoProperties::mapValueAll(),
-          Promises::valueProp(), Promises::errorProp()
-        ]
+      this = getAPreciseArrayIndex().toString()
       or
       exists(AccessPathSyntax::AccessPathToken tok |
         tok.getName() = "Member" and this = tok.getAnArgument()
@@ -378,6 +372,8 @@ module Private {
     MkSetElement() or
     MkIteratorElement() or
     MkIteratorError() or
+    MkPromiseValue() or
+    MkPromiseError() or
     MkCapturedContent(LocalVariable v) { v.isCaptured() }
 
   class Content extends TContent {
@@ -414,6 +410,12 @@ module Private {
       or
       this = MkIteratorError() and
       result = "IteratorError"
+      or
+      this = MkPromiseValue() and
+      result = "PromiseValue"
+      or
+      this = MkPromiseError() and
+      result = "PromiseError"
     }
 
     string asPropertyName() { this = MkPropertyNameContent(result) }
@@ -809,7 +811,7 @@ module Private {
       c = contentSet
       or
       contentSet = MkAwaited() and
-      c = ContentSet::property(Promises::valueProp())
+      c = ContentSet::promiseValue()
     )
     or
     exists(LocalVariable variable |
@@ -856,7 +858,7 @@ module Private {
       FlowSummaryImpl::Private::Steps::summaryStoreStep(input, MkAwaited(), output) and
       node1 = TFlowSummaryIntermediateAwaitStoreNode(input) and
       node2 = TFlowSummaryNode(output) and
-      c.asPropertyName() = Promises::valueProp()
+      c = ContentSet::promiseValue()
     )
     or
     exists(LocalVariable variable |
@@ -1050,7 +1052,11 @@ module Public {
       result = this.asSingleton()
       or
       this.isPromiseFilter() and
-      result.asPropertyName() = [Promises::valueProp(), Promises::errorProp()]
+      (
+        result = Private::MkPromiseValue()
+        or
+        result = Private::MkPromiseError()
+      )
       or
       this.isIteratorFilter() and
       (
@@ -1105,6 +1111,8 @@ module Public {
       or
       this.isPromiseFilter() and result = "PromiseFilter"
       or
+      this.isIteratorFilter() and result = "IteratorFilter"
+      or
       exists(int bound |
         this = ContentSet::arrayElementLowerBound(bound) and
         result = "ArrayElement[" + bound + "..]"
@@ -1141,12 +1149,12 @@ module Public {
     /**
      * A content set describing the result of a resolved promise.
      */
-    ContentSet promiseValue() { result = property(Promises::valueProp()) }
+    ContentSet promiseValue() { result = singleton(Private::MkPromiseValue()) }
 
     /**
      * A content set describing the error stored in a rejected promise.
      */
-    ContentSet promiseError() { result = property(Promises::errorProp()) }
+    ContentSet promiseError() { result = singleton(Private::MkPromiseError()) }
 
     /**
      * A content set describing all array elements, regardless of their index in the array.
@@ -1251,5 +1259,55 @@ module Public {
 
     /** Gets the content set describing the exception to be thrown when attempting to iterate over the given value. */
     ContentSet iteratorError() { result = singleton(Private::MkIteratorError()) }
+
+    /**
+     * Gets a content set corresponding to the pseudo-property `propertyName`.
+     */
+    pragma[nomagic]
+    private ContentSet fromLegacyPseudoProperty(string propertyName) {
+      propertyName = Promises::valueProp() and
+      result = promiseValue()
+      or
+      propertyName = Promises::errorProp() and
+      result = promiseError()
+      or
+      propertyName = DataFlow::PseudoProperties::arrayElement() and
+      result = arrayElement()
+      or
+      propertyName = DataFlow::PseudoProperties::iteratorElement() and
+      result = iteratorElement()
+      or
+      propertyName = DataFlow::PseudoProperties::setElement() and
+      result = setElement()
+      or
+      propertyName = DataFlow::PseudoProperties::mapValueAll() and
+      result = mapValueAll()
+      or
+      propertyName = DataFlow::PseudoProperties::mapValueUnknownKey() and
+      result = mapValueWithUnknownKey()
+      or
+      exists(string key |
+        propertyName = DataFlow::PseudoProperties::mapValueKey(key) and
+        result = mapValueWithKnownKey(key)
+      )
+    }
+
+    /**
+     * Gets the content set corresponding to the given property name, where legacy pseudo-properties
+     * are mapped to their corresponding content sets (which are no longer seen as property names).
+     */
+    bindingset[propertyName]
+    ContentSet fromLegacyProperty(string propertyName) {
+      result = fromLegacyPseudoProperty(propertyName)
+      or
+      not exists(fromLegacyPseudoProperty(propertyName)) and
+      (
+        // In case a map-value key was contributed via a SharedFlowStep, but we don't have a ContentSet for it,
+        // convert it to the unknown key.
+        if DataFlow::PseudoProperties::isMapValueKey(propertyName)
+        then result = mapValueWithUnknownKey()
+        else result = property(propertyName)
+      )
+    }
   }
 }

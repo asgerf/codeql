@@ -110,7 +110,10 @@ module AdditionalFlowStep {
   predicate storeStep(DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ) {
     any(AdditionalFlowStep s).storeStep(pred, content, succ)
     or
-    any(SharedFlowStep s).storeStep(pred, succ, content.asPropertyName())
+    exists(string prop |
+      any(SharedFlowStep s).storeStep(pred, succ, prop) and
+      content = DataFlow2::ContentSet::fromLegacyProperty(prop)
+    )
   }
 
   /**
@@ -120,7 +123,10 @@ module AdditionalFlowStep {
   predicate readStep(DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ) {
     any(AdditionalFlowStep s).readStep(pred, content, succ)
     or
-    any(SharedFlowStep s).loadStep(pred, succ, content.asPropertyName())
+    exists(string prop |
+      any(SharedFlowStep s).loadStep(pred, succ, prop) and
+      content = DataFlow2::ContentSet::fromLegacyProperty(prop)
+    )
   }
 }
 

@@ -78,10 +78,10 @@ class AsyncAwait extends AdditionalFlowInternal {
     DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
   ) {
     exists(AwaitExpr await | pred = await.getOperand().flow() |
-      content.asPropertyName() = Promises::valueProp() and
+      content = DataFlow2::ContentSet::promiseValue() and
       succ = await.flow()
       or
-      content.asPropertyName() = Promises::errorProp() and
+      content = DataFlow2::ContentSet::promiseError() and
       succ = await.getExceptionTarget()
     )
   }
@@ -92,12 +92,12 @@ class AsyncAwait extends AdditionalFlowInternal {
     exists(Function f | f.isAsync() |
       // Box returned non-promise values in a promise
       pred = getSynthesizedNode(f, "async-raw-return") and
-      content.asPropertyName() = Promises::valueProp() and
+      content = DataFlow2::ContentSet::promiseValue() and
       succ = TFunctionReturnNode(f)
       or
       // Store thrown exceptions in promise-error
       pred = TExceptionalFunctionReturnNode(f) and
-      content.asPropertyName() = Promises::errorProp() and
+      content = DataFlow2::ContentSet::promiseError() and
       succ = TFunctionReturnNode(f)
     )
   }

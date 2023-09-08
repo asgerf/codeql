@@ -99,12 +99,12 @@ private SummaryComponent makePropertyContentComponents(
 }
 
 /**
- * Gets the content corresponding to `Awaited[arg]`.
+ * Gets the content set corresponding to `Awaited[arg]`.
  */
-private Content getPromiseContent(string arg) {
-  arg = "value" and result.asPropertyName() = Promises::valueProp()
+private ContentSet getPromiseContent(string arg) {
+  arg = "value" and result = ContentSet::promiseValue()
   or
-  arg = "error" and result.asPropertyName() = Promises::errorProp()
+  arg = "error" and result = ContentSet::promiseError()
 }
 
 pragma[nomagic]
@@ -150,7 +150,7 @@ SummaryComponent interpretComponentSpecific(Private::AccessPathToken c) {
   or
   result = makePropertyContentComponents(c, "Member", c.getAnArgument())
   or
-  result = makeSingletonContentComponents(c, "Awaited", getPromiseContent(c.getAnArgument()))
+  result = makeContentComponents(c, "Awaited", getPromiseContent(c.getAnArgument()))
   or
   c.getNumArgument() = 0 and
   result = makeContentComponents(c, "ArrayElement", ContentSet::arrayElement())
@@ -233,7 +233,7 @@ private string getMadStringFromContentSetAux(ContentSet cs) {
   cs = ContentSet::iteratorError() and result = "IteratorError"
   or
   exists(string awaitedArg |
-    cs.asSingleton() = getPromiseContent(awaitedArg) and
+    cs = getPromiseContent(awaitedArg) and
     result = "Awaited[" + awaitedArg + "]"
   )
   or
