@@ -69,7 +69,7 @@ class AsyncAwait extends AdditionalFlowInternal {
     DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
   ) {
     exists(Function f | f.isAsync() |
-      // Box returned value is a promise
+      // Box returned non-promise values in a promise
       pred = getSynthesizedNode(f, "async-raw-return") and
       content.asPropertyName() = Promises::valueProp() and
       succ = TFunctionReturnNode(f)
