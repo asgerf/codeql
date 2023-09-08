@@ -10,9 +10,13 @@ private import semmle.javascript.dataflow2.AdditionalFlowInternal
 /**
  * Steps modelling flow in an `async` function.
  *
- * - `await x` preserves non-promise values, e.g. `await "foo"` is just `"foo"`.
- * - The return value is coerced to a promise before being returned.
+ * Note about promise-coercion and flattening:
+ * - `await` preserves non-promise values, e.g. `await "foo"` is just `"foo"`.
+ * - `return` preserves existing promise values, and boxes other values in a promise.
  *
+ * We rely on `expectsContent` and `clearsContent` to handle coercion/flattening without risk of creating a nested promise object.
+ *
+ * The following is a brief overview of the steps we generate:
  * ```js
  * async function foo() {
  *   await x;  // x --- READ[promise-value] ---> await x
