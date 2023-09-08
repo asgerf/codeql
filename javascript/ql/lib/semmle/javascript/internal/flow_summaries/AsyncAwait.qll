@@ -32,8 +32,7 @@ private import semmle.javascript.dataflow2.AdditionalFlowInternal
  */
 class AsyncAwait extends AdditionalFlowInternal {
   override predicate needsSynthesizedNode(AstNode node, string tag, StmtContainer container) {
-    // The returned value is coerced to a promise.
-    // We synthesize a clearsContent node to contain the values that aren't promises, which need to be boxed in a promise.
+    // We synthesize a clearsContent node to contain the values that need to be boxed in a promise before returning
     node.(Function).isAsync() and
     container = node and
     tag = "async-raw-return"
