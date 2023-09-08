@@ -38,6 +38,24 @@ class AsyncAwait extends AdditionalFlowInternal {
     tag = "async-raw-return"
   }
 
+  override predicate clearsContent(DataFlow::Node node, DataFlow2::ContentSet contents) {
+    node = getSynthesizedNode(_, "async-raw-return") and
+    contents = DataFlow2::ContentSet::promiseFilter()
+    or
+    // The result of 'await' cannot be a promise. This is needed for the local flow step into 'await'
+    node.asExpr() instanceof AwaitExpr and
+    contents = DataFlow2::ContentSet::promiseFilter()
+  }
+
+  override predicate expectsContent(DataFlow::Node node, DataFlow2::ContentSet contents) {
+    // The final return value must be a promise. This is needed for the local flow step into the return node.
+    exists(Function f |
+      f.isAsync() and
+      node = TFunctionReturnNode(f) and
+      contents = DataFlow2::ContentSet::promiseFilter()
+    )
+  }
+
   override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
     exists(AwaitExpr await |
       // Allow non-promise values to propagate through await.
@@ -81,25 +99,6 @@ class AsyncAwait extends AdditionalFlowInternal {
       pred = TExceptionalFunctionReturnNode(f) and
       content.asPropertyName() = Promises::errorProp() and
       succ = TFunctionReturnNode(f)
-    )
-  }
-
-  override predicate clearsContent(DataFlow::Node node, DataFlow2::ContentSet contents) {
-    // Result of 'await' cannot be a promise. This is needed for the local flow step into 'await'
-    node.asExpr() instanceof AwaitExpr and
-    contents = DataFlow2::ContentSet::promiseFilter()
-    or
-    // Ensure the value about to be boxed in a promise can't be a promise
-    node = getSynthesizedNode(_, "async-raw-return") and
-    contents = DataFlow2::ContentSet::promiseFilter()
-  }
-
-  override predicate expectsContent(DataFlow::Node node, DataFlow2::ContentSet contents) {
-    // The final return value must be a promise. This is needed for the local flow step into the return node.
-    exists(Function f |
-      f.isAsync() and
-      node = TFunctionReturnNode(f) and
-      contents = DataFlow2::ContentSet::promiseFilter()
     )
   }
 }
