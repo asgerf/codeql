@@ -78,11 +78,11 @@ class AsyncAwait extends AdditionalFlowInternal {
     DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
   ) {
     exists(AwaitExpr await | pred = await.getOperand().flow() |
-      succ = await.flow() and
-      content.asPropertyName() = Promises::valueProp()
+      content.asPropertyName() = Promises::valueProp() and
+      succ = await.flow()
       or
-      succ = await.getExceptionTarget() and
-      content.asPropertyName() = Promises::errorProp()
+      content.asPropertyName() = Promises::errorProp() and
+      succ = await.getExceptionTarget()
     )
   }
 
