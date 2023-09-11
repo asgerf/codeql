@@ -10,7 +10,6 @@
 
 import javascript
 import DataFlow
-import DataFlow::PathGraph
 
 /**
  * A dataflow configuration that tracks authentication tokens ("authKey")
@@ -26,12 +25,10 @@ import DataFlow::PathGraph
  * }), '*');
  * ```
  */
-class AuthKeyTracking extends DataFlow::Configuration {
-  AuthKeyTracking() { this = "AuthKeyTracking" }
+module AuthKeyTrackingConfig implements DataFlow::ConfigSig {
+  predicate isSource(Node node) { node.(PropRead).getPropertyName() = "authKey" }
 
-  override predicate isSource(Node node) { node.(PropRead).getPropertyName() = "authKey" }
-
-  override predicate isSink(Node node) {
+  predicate isSink(Node node) {
     exists(MethodCallNode call |
       call.getMethodName() = "postMessage" and
       call.getArgument(1).getStringValue() = "*" and // no restriction on target origin
@@ -39,7 +36,7 @@ class AuthKeyTracking extends DataFlow::Configuration {
     )
   }
 
-  override predicate isAdditionalFlowStep(Node pred, Node succ) {
+  predicate isAdditionalFlowStep(Node pred, Node succ) {
     // Step into objects: x -> { f: x }
     succ.(SourceNode).getAPropertyWrite().getRhs() = pred
     or
@@ -53,6 +50,10 @@ class AuthKeyTracking extends DataFlow::Configuration {
   }
 }
 
-from AuthKeyTracking cfg, PathNode source, PathNode sink
-where cfg.hasFlowPath(source, sink)
+module AuthKeyTracking = DataFlow::Global<AuthKeyTrackingConfig>;
+
+import AuthKeyTracking::PathGraph
+
+from PathNode source, PathNode sink
+where AuthKeyTracking::flowPath(source, sink)
 select sink.getNode(), source, sink, "Message leaks the authKey from $@.", source.getNode(), "here"
