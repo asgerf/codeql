@@ -85,13 +85,6 @@ private SummaryComponent makeContentComponents(
 }
 
 pragma[inline]
-private SummaryComponent makeSingletonContentComponents(
-  Private::AccessPathToken token, string name, Content content
-) {
-  result = makeContentComponents(token, name, ContentSet::singleton(content))
-}
-
-pragma[inline]
 private SummaryComponent makePropertyContentComponents(
   Private::AccessPathToken token, string name, PropertyName content
 ) {
