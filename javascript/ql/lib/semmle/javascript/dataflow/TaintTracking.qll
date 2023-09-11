@@ -1026,4 +1026,6 @@ module TaintTracking {
 
     override predicate appliesTo(Configuration cfg) { any() }
   }
+
+  import semmle.javascript.dataflow2.TaintTracking
 }
