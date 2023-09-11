@@ -38,17 +38,19 @@ class MapConstructor extends SummarizedCallable {
  * for map values with a known key.
  */
 class MapGetStep extends DataFlow::AdditionalFlowStep {
-  override predicate readStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
+  override predicate readStep(
+    DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ
+  ) {
     exists(DataFlow::MethodCallNode call |
       call.getMethodName() = "get" and
       call.getNumArgument() = 1 and
       pred = call.getReceiver() and
       succ = call
     |
-      content = DataFlow::ContentSet::mapValueFromKey(call.getArgument(0).getStringValue())
+      contents = DataFlow::ContentSet::mapValueFromKey(call.getArgument(0).getStringValue())
       or
       not exists(call.getArgument(0).getStringValue()) and
-      content = DataFlow::ContentSet::mapValueAll()
+      contents = DataFlow::ContentSet::mapValueAll()
     )
   }
 }
@@ -61,7 +63,7 @@ class MapGetStep extends DataFlow::AdditionalFlowStep {
  */
 class MapSetStep extends DataFlow::AdditionalFlowStep {
   override predicate storeStep(
-    DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ
   ) {
     exists(DataFlow::MethodCallNode call |
       call.getMethodName() = "set" and
@@ -69,10 +71,10 @@ class MapSetStep extends DataFlow::AdditionalFlowStep {
       pred = call.getArgument(1) and
       succ.(DataFlow::ExprPostUpdateNode).getPreUpdateNode() = call.getReceiver()
     |
-      content = DataFlow::ContentSet::mapValueFromKey(call.getArgument(0).getStringValue())
+      contents = DataFlow::ContentSet::mapValueFromKey(call.getArgument(0).getStringValue())
       or
       not exists(call.getArgument(0).getStringValue()) and
-      content = DataFlow::ContentSet::mapValueWithUnknownKey()
+      contents = DataFlow::ContentSet::mapValueWithUnknownKey()
     )
   }
 }

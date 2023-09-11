@@ -74,28 +74,30 @@ class AsyncAwait extends AdditionalFlowInternal {
     )
   }
 
-  override predicate readStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
+  override predicate readStep(
+    DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ
+  ) {
     exists(AwaitExpr await | pred = await.getOperand().flow() |
-      content = DataFlow::ContentSet::promiseValue() and
+      contents = DataFlow::ContentSet::promiseValue() and
       succ = await.flow()
       or
-      content = DataFlow::ContentSet::promiseError() and
+      contents = DataFlow::ContentSet::promiseError() and
       succ = await.getExceptionTarget()
     )
   }
 
   override predicate storeStep(
-    DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ
   ) {
     exists(Function f | f.isAsync() |
       // Box returned non-promise values in a promise
       pred = getSynthesizedNode(f, "async-raw-return") and
-      content = DataFlow::ContentSet::promiseValue() and
+      contents = DataFlow::ContentSet::promiseValue() and
       succ = TFunctionReturnNode(f)
       or
       // Store thrown exceptions in promise-error
       pred = TExceptionalFunctionReturnNode(f) and
-      content = DataFlow::ContentSet::promiseError() and
+      contents = DataFlow::ContentSet::promiseError() and
       succ = TFunctionReturnNode(f)
     )
   }

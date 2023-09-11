@@ -38,14 +38,14 @@ class ForOfLoopStep extends AdditionalFlowInternal {
   }
 
   override predicate storeStep(
-    DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ
   ) {
     exists(ForOfStmt stmt |
       pred = getSynthesizedNode(stmt, "map-key") and
-      content.asArrayIndex() = 0
+      contents.asArrayIndex() = 0
       or
       pred = getSynthesizedNode(stmt, "map-value") and
-      content.asArrayIndex() = 1
+      contents.asArrayIndex() = 1
     |
       succ = DataFlow::lvalueNode(stmt.getLValue())
     )

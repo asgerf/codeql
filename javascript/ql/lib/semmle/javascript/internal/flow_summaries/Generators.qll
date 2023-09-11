@@ -28,14 +28,14 @@ class GeneratorFunctionStep extends AdditionalFlowInternal {
   }
 
   override predicate storeStep(
-    DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ
   ) {
     // `yield x`. Store into the return value's iterator element.
     exists(Function fun, YieldExpr yield | fun.isGenerator() |
       not yield.isDelegating() and
       yield.getContainer() = fun and
       pred = yield.getOperand().flow() and
-      content = DataFlow::ContentSet::iteratorElement() and
+      contents = DataFlow::ContentSet::iteratorElement() and
       succ = TFunctionReturnNode(fun)
     )
     or
@@ -43,7 +43,7 @@ class GeneratorFunctionStep extends AdditionalFlowInternal {
       // Store thrown exceptions in the iterator-error
       pred = TExceptionalFunctionReturnNode(f) and
       succ = TFunctionReturnNode(f) and
-      content = DataFlow::ContentSet::iteratorError()
+      contents = DataFlow::ContentSet::iteratorError()
     )
   }
 

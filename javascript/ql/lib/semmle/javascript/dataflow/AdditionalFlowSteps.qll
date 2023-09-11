@@ -48,14 +48,14 @@ class AdditionalFlowStep extends Unit {
   /**
    * Holds if `pred` should be stored in the given `content` of the object `succ`.
    */
-  predicate storeStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
+  predicate storeStep(DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ) {
     none()
   }
 
   /**
    * Holds if the given `content` of the object in `pred` should be read into `succ`.
    */
-  predicate readStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
+  predicate readStep(DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ) {
     none()
   }
 }
@@ -107,12 +107,12 @@ module AdditionalFlowStep {
    * Holds if `pred` should be stored in the object `succ` under the property `prop`.
    */
   cached
-  predicate storeStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
-    any(AdditionalFlowStep s).storeStep(pred, content, succ)
+  predicate storeStep(DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ) {
+    any(AdditionalFlowStep s).storeStep(pred, contents, succ)
     or
     exists(string prop |
       any(SharedFlowStep s).storeStep(pred, succ, prop) and
-      content = DataFlow::ContentSet::fromLegacyProperty(prop)
+      contents = DataFlow::ContentSet::fromLegacyProperty(prop)
     )
   }
 
@@ -120,12 +120,12 @@ module AdditionalFlowStep {
    * Holds if the property `prop` of the object `pred` should be read into `succ`.
    */
   cached
-  predicate readStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
-    any(AdditionalFlowStep s).readStep(pred, content, succ)
+  predicate readStep(DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ) {
+    any(AdditionalFlowStep s).readStep(pred, contents, succ)
     or
     exists(string prop |
       any(SharedFlowStep s).loadStep(pred, succ, prop) and
-      content = DataFlow::ContentSet::fromLegacyProperty(prop)
+      contents = DataFlow::ContentSet::fromLegacyProperty(prop)
     )
   }
 }
