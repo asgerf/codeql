@@ -18,8 +18,9 @@
 
 import javascript
 import DataFlow
-import PathGraph
 import semmle.javascript.DynamicPropertyAccess
+import semmle.javascript.dataflow2.BarrierGuards
+import semmle.javascript.dataflow2.DeduplicateFlowState
 private import semmle.javascript.dataflow.InferredTypes
 
 /**
@@ -233,10 +234,10 @@ class UnsafePropLabel extends FlowLabel {
  * for coinciding paths afterwards.  This means this configuration can't be used as
  * a standalone configuration like in most path queries.
  */
-class PropNameTracking extends DataFlow::Configuration {
-  PropNameTracking() { this = "PropNameTracking" }
+module PropNameTrackingConfig implements DataFlow::StateConfigSig {
+  class FlowState = FlowLabel;
 
-  override predicate isSource(DataFlow::Node node, FlowLabel label) {
+  private predicate isSourceRaw(DataFlow::Node node, FlowLabel label) {
     label instanceof UnsafePropLabel and
     (
       isPollutedPropNameSource(node)
@@ -245,7 +246,7 @@ class PropNameTracking extends DataFlow::Configuration {
     )
   }
 
-  override predicate isSink(DataFlow::Node node, FlowLabel label) {
+  private predicate isSinkRaw(DataFlow::Node node, FlowLabel label) {
     label instanceof UnsafePropLabel and
     (
       dynamicPropWrite(node, _, _) or
@@ -254,8 +255,24 @@ class PropNameTracking extends DataFlow::Configuration {
     )
   }
 
-  override predicate isAdditionalFlowStep(
-    DataFlow::Node pred, DataFlow::Node succ, FlowLabel predlbl, FlowLabel succlbl
+  import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
+
+  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+    node instanceof DenyListEqualityGuard or
+    node instanceof AllowListEqualityGuard or
+    node instanceof HasOwnPropertyGuard or
+    node instanceof InExprGuard or
+    node instanceof InstanceOfGuard or
+    node instanceof TypeofGuard or
+    node instanceof DenyListInclusionGuard or
+    node instanceof AllowListInclusionGuard or
+    node instanceof IsPlainObjectGuard
+  }
+
+  import MakeBarrierGuards<isBarrierGuard/1>
+
+  predicate isAdditionalFlowStep(
+    DataFlow::Node pred, FlowLabel predlbl, DataFlow::Node succ, FlowLabel succlbl
   ) {
     predlbl instanceof UnsafePropLabel and
     succlbl = predlbl and
@@ -274,26 +291,26 @@ class PropNameTracking extends DataFlow::Configuration {
         succ = read
       )
     )
-  }
-
-  override predicate isBarrier(DataFlow::Node node) {
-    super.isBarrier(node)
     or
-    node instanceof DataFlow::VarAccessBarrier
+    deduplicationStep(pred, predlbl, succ, succlbl)
   }
 
-  override predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
-    node instanceof DenyListEqualityGuard or
-    node instanceof AllowListEqualityGuard or
-    node instanceof HasOwnPropertyGuard or
-    node instanceof InExprGuard or
-    node instanceof InstanceOfGuard or
-    node instanceof TypeofGuard or
-    node instanceof DenyListInclusionGuard or
-    node instanceof AllowListInclusionGuard or
-    node instanceof IsPlainObjectGuard
+  predicate isBarrier(DataFlow::Node node) {
+    node instanceof DataFlow::VarAccessBarrier
+    or
+    barrierGuardBlocksNode(node, "")
   }
+
+  predicate isBarrier(DataFlow::Node node, FlowLabel label) {
+    barrierGuardBlocksNode(node, label)
+    or
+    deduplicationBarrier(node, label)
+  }
+
+  predicate includeHiddenNodes() { any() }
 }
+
+module PropNameTracking = DataFlow::GlobalWithState<PropNameTrackingConfig>;
 
 /**
  * A sanitizer guard of form `x === "__proto__"` or `x === "constructor"`.
@@ -510,18 +527,16 @@ string deriveExprName(DataFlow::Node node) {
 predicate isPrototypePollutingAssignment(Node base, Node prop, Node rhs, Node propNameSource) {
   dynamicPropWrite(base, prop, rhs) and
   isPollutedPropNameSource(propNameSource) and
-  exists(PropNameTracking cfg |
-    cfg.hasFlow(propNameSource, base) and
-    if propNameSource instanceof EnumeratedPropName
-    then
-      cfg.hasFlow(propNameSource, prop) and
-      cfg.hasFlow([propNameSource, AccessPath::getAnAliasedSourceNode(propNameSource)]
-            .(EnumeratedPropName)
-            .getASourceProp(), rhs)
-    else (
-      cfg.hasFlow(propNameSource.(SplitPropName).getAnAlias(), prop) and
-      rhs.getALocalSource() instanceof ParameterNode
-    )
+  PropNameTracking::flow(propNameSource, base) and
+  if propNameSource instanceof EnumeratedPropName
+  then
+    PropNameTracking::flow(propNameSource, prop) and
+    PropNameTracking::flow([propNameSource, AccessPath::getAnAliasedSourceNode(propNameSource)]
+          .(EnumeratedPropName)
+          .getASourceProp(), rhs)
+  else (
+    PropNameTracking::flow(propNameSource.(SplitPropName).getAnAlias(), prop) and
+    rhs.getALocalSource() instanceof ParameterNode
   )
 }
 
@@ -565,12 +580,14 @@ class ObjectCreateNullCall extends CallNode {
   }
 }
 
+import PropNameTracking::PathGraph
+
 from
-  PropNameTracking cfg, DataFlow::PathNode source, DataFlow::PathNode sink, Node propNameSource,
+  PropNameTracking::PathNode source, PropNameTracking::PathNode sink, Node propNameSource,
   Node base, string msg, Node col1, Node col2
 where
   isPollutedPropName(propNameSource) and
-  cfg.hasFlowPath(source, sink) and
+  PropNameTracking::flowPath(source, sink) and
   isPrototypePollutingAssignment(base, _, _, propNameSource) and
   sink.getNode() = base and
   source.getNode() = propNameSource and
