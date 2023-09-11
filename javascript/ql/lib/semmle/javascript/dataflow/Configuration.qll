@@ -32,8 +32,8 @@
  * Hence when we see a call `a = choice(b, c, d)`, we propagate flow from `c`
  * to `a` and from `d` to `a` (but not from `b` to `a`).
  *
- * The inter-procedural data flow graph is represented by class `PathNode`
- * and its member predicate `getASuccessor`. Each `PathNode` is a pair
+ * The inter-procedural data flow graph is represented by class `PathNodeImpl`
+ * and its member predicate `getASuccessor`. Each `PathNodeImpl` is a pair
  * of an underlying `DataFlow::Node` and a `DataFlow::Configuration`, which
  * can be accessed through member predicates `getNode` and `getConfiguration`,
  * respectively.
@@ -64,7 +64,7 @@
  * sink is a return step, and only considers call steps for paths that do
  * not contain a return step.
  *
- * Finally, we build `PathNode`s for all nodes that appear on a path
+ * Finally, we build `PathNodeImpl`s for all nodes that appear on a path
  * computed by `onPath`.
  */
 
@@ -1482,7 +1482,7 @@ private predicate flowStep(
  */
 pragma[nomagic]
 private predicate flowsTo(
-  PathNode flowsource, DataFlow::Node source, SinkPathNode flowsink, DataFlow::Node sink,
+  PathNodeImpl flowsource, DataFlow::Node source, SinkPathNode flowsink, DataFlow::Node sink,
   DataFlow::Configuration cfg
 ) {
   flowsource.wraps(source, cfg) and
@@ -1593,6 +1593,8 @@ private predicate isSinkNode(DataFlow::Node nd, DataFlow::Configuration cfg, Pat
 bindingset[cfg, result]
 private DataFlow::Configuration id(DataFlow::Configuration cfg) { result >= cfg and cfg >= result }
 
+deprecated class PathNode = PathNodeImpl;
+
 /**
  * A data-flow node on an inter-procedural path from a source to a sink.
  *
@@ -1609,11 +1611,11 @@ private DataFlow::Configuration id(DataFlow::Configuration cfg) { result >= cfg 
  *    some source to the node with the given summary that can be extended to a path to some sink node,
  *    all under the configuration.
  */
-class PathNode extends TPathNode {
+private class PathNodeImpl extends TPathNode {
   DataFlow::Node nd;
   Configuration cfg;
 
-  PathNode() {
+  PathNodeImpl() {
     this = MkSourceNode(nd, cfg) or
     this = MkMidNode(nd, cfg, _) or
     this = MkSinkNode(nd, cfg)
@@ -1629,7 +1631,7 @@ class PathNode extends TPathNode {
   DataFlow::Node getNode() { result = nd }
 
   /** Gets a successor node of this path node. */
-  final PathNode getASuccessor() { result = getASuccessor(this) }
+  final PathNodeImpl getASuccessor() { result = getASuccessor(this) }
 
   /** Gets a textual representation of this path node. */
   string toString() { result = nd.toString() }
@@ -1690,8 +1692,8 @@ private MidPathNode finalMidNode(SinkPathNode snk) {
  */
 pragma[noinline]
 private predicate midNodeStep(
-  PathNode nd, DataFlow::Node predNd, Configuration cfg, PathSummary summary, DataFlow::Node succNd,
-  PathSummary newSummary
+  PathNodeImpl nd, DataFlow::Node predNd, Configuration cfg, PathSummary summary,
+  DataFlow::Node succNd, PathSummary newSummary
 ) {
   nd = MkMidNode(predNd, cfg, summary) and
   flowStep(predNd, id(cfg), succNd, newSummary)
@@ -1700,7 +1702,7 @@ private predicate midNodeStep(
 /**
  * Gets a node to which data from `nd` may flow in one step.
  */
-private PathNode getASuccessor(PathNode nd) {
+private PathNodeImpl getASuccessor(PathNodeImpl nd) {
   // source node to mid node
   result = initialMidNode(nd)
   or
@@ -1714,7 +1716,7 @@ private PathNode getASuccessor(PathNode nd) {
   nd = finalMidNode(result)
 }
 
-private PathNode getASuccessorIfHidden(PathNode nd) {
+private PathNodeImpl getASuccessorIfHidden(PathNodeImpl nd) {
   nd.(MidPathNode).isHidden() and
   result = getASuccessor(nd)
 }
@@ -1726,7 +1728,7 @@ private PathNode getASuccessorIfHidden(PathNode nd) {
  * is a configuration such that `nd` is on a path from a source to a sink under `cfg`
  * summarized by `summary`.
  */
-class MidPathNode extends PathNode, MkMidNode {
+class MidPathNode extends PathNodeImpl, MkMidNode {
   PathSummary summary;
 
   MidPathNode() { this = MkMidNode(nd, cfg, summary) }
@@ -1740,10 +1742,10 @@ class MidPathNode extends PathNode, MkMidNode {
    * Holds if this node is hidden from paths in path explanation queries, except
    * in cases where it is the source or sink.
    */
-  predicate isHidden() { PathNode::shouldNodeBeHidden(nd) }
+  predicate isHidden() { PathNodeImpl::shouldNodeBeHidden(nd) }
 }
 
-module PathNode {
+module PathNodeImpl {
   predicate shouldNodeBeHidden(DataFlow::Node nd) {
     // Skip phi, refinement, and capture nodes
     nd.(DataFlow::SsaDefinitionNode).getSsaVariable().getDefinition() instanceof
@@ -1775,14 +1777,14 @@ module PathNode {
 /**
  * A path node corresponding to a flow source.
  */
-class SourcePathNode extends PathNode, MkSourceNode {
+class SourcePathNode extends PathNodeImpl, MkSourceNode {
   SourcePathNode() { this = MkSourceNode(nd, cfg) }
 }
 
 /**
  * A path node corresponding to a flow sink.
  */
-class SinkPathNode extends PathNode, MkSinkNode {
+class SinkPathNode extends PathNodeImpl, MkSinkNode {
   SinkPathNode() { this = MkSinkNode(nd, cfg) }
 }
 
@@ -1791,12 +1793,12 @@ class SinkPathNode extends PathNode, MkSinkNode {
  */
 deprecated module PathGraph {
   /** Holds if `nd` is a node in the graph of data flow path explanations. */
-  query predicate nodes(PathNode nd) { not nd.(MidPathNode).isHidden() }
+  query predicate nodes(PathNodeImpl nd) { not nd.(MidPathNode).isHidden() }
 
   /**
    * Gets a node to which data from `nd` may flow in one step, skipping over hidden nodes.
    */
-  private PathNode succ0(PathNode nd) {
+  private PathNodeImpl succ0(PathNodeImpl nd) {
     result = getASuccessorIfHidden*(nd.getASuccessor()) and
     // skip hidden nodes
     nodes(nd) and
@@ -1811,7 +1813,7 @@ deprecated module PathGraph {
    * successor. Then `succ0` will yield two edges `src` &rarr; `nd1` and `nd1` &rarr; `nd2`,
    * to which `succ1` will add the edge `src` &rarr; `nd2`.
    */
-  private PathNode succ1(PathNode nd) {
+  private PathNodeImpl succ1(PathNodeImpl nd) {
     result = succ0(nd)
     or
     result = succ0(initialMidNode(nd))
@@ -1825,14 +1827,14 @@ deprecated module PathGraph {
    * predecessor. Then `succ1` will yield two edges `nd1` &rarr; `nd2` and `nd2` &rarr; `snk`,
    * while `succ2` will yield just one edge `nd1` &rarr; `snk`.
    */
-  private PathNode succ2(PathNode nd) {
+  private PathNodeImpl succ2(PathNodeImpl nd) {
     result = succ1(nd)
     or
     succ1(nd) = finalMidNode(result)
   }
 
   /** Holds if `pred` &rarr; `succ` is an edge in the graph of data flow path explanations. */
-  query predicate edges(PathNode pred, PathNode succ) {
+  query predicate edges(PathNodeImpl pred, PathNodeImpl succ) {
     succ = succ2(pred) and
     // skip over uninteresting edges
     not succ = initialMidNode(pred) and

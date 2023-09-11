@@ -298,7 +298,7 @@ module Private {
   DataFlowType getNodeType(Node node) { result = TTodoDataFlowType() and exists(node) }
 
   predicate nodeIsHidden(Node node) {
-    DataFlow::PathNode::shouldNodeBeHidden(node)
+    DataFlow::PathNodeImpl::shouldNodeBeHidden(node)
     or
     node instanceof FlowSummaryNode
     or
