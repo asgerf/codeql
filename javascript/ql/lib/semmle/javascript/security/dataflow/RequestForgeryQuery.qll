@@ -15,6 +15,8 @@ private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
 private import semmle.javascript.dataflow2.BarrierGuards
 
 module ConfigurationArgs implements DataFlow2::ConfigSig {
+  import DefaultSanitizerGuards
+
   predicate isSource(DataFlow::Node source) { source.(Source).isServerSide() }
 
   predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
@@ -22,7 +24,7 @@ module ConfigurationArgs implements DataFlow2::ConfigSig {
   predicate isBarrier(DataFlow::Node node) {
     node instanceof Sanitizer
     or
-    barrierGuardBlocksNode(node, DataFlow::FlowLabel::taint())
+    barrierGuardBlocksNode(node)
   }
 
   predicate isBarrierOut(DataFlow::Node node) { sanitizingPrefixEdge(node, _) }

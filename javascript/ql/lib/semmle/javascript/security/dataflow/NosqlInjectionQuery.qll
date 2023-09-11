@@ -30,10 +30,12 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
 
   import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
 
+  predicate isBarrier(DataFlow::Node node) { barrierGuardBlocksNode(node) }
+
   predicate isBarrier(DataFlow::Node node, FlowState state) {
     node instanceof Sanitizer and state.isTaint()
     or
-    barrierGuardBlocksNode(node, _) and state.isTaint()
+    barrierGuardBlocksNode(node, state)
     or
     deduplicationBarrier(node, state)
   }
@@ -54,6 +56,12 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
     or
     deduplicationStep(node1, state1, node2, state2)
   }
+
+  private predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
+    guard instanceof TaintedObject::SanitizerGuard
+  }
+
+  import MakeSanitizerGuards<isBarrierGuard/1>
 }
 
 module Configuration = TaintTracking2::GlobalWithState<ConfigurationArgs>;

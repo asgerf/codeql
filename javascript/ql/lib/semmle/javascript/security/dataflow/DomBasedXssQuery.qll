@@ -56,7 +56,7 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
     node instanceof ContainsHtmlGuard
   }
 
-  import MakeBarrierGuards<isBarrierGuard/1>
+  import MakeSanitizerGuards<isBarrierGuard/1>
 
   predicate isBarrier(DataFlow::Node node) {
     node instanceof Sanitizer

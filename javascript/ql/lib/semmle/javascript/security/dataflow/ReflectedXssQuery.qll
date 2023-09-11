@@ -18,8 +18,15 @@ module ConfigurationArgs implements DataFlow2::ConfigSig {
   predicate isBarrier(DataFlow::Node node) {
     node instanceof Sanitizer
     or
-    barrierGuardBlocksNode(node, _)
+    barrierGuardBlocksNode(node)
   }
+
+  private predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
+    guard instanceof QuoteGuard or
+    guard instanceof ContainsHtmlGuard
+  }
+
+  import MakeSanitizerGuards<isBarrierGuard/1>
 }
 
 module Configuration = TaintTracking2::Global<ConfigurationArgs>;

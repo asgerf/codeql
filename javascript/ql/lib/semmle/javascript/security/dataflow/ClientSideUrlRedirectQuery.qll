@@ -30,7 +30,9 @@ module ConfigurationArg implements DataFlow2::StateConfigSig {
     sink instanceof Sink and state.isTaint()
   }
 
-  predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
+  predicate isBarrier(DataFlow::Node node) {
+    node instanceof Sanitizer or barrierGuardBlocksNode(node)
+  }
 
   predicate isBarrier(DataFlow::Node node, FlowState state) {
     barrierGuardBlocksNode(node, state)
@@ -58,6 +60,12 @@ module ConfigurationArg implements DataFlow2::StateConfigSig {
       state1 = state2
     )
   }
+
+  private predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
+    guard instanceof HostnameSanitizerGuard
+  }
+
+  import MakeSanitizerGuards<isBarrierGuard/1>
 }
 
 module Configuration = TaintTracking2::GlobalWithState<ConfigurationArg>;

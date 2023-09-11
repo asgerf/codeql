@@ -249,12 +249,12 @@ module MakeBarrierGuards<isBarrierGuardSig/1 isBarrierGuard> {
   }
 
   pragma[nomagic]
-  predicate barrierGuardBlocksNode(DataFlow::Node nd, string label) {
-    barrierGuardBlocksNode(_, nd, label)
+  predicate barrierGuardBlocksNode(DataFlow::Node node, string label) {
+    barrierGuardBlocksNode(_, node, label)
   }
 
   pragma[nomagic]
-  predicate barrierGuardBlocksNode(DataFlow::Node nd) { barrierGuardBlocksNode(_, nd, "") }
+  predicate barrierGuardBlocksNode(DataFlow::Node node) { barrierGuardBlocksNode(_, node, "") }
 
   pragma[nomagic]
   predicate barrierGuardBlocksNodeIncludeHeuristicCheck(DataFlow::Node nd, string label) {

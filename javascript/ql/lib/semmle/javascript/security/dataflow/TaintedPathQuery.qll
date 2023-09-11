@@ -8,7 +8,8 @@
  */
 
 import javascript
-import TaintedPathCustomizations::TaintedPath
+private import TaintedPathCustomizations::TaintedPath as TaintedPath
+import TaintedPath
 private import semmle.javascript.dataflow2.DataFlow as DataFlow2
 private import semmle.javascript.dataflow2.BarrierGuards
 private import semmle.javascript.dataflow2.DeduplicateFlowState
@@ -38,15 +39,21 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
 
   import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
 
+  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+    node instanceof TaintedPath::BarrierGuardNode
+  }
+
+  private import MakeBarrierGuards<isBarrierGuard/1>
+
   predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel label) {
     node instanceof Sanitizer and exists(label)
     or
     barrierGuardBlocksNode(node, label)
     or
-    barrierGuardBlocksNode(node, "") and exists(label)
-    or
     deduplicationBarrier(node, label)
   }
+
+  predicate isBarrier(DataFlow::Node node) { barrierGuardBlocksNode(node) }
 
   // predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) { guard instanceof BarrierGuardNode }
   predicate isAdditionalFlowStep(
