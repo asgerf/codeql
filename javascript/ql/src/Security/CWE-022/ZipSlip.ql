@@ -14,10 +14,10 @@
 
 import javascript
 import semmle.javascript.security.dataflow.ZipSlipQuery
-import DataFlow::PathGraph
+import ZipSlipFlow::PathGraph
 
-from Configuration cfg, DataFlow::PathNode source, DataFlow::PathNode sink
-where cfg.hasFlowPath(source, sink)
+from ZipSlipFlow::PathNode source, ZipSlipFlow::PathNode sink
+where ZipSlipFlow::flowPath(source, sink)
 select source.getNode(), source, sink,
   "Unsanitized archive entry, which may contain '..', is used in a $@.", sink.getNode(),
   "file system operation"
