@@ -48,14 +48,14 @@ class AdditionalFlowStep extends Unit {
   /**
    * Holds if `pred` should be stored in the given `content` of the object `succ`.
    */
-  predicate storeStep(DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ) {
+  predicate storeStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
     none()
   }
 
   /**
    * Holds if the given `content` of the object in `pred` should be read into `succ`.
    */
-  predicate readStep(DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ) {
+  predicate readStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
     none()
   }
 }
@@ -107,12 +107,12 @@ module AdditionalFlowStep {
    * Holds if `pred` should be stored in the object `succ` under the property `prop`.
    */
   cached
-  predicate storeStep(DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ) {
+  predicate storeStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
     any(AdditionalFlowStep s).storeStep(pred, content, succ)
     or
     exists(string prop |
       any(SharedFlowStep s).storeStep(pred, succ, prop) and
-      content = DataFlow2::ContentSet::fromLegacyProperty(prop)
+      content = DataFlow::ContentSet::fromLegacyProperty(prop)
     )
   }
 
@@ -120,12 +120,12 @@ module AdditionalFlowStep {
    * Holds if the property `prop` of the object `pred` should be read into `succ`.
    */
   cached
-  predicate readStep(DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ) {
+  predicate readStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
     any(AdditionalFlowStep s).readStep(pred, content, succ)
     or
     exists(string prop |
       any(SharedFlowStep s).loadStep(pred, succ, prop) and
-      content = DataFlow2::ContentSet::fromLegacyProperty(prop)
+      content = DataFlow::ContentSet::fromLegacyProperty(prop)
     )
   }
 }
@@ -335,7 +335,7 @@ module SharedFlowStep {
     any(SharedFlowStep s).storeStep(pred, succ, prop)
     or
     any(AdditionalFlowStep s)
-        .storeStep(pred, DataFlow2::ContentSet::property(prop), succ.getALocalUse())
+        .storeStep(pred, DataFlow::ContentSet::property(prop), succ.getALocalUse())
     or
     any(LegacyFlowStep s).storeStep(pred, succ, prop)
   }
@@ -347,7 +347,7 @@ module SharedFlowStep {
   predicate loadStep(DataFlow::Node pred, DataFlow::Node succ, string prop) {
     any(SharedFlowStep s).loadStep(pred, succ, prop)
     or
-    any(AdditionalFlowStep s).readStep(pred, DataFlow2::ContentSet::property(prop), succ)
+    any(AdditionalFlowStep s).readStep(pred, DataFlow::ContentSet::property(prop), succ)
     or
     any(LegacyFlowStep s).loadStep(pred, succ, prop)
   }

@@ -16,29 +16,29 @@ class ForOfLoopStep extends AdditionalFlowInternal {
   }
 
   override predicate readStep(
-    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ
   ) {
     exists(ForOfStmt stmt | pred = stmt.getIterationDomain().flow() |
       contents =
         [
-          DataFlow2::ContentSet::arrayElement(), DataFlow2::ContentSet::setElement(),
-          DataFlow2::ContentSet::iteratorElement()
+          DataFlow::ContentSet::arrayElement(), DataFlow::ContentSet::setElement(),
+          DataFlow::ContentSet::iteratorElement()
         ] and
       succ = DataFlow::lvalueNode(stmt.getLValue())
       or
-      contents = DataFlow2::ContentSet::mapKey() and
+      contents = DataFlow::ContentSet::mapKey() and
       succ = getSynthesizedNode(stmt, "map-key")
       or
-      contents = DataFlow2::ContentSet::mapValueAll() and
+      contents = DataFlow::ContentSet::mapValueAll() and
       succ = getSynthesizedNode(stmt, "map-value")
       or
-      contents = DataFlow2::ContentSet::iteratorError() and
+      contents = DataFlow::ContentSet::iteratorError() and
       succ = stmt.getIterationDomain().getExceptionTarget()
     )
   }
 
   override predicate storeStep(
-    DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ
   ) {
     exists(ForOfStmt stmt |
       pred = getSynthesizedNode(stmt, "map-key") and

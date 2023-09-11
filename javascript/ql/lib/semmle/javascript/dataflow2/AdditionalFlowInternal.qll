@@ -26,10 +26,10 @@ class AdditionalFlowInternal extends DataFlow::AdditionalFlowStep {
   /**
    * Holds if `node` should only permit flow of values stored in `contents`.
    */
-  predicate expectsContent(DataFlow::Node node, DataFlow2::ContentSet contents) { none() }
+  predicate expectsContent(DataFlow::Node node, DataFlow::ContentSet contents) { none() }
 
   /**
    * Holds if `node` should not permit flow of values stored in `contents`.
    */
-  predicate clearsContent(DataFlow::Node node, DataFlow2::ContentSet contents) { none() }
+  predicate clearsContent(DataFlow::Node node, DataFlow::ContentSet contents) { none() }
 }

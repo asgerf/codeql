@@ -18,24 +18,24 @@ private import semmle.javascript.dataflow2.AdditionalFlowInternal
  * ```
  */
 class GeneratorFunctionStep extends AdditionalFlowInternal {
-  override predicate expectsContent(DataFlow::Node node, DataFlow2::ContentSet contents) {
+  override predicate expectsContent(DataFlow::Node node, DataFlow::ContentSet contents) {
     // Ensure that the return value can only return iterator contents. This is needed for 'yield*'.
     exists(Function fun |
       fun.isGenerator() and
       node = TFunctionReturnNode(fun) and
-      contents = DataFlow2::ContentSet::iteratorFilter()
+      contents = DataFlow::ContentSet::iteratorFilter()
     )
   }
 
   override predicate storeStep(
-    DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ
   ) {
     // `yield x`. Store into the return value's iterator element.
     exists(Function fun, YieldExpr yield | fun.isGenerator() |
       not yield.isDelegating() and
       yield.getContainer() = fun and
       pred = yield.getOperand().flow() and
-      content = DataFlow2::ContentSet::iteratorElement() and
+      content = DataFlow::ContentSet::iteratorElement() and
       succ = TFunctionReturnNode(fun)
     )
     or
@@ -43,7 +43,7 @@ class GeneratorFunctionStep extends AdditionalFlowInternal {
       // Store thrown exceptions in the iterator-error
       pred = TExceptionalFunctionReturnNode(f) and
       succ = TFunctionReturnNode(f) and
-      content = DataFlow2::ContentSet::iteratorError()
+      content = DataFlow::ContentSet::iteratorError()
     )
   }
 

@@ -27,26 +27,26 @@ private int firstSpreadIndex(ArrayExpr expr) {
  */
 class ArrayLiteralStep extends DataFlow::AdditionalFlowStep {
   override predicate storeStep(
-    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ
   ) {
     exists(ArrayExpr array, int i |
       pred = array.getElement(i).flow() and
       succ = array.flow()
     |
       if i >= firstSpreadIndex(array)
-      then contents = DataFlow2::ContentSet::arrayElement() // after a spread operator, store into unknown indices
-      else contents = DataFlow2::ContentSet::arrayElementFromInt(i)
+      then contents = DataFlow::ContentSet::arrayElement() // after a spread operator, store into unknown indices
+      else contents = DataFlow::ContentSet::arrayElementFromInt(i)
     )
   }
 
   override predicate readStep(
-    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ
   ) {
     exists(SpreadElement spread |
       spread = any(ArrayExpr array).getAnElement() and
       pred = spread.getOperand().flow() and
       succ = spread.flow() and
-      contents = DataFlow2::ContentSet::arrayElement()
+      contents = DataFlow::ContentSet::arrayElement()
     )
   }
 }
@@ -76,13 +76,13 @@ private predicate isLikelyArrayIndex(Expr e) {
  */
 class DynamicArrayStoreStep extends DataFlow::AdditionalFlowStep {
   override predicate storeStep(
-    DataFlow::Node pred, DataFlow2::ContentSet contents, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet contents, DataFlow::Node succ
   ) {
     exists(Assignment assignment, IndexExpr lvalue |
       lvalue = assignment.getLhs() and
       not exists(lvalue.getPropertyName()) and
       isLikelyArrayIndex(lvalue.getPropertyNameExpr()) and
-      contents = DataFlow2::ContentSet::arrayElement() and
+      contents = DataFlow::ContentSet::arrayElement() and
       succ.(DataFlow::ExprPostUpdateNode).getPreUpdateNode() = lvalue.getBase().flow()
     |
       pred = assignment.(Assignment).getRhs().flow()

@@ -1913,4 +1913,5 @@ module DataFlow {
   import TypeTracking
   import AdditionalFlowSteps
   import internal.FunctionWrapperSteps
+  import semmle.javascript.dataflow2.DataFlow
 }

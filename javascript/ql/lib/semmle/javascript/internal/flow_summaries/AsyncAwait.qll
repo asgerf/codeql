@@ -38,21 +38,21 @@ class AsyncAwait extends AdditionalFlowInternal {
     tag = "async-raw-return"
   }
 
-  override predicate clearsContent(DataFlow::Node node, DataFlow2::ContentSet contents) {
+  override predicate clearsContent(DataFlow::Node node, DataFlow::ContentSet contents) {
     node = getSynthesizedNode(_, "async-raw-return") and
-    contents = DataFlow2::ContentSet::promiseFilter()
+    contents = DataFlow::ContentSet::promiseFilter()
     or
     // The result of 'await' cannot be a promise. This is needed for the local flow step into 'await'
     node.asExpr() instanceof AwaitExpr and
-    contents = DataFlow2::ContentSet::promiseFilter()
+    contents = DataFlow::ContentSet::promiseFilter()
   }
 
-  override predicate expectsContent(DataFlow::Node node, DataFlow2::ContentSet contents) {
+  override predicate expectsContent(DataFlow::Node node, DataFlow::ContentSet contents) {
     // The final return value must be a promise. This is needed for the local flow step into the return node.
     exists(Function f |
       f.isAsync() and
       node = TFunctionReturnNode(f) and
-      contents = DataFlow2::ContentSet::promiseFilter()
+      contents = DataFlow::ContentSet::promiseFilter()
     )
   }
 
@@ -74,30 +74,28 @@ class AsyncAwait extends AdditionalFlowInternal {
     )
   }
 
-  override predicate readStep(
-    DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
-  ) {
+  override predicate readStep(DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ) {
     exists(AwaitExpr await | pred = await.getOperand().flow() |
-      content = DataFlow2::ContentSet::promiseValue() and
+      content = DataFlow::ContentSet::promiseValue() and
       succ = await.flow()
       or
-      content = DataFlow2::ContentSet::promiseError() and
+      content = DataFlow::ContentSet::promiseError() and
       succ = await.getExceptionTarget()
     )
   }
 
   override predicate storeStep(
-    DataFlow::Node pred, DataFlow2::ContentSet content, DataFlow::Node succ
+    DataFlow::Node pred, DataFlow::ContentSet content, DataFlow::Node succ
   ) {
     exists(Function f | f.isAsync() |
       // Box returned non-promise values in a promise
       pred = getSynthesizedNode(f, "async-raw-return") and
-      content = DataFlow2::ContentSet::promiseValue() and
+      content = DataFlow::ContentSet::promiseValue() and
       succ = TFunctionReturnNode(f)
       or
       // Store thrown exceptions in promise-error
       pred = TExceptionalFunctionReturnNode(f) and
-      content = DataFlow2::ContentSet::promiseError() and
+      content = DataFlow::ContentSet::promiseError() and
       succ = TFunctionReturnNode(f)
     )
   }
