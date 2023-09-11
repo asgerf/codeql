@@ -15,10 +15,16 @@ module ConfigArg implements DataFlow2::ConfigSig {
 
   predicate isSink(DataFlow::Node node) { node = getACall("sink").getAnArgument() }
 
+  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+    node instanceof BasicBarrierGuard
+  }
+
+  import MakeBarrierGuards<isBarrierGuard/1>
+
   predicate isBarrier(DataFlow::Node node) {
     node.(DataFlow::InvokeNode).getCalleeName().matches("sanitizer_%")
     or
-    barrierGuardBlocksNode(node, _)
+    barrierGuardBlocksNode(node)
   }
 }
 

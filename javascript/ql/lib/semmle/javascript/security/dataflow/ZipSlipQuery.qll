@@ -34,6 +34,7 @@ module ZipSlipConfig implements DataFlow::StateConfigSig {
   }
 
   import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
+  import DefaultBarrierGuards
 
   predicate isBarrier(DataFlow::Node node) {
     node instanceof TaintedPath::Sanitizer

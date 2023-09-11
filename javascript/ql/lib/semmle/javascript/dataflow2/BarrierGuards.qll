@@ -22,7 +22,11 @@ module MakeBarrierGuards<isBarrierGuardSig/1 isBarrierGuard> {
   }
 
   class ExplicitBarrierGuard extends BarrierGuard instanceof DataFlow::BarrierGuardNode {
-    ExplicitBarrierGuard() { isBarrierGuard(this) }
+    ExplicitBarrierGuard() {
+      isBarrierGuard(this)
+      or
+      this instanceof DataFlow::AdditionalBarrierGuardNode
+    }
 
     override predicate blocksExpr(boolean outcome, Expr test, string label) {
       super.blocks(outcome, test, label)
@@ -246,15 +250,35 @@ module MakeBarrierGuards<isBarrierGuardSig/1 isBarrierGuard> {
 
   pragma[nomagic]
   predicate barrierGuardBlocksNode(DataFlow::Node nd, string label) {
-    exists(BarrierGuard guard |
-      barrierGuardBlocksNode(guard, nd, label) //and
-      // Block the AdHocWhitelistCheckSanitizer by default, as it is only used by two queries
-      // not guard instanceof TaintTracking::AdHocWhitelistCheckSanitizer
-    )
+    barrierGuardBlocksNode(_, nd, label)
   }
+
+  pragma[nomagic]
+  predicate barrierGuardBlocksNode(DataFlow::Node nd) { barrierGuardBlocksNode(_, nd, "") }
 
   pragma[nomagic]
   predicate barrierGuardBlocksNodeIncludeHeuristicCheck(DataFlow::Node nd, string label) {
     exists(BarrierGuard guard | barrierGuardBlocksNode(guard, nd, label))
   }
+}
+
+module MakeSanitizerGuards<isBarrierGuardSig/1 isBarrierGuard> {
+  private predicate isBarrierGuard2(DataFlow::BarrierGuardNode node) {
+    isBarrierGuard(node)
+    or
+    node instanceof TaintTracking::AdditionalSanitizerGuardNode
+  }
+
+  import MakeBarrierGuards<isBarrierGuard2/1>
+}
+
+private predicate empty(DataFlow::BarrierGuardNode node) { none() }
+
+module DefaultSanitizerGuards = MakeSanitizerGuards<empty/1>;
+
+/** There are no barrier guards by default */
+module DefaultBarrierGuards {
+  predicate barrierGuardBlocksNode(DataFlow::Node nd, string label) { none() }
+
+  predicate barrierGuardBlocksNode(DataFlow::Node nd) { none() }
 }

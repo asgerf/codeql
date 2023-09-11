@@ -1,6 +1,5 @@
 import javascript
 import semmle.javascript.dataflow2.DataFlow as DataFlow2
-import semmle.javascript.dataflow2.BarrierGuards
 import semmle.javascript.dataflow2.FlowSummary
 
 class MkSummary extends SummarizedCallable {

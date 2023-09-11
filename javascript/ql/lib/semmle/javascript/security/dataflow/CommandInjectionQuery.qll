@@ -25,6 +25,8 @@ predicate isSinkWithHighlight(DataFlow::Node sink, DataFlow::Node highlight) {
 }
 
 module ConfigurationArgs implements DataFlow2::ConfigSig {
+  import DefaultSanitizerGuards
+
   predicate isSource(DataFlow::Node source) { source instanceof Source }
 
   predicate isSink(DataFlow::Node sink) { isSinkWithHighlight(sink, _) }

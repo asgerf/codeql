@@ -51,10 +51,17 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
 
   import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
 
+  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+    node instanceof PrefixStringSanitizer or
+    node instanceof ContainsHtmlGuard
+  }
+
+  import MakeBarrierGuards<isBarrierGuard/1>
+
   predicate isBarrier(DataFlow::Node node) {
     node instanceof Sanitizer
     or
-    barrierGuardBlocksNode(node, "")
+    barrierGuardBlocksNode(node)
   }
 
   predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel lbl) {

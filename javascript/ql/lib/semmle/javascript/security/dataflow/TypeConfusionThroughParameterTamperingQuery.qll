@@ -25,6 +25,13 @@ module TypeConfusionConfig implements DataFlow::ConfigSig {
     sink.analyze().getAType() = TTObject()
   }
 
+  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+    node instanceof TypeOfTestBarrier or
+    node instanceof IsArrayBarrier
+  }
+
+  import MakeBarrierGuards<isBarrierGuard/1>
+
   predicate isBarrier(DataFlow::Node node) {
     node instanceof Barrier or barrierGuardBlocksNode(node, _)
   }
