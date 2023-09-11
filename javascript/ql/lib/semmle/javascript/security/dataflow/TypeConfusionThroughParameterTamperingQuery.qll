@@ -9,34 +9,31 @@
  */
 
 import javascript
+private import semmle.javascript.dataflow2.BarrierGuards
 private import semmle.javascript.dataflow.InferredTypes
 import TypeConfusionThroughParameterTamperingCustomizations::TypeConfusionThroughParameterTampering
 
 /**
- * A taint tracking configuration for type confusion for HTTP request inputs.
+ * Data flow configuration for type confusion for HTTP request inputs.
  */
-class Configuration extends DataFlow::Configuration {
-  Configuration() { this = "TypeConfusionThroughParameterTampering" }
+module TypeConfusionConfig implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node source) { source instanceof Source }
 
-  override predicate isSource(DataFlow::Node source) { source instanceof Source }
-
-  override predicate isSink(DataFlow::Node sink) {
+  predicate isSink(DataFlow::Node sink) {
     sink instanceof Sink and
     sink.analyze().getAType() = TTString() and
     sink.analyze().getAType() = TTObject()
   }
 
-  override predicate isBarrier(DataFlow::Node node) {
-    super.isBarrier(node)
-    or
-    node instanceof Barrier
-  }
-
-  override predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
-    guard instanceof TypeOfTestBarrier or
-    guard instanceof IsArrayBarrier
+  predicate isBarrier(DataFlow::Node node) {
+    node instanceof Barrier or barrierGuardBlocksNode(node, _)
   }
 }
+
+/**
+ * Data flow for type confusion for HTTP request inputs.
+ */
+module TypeConfusionFlow = DataFlow::Global<TypeConfusionConfig>;
 
 private class TypeOfTestBarrier extends DataFlow::BarrierGuardNode, DataFlow::ValueNode {
   override EqualityTest astNode;
@@ -59,5 +56,27 @@ private class IsArrayBarrier extends DataFlow::BarrierGuardNode, DataFlow::CallN
   override predicate blocks(boolean outcome, Expr e) {
     e = this.getArgument(0).asExpr() and
     outcome = [true, false] // separation between string/array removes type confusion in both branches
+  }
+}
+
+/**
+ * DEPRECATED. Use the `TypeConfusionFlow` module instead.
+ */
+deprecated class Configuration extends DataFlow::Configuration {
+  Configuration() { this = "TypeConfusionThroughParameterTampering" }
+
+  override predicate isSource(DataFlow::Node source) { TypeConfusionConfig::isSource(source) }
+
+  override predicate isSink(DataFlow::Node sink) { TypeConfusionConfig::isSink(sink) }
+
+  override predicate isBarrier(DataFlow::Node node) {
+    super.isBarrier(node)
+    or
+    node instanceof Barrier
+  }
+
+  override predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
+    guard instanceof TypeOfTestBarrier or
+    guard instanceof IsArrayBarrier
   }
 }
