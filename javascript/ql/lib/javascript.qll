@@ -142,4 +142,3 @@ import semmle.javascript.linters.ESLint
 import semmle.javascript.linters.JSLint
 import semmle.javascript.linters.Linting
 import semmle.javascript.security.dataflow.RemoteFlowSources
-private import semmle.javascript.dataflow2.DataFlow as DataFlow2

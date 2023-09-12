@@ -9,7 +9,6 @@
  */
 
 import javascript
-private import semmle.javascript.dataflow2.BarrierGuards
 private import semmle.javascript.dataflow.InferredTypes
 import TypeConfusionThroughParameterTamperingCustomizations::TypeConfusionThroughParameterTampering
 
@@ -25,16 +24,12 @@ module TypeConfusionConfig implements DataFlow::ConfigSig {
     sink.analyze().getAType() = TTObject()
   }
 
-  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+  predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
     node instanceof TypeOfTestBarrier or
     node instanceof IsArrayBarrier
   }
 
-  import MakeBarrierGuards<isBarrierGuard/1>
-
-  predicate isBarrier(DataFlow::Node node) {
-    node instanceof Barrier or barrierGuardBlocksNode(node, _)
-  }
+  predicate isBarrier(DataFlow::Node node) { node instanceof Barrier }
 }
 
 /**
@@ -83,7 +78,6 @@ deprecated class Configuration extends DataFlow::Configuration {
   }
 
   override predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
-    guard instanceof TypeOfTestBarrier or
-    guard instanceof IsArrayBarrier
+    TypeConfusionConfig::isBarrierGuard(guard)
   }
 }

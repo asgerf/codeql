@@ -141,10 +141,10 @@ edges
 | path-assignment.js:42:25:42:27 | key | path-assignment.js:42:25:42:27 | key |
 | path-assignment.js:42:32:42:37 | target | path-assignment.js:42:32:42:42 | target[key] |
 | path-assignment.js:42:32:42:37 | target | path-assignment.js:42:32:42:42 | target[key] |
+| path-assignment.js:42:32:42:42 | target[key] | path-assignment.js:42:9:42:48 | target |
+| path-assignment.js:42:32:42:42 | target[key] | path-assignment.js:42:9:42:48 | target |
 | path-assignment.js:42:32:42:42 | target[key] | path-assignment.js:42:32:42:48 | target[key] \|\| {} |
 | path-assignment.js:42:32:42:42 | target[key] | path-assignment.js:42:32:42:48 | target[key] \|\| {} |
-| path-assignment.js:42:32:42:48 | target[key] \|\| {} | path-assignment.js:42:9:42:48 | target |
-| path-assignment.js:42:32:42:48 | target[key] \|\| {} | path-assignment.js:42:9:42:48 | target |
 | path-assignment.js:42:32:42:48 | target[key] \|\| {} | path-assignment.js:42:32:42:48 | target[key] \|\| {} |
 | path-assignment.js:42:32:42:48 | target[key] \|\| {} | path-assignment.js:42:32:42:48 | target[key] \|\| {} |
 | path-assignment.js:42:39:42:41 | key | path-assignment.js:42:32:42:42 | target[key] |
@@ -175,10 +175,10 @@ edges
 | path-assignment.js:59:25:59:27 | key | path-assignment.js:59:25:59:27 | key |
 | path-assignment.js:59:32:59:37 | target | path-assignment.js:59:32:59:42 | target[key] |
 | path-assignment.js:59:32:59:37 | target | path-assignment.js:59:32:59:42 | target[key] |
+| path-assignment.js:59:32:59:42 | target[key] | path-assignment.js:59:9:59:48 | target |
+| path-assignment.js:59:32:59:42 | target[key] | path-assignment.js:59:9:59:48 | target |
 | path-assignment.js:59:32:59:42 | target[key] | path-assignment.js:59:32:59:48 | target[key] \|\| {} |
 | path-assignment.js:59:32:59:42 | target[key] | path-assignment.js:59:32:59:48 | target[key] \|\| {} |
-| path-assignment.js:59:32:59:48 | target[key] \|\| {} | path-assignment.js:59:9:59:48 | target |
-| path-assignment.js:59:32:59:48 | target[key] \|\| {} | path-assignment.js:59:9:59:48 | target |
 | path-assignment.js:59:32:59:48 | target[key] \|\| {} | path-assignment.js:59:32:59:48 | target[key] \|\| {} |
 | path-assignment.js:59:32:59:48 | target[key] \|\| {} | path-assignment.js:59:32:59:48 | target[key] \|\| {} |
 | path-assignment.js:59:39:59:41 | key | path-assignment.js:59:32:59:42 | target[key] |
@@ -209,10 +209,10 @@ edges
 | path-assignment.js:69:25:69:27 | key | path-assignment.js:69:25:69:27 | key |
 | path-assignment.js:69:32:69:37 | target | path-assignment.js:69:32:69:42 | target[key] |
 | path-assignment.js:69:32:69:37 | target | path-assignment.js:69:32:69:42 | target[key] |
+| path-assignment.js:69:32:69:42 | target[key] | path-assignment.js:69:9:69:48 | target |
+| path-assignment.js:69:32:69:42 | target[key] | path-assignment.js:69:9:69:48 | target |
 | path-assignment.js:69:32:69:42 | target[key] | path-assignment.js:69:32:69:48 | target[key] \|\| {} |
 | path-assignment.js:69:32:69:42 | target[key] | path-assignment.js:69:32:69:48 | target[key] \|\| {} |
-| path-assignment.js:69:32:69:48 | target[key] \|\| {} | path-assignment.js:69:9:69:48 | target |
-| path-assignment.js:69:32:69:48 | target[key] \|\| {} | path-assignment.js:69:9:69:48 | target |
 | path-assignment.js:69:32:69:48 | target[key] \|\| {} | path-assignment.js:69:32:69:48 | target[key] \|\| {} |
 | path-assignment.js:69:32:69:48 | target[key] \|\| {} | path-assignment.js:69:32:69:48 | target[key] \|\| {} |
 | path-assignment.js:69:39:69:41 | key | path-assignment.js:69:32:69:42 | target[key] |

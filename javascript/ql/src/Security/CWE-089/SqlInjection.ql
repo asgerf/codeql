@@ -14,12 +14,11 @@
  */
 
 import javascript
-import semmle.javascript.dataflow2.DataFlow as DataFlow2
 import semmle.javascript.security.dataflow.SqlInjectionQuery as SqlInjection
 import semmle.javascript.security.dataflow.NosqlInjectionQuery as NosqlInjection
 
 module Merged =
-  DataFlow2::MergePathGraph<SqlInjection::Configuration::PathNode,
+  DataFlow::MergePathGraph<SqlInjection::Configuration::PathNode,
     NosqlInjection::Configuration::PathNode, SqlInjection::Configuration::PathGraph,
     NosqlInjection::Configuration::PathGraph>;
 

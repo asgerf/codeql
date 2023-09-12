@@ -1,21 +1,22 @@
 private import javascript
-private import BarrierGuards
-private import DeduplicateFlowState
-private import DataFlowImpl as DataFlowImpl
-private import DataFlow as DF
-private import javascript::DataFlow
+private import semmle.javascript.dataflow2.BarrierGuards
+private import semmle.javascript.dataflow2.DeduplicateFlowState
+private import semmle.javascript.dataflow2.DataFlow as SharedDataFlow
 
 class FlowState = DataFlow::FlowLabel;
 
-private class Node = DataFlow::Node;
-
-signature class AdditionalGuardClass extends DataFlow::BarrierGuardNode;
-
+/**
+ * The public parts of the shared-data flow API, with some features shadowed by JS-specific wrappers.
+ */
 module Public {
-  import DF // Re-export while shadowing original signatures
+  import SharedDataFlow // Re-export while shadowing original signatures
+
+  class Node = DataFlow::Node; // Needed to resolve an ambiguity between two other aliases
 
   //
-  // The following is a copy of ConfigSig and StateConfigSig with the addition of `isBarrierGuard`
+  // The following is a copy of ConfigSig and StateConfigSig with two changes:
+  //  - The addition of `isBarrierGuard`
+  //  - `FlowState` is not part of the signature, and is instead fixed to `DataFlow::FlowLabel`.
   //
   /** An input configuration for data flow. */
   signature module ConfigSig {
@@ -215,94 +216,128 @@ module Public {
      */
     default predicate includeHiddenNodes() { none() }
   }
+
+  /**
+   * An empty set of barrier guards.
+   *
+   * We don't want to use `AdditionalBarrierGuardNode` here, as it forces evaluation of parts of the
+   * old data flow library. There are no nodes in it other than derived ones, which we get anyway.
+   */
+  abstract private class EmptyGuard extends DataFlow::BarrierGuardNode { }
+
+  /** Constructs a global data flow computation. */
+  module Global<ConfigSig S> implements SharedDataFlow::GlobalFlowSig {
+    import SharedDataFlow::Global<Convert<S, EmptyGuard>>
+  }
+
+  /** Constructs a global data flow computation using flow state. */
+  module GlobalWithState<StateConfigSig S> implements SharedDataFlow::GlobalFlowSig {
+    import SharedDataFlow::GlobalWithState<ConvertWithState<S, EmptyGuard>>
+  }
 }
 
-module Convert<ConfigSig C, AdditionalGuardClass AdditionalGuard> implements DF::ConfigSig {
-  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
-    C::isBarrierGuard(node)
-    or
-    node instanceof AdditionalGuard
+import Conversions
+
+private module Conversions {
+  private import javascript::DataFlow
+
+  //
+  // TODO: Pass in the `DefaultSanitizerGuards::barrierGuardBlocksNode` predicate instead, to avoid repeating this work for each query.
+  //
+  /** Either `AdditionalBarrierGuardNode` or `AdditionalSanitizerGuardNode`. */
+  signature class AdditionalGuardClass extends DataFlow::BarrierGuardNode;
+
+  module Convert<ConfigSig C, AdditionalGuardClass AdditionalGuard> implements
+    SharedDataFlow::ConfigSig
+  {
+    private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+      C::isBarrierGuard(node)
+      or
+      node instanceof AdditionalGuard
+    }
+
+    private import MakeBarrierGuards<isBarrierGuard/1>
+
+    predicate isSource(Node source) { C::isSource(source) }
+
+    predicate isSink(Node sink) { C::isSink(sink) }
+
+    predicate isBarrier(Node node) {
+      C::isBarrier(node) or barrierGuardBlocksNode(node) or barrierGuardBlocksNode(node, _)
+    }
+
+    predicate isBarrierIn(Node node) { C::isBarrierIn(node) }
+
+    predicate isBarrierOut(Node node) { C::isBarrierOut(node) }
+
+    predicate isAdditionalFlowStep(Node node1, Node node2) { C::isAdditionalFlowStep(node1, node2) }
+
+    predicate allowImplicitRead(Node node, ContentSet c) { C::allowImplicitRead(node, c) }
+
+    predicate neverSkip(Node node) { C::neverSkip(node) }
+
+    int fieldFlowBranchLimit() { result = C::fieldFlowBranchLimit() }
+
+    FlowFeature getAFeature() { result = C::getAFeature() }
+
+    predicate sourceGrouping(Node source, string sourceGroup) {
+      C::sourceGrouping(source, sourceGroup)
+    }
+
+    predicate sinkGrouping(Node sink, string sinkGroup) { C::sinkGrouping(sink, sinkGroup) }
+
+    predicate includeHiddenNodes() { C::includeHiddenNodes() }
   }
 
-  private import MakeBarrierGuards<isBarrierGuard/1>
+  module ConvertWithState<StateConfigSig C, AdditionalGuardClass AdditionalGuard> implements
+    SharedDataFlow::StateConfigSig
+  {
+    class FlowState = DataFlow::FlowLabel;
 
-  predicate isSource(Node source) { C::isSource(source) }
+    private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+      C::isBarrierGuard(node)
+      or
+      node instanceof AdditionalGuard
+    }
 
-  predicate isSink(Node sink) { C::isSink(sink) }
+    import MakeDeduplicateFlowState<C::isSource/2, C::isSink/2>
+    private import MakeBarrierGuards<isBarrierGuard/1>
 
-  predicate isBarrier(Node node) { C::isBarrier(node) or barrierGuardBlocksNode(node) }
+    predicate isSink(Node sink) { none() } // FIXME: forward C::isSink to MakeDeduplicateFlowState
 
-  predicate isBarrierIn(Node node) { C::isBarrierIn(node) }
+    predicate isBarrier(Node node) { C::isBarrier(node) or barrierGuardBlocksNode(node) }
 
-  predicate isBarrierOut(Node node) { C::isBarrierOut(node) }
+    predicate isBarrier(Node node, FlowState state) {
+      C::isBarrier(node, state) or
+      deduplicationBarrier(node, state) or
+      barrierGuardBlocksNode(node, state)
+    }
 
-  predicate isAdditionalFlowStep(Node node1, Node node2) { C::isAdditionalFlowStep(node1, node2) }
+    predicate isBarrierIn(Node node) { C::isBarrierIn(node) }
 
-  predicate allowImplicitRead(Node node, ContentSet c) { C::allowImplicitRead(node, c) }
+    predicate isBarrierOut(Node node) { C::isBarrierOut(node) }
 
-  predicate neverSkip(Node node) { C::neverSkip(node) }
+    predicate isAdditionalFlowStep(Node node1, Node node2) { C::isAdditionalFlowStep(node1, node2) }
 
-  int fieldFlowBranchLimit() { result = C::fieldFlowBranchLimit() }
+    predicate isAdditionalFlowStep(Node node1, FlowState state1, Node node2, FlowState state2) {
+      C::isAdditionalFlowStep(node1, state1, node2, state2) or
+      deduplicationStep(node1, state1, node2, state2)
+    }
 
-  FlowFeature getAFeature() { result = C::getAFeature() }
+    predicate allowImplicitRead(Node node, ContentSet c) { C::allowImplicitRead(node, c) }
 
-  predicate sourceGrouping(Node source, string sourceGroup) {
-    C::sourceGrouping(source, sourceGroup)
+    predicate neverSkip(Node node) { C::neverSkip(node) }
+
+    int fieldFlowBranchLimit() { result = C::fieldFlowBranchLimit() }
+
+    FlowFeature getAFeature() { result = C::getAFeature() }
+
+    predicate sourceGrouping(Node source, string sourceGroup) {
+      C::sourceGrouping(source, sourceGroup)
+    }
+
+    predicate sinkGrouping(Node sink, string sinkGroup) { C::sinkGrouping(sink, sinkGroup) }
+
+    predicate includeHiddenNodes() { C::includeHiddenNodes() }
   }
-
-  predicate sinkGrouping(Node sink, string sinkGroup) { C::sinkGrouping(sink, sinkGroup) }
-
-  predicate includeHiddenNodes() { C::includeHiddenNodes() }
-}
-
-module ConvertWithState<StateConfigSig C, AdditionalGuardClass AdditionalGuard> implements
-  DF::StateConfigSig
-{
-  class FlowState = DataFlow::FlowLabel;
-
-  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
-    C::isBarrierGuard(node)
-    or
-    node instanceof AdditionalGuard
-  }
-
-  import MakeDeduplicateFlowState<C::isSource/2, C::isSink/2>
-  private import MakeBarrierGuards<isBarrierGuard/1>
-
-  predicate isSink(Node sink) { none() }
-
-  predicate isBarrier(Node node) { C::isBarrier(node) or barrierGuardBlocksNode(node) }
-
-  predicate isBarrier(Node node, FlowState state) {
-    C::isBarrier(node, state) or
-    deduplicationBarrier(node, state) or
-    barrierGuardBlocksNode(node, state)
-  }
-
-  predicate isBarrierIn(Node node) { C::isBarrierIn(node) }
-
-  predicate isBarrierOut(Node node) { C::isBarrierOut(node) }
-
-  predicate isAdditionalFlowStep(Node node1, Node node2) { C::isAdditionalFlowStep(node1, node2) }
-
-  predicate isAdditionalFlowStep(Node node1, FlowState state1, Node node2, FlowState state2) {
-    C::isAdditionalFlowStep(node1, state1, node2, state2) or
-    deduplicationStep(node1, state1, node2, state2)
-  }
-
-  predicate allowImplicitRead(Node node, ContentSet c) { C::allowImplicitRead(node, c) }
-
-  predicate neverSkip(Node node) { C::neverSkip(node) }
-
-  int fieldFlowBranchLimit() { result = C::fieldFlowBranchLimit() }
-
-  FlowFeature getAFeature() { result = C::getAFeature() }
-
-  predicate sourceGrouping(Node source, string sourceGroup) {
-    C::sourceGrouping(source, sourceGroup)
-  }
-
-  predicate sinkGrouping(Node sink, string sinkGroup) { C::sinkGrouping(sink, sinkGroup) }
-
-  predicate includeHiddenNodes() { C::includeHiddenNodes() }
 }

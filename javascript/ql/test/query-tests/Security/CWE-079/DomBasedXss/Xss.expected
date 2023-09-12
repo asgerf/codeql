@@ -1062,12 +1062,10 @@ edges
 | tst.js:381:7:381:39 | target [taint8] | tst.js:409:18:409:23 | target [taint8] |
 | tst.js:381:16:381:39 | documen ... .search | tst.js:381:7:381:39 | target |
 | tst.js:381:16:381:39 | documen ... .search | tst.js:381:16:381:39 | documen ... .search |
-| tst.js:381:16:381:39 | documen ... .search [taint3] | tst.js:381:7:381:39 | target [taint3] |
-| tst.js:381:16:381:39 | documen ... .search [taint8] | tst.js:381:7:381:39 | target [taint8] |
 | tst.js:384:18:384:23 | target | tst.js:384:18:384:23 | target |
 | tst.js:386:18:386:23 | target | tst.js:386:18:386:29 | target.taint |
 | tst.js:386:18:386:29 | target.taint | tst.js:386:18:386:29 | target.taint |
-| tst.js:391:3:391:8 | [post update] target [taint3] | tst.js:381:16:381:39 | documen ... .search [taint3] |
+| tst.js:391:3:391:8 | [post update] target [taint3] | tst.js:381:7:381:39 | target [taint3] |
 | tst.js:391:19:391:42 | documen ... .search | tst.js:391:3:391:8 | [post update] target [taint3] |
 | tst.js:391:19:391:42 | documen ... .search | tst.js:391:19:391:42 | documen ... .search |
 | tst.js:392:18:392:23 | target [taint3] | tst.js:392:18:392:30 | target.taint3 |
@@ -1076,7 +1074,7 @@ edges
 | tst.js:397:18:397:30 | target.taint5 | tst.js:397:18:397:30 | target.taint5 |
 | tst.js:406:18:406:23 | target | tst.js:406:18:406:30 | target.taint7 |
 | tst.js:406:18:406:30 | target.taint7 | tst.js:406:18:406:30 | target.taint7 |
-| tst.js:408:3:408:8 | [post update] target [taint8] | tst.js:381:16:381:39 | documen ... .search [taint8] |
+| tst.js:408:3:408:8 | [post update] target [taint8] | tst.js:381:7:381:39 | target [taint8] |
 | tst.js:408:19:408:24 | target | tst.js:408:19:408:31 | target.taint8 |
 | tst.js:408:19:408:24 | target [taint8] | tst.js:408:19:408:31 | target.taint8 |
 | tst.js:408:19:408:31 | target.taint8 | tst.js:408:3:408:8 | [post update] target [taint8] |
@@ -2296,8 +2294,6 @@ nodes
 | tst.js:381:7:381:39 | target [taint8] | semmle.label | target [taint8] |
 | tst.js:381:16:381:39 | documen ... .search | semmle.label | documen ... .search |
 | tst.js:381:16:381:39 | documen ... .search | semmle.label | documen ... .search |
-| tst.js:381:16:381:39 | documen ... .search [taint3] | semmle.label | documen ... .search [taint3] |
-| tst.js:381:16:381:39 | documen ... .search [taint8] | semmle.label | documen ... .search [taint8] |
 | tst.js:384:18:384:23 | target | semmle.label | target |
 | tst.js:384:18:384:23 | target | semmle.label | target |
 | tst.js:386:18:386:23 | target | semmle.label | target |

@@ -1,0 +1,29 @@
+---
+sourceLocationPrefix: /Users/asger/git/code/ql/javascript/ql/src
+baselineLinesOfCode: 0
+unicodeNewlines: true
+columnKind: utf16
+primaryLanguage: javascript
+inProgress:
+  primaryLanguage: javascript
+  installedExtractors:
+    yaml:
+     - /Users/asger/git/code/target/intree/extractor-yaml/yaml
+    ruby:
+     - /Users/asger/git/code/target/intree/extractor-ruby/ruby
+    python:
+     - /Users/asger/git/code/target/intree/extractor-python/python
+    xml:
+     - /Users/asger/git/code/target/intree/extractor-xml/xml
+    javascript:
+     - /Users/asger/git/code/target/intree/extractor-javascript/javascript
+    properties:
+     - /Users/asger/git/code/target/intree/extractor-properties/properties
+    java:
+     - /Users/asger/git/code/target/intree/extractor-java/java
+    ql:
+     - /Users/asger/git/code/ql/ql/extractor-pack
+creationMetadata:
+  cliVersion: 2.14.3+202309080713plus
+  creationTime: 2023-09-12T12:24:37.802550Z
+finalised: false

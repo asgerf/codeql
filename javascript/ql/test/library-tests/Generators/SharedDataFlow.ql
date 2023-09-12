@@ -1,8 +1,7 @@
 import javascript
-import semmle.javascript.dataflow2.DataFlow as DataFlow2
 import testUtilities.ConsistencyChecking
 
-module ConfigArg implements DataFlow2::ConfigSig {
+module ConfigArg implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) { source.asExpr().getStringValue() = "source" }
 
   predicate isSink(DataFlow::Node sink) {
@@ -10,7 +9,7 @@ module ConfigArg implements DataFlow2::ConfigSig {
   }
 }
 
-module Configuration = DataFlow2::Global<ConfigArg>;
+module Configuration = DataFlow::Global<ConfigArg>;
 
 class ConsistencyConfig extends ConsistencyConfiguration {
   ConsistencyConfig() { this = "ConsistencyConfig" }

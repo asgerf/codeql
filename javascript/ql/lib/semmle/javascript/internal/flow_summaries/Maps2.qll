@@ -3,7 +3,6 @@
  */
 
 private import javascript
-private import semmle.javascript.dataflow2.DataFlow as DataFlow2
 private import semmle.javascript.dataflow2.FlowSummary
 private import FlowSummaryUtil
 

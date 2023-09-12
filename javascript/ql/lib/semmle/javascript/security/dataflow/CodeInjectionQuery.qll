@@ -9,11 +9,8 @@
 
 import javascript
 import CodeInjectionCustomizations::CodeInjection
-private import semmle.javascript.dataflow2.DataFlow as DataFlow2
-private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
-private import semmle.javascript.dataflow2.BarrierGuards
 
-module ConfigurationArgs implements DataFlow2::ConfigSig {
+module ConfigurationArgs implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) { source instanceof Source }
 
   predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
@@ -26,7 +23,7 @@ module ConfigurationArgs implements DataFlow2::ConfigSig {
   }
 }
 
-module Configuration = TaintTracking2::Global<ConfigurationArgs>;
+module Configuration = TaintTracking::Global<ConfigurationArgs>;
 
 /**
  * A taint-tracking configuration for reasoning about code injection vulnerabilities.

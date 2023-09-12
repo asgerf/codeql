@@ -1,9 +1,6 @@
 import javascript
-private import semmle.javascript.dataflow2.DataFlow as DataFlow2
-private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
-private import semmle.javascript.dataflow2.BarrierGuards
 
-module TestDataFlowConfigurationArgs implements DataFlow2::ConfigSig {
+module TestDataFlowConfigurationArgs implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node src) {
     exists(VariableDeclarator vd |
       vd.getBindingPattern().(VarDecl).getName().matches("%source%") and
@@ -25,12 +22,10 @@ module TestDataFlowConfigurationArgs implements DataFlow2::ConfigSig {
     )
     or
     node.asExpr().(PropAccess).getPropertyName() = "notTracked"
-    or
-    barrierGuardBlocksNode(node, DataFlow::FlowLabel::data())
   }
 }
 
-module TestDataFlowConfiguration = DataFlow2::Global<TestDataFlowConfigurationArgs>;
+module TestDataFlowConfiguration = DataFlow::Global<TestDataFlowConfigurationArgs>;
 
 query predicate dataFlow(DataFlow::Node src, DataFlow::Node snk) {
   TestDataFlowConfiguration::flow(src, snk)
@@ -42,7 +37,7 @@ class Parity extends DataFlow::FlowLabel {
   Parity flip() { result != this }
 }
 
-module FlowLabelConfigArg implements DataFlow2::StateConfigSig {
+module FlowLabelConfigArg implements DataFlow::StateConfigSig {
   class FlowState = DataFlow::FlowLabel;
 
   predicate isSource(DataFlow::Node nd, FlowState lbl) {
@@ -55,8 +50,6 @@ module FlowLabelConfigArg implements DataFlow2::StateConfigSig {
     lbl = "even"
   }
 
-  predicate isBarrier(DataFlow::Node node, FlowState state) { barrierGuardBlocksNode(node, state) }
-
   predicate isAdditionalFlowStep(
     DataFlow::Node pred, FlowState predLabel, DataFlow::Node succ, FlowState succLabel
   ) {
@@ -68,13 +61,13 @@ module FlowLabelConfigArg implements DataFlow2::StateConfigSig {
   }
 }
 
-module FlowLabelConfig = DataFlow2::GlobalWithState<FlowLabelConfigArg>;
+module FlowLabelConfig = DataFlow::GlobalWithState<FlowLabelConfigArg>;
 
 query predicate flowLabels(FlowLabelConfig::PathNode source, FlowLabelConfig::PathNode sink) {
   FlowLabelConfig::flowPath(source, sink)
 }
 
-module TestTaintTrackingConfigurationArg implements DataFlow2::ConfigSig {
+module TestTaintTrackingConfigurationArg implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node src) {
     exists(VariableDeclarator vd |
       vd.getBindingPattern().(VarDecl).getName().matches("%source%") and
@@ -96,18 +89,16 @@ module TestTaintTrackingConfigurationArg implements DataFlow2::ConfigSig {
     )
     or
     node.asExpr().(PropAccess).getPropertyName() = "notTracked"
-    or
-    barrierGuardBlocksNode(node, DataFlow::FlowLabel::taint())
   }
 }
 
-module TestTaintTrackingConfiguration = TaintTracking2::Global<TestTaintTrackingConfigurationArg>;
+module TestTaintTrackingConfiguration = TaintTracking::Global<TestTaintTrackingConfigurationArg>;
 
 query predicate taintTracking(DataFlow::Node src, DataFlow::Node snk) {
   TestTaintTrackingConfiguration::flow(src, snk)
 }
 
-module GermanFlowConfigArg implements DataFlow2::ConfigSig {
+module GermanFlowConfigArg implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node src) {
     exists(VariableDeclarator vd |
       vd.getBindingPattern().(VarDecl).getName().matches("%source%") and
@@ -133,12 +124,10 @@ module GermanFlowConfigArg implements DataFlow2::ConfigSig {
     )
     or
     node.asExpr().(PropAccess).getPropertyName() = "notTracked"
-    or
-    barrierGuardBlocksNode(node, DataFlow::FlowLabel::data())
   }
 }
 
-module GermanFlowConfig = DataFlow2::Global<GermanFlowConfigArg>;
+module GermanFlowConfig = DataFlow::Global<GermanFlowConfigArg>;
 
 query predicate germanFlow(DataFlow::Node src, DataFlow::Node snk) {
   GermanFlowConfig::flow(src, snk)

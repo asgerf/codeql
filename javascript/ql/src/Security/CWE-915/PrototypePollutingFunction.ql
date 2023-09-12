@@ -19,8 +19,6 @@
 import javascript
 import DataFlow
 import semmle.javascript.DynamicPropertyAccess
-import semmle.javascript.dataflow2.BarrierGuards
-import semmle.javascript.dataflow2.DeduplicateFlowState
 private import semmle.javascript.dataflow.InferredTypes
 
 /**
@@ -235,9 +233,7 @@ class UnsafePropLabel extends FlowLabel {
  * a standalone configuration like in most path queries.
  */
 module PropNameTrackingConfig implements DataFlow::StateConfigSig {
-  class FlowState = FlowLabel;
-
-  private predicate isSourceRaw(DataFlow::Node node, FlowLabel label) {
+  predicate isSource(DataFlow::Node node, FlowLabel label) {
     label instanceof UnsafePropLabel and
     (
       isPollutedPropNameSource(node)
@@ -246,7 +242,7 @@ module PropNameTrackingConfig implements DataFlow::StateConfigSig {
     )
   }
 
-  private predicate isSinkRaw(DataFlow::Node node, FlowLabel label) {
+  predicate isSink(DataFlow::Node node, FlowLabel label) {
     label instanceof UnsafePropLabel and
     (
       dynamicPropWrite(node, _, _) or
@@ -255,9 +251,7 @@ module PropNameTrackingConfig implements DataFlow::StateConfigSig {
     )
   }
 
-  import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
-
-  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+  predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
     node instanceof DenyListEqualityGuard or
     node instanceof AllowListEqualityGuard or
     node instanceof HasOwnPropertyGuard or
@@ -268,8 +262,6 @@ module PropNameTrackingConfig implements DataFlow::StateConfigSig {
     node instanceof AllowListInclusionGuard or
     node instanceof IsPlainObjectGuard
   }
-
-  import MakeBarrierGuards<isBarrierGuard/1>
 
   predicate isAdditionalFlowStep(
     DataFlow::Node pred, FlowLabel predlbl, DataFlow::Node succ, FlowLabel succlbl
@@ -291,23 +283,9 @@ module PropNameTrackingConfig implements DataFlow::StateConfigSig {
         succ = read
       )
     )
-    or
-    deduplicationStep(pred, predlbl, succ, succlbl)
   }
 
-  predicate isBarrier(DataFlow::Node node) {
-    node instanceof DataFlow::VarAccessBarrier
-    or
-    barrierGuardBlocksNode(node, "")
-  }
-
-  predicate isBarrier(DataFlow::Node node, FlowLabel label) {
-    barrierGuardBlocksNode(node, label)
-    or
-    deduplicationBarrier(node, label)
-  }
-
-  predicate includeHiddenNodes() { any() }
+  predicate isBarrier(DataFlow::Node node) { node instanceof DataFlow::VarAccessBarrier }
 }
 
 module PropNameTracking = DataFlow::GlobalWithState<PropNameTrackingConfig>;

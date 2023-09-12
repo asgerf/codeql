@@ -1,8 +1,5 @@
 import javascript
 import semmle.javascript.dataflow.InferredTypes
-import semmle.javascript.dataflow2.DataFlow as DataFlow2
-import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
-import semmle.javascript.dataflow2.BarrierGuards
 import testUtilities.ConsistencyChecking
 
 DataFlow::CallNode getACall(string name) {
@@ -11,19 +8,22 @@ DataFlow::CallNode getACall(string name) {
   result.getCalleeNode().getALocalSource() = DataFlow::globalVarRef(name)
 }
 
-module ConfigArg implements DataFlow2::ConfigSig {
+module ConfigArg implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node node) { node = getACall("source") }
 
   predicate isSink(DataFlow::Node node) { node = getACall("sink").getAnArgument() }
 
   predicate isBarrier(DataFlow::Node node) {
     node.(DataFlow::InvokeNode).getCalleeName().matches("sanitizer_%")
-    or
-    barrierGuardBlocksNodeIncludeHeuristicCheck(node, _)
+  }
+
+  predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+    node instanceof TaintTracking::AdHocWhitelistCheckSanitizer or
+    node instanceof BasicBarrierGuard
   }
 }
 
-module Configuration = TaintTracking2::Global<ConfigArg>;
+module Configuration = TaintTracking::Global<ConfigArg>;
 
 class BasicBarrierGuard extends DataFlow::BarrierGuardNode, DataFlow::CallNode {
   BasicBarrierGuard() { this = getACall("isSafe") }

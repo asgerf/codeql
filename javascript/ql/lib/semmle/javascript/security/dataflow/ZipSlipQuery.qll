@@ -8,8 +8,6 @@
  */
 
 import javascript
-import semmle.javascript.dataflow2.BarrierGuards
-import semmle.javascript.dataflow2.DeduplicateFlowState
 import ZipSlipCustomizations::ZipSlip
 
 // Materialize flow labels
@@ -23,28 +21,18 @@ private class ConcreteSplitPath extends TaintedPath::Label::SplitPath {
 
 /** A taint tracking configuration for unsafe archive extraction. */
 module ZipSlipConfig implements DataFlow::StateConfigSig {
-  class FlowState = DataFlow::FlowLabel;
-
-  private predicate isSourceRaw(DataFlow::Node source, DataFlow::FlowLabel label) {
+  predicate isSource(DataFlow::Node source, DataFlow::FlowLabel label) {
     label = source.(Source).getAFlowLabel()
   }
 
-  private predicate isSinkRaw(DataFlow::Node sink, DataFlow::FlowLabel label) {
+  predicate isSink(DataFlow::Node sink, DataFlow::FlowLabel label) {
     label = sink.(Sink).getAFlowLabel()
   }
 
-  import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
-  import DefaultBarrierGuards
+  predicate isBarrier(DataFlow::Node node) { node instanceof TaintedPath::Sanitizer }
 
-  predicate isBarrier(DataFlow::Node node) {
-    node instanceof TaintedPath::Sanitizer
-    or
-    barrierGuardBlocksNode(node, "")
-  }
-
-  predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel label) {
-    barrierGuardBlocksNode(node, label) or
-    deduplicationBarrier(node, label)
+  predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
+    guard instanceof TaintedPath::BarrierGuardNode
   }
 
   predicate isAdditionalFlowStep(
@@ -52,8 +40,6 @@ module ZipSlipConfig implements DataFlow::StateConfigSig {
     DataFlow::FlowLabel state2
   ) {
     TaintedPath::isAdditionalTaintedPathFlowStep(node1, node2, state1, state2)
-    or
-    deduplicationStep(node1, state1, node2, state2)
   }
 }
 

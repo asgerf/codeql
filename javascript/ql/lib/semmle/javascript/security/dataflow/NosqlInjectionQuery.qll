@@ -10,38 +10,25 @@
 import javascript
 import semmle.javascript.security.TaintedObject
 import NosqlInjectionCustomizations::NosqlInjection
-private import semmle.javascript.dataflow2.DataFlow as DataFlow2
-private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
-private import semmle.javascript.dataflow2.BarrierGuards
-private import semmle.javascript.dataflow2.DeduplicateFlowState
 
-module ConfigurationArgs implements DataFlow2::StateConfigSig {
-  class FlowState = DataFlow::FlowLabel;
-
-  private predicate isSourceRaw(DataFlow::Node source, FlowState state) {
+module ConfigurationArgs implements DataFlow::StateConfigSig {
+  predicate isSource(DataFlow::Node source, DataFlow::FlowLabel state) {
     source instanceof Source and state.isTaint()
     or
     TaintedObject::isSource(source, state)
   }
 
-  private predicate isSinkRaw(DataFlow::Node sink, FlowState state) {
+  predicate isSink(DataFlow::Node sink, DataFlow::FlowLabel state) {
     sink.(Sink).getAFlowLabel() = state
   }
 
-  import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
-
-  predicate isBarrier(DataFlow::Node node) { barrierGuardBlocksNode(node) }
-
-  predicate isBarrier(DataFlow::Node node, FlowState state) {
+  predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel state) {
     node instanceof Sanitizer and state.isTaint()
-    or
-    barrierGuardBlocksNode(node, state)
-    or
-    deduplicationBarrier(node, state)
   }
 
   predicate isAdditionalFlowStep(
-    DataFlow::Node node1, FlowState state1, DataFlow::Node node2, FlowState state2
+    DataFlow::Node node1, DataFlow::FlowLabel state1, DataFlow::Node node2,
+    DataFlow::FlowLabel state2
   ) {
     TaintedObject::step(node1, node2, state1, state2)
     or
@@ -53,18 +40,14 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
       queryObj.flowsTo(node2) and
       node1 = queryObj.getAPropertyWrite().getRhs()
     )
-    or
-    deduplicationStep(node1, state1, node2, state2)
   }
 
-  private predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
+  predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
     guard instanceof TaintedObject::SanitizerGuard
   }
-
-  import MakeSanitizerGuards<isBarrierGuard/1>
 }
 
-module Configuration = TaintTracking2::GlobalWithState<ConfigurationArgs>;
+module Configuration = TaintTracking::GlobalWithState<ConfigurationArgs>;
 
 /**
  * A taint-tracking configuration for reasoning about SQL-injection vulnerabilities.

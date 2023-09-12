@@ -10,45 +10,42 @@
 import javascript
 import UrlConcatenation
 import ClientSideUrlRedirectCustomizations::ClientSideUrlRedirect
-private import semmle.javascript.dataflow2.DataFlow as DataFlow2
-private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
-private import semmle.javascript.dataflow2.BarrierGuards
 
 // Materialize flow labels
 private class ConcreteDocumentUrl extends DocumentUrl {
   ConcreteDocumentUrl() { this = this }
 }
 
-module ConfigurationArg implements DataFlow2::StateConfigSig {
-  class FlowState = DataFlow::FlowLabel;
-
-  predicate isSource(DataFlow::Node source, FlowState state) {
+/**
+ * A taint-tracking configuration for reasoning about unvalidated URL redirections.
+ */
+module ClientSideUrlRedirectConfig implements DataFlow::StateConfigSig {
+  predicate isSource(DataFlow::Node source, DataFlow::FlowLabel state) {
     source.(Source).getAFlowLabel() = state
   }
 
-  predicate isSink(DataFlow::Node sink, FlowState state) {
+  predicate isSink(DataFlow::Node sink, DataFlow::FlowLabel state) {
     sink instanceof Sink and state.isTaint()
   }
 
-  predicate isBarrier(DataFlow::Node node) {
-    node instanceof Sanitizer or barrierGuardBlocksNode(node)
-  }
+  predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
 
-  predicate isBarrier(DataFlow::Node node, FlowState state) {
-    barrierGuardBlocksNode(node, state)
-    or
+  predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel state) {
     isPrefixExtraction(node) and
     state instanceof DocumentUrl
   }
 
   predicate isBarrierOut(DataFlow::Node node) {
     hostnameSanitizingPrefixEdge(node, _)
-    or
-    isSink(node, _) // TODO: support for out-barriers with flow state
+    // or
+    // TODO: support for out-barriers with flow state
+    // Marking all sinks as out-barriers conflicts with the flow state deduplication tricks
+    // isSink(node, _)
   }
 
   predicate isAdditionalFlowStep(
-    DataFlow::Node node1, FlowState state1, DataFlow::Node node2, FlowState state2
+    DataFlow::Node node1, DataFlow::FlowLabel state1, DataFlow::Node node2,
+    DataFlow::FlowLabel state2
   ) {
     untrustedUrlSubstring(node1, node2) and
     state1 instanceof DocumentUrl and
@@ -61,14 +58,15 @@ module ConfigurationArg implements DataFlow2::StateConfigSig {
     )
   }
 
-  private predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
+  predicate isBarrierGuard(DataFlow::BarrierGuardNode guard) {
     guard instanceof HostnameSanitizerGuard
   }
-
-  import MakeSanitizerGuards<isBarrierGuard/1>
 }
 
-module Configuration = TaintTracking2::GlobalWithState<ConfigurationArg>;
+/**
+ * Taint-tracking flow for reasoning about unvalidated URL redirections.
+ */
+module ClientSideUrlRedirectFlow = TaintTracking::GlobalWithState<ClientSideUrlRedirectConfig>;
 
 /**
  * A taint-tracking configuration for reasoning about unvalidated URL redirections.
@@ -93,7 +91,7 @@ deprecated class Configuration extends TaintTracking::Configuration {
     DataFlow::Node node1, DataFlow::Node node2, DataFlow::FlowLabel state1,
     DataFlow::FlowLabel state2
   ) {
-    ConfigurationArg::isAdditionalFlowStep(node1, state1, node2, state2)
+    ClientSideUrlRedirectConfig::isAdditionalFlowStep(node1, state1, node2, state2)
     or
     // Preserve document.url label in step from `location` to `location.href` or `location.toString()`
     // TODO: These steps are included in the default taint steps, which are inherited by all flow states.

@@ -1027,5 +1027,16 @@ module TaintTracking {
     override predicate appliesTo(Configuration cfg) { any() }
   }
 
-  import semmle.javascript.dataflow2.TaintTracking
+  private import semmle.javascript.dataflow2.FeatureLayer as FeatureLayer
+  private import semmle.javascript.dataflow2.TaintTracking as SharedTaintTracking
+
+  /** Construts a global taint tracking computation. */
+  module Global<DataFlow::ConfigSig S> implements DataFlow::GlobalFlowSig {
+    import SharedTaintTracking::Global<FeatureLayer::Convert<S, AdditionalSanitizerGuardNode>>
+  }
+
+  /** Construts a global taint tracking computation using flow state. */
+  module GlobalWithState<DataFlow::StateConfigSig S> implements DataFlow::GlobalFlowSig {
+    import SharedTaintTracking::GlobalWithState<FeatureLayer::ConvertWithState<S, AdditionalSanitizerGuardNode>>
+  }
 }

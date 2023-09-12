@@ -10,9 +10,6 @@
 import javascript
 import CommandInjectionCustomizations::CommandInjection
 import IndirectCommandArgument
-private import semmle.javascript.dataflow2.DataFlow as DataFlow2
-private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
-private import semmle.javascript.dataflow2.BarrierGuards
 
 /**
  * Holds if `sink` is a data flow sink for command-injection vulnerabilities, and
@@ -24,9 +21,7 @@ predicate isSinkWithHighlight(DataFlow::Node sink, DataFlow::Node highlight) {
   isIndirectCommandArgument(sink, highlight)
 }
 
-module ConfigurationArgs implements DataFlow2::ConfigSig {
-  import DefaultSanitizerGuards
-
+module ConfigurationArgs implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) { source instanceof Source }
 
   predicate isSink(DataFlow::Node sink) { isSinkWithHighlight(sink, _) }
@@ -34,7 +29,7 @@ module ConfigurationArgs implements DataFlow2::ConfigSig {
   predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
 }
 
-module Configuration = TaintTracking2::Global<ConfigurationArgs>;
+module Configuration = TaintTracking::Global<ConfigurationArgs>;
 
 /**
  * A taint-tracking configuration for reasoning about command-injection vulnerabilities.

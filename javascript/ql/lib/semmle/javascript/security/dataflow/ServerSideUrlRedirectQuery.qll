@@ -11,22 +11,13 @@ import javascript
 import RemoteFlowSources
 import UrlConcatenation
 import ServerSideUrlRedirectCustomizations::ServerSideUrlRedirect
-private import semmle.javascript.dataflow2.DataFlow as DataFlow2
-private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
-private import semmle.javascript.dataflow2.BarrierGuards
 
-module ConfigurationArg implements DataFlow2::ConfigSig {
-  import DefaultSanitizerGuards
-
+module ConfigurationArg implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) { source instanceof Source }
 
   predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
 
-  predicate isBarrier(DataFlow::Node node) {
-    node instanceof Sanitizer
-    or
-    barrierGuardBlocksNode(node)
-  }
+  predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
 
   predicate isBarrierOut(DataFlow::Node node) { hostnameSanitizingPrefixEdge(node, _) }
 
@@ -38,7 +29,7 @@ module ConfigurationArg implements DataFlow2::ConfigSig {
   }
 }
 
-module Configuration = TaintTracking2::Global<ConfigurationArg>;
+module Configuration = TaintTracking::Global<ConfigurationArg>;
 
 /**
  * A taint-tracking configuration for reasoning about unvalidated URL redirections.

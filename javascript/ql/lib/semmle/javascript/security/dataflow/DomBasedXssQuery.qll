@@ -7,10 +7,7 @@ import javascript
 private import semmle.javascript.security.TaintedUrlSuffix
 import DomBasedXssCustomizations::DomBasedXss
 private import Xss::Shared as Shared
-private import semmle.javascript.dataflow2.DataFlow as DataFlow2
-private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
 private import semmle.javascript.dataflow2.BarrierGuards
-private import semmle.javascript.dataflow2.DeduplicateFlowState
 
 /**
  * A sink that is not a URL write or a JQuery selector,
@@ -26,10 +23,8 @@ class HtmlSink extends DataFlow::Node instanceof Sink {
 /** DEPRECATED: Alias for HtmlSink */
 deprecated class HTMLSink = HtmlSink;
 
-module ConfigurationArgs implements DataFlow2::StateConfigSig {
-  class FlowState = DataFlow::FlowLabel;
-
-  private predicate isSourceRaw(DataFlow::Node source, DataFlow::FlowLabel label) {
+module ConfigurationArgs implements DataFlow::StateConfigSig {
+  predicate isSource(DataFlow::Node source, DataFlow::FlowLabel label) {
     source instanceof Source and
     (label.isTaint() or label = prefixLabel()) and
     not source = TaintedUrlSuffix::source()
@@ -38,7 +33,7 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
     label = TaintedUrlSuffix::label()
   }
 
-  private predicate isSinkRaw(DataFlow::Node sink, DataFlow::FlowLabel label) {
+  predicate isSink(DataFlow::Node sink, DataFlow::FlowLabel label) {
     sink instanceof HtmlSink and
     label = [TaintedUrlSuffix::label(), prefixLabel(), DataFlow::FlowLabel::taint()]
     or
@@ -49,26 +44,16 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
     label = prefixLabel()
   }
 
-  import MakeDeduplicateFlowState<isSourceRaw/2, isSinkRaw/2>
-
-  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
+  predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
     node instanceof PrefixStringSanitizer or
     node instanceof ContainsHtmlGuard
   }
 
-  import MakeSanitizerGuards<isBarrierGuard/1>
-
-  predicate isBarrier(DataFlow::Node node) {
-    node instanceof Sanitizer
-    or
-    barrierGuardBlocksNode(node)
-  }
+  predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
 
   predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel lbl) {
-    barrierGuardBlocksNode(node, lbl)
-    or
     // copy all taint barrier guards to the TaintedUrlSuffix/PrefixLabel label
-    barrierGuardBlocksNode(node, DataFlow::FlowLabel::taint()) and
+    DefaultSanitizerGuards::barrierGuardBlocksNode(node, DataFlow::FlowLabel::taint()) and
     lbl = [TaintedUrlSuffix::label(), prefixLabel()]
     or
     // any non-first string-concatenation leaf is a barrier for the prefix label.
@@ -86,12 +71,11 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
     lbl = [DataFlow::FlowLabel::taint(), prefixLabel(), TaintedUrlSuffix::label()]
     or
     TaintedUrlSuffix::isBarrier(node, lbl)
-    or
-    deduplicationBarrier(node, lbl)
   }
 
   predicate isAdditionalFlowStep(
-    DataFlow::Node node1, FlowState state1, DataFlow::Node node2, FlowState state2
+    DataFlow::Node node1, DataFlow::FlowLabel state1, DataFlow::Node node2,
+    DataFlow::FlowLabel state2
   ) {
     TaintedUrlSuffix::step(node1, node2, state1, state2)
     or
@@ -114,12 +98,10 @@ module ConfigurationArgs implements DataFlow2::StateConfigSig {
       node2 = callback and
       state1 = state2
     )
-    or
-    deduplicationStep(node1, state1, node2, state2)
   }
 }
 
-module Configuration = TaintTracking2::GlobalWithState<ConfigurationArgs>;
+module Configuration = TaintTracking::GlobalWithState<ConfigurationArgs>;
 
 /**
  * A taint-tracking configuration for reasoning about XSS.

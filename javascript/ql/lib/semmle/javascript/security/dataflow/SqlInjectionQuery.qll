@@ -9,22 +9,13 @@
 
 import javascript
 import SqlInjectionCustomizations::SqlInjection
-private import semmle.javascript.dataflow2.DataFlow as DataFlow2
-private import semmle.javascript.dataflow2.TaintTracking as TaintTracking2
-private import semmle.javascript.dataflow2.BarrierGuards
 
-module ConfigurationArgs implements DataFlow2::ConfigSig {
-  import DefaultSanitizerGuards
-
+module ConfigurationArgs implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node source) { source instanceof Source }
 
   predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
 
-  predicate isBarrier(DataFlow::Node node) {
-    node instanceof Sanitizer
-    or
-    barrierGuardBlocksNode(node)
-  }
+  predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
 
   predicate isAdditionalFlowStep(DataFlow::Node pred, DataFlow::Node succ) {
     exists(LdapJS::TaintPreservingLdapFilterStep filter |
@@ -39,7 +30,7 @@ module ConfigurationArgs implements DataFlow2::ConfigSig {
   }
 }
 
-module Configuration = TaintTracking2::Global<ConfigurationArgs>;
+module Configuration = TaintTracking::Global<ConfigurationArgs>;
 
 /**
  * A taint-tracking configuration for reasoning about string based query injection vulnerabilities.

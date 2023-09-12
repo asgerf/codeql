@@ -1,6 +1,4 @@
 import javascript
-import semmle.javascript.dataflow2.DataFlow as DataFlow2
-import semmle.javascript.dataflow2.BarrierGuards
 import testUtilities.ConsistencyChecking
 import Summaries
 
@@ -10,25 +8,19 @@ DataFlow::CallNode getACall(string name) {
   result.getCalleeNode().getALocalSource() = DataFlow::globalVarRef(name)
 }
 
-module ConfigArg implements DataFlow2::ConfigSig {
+module ConfigArg implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node node) { node = getACall("source") }
 
   predicate isSink(DataFlow::Node node) { node = getACall("sink").getAnArgument() }
 
-  private predicate isBarrierGuard(DataFlow::BarrierGuardNode node) {
-    node instanceof BasicBarrierGuard
-  }
-
-  import MakeBarrierGuards<isBarrierGuard/1>
+  predicate isBarrierGuard(DataFlow::BarrierGuardNode node) { node instanceof BasicBarrierGuard }
 
   predicate isBarrier(DataFlow::Node node) {
     node.(DataFlow::InvokeNode).getCalleeName().matches("sanitizer_%")
-    or
-    barrierGuardBlocksNode(node)
   }
 }
 
-module Configuration = DataFlow2::Global<ConfigArg>;
+module Configuration = DataFlow::Global<ConfigArg>;
 
 class BasicBarrierGuard extends DataFlow::BarrierGuardNode, DataFlow::CallNode {
   BasicBarrierGuard() { this = getACall("isSafe") }

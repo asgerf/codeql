@@ -1934,6 +1934,7 @@ private class BarrierGuardFunction extends Function {
 /**
  * A call that sanitizes an argument.
  */
+// TODO: do not extend `AdditionalBarrierGuardNode`, as it confuses DataFlow2
 private class AdditionalBarrierGuardCall extends AdditionalBarrierGuardNode, DataFlow::CallNode {
   BarrierGuardFunction f;
 
