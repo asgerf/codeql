@@ -499,53 +499,39 @@ module MakeImpl<InputSig Lang> {
       filepath = "" and startline = 0 and startcolumn = 0 and endline = 0 and endcolumn = 0
     }
 
-    private newtype TSourceOrSinkGroup =
-      TNamedGroup(string name) { Config::sourceGrouping(_, name) or Config::sinkGrouping(_, name) } or
-      TNodeGroup(Node node) {
-        Config::hideFinalFlowStates() and
-        (
-          Config::isSource(node, _)
+    module MakeGroup<sourceOrSinkSig/2 sourceOrSink, nodeGroupingSig/2 nodeGrouping> {
+      private newtype TGroup =
+        TNamedGroup(string name) { nodeGrouping(_, name) } or
+        TNodeGroup(Node node) {
+          Config::hideFinalFlowStates() and
+          sourceOrSink(node, _)
+        }
+
+      class Group extends TGroup {
+        string asNamedGroup() { this = TNamedGroup(result) }
+
+        Node asNode() { this = TNodeGroup(result) }
+
+        NodeEx asNodeEx() { this = TNodeGroup(result.asNode()) }
+
+        string toString() {
+          result = this.asNamedGroup().toString() or result = this.asNode().toString()
+        }
+
+        predicate hasLocationInfo(
+          string filepath, int startline, int startcolumn, int endline, int endcolumn
+        ) {
+          this instanceof TNamedGroup and
+          emptyLocation(filepath, startline, startcolumn, endline, endcolumn)
           or
-          Config::isSink(node, _)
-        )
-      }
-
-    private class SourceOrSinkGroup extends TSourceOrSinkGroup {
-      string asNamedGroup() { this = TNamedGroup(result) }
-
-      Node asNode() { this = TNodeGroup(result) }
-
-      NodeEx asNodeEx() { this = TNodeGroup(result.asNode()) }
-
-      string toString() {
-        result = this.asNamedGroup().toString() or result = this.asNode().toString()
-      }
-
-      predicate hasLocationInfo(
-        string filepath, int startline, int startcolumn, int endline, int endcolumn
-      ) {
-        this instanceof TNamedGroup and
-        emptyLocation(filepath, startline, startcolumn, endline, endcolumn)
-        or
-        this.asNode().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+          this.asNode().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+        }
       }
     }
 
-    private class SourceGroup extends SourceOrSinkGroup {
-      SourceGroup() {
-        Config::sourceGrouping(_, this.asNamedGroup())
-        or
-        Config::isSource(this.asNode(), _)
-      }
-    }
+    private class SourceGroup = MakeGroup<Config::isSource/2, Config::sourceGrouping/2>::Group;
 
-    private class SinkGroup extends SourceOrSinkGroup {
-      SinkGroup() {
-        Config::sinkGrouping(_, this.asNamedGroup())
-        or
-        Config::isSink(this.asNode(), _)
-      }
-    }
+    private class SinkGroup = MakeGroup<Config::isSink/2, Config::sinkGrouping/2>::Group;
 
     private module Stage1 implements StageSig {
       class Ap = Unit;
