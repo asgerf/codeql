@@ -501,19 +501,21 @@ module MakeImpl<InputSig Lang> {
 
     private newtype TSourceOrSinkGroup =
       TNamedGroup(string name) { Config::sourceGrouping(_, name) or Config::sinkGrouping(_, name) } or
-      TNodeGroup(NodeEx node) {
+      TNodeGroup(Node node) {
         Config::hideFinalFlowStates() and
         (
-          Config::isSource(node.asNode(), _)
+          Config::isSource(node, _)
           or
-          Config::isSink(node.asNode(), _)
+          Config::isSink(node, _)
         )
       }
 
     private class SourceOrSinkGroup extends TSourceOrSinkGroup {
       string asNamedGroup() { this = TNamedGroup(result) }
 
-      NodeEx asNode() { this = TNodeGroup(result) }
+      Node asNode() { this = TNodeGroup(result) }
+
+      NodeEx asNodeEx() { this = TNodeGroup(result.asNode()) }
 
       string toString() {
         result = this.asNamedGroup().toString() or result = this.asNode().toString()
@@ -533,7 +535,7 @@ module MakeImpl<InputSig Lang> {
       SourceGroup() {
         Config::sourceGrouping(_, this.asNamedGroup())
         or
-        Config::isSource(this.asNode().asNode(), _)
+        Config::isSource(this.asNode(), _)
       }
     }
 
@@ -541,7 +543,7 @@ module MakeImpl<InputSig Lang> {
       SinkGroup() {
         Config::sinkGrouping(_, this.asNamedGroup())
         or
-        Config::isSink(this.asNode().asNode(), _)
+        Config::isSink(this.asNode(), _)
       }
     }
 
@@ -3307,7 +3309,7 @@ module MakeImpl<InputSig Lang> {
         (
           Config::sourceGrouping(this.getNodeEx().asNode(), result.asNamedGroup())
           or
-          result.asNode() = this.(PathNodeMid).getNodeEx()
+          result.asNodeEx() = this.(PathNodeMid).getNodeEx()
         )
       }
 
@@ -3571,7 +3573,7 @@ module MakeImpl<InputSig Lang> {
       SinkGroup getSinkGroup() {
         Config::sinkGrouping(node.asNode(), result.asNamedGroup())
         or
-        node = result.asNode()
+        node = result.asNodeEx()
       }
     }
 
@@ -3580,7 +3582,7 @@ module MakeImpl<InputSig Lang> {
 
       PathNodeSourceGroup() { this = TPathNodeSourceGroup(sourceGroup) }
 
-      override NodeEx getNodeEx() { result = sourceGroup.asNode() }
+      override NodeEx getNodeEx() { result = sourceGroup.asNodeEx() }
 
       override FlowState getState() { none() }
 
@@ -3602,7 +3604,7 @@ module MakeImpl<InputSig Lang> {
 
       PathNodeSinkGroup() { this = TPathNodeSinkGroup(sinkGroup) }
 
-      override NodeEx getNodeEx() { result = sinkGroup.asNode() }
+      override NodeEx getNodeEx() { result = sinkGroup.asNodeEx() }
 
       override FlowState getState() { none() }
 
