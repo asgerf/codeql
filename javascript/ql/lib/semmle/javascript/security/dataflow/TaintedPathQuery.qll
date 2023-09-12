@@ -24,13 +24,13 @@ private class ConcreteSplitPath extends Label::SplitPath {
  * A taint-tracking configuration for reasoning about tainted-path vulnerabilities.
  */
 module ConfigurationArgs implements DataFlow::StateConfigSig {
-  class FlowState = DataFlow::FlowLabel;
-
-  predicate isSource(DataFlow::Node source, FlowState state) {
+  predicate isSource(DataFlow::Node source, DataFlow::FlowLabel state) {
     state = source.(Source).getAFlowLabel()
   }
 
-  predicate isSink(DataFlow::Node sink, FlowState state) { state = sink.(Sink).getAFlowLabel() }
+  predicate isSink(DataFlow::Node sink, DataFlow::FlowLabel state) {
+    state = sink.(Sink).getAFlowLabel()
+  }
 
   predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel label) {
     node instanceof Sanitizer and exists(label)

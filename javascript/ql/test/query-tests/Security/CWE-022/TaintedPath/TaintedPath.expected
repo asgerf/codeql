@@ -315,10 +315,6 @@ edges
 | TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] |
 | TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] |
 | TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] |
-| TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] |
-| TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] |
-| TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] |
-| TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] |
 | TaintedPath.js:95:30:95:31 | ev | TaintedPath.js:95:30:95:31 | ev |
 | TaintedPath.js:95:30:95:31 | ev | TaintedPath.js:95:30:95:31 | ev |
 | TaintedPath.js:95:30:95:31 | ev | TaintedPath.js:95:30:95:31 | ev |
@@ -758,10 +754,6 @@ edges
 | TaintedPath.js:214:35:214:38 | path | TaintedPath.js:214:35:214:38 | path |
 | TaintedPath.js:214:35:214:38 | path | TaintedPath.js:214:35:214:38 | path |
 | TaintedPath.js:214:35:214:38 | path | TaintedPath.js:214:35:214:38 | path |
-| express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar |
-| express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar |
-| express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar |
-| express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar |
 | express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar |
 | express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar |
 | express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar |
@@ -1933,38 +1925,18 @@ edges
 | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") |
 | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") |
 | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") |
-| tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") |
-| tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") |
-| tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") |
-| tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") |
 | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") |
 | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") |
 | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") |
 | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") |
-| tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") |
-| tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") |
-| tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") |
-| tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") |
-| tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") |
-| tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") |
-| tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") |
-| tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") |
 | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") |
 | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") |
 | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") |
 | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") |
 | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | tainted-sendFile.js:8:16:8:33 | req.param("gimme") |
 | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | tainted-sendFile.js:8:16:8:33 | req.param("gimme") |
-| tainted-sendFile.js:8:16:8:33 | req.param("gimme") | tainted-sendFile.js:8:16:8:33 | req.param("gimme") |
-| tainted-sendFile.js:8:16:8:33 | req.param("gimme") | tainted-sendFile.js:8:16:8:33 | req.param("gimme") |
 | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | tainted-sendFile.js:10:16:10:33 | req.param("gimme") |
 | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | tainted-sendFile.js:10:16:10:33 | req.param("gimme") |
-| tainted-sendFile.js:10:16:10:33 | req.param("gimme") | tainted-sendFile.js:10:16:10:33 | req.param("gimme") |
-| tainted-sendFile.js:10:16:10:33 | req.param("gimme") | tainted-sendFile.js:10:16:10:33 | req.param("gimme") |
-| tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") |
-| tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") |
-| tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") |
-| tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") |
 | tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") |
 | tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") |
 | tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") |
@@ -2290,10 +2262,6 @@ edges
 | views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] |
 | views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] |
 | views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] |
-| views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] |
-| views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] |
-| views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] |
-| views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] |
 nodes
 | TaintedPath-es6.js:7:7:7:44 | path | semmle.label | path |
 | TaintedPath-es6.js:7:7:7:44 | path | semmle.label | path |
@@ -2317,6 +2285,11 @@ nodes
 | TaintedPath-es6.js:10:41:10:44 | path | semmle.label | path |
 | TaintedPath-es6.js:10:41:10:44 | path | semmle.label | path |
 | TaintedPath-es6.js:10:41:10:44 | path | semmle.label | path |
+| TaintedPath.js:1:18:1:21 | 'fs' | semmle.label | 'fs' |
+| TaintedPath.js:2:20:2:25 | 'http' | semmle.label | 'http' |
+| TaintedPath.js:3:19:3:23 | 'url' | semmle.label | 'url' |
+| TaintedPath.js:4:24:4:42 | 'sanitize-filename' | semmle.label | 'sanitize-filename' |
+| TaintedPath.js:5:26:5:31 | 'path' | semmle.label | 'path' |
 | TaintedPath.js:9:7:9:48 | path | semmle.label | path |
 | TaintedPath.js:9:7:9:48 | path | semmle.label | path |
 | TaintedPath.js:9:7:9:48 | path | semmle.label | path |
@@ -2360,11 +2333,14 @@ nodes
 | TaintedPath.js:24:33:24:36 | path | semmle.label | path |
 | TaintedPath.js:24:33:24:36 | path | semmle.label | path |
 | TaintedPath.js:24:33:24:36 | path | semmle.label | path |
+| TaintedPath.js:27:31:27:34 | path | semmle.label | path |
+| TaintedPath.js:30:31:30:34 | path | semmle.label | path |
 | TaintedPath.js:33:31:33:34 | path | semmle.label | path |
 | TaintedPath.js:33:31:33:34 | path | semmle.label | path |
 | TaintedPath.js:33:31:33:34 | path | semmle.label | path |
 | TaintedPath.js:33:31:33:34 | path | semmle.label | path |
 | TaintedPath.js:33:31:33:34 | path | semmle.label | path |
+| TaintedPath.js:36:29:36:32 | path | semmle.label | path |
 | TaintedPath.js:38:3:38:44 | path | semmle.label | path |
 | TaintedPath.js:38:3:38:44 | path | semmle.label | path |
 | TaintedPath.js:38:3:38:44 | path | semmle.label | path |
@@ -2386,6 +2362,7 @@ nodes
 | TaintedPath.js:38:20:38:26 | req.url | semmle.label | req.url |
 | TaintedPath.js:38:20:38:26 | req.url | semmle.label | req.url |
 | TaintedPath.js:38:20:38:26 | req.url | semmle.label | req.url |
+| TaintedPath.js:40:29:40:53 | pathMod ... e(path) | semmle.label | pathMod ... e(path) |
 | TaintedPath.js:42:29:42:52 | pathMod ... e(path) | semmle.label | pathMod ... e(path) |
 | TaintedPath.js:42:29:42:52 | pathMod ... e(path) | semmle.label | pathMod ... e(path) |
 | TaintedPath.js:42:29:42:52 | pathMod ... e(path) | semmle.label | pathMod ... e(path) |
@@ -2395,6 +2372,7 @@ nodes
 | TaintedPath.js:42:48:42:51 | path | semmle.label | path |
 | TaintedPath.js:42:48:42:51 | path | semmle.label | path |
 | TaintedPath.js:42:48:42:51 | path | semmle.label | path |
+| TaintedPath.js:44:29:44:52 | pathMod ... e(path) | semmle.label | pathMod ... e(path) |
 | TaintedPath.js:46:29:46:49 | pathMod ... n(path) | semmle.label | pathMod ... n(path) |
 | TaintedPath.js:46:29:46:49 | pathMod ... n(path) | semmle.label | pathMod ... n(path) |
 | TaintedPath.js:46:29:46:49 | pathMod ... n(path) | semmle.label | pathMod ... n(path) |
@@ -2447,6 +2425,7 @@ nodes
 | TaintedPath.js:60:57:60:60 | path | semmle.label | path |
 | TaintedPath.js:60:57:60:60 | path | semmle.label | path |
 | TaintedPath.js:60:57:60:60 | path | semmle.label | path |
+| TaintedPath.js:66:26:66:31 | "SAFE" | semmle.label | "SAFE" |
 | TaintedPath.js:71:26:71:45 | Cookie.get("unsafe") | semmle.label | Cookie.get("unsafe") |
 | TaintedPath.js:71:26:71:45 | Cookie.get("unsafe") | semmle.label | Cookie.get("unsafe") |
 | TaintedPath.js:71:26:71:45 | Cookie.get("unsafe") | semmle.label | Cookie.get("unsafe") |
@@ -2461,6 +2440,7 @@ nodes
 | TaintedPath.js:77:31:77:76 | require ... ).query | semmle.label | require ... ).query |
 | TaintedPath.js:77:31:77:76 | require ... ).query | semmle.label | require ... ).query |
 | TaintedPath.js:77:31:77:76 | require ... ).query | semmle.label | require ... ).query |
+| TaintedPath.js:77:39:77:54 | "querystringify" | semmle.label | "querystringify" |
 | TaintedPath.js:77:63:77:69 | req.url | semmle.label | req.url |
 | TaintedPath.js:77:63:77:69 | req.url | semmle.label | req.url |
 | TaintedPath.js:77:63:77:69 | req.url | semmle.label | req.url |
@@ -2475,6 +2455,7 @@ nodes
 | TaintedPath.js:78:31:78:74 | require ... ).query | semmle.label | require ... ).query |
 | TaintedPath.js:78:31:78:74 | require ... ).query | semmle.label | require ... ).query |
 | TaintedPath.js:78:31:78:74 | require ... ).query | semmle.label | require ... ).query |
+| TaintedPath.js:78:39:78:52 | "query-string" | semmle.label | "query-string" |
 | TaintedPath.js:78:61:78:67 | req.url | semmle.label | req.url |
 | TaintedPath.js:78:61:78:67 | req.url | semmle.label | req.url |
 | TaintedPath.js:78:61:78:67 | req.url | semmle.label | req.url |
@@ -2489,17 +2470,19 @@ nodes
 | TaintedPath.js:79:31:79:73 | require ... ).query | semmle.label | require ... ).query |
 | TaintedPath.js:79:31:79:73 | require ... ).query | semmle.label | require ... ).query |
 | TaintedPath.js:79:31:79:73 | require ... ).query | semmle.label | require ... ).query |
+| TaintedPath.js:79:39:79:51 | "querystring" | semmle.label | "querystring" |
 | TaintedPath.js:79:60:79:66 | req.url | semmle.label | req.url |
 | TaintedPath.js:79:60:79:66 | req.url | semmle.label | req.url |
 | TaintedPath.js:79:60:79:66 | req.url | semmle.label | req.url |
 | TaintedPath.js:79:60:79:66 | req.url | semmle.label | req.url |
 | TaintedPath.js:79:60:79:66 | req.url | semmle.label | req.url |
+| TaintedPath.js:84:27:84:35 | 'express' | semmle.label | 'express' |
 | TaintedPath.js:87:48:87:60 | req.params[0] | semmle.label | req.params[0] |
 | TaintedPath.js:87:48:87:60 | req.params[0] | semmle.label | req.params[0] |
 | TaintedPath.js:87:48:87:60 | req.params[0] | semmle.label | req.params[0] |
 | TaintedPath.js:87:48:87:60 | req.params[0] | semmle.label | req.params[0] |
 | TaintedPath.js:87:48:87:60 | req.params[0] | semmle.label | req.params[0] |
-| TaintedPath.js:87:48:87:60 | req.params[0] | semmle.label | req.params[0] |
+| TaintedPath.js:90:34:90:42 | "./views" | semmle.label | "./views" |
 | TaintedPath.js:95:30:95:31 | ev | semmle.label | ev |
 | TaintedPath.js:95:30:95:31 | ev | semmle.label | ev |
 | TaintedPath.js:95:30:95:31 | ev | semmle.label | ev |
@@ -2547,6 +2530,8 @@ nodes
 | TaintedPath.js:104:32:104:39 | realpath | semmle.label | realpath |
 | TaintedPath.js:105:45:105:52 | realpath | semmle.label | realpath |
 | TaintedPath.js:105:45:105:52 | realpath | semmle.label | realpath |
+| TaintedPath.js:119:29:119:32 | path | semmle.label | path |
+| TaintedPath.js:132:29:132:32 | path | semmle.label | path |
 | TaintedPath.js:136:6:136:47 | path | semmle.label | path |
 | TaintedPath.js:136:6:136:47 | path | semmle.label | path |
 | TaintedPath.js:136:6:136:47 | path | semmle.label | path |
@@ -2568,6 +2553,7 @@ nodes
 | TaintedPath.js:136:23:136:29 | req.url | semmle.label | req.url |
 | TaintedPath.js:136:23:136:29 | req.url | semmle.label | req.url |
 | TaintedPath.js:136:23:136:29 | req.url | semmle.label | req.url |
+| TaintedPath.js:138:10:138:15 | 'send' | semmle.label | 'send' |
 | TaintedPath.js:138:23:138:26 | path | semmle.label | path |
 | TaintedPath.js:138:23:138:26 | path | semmle.label | path |
 | TaintedPath.js:138:23:138:26 | path | semmle.label | path |
@@ -2609,6 +2595,7 @@ nodes
 | TaintedPath.js:148:19:148:33 | split.join("/") | semmle.label | split.join("/") |
 | TaintedPath.js:148:19:148:33 | split.join("/") | semmle.label | split.join("/") |
 | TaintedPath.js:148:19:148:33 | split.join("/") | semmle.label | split.join("/") |
+| TaintedPath.js:150:19:150:50 | prefix  ... th - 1] | semmle.label | prefix  ... th - 1] |
 | TaintedPath.js:152:19:152:23 | split | semmle.label | split |
 | TaintedPath.js:152:19:152:26 | split[x] | semmle.label | split[x] |
 | TaintedPath.js:152:19:152:26 | split[x] | semmle.label | split[x] |
@@ -2662,6 +2649,7 @@ nodes
 | TaintedPath.js:166:24:166:30 | req.url | semmle.label | req.url |
 | TaintedPath.js:166:24:166:30 | req.url | semmle.label | req.url |
 | TaintedPath.js:166:24:166:30 | req.url | semmle.label | req.url |
+| TaintedPath.js:169:29:169:68 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
 | TaintedPath.js:170:29:170:32 | path | semmle.label | path |
 | TaintedPath.js:170:29:170:32 | path | semmle.label | path |
 | TaintedPath.js:170:29:170:32 | path | semmle.label | path |
@@ -2671,6 +2659,10 @@ nodes
 | TaintedPath.js:170:29:170:55 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
 | TaintedPath.js:170:29:170:55 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
 | TaintedPath.js:170:29:170:55 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
+| TaintedPath.js:171:29:171:53 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
+| TaintedPath.js:172:29:172:64 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
+| TaintedPath.js:173:29:173:51 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
+| TaintedPath.js:174:29:174:54 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
 | TaintedPath.js:176:29:176:32 | path | semmle.label | path |
 | TaintedPath.js:176:29:176:32 | path | semmle.label | path |
 | TaintedPath.js:176:29:176:52 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
@@ -2687,6 +2679,14 @@ nodes
 | TaintedPath.js:179:29:179:32 | path | semmle.label | path |
 | TaintedPath.js:179:29:179:57 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
 | TaintedPath.js:179:29:179:57 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
+| TaintedPath.js:182:31:182:54 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
+| TaintedPath.js:183:30:183:54 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
+| TaintedPath.js:184:31:184:53 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
+| TaintedPath.js:185:30:185:58 | path.re ... /g, '') | semmle.label | path.re ... /g, '') |
+| TaintedPath.js:189:29:189:95 | "prefix ... +/, '') | semmle.label | "prefix ... +/, '') |
+| TaintedPath.js:190:29:190:94 | "prefix ... +/, '') | semmle.label | "prefix ... +/, '') |
+| TaintedPath.js:191:29:191:90 | "prefix ... +/, '') | semmle.label | "prefix ... +/, '') |
+| TaintedPath.js:192:29:192:90 | "prefix ... */, '') | semmle.label | "prefix ... */, '') |
 | TaintedPath.js:194:29:194:73 | "prefix ... +/, '') | semmle.label | "prefix ... +/, '') |
 | TaintedPath.js:194:29:194:73 | "prefix ... +/, '') | semmle.label | "prefix ... +/, '') |
 | TaintedPath.js:194:40:194:43 | path | semmle.label | path |
@@ -2699,6 +2699,7 @@ nodes
 | TaintedPath.js:195:29:195:84 | pathMod ... +/, '') | semmle.label | pathMod ... +/, '') |
 | TaintedPath.js:195:50:195:53 | path | semmle.label | path |
 | TaintedPath.js:195:50:195:53 | path | semmle.label | path |
+| TaintedPath.js:202:22:202:25 | "qs" | semmle.label | "qs" |
 | TaintedPath.js:203:29:203:45 | qs.parse(req.url) | semmle.label | qs.parse(req.url) |
 | TaintedPath.js:203:29:203:45 | qs.parse(req.url) | semmle.label | qs.parse(req.url) |
 | TaintedPath.js:203:29:203:45 | qs.parse(req.url) | semmle.label | qs.parse(req.url) |
@@ -2731,6 +2732,7 @@ nodes
 | TaintedPath.js:204:51:204:57 | req.url | semmle.label | req.url |
 | TaintedPath.js:204:51:204:57 | req.url | semmle.label | req.url |
 | TaintedPath.js:204:51:204:57 | req.url | semmle.label | req.url |
+| TaintedPath.js:205:27:205:35 | "parseqs" | semmle.label | "parseqs" |
 | TaintedPath.js:206:29:206:51 | parseqs ... eq.url) | semmle.label | parseqs ... eq.url) |
 | TaintedPath.js:206:29:206:51 | parseqs ... eq.url) | semmle.label | parseqs ... eq.url) |
 | TaintedPath.js:206:29:206:51 | parseqs ... eq.url) | semmle.label | parseqs ... eq.url) |
@@ -2745,6 +2747,7 @@ nodes
 | TaintedPath.js:206:44:206:50 | req.url | semmle.label | req.url |
 | TaintedPath.js:206:44:206:50 | req.url | semmle.label | req.url |
 | TaintedPath.js:206:44:206:50 | req.url | semmle.label | req.url |
+| TaintedPath.js:209:20:209:34 | "child_process" | semmle.label | "child_process" |
 | TaintedPath.js:211:7:211:48 | path | semmle.label | path |
 | TaintedPath.js:211:7:211:48 | path | semmle.label | path |
 | TaintedPath.js:211:7:211:48 | path | semmle.label | path |
@@ -2781,12 +2784,16 @@ nodes
 | TaintedPath.js:214:35:214:38 | path | semmle.label | path |
 | TaintedPath.js:214:35:214:38 | path | semmle.label | path |
 | TaintedPath.js:214:35:214:38 | path | semmle.label | path |
+| express.js:1:23:1:31 | "express" | semmle.label | "express" |
+| express.js:2:24:2:43 | "express-fileupload" | semmle.label | "express-fileupload" |
 | express.js:8:20:8:32 | req.query.bar | semmle.label | req.query.bar |
 | express.js:8:20:8:32 | req.query.bar | semmle.label | req.query.bar |
 | express.js:8:20:8:32 | req.query.bar | semmle.label | req.query.bar |
 | express.js:8:20:8:32 | req.query.bar | semmle.label | req.query.bar |
 | express.js:8:20:8:32 | req.query.bar | semmle.label | req.query.bar |
-| express.js:8:20:8:32 | req.query.bar | semmle.label | req.query.bar |
+| handlebars.js:1:25:1:33 | 'express' | semmle.label | 'express' |
+| handlebars.js:2:20:2:31 | "handlebars" | semmle.label | "handlebars" |
+| handlebars.js:3:20:3:23 | "fs" | semmle.label | "fs" |
 | handlebars.js:10:51:10:58 | filePath | semmle.label | filePath |
 | handlebars.js:10:51:10:58 | filePath | semmle.label | filePath |
 | handlebars.js:10:51:10:58 | filePath | semmle.label | filePath |
@@ -2805,6 +2812,7 @@ nodes
 | handlebars.js:15:25:15:32 | filePath | semmle.label | filePath |
 | handlebars.js:15:25:15:32 | filePath | semmle.label | filePath |
 | handlebars.js:15:25:15:32 | filePath | semmle.label | filePath |
+| handlebars.js:22:55:22:73 | "greeting.template" | semmle.label | "greeting.template" |
 | handlebars.js:29:46:29:60 | req.params.path | semmle.label | req.params.path |
 | handlebars.js:29:46:29:60 | req.params.path | semmle.label | req.params.path |
 | handlebars.js:29:46:29:60 | req.params.path | semmle.label | req.params.path |
@@ -2815,6 +2823,15 @@ nodes
 | handlebars.js:43:15:43:29 | req.params.path | semmle.label | req.params.path |
 | handlebars.js:43:15:43:29 | req.params.path | semmle.label | req.params.path |
 | handlebars.js:43:15:43:29 | req.params.path | semmle.label | req.params.path |
+| my-async-fs-module.js:1:20:1:23 | 'fs' | semmle.label | 'fs' |
+| my-async-fs-module.js:2:29:2:38 | 'bluebird' | semmle.label | 'bluebird' |
+| my-fs-module.js:3:18:3:21 | "fs" | semmle.label | "fs" |
+| my-fs-module.js:5:18:5:30 | "original-fs" | semmle.label | "original-fs" |
+| normalizedPaths.js:1:18:1:21 | 'fs' | semmle.label | 'fs' |
+| normalizedPaths.js:2:23:2:31 | 'express' | semmle.label | 'express' |
+| normalizedPaths.js:3:19:3:23 | 'url' | semmle.label | 'url' |
+| normalizedPaths.js:4:24:4:42 | 'sanitize-filename' | semmle.label | 'sanitize-filename' |
+| normalizedPaths.js:5:26:5:31 | 'path' | semmle.label | 'path' |
 | normalizedPaths.js:11:7:11:27 | path | semmle.label | path |
 | normalizedPaths.js:11:7:11:27 | path | semmle.label | path |
 | normalizedPaths.js:11:7:11:27 | path | semmle.label | path |
@@ -2890,8 +2907,12 @@ nodes
 | normalizedPaths.js:31:35:31:48 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:36:19:36:22 | path | semmle.label | path |
 | normalizedPaths.js:36:19:36:22 | path | semmle.label | path |
+| normalizedPaths.js:39:21:39:24 | path | semmle.label | path |
 | normalizedPaths.js:41:21:41:24 | path | semmle.label | path |
 | normalizedPaths.js:41:21:41:24 | path | semmle.label | path |
+| normalizedPaths.js:44:21:44:24 | path | semmle.label | path |
+| normalizedPaths.js:47:21:47:24 | path | semmle.label | path |
+| normalizedPaths.js:50:21:50:24 | path | semmle.label | path |
 | normalizedPaths.js:54:7:54:49 | path | semmle.label | path |
 | normalizedPaths.js:54:14:54:49 | pathMod ... y.path) | semmle.label | pathMod ... y.path) |
 | normalizedPaths.js:54:35:54:48 | req.query.path | semmle.label | req.query.path |
@@ -2899,9 +2920,11 @@ nodes
 | normalizedPaths.js:54:35:54:48 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:59:19:59:22 | path | semmle.label | path |
 | normalizedPaths.js:59:19:59:22 | path | semmle.label | path |
+| normalizedPaths.js:61:19:61:29 | "./" + path | semmle.label | "./" + path |
 | normalizedPaths.js:63:19:63:22 | path | semmle.label | path |
 | normalizedPaths.js:63:19:63:38 | path + "/index.html" | semmle.label | path + "/index.html" |
 | normalizedPaths.js:63:19:63:38 | path + "/index.html" | semmle.label | path + "/index.html" |
+| normalizedPaths.js:66:21:66:24 | path | semmle.label | path |
 | normalizedPaths.js:68:21:68:24 | path | semmle.label | path |
 | normalizedPaths.js:68:21:68:24 | path | semmle.label | path |
 | normalizedPaths.js:73:7:73:56 | path | semmle.label | path |
@@ -2911,6 +2934,7 @@ nodes
 | normalizedPaths.js:73:42:73:55 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:73:42:73:55 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:73:42:73:55 | req.query.path | semmle.label | req.query.path |
+| normalizedPaths.js:76:21:76:24 | path | semmle.label | path |
 | normalizedPaths.js:78:22:78:25 | path | semmle.label | path |
 | normalizedPaths.js:78:22:78:25 | path | semmle.label | path |
 | normalizedPaths.js:82:7:82:27 | path | semmle.label | path |
@@ -2930,6 +2954,9 @@ nodes
 | normalizedPaths.js:94:35:94:48 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:99:29:99:32 | path | semmle.label | path |
 | normalizedPaths.js:99:29:99:32 | path | semmle.label | path |
+| normalizedPaths.js:102:31:102:34 | path | semmle.label | path |
+| normalizedPaths.js:110:21:110:24 | path | semmle.label | path |
+| normalizedPaths.js:113:21:113:24 | path | semmle.label | path |
 | normalizedPaths.js:117:7:117:44 | path | semmle.label | path |
 | normalizedPaths.js:117:14:117:44 | fs.real ... y.path) | semmle.label | fs.real ... y.path) |
 | normalizedPaths.js:117:30:117:43 | req.query.path | semmle.label | req.query.path |
@@ -2942,12 +2969,16 @@ nodes
 | normalizedPaths.js:120:19:120:53 | pathMod ... .html') | semmle.label | pathMod ... .html') |
 | normalizedPaths.js:120:19:120:53 | pathMod ... .html') | semmle.label | pathMod ... .html') |
 | normalizedPaths.js:120:35:120:38 | path | semmle.label | path |
+| normalizedPaths.js:123:21:123:24 | path | semmle.label | path |
+| normalizedPaths.js:125:19:125:44 | pathMod ... , path) | semmle.label | pathMod ... , path) |
+| normalizedPaths.js:126:19:126:57 | pathMod ... , path) | semmle.label | pathMod ... , path) |
 | normalizedPaths.js:130:7:130:49 | path | semmle.label | path |
 | normalizedPaths.js:130:14:130:49 | pathMod ... y.path) | semmle.label | pathMod ... y.path) |
 | normalizedPaths.js:130:35:130:48 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:130:35:130:48 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:130:35:130:48 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:130:35:130:48 | req.query.path | semmle.label | req.query.path |
+| normalizedPaths.js:133:21:133:24 | path | semmle.label | path |
 | normalizedPaths.js:135:21:135:24 | path | semmle.label | path |
 | normalizedPaths.js:135:21:135:24 | path | semmle.label | path |
 | normalizedPaths.js:139:7:139:62 | path | semmle.label | path |
@@ -2956,6 +2987,7 @@ nodes
 | normalizedPaths.js:139:48:139:61 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:139:48:139:61 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:139:48:139:61 | req.query.path | semmle.label | req.query.path |
+| normalizedPaths.js:142:21:142:24 | path | semmle.label | path |
 | normalizedPaths.js:144:21:144:24 | path | semmle.label | path |
 | normalizedPaths.js:144:21:144:24 | path | semmle.label | path |
 | normalizedPaths.js:148:7:148:58 | path | semmle.label | path |
@@ -2968,6 +3000,7 @@ nodes
 | normalizedPaths.js:151:21:151:24 | path | semmle.label | path |
 | normalizedPaths.js:153:21:153:24 | path | semmle.label | path |
 | normalizedPaths.js:153:21:153:24 | path | semmle.label | path |
+| normalizedPaths.js:156:21:156:24 | path | semmle.label | path |
 | normalizedPaths.js:160:7:160:49 | path | semmle.label | path |
 | normalizedPaths.js:160:14:160:49 | pathMod ... y.path) | semmle.label | pathMod ... y.path) |
 | normalizedPaths.js:160:35:160:48 | req.query.path | semmle.label | req.query.path |
@@ -2975,6 +3008,7 @@ nodes
 | normalizedPaths.js:160:35:160:48 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:165:19:165:22 | path | semmle.label | path |
 | normalizedPaths.js:165:19:165:22 | path | semmle.label | path |
+| normalizedPaths.js:168:21:168:24 | path | semmle.label | path |
 | normalizedPaths.js:170:21:170:24 | path | semmle.label | path |
 | normalizedPaths.js:170:21:170:24 | path | semmle.label | path |
 | normalizedPaths.js:174:7:174:27 | path | semmle.label | path |
@@ -3004,6 +3038,7 @@ nodes
 | normalizedPaths.js:192:21:192:24 | path | semmle.label | path |
 | normalizedPaths.js:194:21:194:24 | path | semmle.label | path |
 | normalizedPaths.js:194:21:194:24 | path | semmle.label | path |
+| normalizedPaths.js:197:21:197:24 | path | semmle.label | path |
 | normalizedPaths.js:199:21:199:24 | path | semmle.label | path |
 | normalizedPaths.js:199:21:199:24 | path | semmle.label | path |
 | normalizedPaths.js:199:21:199:24 | path | semmle.label | path |
@@ -3017,6 +3052,7 @@ nodes
 | normalizedPaths.js:201:45:201:48 | path | semmle.label | path |
 | normalizedPaths.js:201:45:201:48 | path | semmle.label | path |
 | normalizedPaths.js:201:45:201:48 | path | semmle.label | path |
+| normalizedPaths.js:203:21:203:34 | normalizedPath | semmle.label | normalizedPath |
 | normalizedPaths.js:205:21:205:34 | normalizedPath | semmle.label | normalizedPath |
 | normalizedPaths.js:205:21:205:34 | normalizedPath | semmle.label | normalizedPath |
 | normalizedPaths.js:205:21:205:34 | normalizedPath | semmle.label | normalizedPath |
@@ -3035,6 +3071,7 @@ nodes
 | normalizedPaths.js:214:35:214:48 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:214:35:214:48 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:214:35:214:48 | req.query.path | semmle.label | req.query.path |
+| normalizedPaths.js:217:21:217:24 | path | semmle.label | path |
 | normalizedPaths.js:219:3:219:33 | path | semmle.label | path |
 | normalizedPaths.js:219:10:219:33 | decodeU ... t(path) | semmle.label | decodeU ... t(path) |
 | normalizedPaths.js:219:29:219:32 | path | semmle.label | path |
@@ -3049,6 +3086,7 @@ nodes
 | normalizedPaths.js:226:35:226:48 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:228:21:228:24 | path | semmle.label | path |
 | normalizedPaths.js:228:21:228:24 | path | semmle.label | path |
+| normalizedPaths.js:231:21:231:24 | path | semmle.label | path |
 | normalizedPaths.js:236:7:236:47 | path | semmle.label | path |
 | normalizedPaths.js:236:14:236:47 | pathMod ... y.path) | semmle.label | pathMod ... y.path) |
 | normalizedPaths.js:236:33:236:46 | req.query.path | semmle.label | req.query.path |
@@ -3058,8 +3096,10 @@ nodes
 | normalizedPaths.js:236:33:236:46 | req.query.path | semmle.label | req.query.path |
 | normalizedPaths.js:238:19:238:22 | path | semmle.label | path |
 | normalizedPaths.js:238:19:238:22 | path | semmle.label | path |
+| normalizedPaths.js:243:21:243:24 | path | semmle.label | path |
 | normalizedPaths.js:245:21:245:24 | path | semmle.label | path |
 | normalizedPaths.js:245:21:245:24 | path | semmle.label | path |
+| normalizedPaths.js:248:21:248:24 | path | semmle.label | path |
 | normalizedPaths.js:250:21:250:24 | path | semmle.label | path |
 | normalizedPaths.js:250:21:250:24 | path | semmle.label | path |
 | normalizedPaths.js:254:7:254:47 | path | semmle.label | path |
@@ -3073,26 +3113,33 @@ nodes
 | normalizedPaths.js:256:19:256:22 | path | semmle.label | path |
 | normalizedPaths.js:262:21:262:24 | path | semmle.label | path |
 | normalizedPaths.js:262:21:262:24 | path | semmle.label | path |
+| normalizedPaths.js:264:21:264:24 | path | semmle.label | path |
 | normalizedPaths.js:267:7:267:42 | newpath | semmle.label | newpath |
 | normalizedPaths.js:267:17:267:42 | pathMod ... e(path) | semmle.label | pathMod ... e(path) |
 | normalizedPaths.js:267:38:267:41 | path | semmle.label | path |
 | normalizedPaths.js:270:21:270:27 | newpath | semmle.label | newpath |
 | normalizedPaths.js:270:21:270:27 | newpath | semmle.label | newpath |
+| normalizedPaths.js:272:21:272:27 | newpath | semmle.label | newpath |
 | normalizedPaths.js:275:7:275:42 | newpath | semmle.label | newpath |
 | normalizedPaths.js:275:17:275:42 | pathMod ... e(path) | semmle.label | pathMod ... e(path) |
 | normalizedPaths.js:275:38:275:41 | path | semmle.label | path |
 | normalizedPaths.js:278:21:278:27 | newpath | semmle.label | newpath |
 | normalizedPaths.js:278:21:278:27 | newpath | semmle.label | newpath |
+| normalizedPaths.js:280:21:280:27 | newpath | semmle.label | newpath |
 | normalizedPaths.js:283:7:283:42 | newpath | semmle.label | newpath |
 | normalizedPaths.js:283:17:283:42 | pathMod ... e(path) | semmle.label | pathMod ... e(path) |
 | normalizedPaths.js:283:38:283:41 | path | semmle.label | path |
 | normalizedPaths.js:286:21:286:27 | newpath | semmle.label | newpath |
 | normalizedPaths.js:286:21:286:27 | newpath | semmle.label | newpath |
+| normalizedPaths.js:288:21:288:27 | newpath | semmle.label | newpath |
 | normalizedPaths.js:291:7:291:42 | newpath | semmle.label | newpath |
 | normalizedPaths.js:291:17:291:42 | pathMod ... e(path) | semmle.label | pathMod ... e(path) |
 | normalizedPaths.js:291:38:291:41 | path | semmle.label | path |
+| normalizedPaths.js:294:21:294:27 | newpath | semmle.label | newpath |
 | normalizedPaths.js:296:21:296:27 | newpath | semmle.label | newpath |
 | normalizedPaths.js:296:21:296:27 | newpath | semmle.label | newpath |
+| normalizedPaths.js:300:28:300:43 | "is-path-inside" | semmle.label | "is-path-inside" |
+| normalizedPaths.js:301:28:301:43 | "path-is-inside" | semmle.label | "path-is-inside" |
 | normalizedPaths.js:303:6:303:26 | path | semmle.label | path |
 | normalizedPaths.js:303:6:303:26 | path | semmle.label | path |
 | normalizedPaths.js:303:6:303:26 | path | semmle.label | path |
@@ -3107,6 +3154,7 @@ nodes
 | normalizedPaths.js:304:18:304:21 | path | semmle.label | path |
 | normalizedPaths.js:304:18:304:21 | path | semmle.label | path |
 | normalizedPaths.js:304:18:304:21 | path | semmle.label | path |
+| normalizedPaths.js:306:19:306:22 | path | semmle.label | path |
 | normalizedPaths.js:309:19:309:22 | path | semmle.label | path |
 | normalizedPaths.js:309:19:309:22 | path | semmle.label | path |
 | normalizedPaths.js:309:19:309:22 | path | semmle.label | path |
@@ -3126,8 +3174,10 @@ nodes
 | normalizedPaths.js:320:45:320:48 | path | semmle.label | path |
 | normalizedPaths.js:320:45:320:48 | path | semmle.label | path |
 | normalizedPaths.js:320:45:320:48 | path | semmle.label | path |
+| normalizedPaths.js:322:19:322:32 | normalizedPath | semmle.label | normalizedPath |
 | normalizedPaths.js:325:19:325:32 | normalizedPath | semmle.label | normalizedPath |
 | normalizedPaths.js:325:19:325:32 | normalizedPath | semmle.label | normalizedPath |
+| normalizedPaths.js:329:19:329:32 | normalizedPath | semmle.label | normalizedPath |
 | normalizedPaths.js:332:19:332:32 | normalizedPath | semmle.label | normalizedPath |
 | normalizedPaths.js:332:19:332:32 | normalizedPath | semmle.label | normalizedPath |
 | normalizedPaths.js:339:6:339:46 | path | semmle.label | path |
@@ -3141,6 +3191,7 @@ nodes
 | normalizedPaths.js:341:18:341:21 | path | semmle.label | path |
 | normalizedPaths.js:346:19:346:22 | path | semmle.label | path |
 | normalizedPaths.js:346:19:346:22 | path | semmle.label | path |
+| normalizedPaths.js:349:18:349:21 | path | semmle.label | path |
 | normalizedPaths.js:354:7:354:27 | path | semmle.label | path |
 | normalizedPaths.js:354:7:354:27 | path | semmle.label | path |
 | normalizedPaths.js:354:7:354:27 | path | semmle.label | path |
@@ -3162,6 +3213,8 @@ nodes
 | normalizedPaths.js:358:47:358:50 | path | semmle.label | path |
 | normalizedPaths.js:363:21:363:31 | requestPath | semmle.label | requestPath |
 | normalizedPaths.js:363:21:363:31 | requestPath | semmle.label | requestPath |
+| normalizedPaths.js:366:21:366:31 | requestPath | semmle.label | requestPath |
+| normalizedPaths.js:368:19:368:28 | targetPath | semmle.label | targetPath |
 | normalizedPaths.js:377:7:377:27 | path | semmle.label | path |
 | normalizedPaths.js:377:7:377:27 | path | semmle.label | path |
 | normalizedPaths.js:377:7:377:27 | path | semmle.label | path |
@@ -3192,8 +3245,12 @@ nodes
 | normalizedPaths.js:385:35:385:45 | req.query.x | semmle.label | req.query.x |
 | normalizedPaths.js:388:19:388:22 | path | semmle.label | path |
 | normalizedPaths.js:388:19:388:22 | path | semmle.label | path |
+| normalizedPaths.js:390:21:390:24 | path | semmle.label | path |
+| normalizedPaths.js:393:21:393:24 | path | semmle.label | path |
+| normalizedPaths.js:396:21:396:24 | path | semmle.label | path |
 | normalizedPaths.js:399:21:399:24 | path | semmle.label | path |
 | normalizedPaths.js:399:21:399:24 | path | semmle.label | path |
+| normalizedPaths.js:402:21:402:24 | path | semmle.label | path |
 | normalizedPaths.js:407:19:407:67 | pathMod ... t('/')) | semmle.label | pathMod ... t('/')) |
 | normalizedPaths.js:407:19:407:67 | pathMod ... t('/')) | semmle.label | pathMod ... t('/')) |
 | normalizedPaths.js:407:45:407:55 | req.query.x | semmle.label | req.query.x |
@@ -3208,6 +3265,12 @@ nodes
 | normalizedPaths.js:408:38:408:48 | req.query.x | semmle.label | req.query.x |
 | normalizedPaths.js:408:38:408:48 | req.query.x | semmle.label | req.query.x |
 | normalizedPaths.js:408:38:408:59 | req.que ... it('/') | semmle.label | req.que ... it('/') |
+| other-fs-libraries.js:1:20:1:25 | "http" | semmle.label | "http" |
+| other-fs-libraries.js:2:17:2:21 | "url" | semmle.label | "url" |
+| other-fs-libraries.js:3:16:3:19 | "fs" | semmle.label | "fs" |
+| other-fs-libraries.js:4:24:4:36 | "graceful-fs" | semmle.label | "graceful-fs" |
+| other-fs-libraries.js:5:21:5:30 | "fs-extra" | semmle.label | "fs-extra" |
+| other-fs-libraries.js:6:24:6:36 | "original-fs" | semmle.label | "original-fs" |
 | other-fs-libraries.js:9:7:9:48 | path | semmle.label | path |
 | other-fs-libraries.js:9:7:9:48 | path | semmle.label | path |
 | other-fs-libraries.js:9:7:9:48 | path | semmle.label | path |
@@ -3259,16 +3322,21 @@ nodes
 | other-fs-libraries.js:17:35:17:38 | path | semmle.label | path |
 | other-fs-libraries.js:17:35:17:38 | path | semmle.label | path |
 | other-fs-libraries.js:17:35:17:38 | path | semmle.label | path |
+| other-fs-libraries.js:19:11:19:26 | "./my-fs-module" | semmle.label | "./my-fs-module" |
 | other-fs-libraries.js:19:56:19:59 | path | semmle.label | path |
 | other-fs-libraries.js:19:56:19:59 | path | semmle.label | path |
 | other-fs-libraries.js:19:56:19:59 | path | semmle.label | path |
 | other-fs-libraries.js:19:56:19:59 | path | semmle.label | path |
 | other-fs-libraries.js:19:56:19:59 | path | semmle.label | path |
+| other-fs-libraries.js:21:36:23:10 | process ...  : "fs" | semmle.label | process ...  : "fs" |
 | other-fs-libraries.js:24:35:24:38 | path | semmle.label | path |
 | other-fs-libraries.js:24:35:24:38 | path | semmle.label | path |
 | other-fs-libraries.js:24:35:24:38 | path | semmle.label | path |
 | other-fs-libraries.js:24:35:24:38 | path | semmle.label | path |
 | other-fs-libraries.js:24:35:24:38 | path | semmle.label | path |
+| other-fs-libraries.js:29:20:29:23 | "fs" | semmle.label | "fs" |
+| other-fs-libraries.js:31:20:31:32 | "original-fs" | semmle.label | "original-fs" |
+| other-fs-libraries.js:35:20:35:25 | "util" | semmle.label | "util" |
 | other-fs-libraries.js:38:7:38:48 | path | semmle.label | path |
 | other-fs-libraries.js:38:7:38:48 | path | semmle.label | path |
 | other-fs-libraries.js:38:7:38:48 | path | semmle.label | path |
@@ -3295,16 +3363,19 @@ nodes
 | other-fs-libraries.js:40:35:40:38 | path | semmle.label | path |
 | other-fs-libraries.js:40:35:40:38 | path | semmle.label | path |
 | other-fs-libraries.js:40:35:40:38 | path | semmle.label | path |
+| other-fs-libraries.js:41:11:41:20 | "bluebird" | semmle.label | "bluebird" |
 | other-fs-libraries.js:41:50:41:53 | path | semmle.label | path |
 | other-fs-libraries.js:41:50:41:53 | path | semmle.label | path |
 | other-fs-libraries.js:41:50:41:53 | path | semmle.label | path |
 | other-fs-libraries.js:41:50:41:53 | path | semmle.label | path |
 | other-fs-libraries.js:41:50:41:53 | path | semmle.label | path |
+| other-fs-libraries.js:42:11:42:20 | "bluebird" | semmle.label | "bluebird" |
 | other-fs-libraries.js:42:53:42:56 | path | semmle.label | path |
 | other-fs-libraries.js:42:53:42:56 | path | semmle.label | path |
 | other-fs-libraries.js:42:53:42:56 | path | semmle.label | path |
 | other-fs-libraries.js:42:53:42:56 | path | semmle.label | path |
 | other-fs-libraries.js:42:53:42:56 | path | semmle.label | path |
+| other-fs-libraries.js:46:25:46:46 | "./my-a ... module" | semmle.label | "./my-a ... module" |
 | other-fs-libraries.js:49:7:49:48 | path | semmle.label | path |
 | other-fs-libraries.js:49:7:49:48 | path | semmle.label | path |
 | other-fs-libraries.js:49:7:49:48 | path | semmle.label | path |
@@ -3336,26 +3407,31 @@ nodes
 | other-fs-libraries.js:52:24:52:27 | path | semmle.label | path |
 | other-fs-libraries.js:52:24:52:27 | path | semmle.label | path |
 | other-fs-libraries.js:52:24:52:27 | path | semmle.label | path |
+| other-fs-libraries.js:54:11:54:16 | "pify" | semmle.label | "pify" |
 | other-fs-libraries.js:54:36:54:39 | path | semmle.label | path |
 | other-fs-libraries.js:54:36:54:39 | path | semmle.label | path |
 | other-fs-libraries.js:54:36:54:39 | path | semmle.label | path |
 | other-fs-libraries.js:54:36:54:39 | path | semmle.label | path |
 | other-fs-libraries.js:54:36:54:39 | path | semmle.label | path |
+| other-fs-libraries.js:55:11:55:16 | "pify" | semmle.label | "pify" |
 | other-fs-libraries.js:55:36:55:39 | path | semmle.label | path |
 | other-fs-libraries.js:55:36:55:39 | path | semmle.label | path |
 | other-fs-libraries.js:55:36:55:39 | path | semmle.label | path |
 | other-fs-libraries.js:55:36:55:39 | path | semmle.label | path |
 | other-fs-libraries.js:55:36:55:39 | path | semmle.label | path |
+| other-fs-libraries.js:57:11:57:26 | 'util.promisify' | semmle.label | 'util.promisify' |
 | other-fs-libraries.js:57:46:57:49 | path | semmle.label | path |
 | other-fs-libraries.js:57:46:57:49 | path | semmle.label | path |
 | other-fs-libraries.js:57:46:57:49 | path | semmle.label | path |
 | other-fs-libraries.js:57:46:57:49 | path | semmle.label | path |
 | other-fs-libraries.js:57:46:57:49 | path | semmle.label | path |
+| other-fs-libraries.js:59:11:59:19 | "thenify" | semmle.label | "thenify" |
 | other-fs-libraries.js:59:39:59:42 | path | semmle.label | path |
 | other-fs-libraries.js:59:39:59:42 | path | semmle.label | path |
 | other-fs-libraries.js:59:39:59:42 | path | semmle.label | path |
 | other-fs-libraries.js:59:39:59:42 | path | semmle.label | path |
 | other-fs-libraries.js:59:39:59:42 | path | semmle.label | path |
+| other-fs-libraries.js:61:27:61:36 | 'read-pkg' | semmle.label | 'read-pkg' |
 | other-fs-libraries.js:62:43:62:46 | path | semmle.label | path |
 | other-fs-libraries.js:62:43:62:46 | path | semmle.label | path |
 | other-fs-libraries.js:62:43:62:46 | path | semmle.label | path |
@@ -3366,6 +3442,7 @@ nodes
 | other-fs-libraries.js:63:51:63:54 | path | semmle.label | path |
 | other-fs-libraries.js:63:51:63:54 | path | semmle.label | path |
 | other-fs-libraries.js:63:51:63:54 | path | semmle.label | path |
+| other-fs-libraries.js:66:24:66:31 | "mkdirp" | semmle.label | "mkdirp" |
 | other-fs-libraries.js:68:7:68:48 | path | semmle.label | path |
 | other-fs-libraries.js:68:7:68:48 | path | semmle.label | path |
 | other-fs-libraries.js:68:7:68:48 | path | semmle.label | path |
@@ -3415,6 +3492,7 @@ nodes
 | other-fs-libraries.js:76:19:76:19 | x | semmle.label | x |
 | other-fs-libraries.js:76:19:76:19 | x | semmle.label | x |
 | other-fs-libraries.js:76:19:76:19 | x | semmle.label | x |
+| other-fs-libraries.js:79:21:79:33 | "fs/promises" | semmle.label | "fs/promises" |
 | other-fs-libraries.js:81:7:81:48 | path | semmle.label | path |
 | other-fs-libraries.js:81:7:81:48 | path | semmle.label | path |
 | other-fs-libraries.js:81:7:81:48 | path | semmle.label | path |
@@ -3441,6 +3519,8 @@ nodes
 | other-fs-libraries.js:83:16:83:19 | path | semmle.label | path |
 | other-fs-libraries.js:83:16:83:19 | path | semmle.label | path |
 | other-fs-libraries.js:83:16:83:19 | path | semmle.label | path |
+| prettier.js:1:25:1:33 | 'express' | semmle.label | 'express' |
+| prettier.js:2:26:2:35 | "prettier" | semmle.label | "prettier" |
 | prettier.js:6:11:6:28 | p | semmle.label | p |
 | prettier.js:6:11:6:28 | p | semmle.label | p |
 | prettier.js:6:11:6:28 | p | semmle.label | p |
@@ -3455,11 +3535,14 @@ nodes
 | prettier.js:7:28:7:28 | p | semmle.label | p |
 | prettier.js:7:28:7:28 | p | semmle.label | p |
 | prettier.js:7:28:7:28 | p | semmle.label | p |
+| prettier.js:11:28:11:32 | "foo" | semmle.label | "foo" |
 | prettier.js:11:44:11:44 | p | semmle.label | p |
 | prettier.js:11:44:11:44 | p | semmle.label | p |
 | prettier.js:11:44:11:44 | p | semmle.label | p |
 | prettier.js:11:44:11:44 | p | semmle.label | p |
 | prettier.js:11:44:11:44 | p | semmle.label | p |
+| pupeteer.js:1:27:1:37 | 'puppeteer' | semmle.label | 'puppeteer' |
+| pupeteer.js:2:30:2:44 | 'parse-torrent' | semmle.label | 'parse-torrent' |
 | pupeteer.js:5:9:5:71 | tainted | semmle.label | tainted |
 | pupeteer.js:5:19:5:71 | "dir/"  ... t.data" | semmle.label | "dir/"  ... t.data" |
 | pupeteer.js:5:28:5:53 | parseTo ... t).name | semmle.label | parseTo ... t).name |
@@ -3470,6 +3553,8 @@ nodes
 | pupeteer.js:9:28:9:34 | tainted | semmle.label | tainted |
 | pupeteer.js:13:37:13:43 | tainted | semmle.label | tainted |
 | pupeteer.js:13:37:13:43 | tainted | semmle.label | tainted |
+| sharedlib-repro.js:1:20:1:23 | 'fs' | semmle.label | 'fs' |
+| sharedlib-repro.js:2:25:2:33 | 'express' | semmle.label | 'express' |
 | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId | semmle.label | req.par ... spaceId |
 | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId | semmle.label | req.par ... spaceId |
 | sharedlib-repro.js:13:22:13:43 | req.par ... spaceId | semmle.label | req.par ... spaceId |
@@ -3484,6 +3569,9 @@ nodes
 | sharedlib-repro.js:22:18:22:25 | filepath | semmle.label | filepath |
 | sharedlib-repro.js:22:18:22:25 | filepath | semmle.label | filepath |
 | sharedlib-repro.js:22:18:22:25 | filepath | semmle.label | filepath |
+| tainted-access-paths.js:1:18:1:21 | 'fs' | semmle.label | 'fs' |
+| tainted-access-paths.js:2:20:2:25 | 'http' | semmle.label | 'http' |
+| tainted-access-paths.js:3:19:3:23 | 'url' | semmle.label | 'url' |
 | tainted-access-paths.js:6:7:6:48 | path | semmle.label | path |
 | tainted-access-paths.js:6:7:6:48 | path | semmle.label | path |
 | tainted-access-paths.js:6:7:6:48 | path | semmle.label | path |
@@ -3527,6 +3615,8 @@ nodes
 | tainted-access-paths.js:12:19:12:25 | obj.sub | semmle.label | obj.sub |
 | tainted-access-paths.js:12:19:12:25 | obj.sub | semmle.label | obj.sub |
 | tainted-access-paths.js:12:19:12:25 | obj.sub | semmle.label | obj.sub |
+| tainted-access-paths.js:16:19:16:25 | obj.sub | semmle.label | obj.sub |
+| tainted-access-paths.js:20:21:20:28 | obj.sub2 | semmle.label | obj.sub2 |
 | tainted-access-paths.js:26:19:26:21 | obj | semmle.label | obj |
 | tainted-access-paths.js:26:19:26:21 | obj | semmle.label | obj |
 | tainted-access-paths.js:26:19:26:21 | obj | semmle.label | obj |
@@ -3563,6 +3653,7 @@ nodes
 | tainted-access-paths.js:31:23:31:30 | obj.sub4 | semmle.label | obj.sub4 |
 | tainted-access-paths.js:31:23:31:30 | obj.sub4 | semmle.label | obj.sub4 |
 | tainted-access-paths.js:31:23:31:30 | obj.sub4 | semmle.label | obj.sub4 |
+| tainted-access-paths.js:36:22:36:30 | 'node:fs' | semmle.label | 'node:fs' |
 | tainted-access-paths.js:39:7:39:48 | path | semmle.label | path |
 | tainted-access-paths.js:39:7:39:48 | path | semmle.label | path |
 | tainted-access-paths.js:39:7:39:48 | path | semmle.label | path |
@@ -3589,6 +3680,7 @@ nodes
 | tainted-access-paths.js:40:23:40:26 | path | semmle.label | path |
 | tainted-access-paths.js:40:23:40:26 | path | semmle.label | path |
 | tainted-access-paths.js:40:23:40:26 | path | semmle.label | path |
+| tainted-access-paths.js:45:24:45:31 | "chownr" | semmle.label | "chownr" |
 | tainted-access-paths.js:48:7:48:48 | path | semmle.label | path |
 | tainted-access-paths.js:48:7:48:48 | path | semmle.label | path |
 | tainted-access-paths.js:48:7:48:48 | path | semmle.label | path |
@@ -3615,6 +3707,16 @@ nodes
 | tainted-access-paths.js:49:10:49:13 | path | semmle.label | path |
 | tainted-access-paths.js:49:10:49:13 | path | semmle.label | path |
 | tainted-access-paths.js:49:10:49:13 | path | semmle.label | path |
+| tainted-array-steps.js:1:18:1:21 | 'fs' | semmle.label | 'fs' |
+| tainted-array-steps.js:2:20:2:25 | 'http' | semmle.label | 'http' |
+| tainted-array-steps.js:3:19:3:23 | 'url' | semmle.label | 'url' |
+| tainted-array-steps.js:4:24:4:42 | 'sanitize-filename' | semmle.label | 'sanitize-filename' |
+| tainted-array-steps.js:5:26:5:31 | 'path' | semmle.label | 'path' |
+| tainted-array-steps.js:10:29:10:54 | ['publi ... in('/') | semmle.label | ['publi ... in('/') |
+| tainted-array-steps.js:14:29:14:43 | parts.join('/') | semmle.label | parts.join('/') |
+| tainted-promise-steps.js:1:18:1:21 | 'fs' | semmle.label | 'fs' |
+| tainted-promise-steps.js:2:20:2:25 | 'http' | semmle.label | 'http' |
+| tainted-promise-steps.js:3:19:3:23 | 'url' | semmle.label | 'url' |
 | tainted-promise-steps.js:6:7:6:48 | path | semmle.label | path |
 | tainted-promise-steps.js:6:7:6:48 | path | semmle.label | path |
 | tainted-promise-steps.js:6:7:6:48 | path | semmle.label | path |
@@ -3670,13 +3772,13 @@ nodes
 | tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
 | tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
 | tainted-promise-steps.js:12:44:12:47 | path | semmle.label | path |
+| tainted-require.js:1:23:1:31 | 'express' | semmle.label | 'express' |
 | tainted-require.js:7:19:7:37 | req.param("module") | semmle.label | req.param("module") |
 | tainted-require.js:7:19:7:37 | req.param("module") | semmle.label | req.param("module") |
 | tainted-require.js:7:19:7:37 | req.param("module") | semmle.label | req.param("module") |
 | tainted-require.js:7:19:7:37 | req.param("module") | semmle.label | req.param("module") |
 | tainted-require.js:7:19:7:37 | req.param("module") | semmle.label | req.param("module") |
-| tainted-require.js:7:19:7:37 | req.param("module") | semmle.label | req.param("module") |
-| tainted-require.js:12:29:12:47 | req.param("module") | semmle.label | req.param("module") |
+| tainted-require.js:10:25:10:33 | "resolve" | semmle.label | "resolve" |
 | tainted-require.js:12:29:12:47 | req.param("module") | semmle.label | req.param("module") |
 | tainted-require.js:12:29:12:47 | req.param("module") | semmle.label | req.param("module") |
 | tainted-require.js:12:29:12:47 | req.param("module") | semmle.label | req.param("module") |
@@ -3687,21 +3789,23 @@ nodes
 | tainted-require.js:14:11:14:29 | req.param("module") | semmle.label | req.param("module") |
 | tainted-require.js:14:11:14:29 | req.param("module") | semmle.label | req.param("module") |
 | tainted-require.js:14:11:14:29 | req.param("module") | semmle.label | req.param("module") |
-| tainted-require.js:14:11:14:29 | req.param("module") | semmle.label | req.param("module") |
-| tainted-sendFile.js:8:16:8:33 | req.param("gimme") | semmle.label | req.param("gimme") |
+| tainted-sendFile.js:1:23:1:31 | 'express' | semmle.label | 'express' |
+| tainted-sendFile.js:2:20:2:25 | 'path' | semmle.label | 'path' |
 | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | semmle.label | req.param("gimme") |
 | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | semmle.label | req.param("gimme") |
 | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | semmle.label | req.param("gimme") |
 | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | semmle.label | req.param("gimme") |
 | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | semmle.label | req.param("gimme") |
 | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | semmle.label | req.param("gimme") |
-| tainted-sendFile.js:10:16:10:33 | req.param("gimme") | semmle.label | req.param("gimme") |
+| tainted-sendFile.js:13:44:13:56 | process.cwd() | semmle.label | process.cwd() |
+| tainted-sendFile.js:15:44:15:56 | process.cwd() | semmle.label | process.cwd() |
 | tainted-sendFile.js:18:43:18:58 | req.param("dir") | semmle.label | req.param("dir") |
 | tainted-sendFile.js:18:43:18:58 | req.param("dir") | semmle.label | req.param("dir") |
 | tainted-sendFile.js:18:43:18:58 | req.param("dir") | semmle.label | req.param("dir") |
 | tainted-sendFile.js:18:43:18:58 | req.param("dir") | semmle.label | req.param("dir") |
 | tainted-sendFile.js:18:43:18:58 | req.param("dir") | semmle.label | req.param("dir") |
-| tainted-sendFile.js:18:43:18:58 | req.param("dir") | semmle.label | req.param("dir") |
+| tainted-sendFile.js:21:16:21:48 | homeDir ... arams.x | semmle.label | homeDir ... arams.x |
+| tainted-sendFile.js:22:16:22:37 | 'data/' ... arams.x | semmle.label | 'data/' ... arams.x |
 | tainted-sendFile.js:24:16:24:49 | path.re ... rams.x) | semmle.label | path.re ... rams.x) |
 | tainted-sendFile.js:24:16:24:49 | path.re ... rams.x) | semmle.label | path.re ... rams.x) |
 | tainted-sendFile.js:24:37:24:48 | req.params.x | semmle.label | req.params.x |
@@ -3715,6 +3819,10 @@ nodes
 | tainted-sendFile.js:25:34:25:45 | req.params.x | semmle.label | req.params.x |
 | tainted-sendFile.js:25:34:25:45 | req.params.x | semmle.label | req.params.x |
 | tainted-sendFile.js:25:34:25:45 | req.params.x | semmle.label | req.params.x |
+| tainted-sendFile.js:27:16:27:56 | homeDir ... rams.x) | semmle.label | homeDir ... rams.x) |
+| tainted-string-steps.js:1:18:1:21 | 'fs' | semmle.label | 'fs' |
+| tainted-string-steps.js:2:20:2:25 | 'http' | semmle.label | 'http' |
+| tainted-string-steps.js:3:19:3:23 | 'url' | semmle.label | 'url' |
 | tainted-string-steps.js:6:7:6:48 | path | semmle.label | path |
 | tainted-string-steps.js:6:7:6:48 | path | semmle.label | path |
 | tainted-string-steps.js:6:7:6:48 | path | semmle.label | path |
@@ -3736,6 +3844,7 @@ nodes
 | tainted-string-steps.js:6:24:6:30 | req.url | semmle.label | req.url |
 | tainted-string-steps.js:6:24:6:30 | req.url | semmle.label | req.url |
 | tainted-string-steps.js:6:24:6:30 | req.url | semmle.label | req.url |
+| tainted-string-steps.js:7:18:7:37 | path.substring(i, j) | semmle.label | path.substring(i, j) |
 | tainted-string-steps.js:8:18:8:21 | path | semmle.label | path |
 | tainted-string-steps.js:8:18:8:21 | path | semmle.label | path |
 | tainted-string-steps.js:8:18:8:21 | path | semmle.label | path |
@@ -3809,6 +3918,8 @@ nodes
 | tainted-string-steps.js:18:18:18:35 | path.toLowerCase() | semmle.label | path.toLowerCase() |
 | tainted-string-steps.js:18:18:18:35 | path.toLowerCase() | semmle.label | path.toLowerCase() |
 | tainted-string-steps.js:18:18:18:35 | path.toLowerCase() | semmle.label | path.toLowerCase() |
+| tainted-string-steps.js:20:18:20:32 | path.split('/') | semmle.label | path.split('/') |
+| tainted-string-steps.js:21:18:21:35 | path.split('/')[0] | semmle.label | path.split('/')[0] |
 | tainted-string-steps.js:22:18:22:21 | path | semmle.label | path |
 | tainted-string-steps.js:22:18:22:21 | path | semmle.label | path |
 | tainted-string-steps.js:22:18:22:21 | path | semmle.label | path |
@@ -3838,6 +3949,7 @@ nodes
 | tainted-string-steps.js:24:18:24:35 | path.split("?")[0] | semmle.label | path.split("?")[0] |
 | tainted-string-steps.js:24:18:24:35 | path.split("?")[0] | semmle.label | path.split("?")[0] |
 | tainted-string-steps.js:24:18:24:35 | path.split("?")[0] | semmle.label | path.split("?")[0] |
+| tainted-string-steps.js:25:18:25:39 | path.sp ... own)[i] | semmle.label | path.sp ... own)[i] |
 | tainted-string-steps.js:26:18:26:21 | path | semmle.label | path |
 | tainted-string-steps.js:26:18:26:21 | path | semmle.label | path |
 | tainted-string-steps.js:26:18:26:21 | path | semmle.label | path |
@@ -3860,6 +3972,9 @@ nodes
 | tainted-string-steps.js:27:18:27:36 | path.split(unknown) | semmle.label | path.split(unknown) |
 | tainted-string-steps.js:27:18:27:36 | path.split(unknown) | semmle.label | path.split(unknown) |
 | tainted-string-steps.js:27:18:27:36 | path.split(unknown) | semmle.label | path.split(unknown) |
+| tainted-string-steps.js:28:18:28:35 | path.split("?")[i] | semmle.label | path.split("?")[i] |
+| torrents.js:1:30:1:44 | 'parse-torrent' | semmle.label | 'parse-torrent' |
+| torrents.js:2:20:2:23 | 'fs' | semmle.label | 'fs' |
 | torrents.js:5:6:5:38 | name | semmle.label | name |
 | torrents.js:5:6:5:38 | name | semmle.label | name |
 | torrents.js:5:6:5:38 | name | semmle.label | name |
@@ -3874,6 +3989,11 @@ nodes
 | torrents.js:6:24:6:27 | name | semmle.label | name |
 | torrents.js:7:25:7:27 | loc | semmle.label | loc |
 | torrents.js:7:25:7:27 | loc | semmle.label | loc |
+| typescript.ts:1:18:1:21 | 'fs' | semmle.label | 'fs' |
+| typescript.ts:2:20:2:25 | 'http' | semmle.label | 'http' |
+| typescript.ts:3:19:3:23 | 'url' | semmle.label | 'url' |
+| typescript.ts:4:24:4:42 | 'sanitize-filename' | semmle.label | 'sanitize-filename' |
+| typescript.ts:5:26:5:31 | 'path' | semmle.label | 'path' |
 | typescript.ts:9:7:9:48 | path | semmle.label | path |
 | typescript.ts:9:7:9:48 | path | semmle.label | path |
 | typescript.ts:9:7:9:48 | path | semmle.label | path |
@@ -3900,6 +4020,8 @@ nodes
 | typescript.ts:12:29:12:32 | path | semmle.label | path |
 | typescript.ts:12:29:12:32 | path | semmle.label | path |
 | typescript.ts:12:29:12:32 | path | semmle.label | path |
+| typescript.ts:15:31:15:34 | path | semmle.label | path |
+| typescript.ts:18:39:18:43 | path2 | semmle.label | path2 |
 | typescript.ts:20:7:20:18 | path3 | semmle.label | path3 |
 | typescript.ts:20:7:20:18 | path3 | semmle.label | path3 |
 | typescript.ts:20:7:20:18 | path3 | semmle.label | path3 |
@@ -3926,6 +4048,7 @@ nodes
 | typescript.ts:24:39:24:43 | path4 | semmle.label | path4 |
 | typescript.ts:24:39:24:43 | path4 | semmle.label | path4 |
 | typescript.ts:24:39:24:43 | path4 | semmle.label | path4 |
+| typescript.ts:28:29:28:33 | path5 | semmle.label | path5 |
 | typescript.ts:30:7:30:18 | path6 | semmle.label | path6 |
 | typescript.ts:30:7:30:18 | path6 | semmle.label | path6 |
 | typescript.ts:30:7:30:18 | path6 | semmle.label | path6 |
@@ -3939,7 +4062,6 @@ nodes
 | typescript.ts:32:29:32:33 | path6 | semmle.label | path6 |
 | typescript.ts:32:29:32:33 | path6 | semmle.label | path6 |
 | typescript.ts:32:29:32:33 | path6 | semmle.label | path6 |
-| views.js:1:43:1:55 | req.params[0] | semmle.label | req.params[0] |
 | views.js:1:43:1:55 | req.params[0] | semmle.label | req.params[0] |
 | views.js:1:43:1:55 | req.params[0] | semmle.label | req.params[0] |
 | views.js:1:43:1:55 | req.params[0] | semmle.label | req.params[0] |
@@ -3968,6 +4090,9 @@ subpaths
 | TaintedPath.js:78:31:78:74 | require ... ).query | TaintedPath.js:78:61:78:67 | req.url | TaintedPath.js:78:31:78:74 | require ... ).query | This path depends on a $@. | TaintedPath.js:78:61:78:67 | req.url | user-provided value |
 | TaintedPath.js:79:31:79:73 | require ... ).query | TaintedPath.js:79:60:79:66 | req.url | TaintedPath.js:79:31:79:73 | require ... ).query | This path depends on a $@. | TaintedPath.js:79:60:79:66 | req.url | user-provided value |
 | TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] | This path depends on a $@. | TaintedPath.js:87:48:87:60 | req.params[0] | user-provided value |
+| TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] | This path depends on a $@. | TaintedPath.js:87:48:87:60 | req.params[0] | user-provided value |
+| TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] | This path depends on a $@. | TaintedPath.js:87:48:87:60 | req.params[0] | user-provided value |
+| TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] | TaintedPath.js:87:48:87:60 | req.params[0] | This path depends on a $@. | TaintedPath.js:87:48:87:60 | req.params[0] | user-provided value |
 | TaintedPath.js:102:28:102:48 | fs.real ... c(path) | TaintedPath.js:100:23:100:29 | req.url | TaintedPath.js:102:28:102:48 | fs.real ... c(path) | This path depends on a $@. | TaintedPath.js:100:23:100:29 | req.url | user-provided value |
 | TaintedPath.js:105:45:105:52 | realpath | TaintedPath.js:100:23:100:29 | req.url | TaintedPath.js:105:45:105:52 | realpath | This path depends on a $@. | TaintedPath.js:100:23:100:29 | req.url | user-provided value |
 | TaintedPath.js:138:23:138:26 | path | TaintedPath.js:136:23:136:29 | req.url | TaintedPath.js:138:23:138:26 | path | This path depends on a $@. | TaintedPath.js:136:23:136:29 | req.url | user-provided value |
@@ -3991,6 +4116,9 @@ subpaths
 | TaintedPath.js:212:31:212:34 | path | TaintedPath.js:211:24:211:30 | req.url | TaintedPath.js:212:31:212:34 | path | This path depends on a $@. | TaintedPath.js:211:24:211:30 | req.url | user-provided value |
 | TaintedPath.js:213:45:213:48 | path | TaintedPath.js:211:24:211:30 | req.url | TaintedPath.js:213:45:213:48 | path | This path depends on a $@. | TaintedPath.js:211:24:211:30 | req.url | user-provided value |
 | TaintedPath.js:214:35:214:38 | path | TaintedPath.js:211:24:211:30 | req.url | TaintedPath.js:214:35:214:38 | path | This path depends on a $@. | TaintedPath.js:211:24:211:30 | req.url | user-provided value |
+| express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar | This path depends on a $@. | express.js:8:20:8:32 | req.query.bar | user-provided value |
+| express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar | This path depends on a $@. | express.js:8:20:8:32 | req.query.bar | user-provided value |
+| express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar | This path depends on a $@. | express.js:8:20:8:32 | req.query.bar | user-provided value |
 | express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar | express.js:8:20:8:32 | req.query.bar | This path depends on a $@. | express.js:8:20:8:32 | req.query.bar | user-provided value |
 | handlebars.js:11:32:11:39 | filePath | handlebars.js:29:46:29:60 | req.params.path | handlebars.js:11:32:11:39 | filePath | This path depends on a $@. | handlebars.js:29:46:29:60 | req.params.path | user-provided value |
 | handlebars.js:15:25:15:32 | filePath | handlebars.js:43:15:43:29 | req.params.path | handlebars.js:15:25:15:32 | filePath | This path depends on a $@. | handlebars.js:43:15:43:29 | req.params.path | user-provided value |
@@ -4097,10 +4225,24 @@ subpaths
 | tainted-promise-steps.js:11:19:11:35 | await pathPromise | tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:11:19:11:35 | await pathPromise | This path depends on a $@. | tainted-promise-steps.js:6:24:6:30 | req.url | user-provided value |
 | tainted-promise-steps.js:12:44:12:47 | path | tainted-promise-steps.js:6:24:6:30 | req.url | tainted-promise-steps.js:12:44:12:47 | path | This path depends on a $@. | tainted-promise-steps.js:6:24:6:30 | req.url | user-provided value |
 | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") | This path depends on a $@. | tainted-require.js:7:19:7:37 | req.param("module") | user-provided value |
+| tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") | This path depends on a $@. | tainted-require.js:7:19:7:37 | req.param("module") | user-provided value |
+| tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") | This path depends on a $@. | tainted-require.js:7:19:7:37 | req.param("module") | user-provided value |
+| tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") | tainted-require.js:7:19:7:37 | req.param("module") | This path depends on a $@. | tainted-require.js:7:19:7:37 | req.param("module") | user-provided value |
+| tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") | This path depends on a $@. | tainted-require.js:12:29:12:47 | req.param("module") | user-provided value |
+| tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") | This path depends on a $@. | tainted-require.js:12:29:12:47 | req.param("module") | user-provided value |
+| tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") | This path depends on a $@. | tainted-require.js:12:29:12:47 | req.param("module") | user-provided value |
 | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") | tainted-require.js:12:29:12:47 | req.param("module") | This path depends on a $@. | tainted-require.js:12:29:12:47 | req.param("module") | user-provided value |
 | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") | This path depends on a $@. | tainted-require.js:14:11:14:29 | req.param("module") | user-provided value |
+| tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") | This path depends on a $@. | tainted-require.js:14:11:14:29 | req.param("module") | user-provided value |
+| tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") | This path depends on a $@. | tainted-require.js:14:11:14:29 | req.param("module") | user-provided value |
+| tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") | tainted-require.js:14:11:14:29 | req.param("module") | This path depends on a $@. | tainted-require.js:14:11:14:29 | req.param("module") | user-provided value |
+| tainted-sendFile.js:8:16:8:33 | req.param("gimme") | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | This path depends on a $@. | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | user-provided value |
 | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | This path depends on a $@. | tainted-sendFile.js:8:16:8:33 | req.param("gimme") | user-provided value |
 | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | This path depends on a $@. | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | user-provided value |
+| tainted-sendFile.js:10:16:10:33 | req.param("gimme") | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | This path depends on a $@. | tainted-sendFile.js:10:16:10:33 | req.param("gimme") | user-provided value |
+| tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") | This path depends on a $@. | tainted-sendFile.js:18:43:18:58 | req.param("dir") | user-provided value |
+| tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") | This path depends on a $@. | tainted-sendFile.js:18:43:18:58 | req.param("dir") | user-provided value |
+| tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") | This path depends on a $@. | tainted-sendFile.js:18:43:18:58 | req.param("dir") | user-provided value |
 | tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") | tainted-sendFile.js:18:43:18:58 | req.param("dir") | This path depends on a $@. | tainted-sendFile.js:18:43:18:58 | req.param("dir") | user-provided value |
 | tainted-sendFile.js:24:16:24:49 | path.re ... rams.x) | tainted-sendFile.js:24:37:24:48 | req.params.x | tainted-sendFile.js:24:16:24:49 | path.re ... rams.x) | This path depends on a $@. | tainted-sendFile.js:24:37:24:48 | req.params.x | user-provided value |
 | tainted-sendFile.js:25:16:25:46 | path.jo ... rams.x) | tainted-sendFile.js:25:34:25:45 | req.params.x | tainted-sendFile.js:25:16:25:46 | path.jo ... rams.x) | This path depends on a $@. | tainted-sendFile.js:25:34:25:45 | req.params.x | user-provided value |
@@ -4123,4 +4265,7 @@ subpaths
 | typescript.ts:21:39:21:43 | path3 | typescript.ts:9:24:9:30 | req.url | typescript.ts:21:39:21:43 | path3 | This path depends on a $@. | typescript.ts:9:24:9:30 | req.url | user-provided value |
 | typescript.ts:24:39:24:43 | path4 | typescript.ts:9:24:9:30 | req.url | typescript.ts:24:39:24:43 | path4 | This path depends on a $@. | typescript.ts:9:24:9:30 | req.url | user-provided value |
 | typescript.ts:32:29:32:33 | path6 | typescript.ts:9:24:9:30 | req.url | typescript.ts:32:29:32:33 | path6 | This path depends on a $@. | typescript.ts:9:24:9:30 | req.url | user-provided value |
+| views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] | This path depends on a $@. | views.js:1:43:1:55 | req.params[0] | user-provided value |
+| views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] | This path depends on a $@. | views.js:1:43:1:55 | req.params[0] | user-provided value |
+| views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] | This path depends on a $@. | views.js:1:43:1:55 | req.params[0] | user-provided value |
 | views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] | views.js:1:43:1:55 | req.params[0] | This path depends on a $@. | views.js:1:43:1:55 | req.params[0] | user-provided value |

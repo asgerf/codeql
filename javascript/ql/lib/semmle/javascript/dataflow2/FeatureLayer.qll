@@ -300,16 +300,21 @@ private module Conversions {
       node instanceof AdditionalGuard
     }
 
-    import MakeDeduplicateFlowState<C::isSource/2, C::isSink/2>
+    // import MakeDeduplicateFlowState<C::isSource/2, C::isSink/2>
     private import MakeBarrierGuards<isBarrierGuard/1>
+
+    predicate isSource = C::isSource/2;
+
+    predicate isSink = C::isSink/2;
 
     predicate isSink(Node sink) { none() } // FIXME: forward C::isSink to MakeDeduplicateFlowState
 
     predicate isBarrier(Node node) { C::isBarrier(node) or barrierGuardBlocksNode(node) }
 
     predicate isBarrier(Node node, FlowState state) {
-      C::isBarrier(node, state) or
-      deduplicationBarrier(node, state) or
+      C::isBarrier(node, state)
+      or
+      // deduplicationBarrier(node, state) or
       barrierGuardBlocksNode(node, state)
     }
 
@@ -320,8 +325,8 @@ private module Conversions {
     predicate isAdditionalFlowStep(Node node1, Node node2) { C::isAdditionalFlowStep(node1, node2) }
 
     predicate isAdditionalFlowStep(Node node1, FlowState state1, Node node2, FlowState state2) {
-      C::isAdditionalFlowStep(node1, state1, node2, state2) or
-      deduplicationStep(node1, state1, node2, state2)
+      C::isAdditionalFlowStep(node1, state1, node2, state2) //or
+      // deduplicationStep(node1, state1, node2, state2)
     }
 
     predicate allowImplicitRead(Node node, ContentSet c) { C::allowImplicitRead(node, c) }
@@ -339,5 +344,9 @@ private module Conversions {
     predicate sinkGrouping(Node sink, string sinkGroup) { C::sinkGrouping(sink, sinkGroup) }
 
     predicate includeHiddenNodes() { C::includeHiddenNodes() }
+
+    predicate hideFinalFlowStates() {
+      any() // yes please
+    }
   }
 }

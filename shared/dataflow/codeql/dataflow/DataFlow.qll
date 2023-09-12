@@ -430,6 +430,16 @@ module Configs<InputSig Lang> {
      * is not visualized (as it is in a `path-problem` query).
      */
     default predicate includeHiddenNodes() { none() }
+
+    /**
+     * Holds if the source-sink pairs reported by this data flow configuration should not be
+     * associated with a specific pair of flow states.
+     *
+     * This can help avoid duplicate results when a source and/or sink have multiple flow states.
+     *
+     * If enabled, `PathNode.getState()` will have no result for sources and sinks reported by `flowPath`.
+     */
+    default predicate hideFinalFlowStates() { none() }
   }
 }
 
