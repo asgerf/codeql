@@ -56,14 +56,8 @@ module MakeImpl<InputSig Lang> {
     /** Holds if data flow into `node` is prohibited. */
     predicate isBarrierIn(Node node);
 
-    /** Holds if data flow into `node` is prohibited when the target flow state is `state`. */
-    predicate isBarrierIn(Node node, FlowState state);
-
     /** Holds if data flow out of `node` is prohibited. */
     predicate isBarrierOut(Node node);
-
-    /** Holds if data flow out of `node` is prohibited when the originating flow state is `state`. */
-    predicate isBarrierOut(Node node, FlowState state);
 
     /**
      * Holds if data may flow from `node1` to `node2` in addition to the normal data-flow steps.
@@ -229,31 +223,12 @@ module MakeImpl<InputSig Lang> {
       )
     }
 
-    private predicate inBarrier(NodeEx node, FlowState state) {
-      exists(Node n |
-        node.asNode() = n and
-        Config::isBarrierIn(n, state) and
-        Config::isSource(n, state)
-      )
-    }
-
     private predicate outBarrier(NodeEx node) {
       exists(Node n |
         node.asNode() = n and
         Config::isBarrierOut(n)
       |
         Config::isSink(n, _)
-        or
-        Config::isSink(n)
-      )
-    }
-
-    private predicate outBarrier(NodeEx node, FlowState state) {
-      exists(Node n |
-        node.asNode() = n and
-        Config::isBarrierOut(n, state)
-      |
-        Config::isSink(n, state)
         or
         Config::isSink(n)
       )
@@ -275,16 +250,7 @@ module MakeImpl<InputSig Lang> {
 
     pragma[nomagic]
     private predicate stateBarrier(NodeEx node, FlowState state) {
-      exists(Node n | node.asNode() = n |
-        Config::isBarrier(n, state)
-        or
-        Config::isBarrierIn(n, state) and
-        not Config::isSource(n, state)
-        or
-        Config::isBarrierOut(n, state) and
-        not Config::isSink(n, state) and
-        not Config::isSink(n)
-      )
+      exists(Node n | node.asNode() = n | Config::isBarrier(n, state))
     }
 
     pragma[nomagic]
@@ -308,16 +274,6 @@ module MakeImpl<InputSig Lang> {
       not inBarrier(node2) and
       not fullBarrier(node1) and
       not fullBarrier(node2)
-    }
-
-    /** Provides the relevant barriers for a step from `node1,state1` to `node2,state2`, including stateless barriers for `node1` to `node2`. */
-    pragma[inline]
-    private predicate stateStepFilter(NodeEx node1, FlowState state1, NodeEx node2, FlowState state2) {
-      stepFilter(node1, node2) and
-      not outBarrier(node1, state1) and
-      not inBarrier(node2, state2) and
-      not stateBarrier(node1, state1) and
-      not stateBarrier(node2, state2)
     }
 
     pragma[nomagic]
@@ -372,7 +328,9 @@ module MakeImpl<InputSig Lang> {
         node2.asNode() = n2 and
         Config::isAdditionalFlowStep(pragma[only_bind_into](n1), s1, pragma[only_bind_into](n2), s2) and
         getNodeEnclosingCallable(n1) = getNodeEnclosingCallable(n2) and
-        stateStepFilter(node1, s1, node2, s2)
+        stepFilter(node1, node2) and
+        not stateBarrier(node1, s1) and
+        not stateBarrier(node2, s2)
       )
     }
 
@@ -409,7 +367,9 @@ module MakeImpl<InputSig Lang> {
         node2.asNode() = n2 and
         Config::isAdditionalFlowStep(pragma[only_bind_into](n1), s1, pragma[only_bind_into](n2), s2) and
         getNodeEnclosingCallable(n1) != getNodeEnclosingCallable(n2) and
-        stateStepFilter(node1, s1, node2, s2) and
+        stepFilter(node1, node2) and
+        not stateBarrier(node1, s1) and
+        not stateBarrier(node2, s2) and
         not Config::getAFeature() instanceof FeatureEqualSourceSinkCallContext
       )
     }
