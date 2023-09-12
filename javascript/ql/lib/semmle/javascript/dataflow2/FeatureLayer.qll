@@ -140,8 +140,14 @@ module Public {
     /** Holds if data flow into `node` is prohibited. */
     default predicate isBarrierIn(Node node) { none() }
 
+    /** Holds if data flow into `node` is prohibited when the target flow state is `state`. */
+    default predicate isBarrierIn(Node node, FlowState state) { none() }
+
     /** Holds if data flow out of `node` is prohibited. */
     default predicate isBarrierOut(Node node) { none() }
+
+    /** Holds if data flow out of `node` is prohibited when the originating flow state is `state`. */
+    default predicate isBarrierOut(Node node, FlowState state) { none() }
 
     /**
      * Holds if data may flow from `node1` to `node2` in addition to the normal data-flow steps.
@@ -315,7 +321,11 @@ private module Conversions {
 
     predicate isBarrierIn(Node node) { C::isBarrierIn(node) }
 
+    predicate isBarrierIn(Node node, FlowState state) { C::isBarrierIn(node, state) }
+
     predicate isBarrierOut(Node node) { C::isBarrierOut(node) }
+
+    predicate isBarrierOut(Node node, FlowState state) { C::isBarrierOut(node, state) }
 
     predicate isAdditionalFlowStep(Node node1, Node node2) { C::isAdditionalFlowStep(node1, node2) }
 
