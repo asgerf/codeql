@@ -437,6 +437,12 @@ module Configs<InputSig Lang> {
      * is not visualized (as it is in a `path-problem` query).
      */
     default predicate includeHiddenNodes() { none() }
+
+    /**
+     * Holds if taint steps should not apply to `state`, when this configuration is used for taint-tracking.
+     * Has no effect for non-taint configurations.
+     */
+    default predicate isValueOnlyFlowState(FlowState state) { none() }
   }
 }
 

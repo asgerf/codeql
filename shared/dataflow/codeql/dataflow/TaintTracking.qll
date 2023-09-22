@@ -43,23 +43,50 @@ module TaintFlowMake<DF::InputSig DataFlowLang, InputSig<DataFlowLang> TaintTrac
   {
     import Config
 
-    predicate isBarrier(DataFlowLang::Node node) {
-      Config::isBarrier(node) or defaultTaintSanitizer(node)
+    private predicate isFlowState(Config::FlowState state) {
+      Config::isAdditionalFlowStep(_, state, _, _) or
+      Config::isAdditionalFlowStep(_, _, _, state) or
+      Config::isSink(_, state) or
+      Config::isSource(_, state)
     }
 
-    predicate isAdditionalFlowStep(DataFlowLang::Node node1, DataFlowLang::Node node2) {
-      Config::isAdditionalFlowStep(node1, node2) or
-      defaultAdditionalTaintStep(node1, node2)
+    private predicate isTaintFlowState(FlowState state) {
+      isFlowState(state) and
+      not Config::isValueOnlyFlowState(state)
+    }
+
+    predicate isBarrier(DataFlowLang::Node node, FlowState state) {
+      Config::isBarrier(node, state)
+      or
+      isTaintFlowState(state) and
+      defaultTaintSanitizer(node)
+    }
+
+    predicate isAdditionalFlowStep(
+      DataFlowLang::Node node1, Config::FlowState state1, DataFlowLang::Node node2,
+      Config::FlowState state2
+    ) {
+      Config::isAdditionalFlowStep(node1, state1, node2, state2)
+      or
+      defaultAdditionalTaintStep(node1, node2) and
+      isTaintFlowState(state1) and
+      state2 = state1
     }
 
     predicate allowImplicitRead(DataFlowLang::Node node, DataFlowLang::ContentSet c) {
       Config::allowImplicitRead(node, c)
       or
       (
-        Config::isSink(node) or
-        Config::isSink(node, _) or
-        Config::isAdditionalFlowStep(node, _) or
-        Config::isAdditionalFlowStep(node, _, _, _)
+        Config::isSink(node)
+        or
+        Config::isAdditionalFlowStep(node, _)
+        or
+        exists(Config::FlowState state | not Config::isValueOnlyFlowState(state) |
+          // Flow state-specific implicit reads are not supported, so as a best approximation,
+          // include them at sinks and additional steps for any taint flow state, even though other flow states can use them.
+          Config::isSink(node, state) or
+          Config::isAdditionalFlowStep(node, state, _, _)
+        )
       ) and
       defaultImplicitTaintRead(node, c)
     }

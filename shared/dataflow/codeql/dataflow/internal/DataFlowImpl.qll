@@ -119,6 +119,12 @@ module MakeImpl<InputSig Lang> {
      * is not visualized (as it is in a `path-problem` query).
      */
     predicate includeHiddenNodes();
+
+    /**
+     * Holds if taint steps should not apply to `state`, when this configuration is used for taint-tracking.
+     * Has no effect for non-taint configurations.
+     */
+    predicate isValueOnlyFlowState(FlowState state);
   }
 
   /**
@@ -136,6 +142,8 @@ module MakeImpl<InputSig Lang> {
     predicate isAdditionalFlowStep(Node node1, FlowState state1, Node node2, FlowState state2) {
       none()
     }
+
+    predicate isValueOnlyFlowState(Unit state) { none() }
   }
 
   /**
