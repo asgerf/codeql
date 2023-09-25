@@ -330,6 +330,8 @@ private module Config implements FullStateConfigSig {
   }
 
   predicate includeHiddenNodes() { any(Configuration config).includeHiddenNodes() }
+
+  predicate isValueOnlyFlowState(FlowState state) { none() }
 }
 
 private import Impl<Config> as I
