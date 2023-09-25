@@ -65,6 +65,62 @@ module TaintFlowMake<DF::InputSig DataFlowLang, InputSig<DataFlowLang> TaintTrac
     }
   }
 
+  /** Signature for a `FlowState`. */
+  bindingset[this]
+  private signature class FlowStateSig;
+
+  /**
+   * Additional configuration options that are specific to taint-tracking.
+   */
+  signature module TaintConfigSig<FlowStateSig FlowState> {
+    /**
+     * Holds if the default taint steps, sanitizers, and implicit reads should apply to `state`.
+     */
+    predicate isTaintFlowState(FlowState state);
+  }
+
+  private module AddTaintDefaultsWithTaintConfig<
+    DataFlowInternal::FullStateConfigSig Config, TaintConfigSig<Config::FlowState> TaintConfig>
+    implements DataFlowInternal::FullStateConfigSig
+  {
+    import Config
+
+    predicate isBarrier(DataFlowLang::Node node, FlowState state) {
+      Config::isBarrier(node, state)
+      or
+      defaultTaintSanitizer(node) and TaintConfig::isTaintFlowState(state)
+    }
+
+    predicate isAdditionalFlowStep(
+      DataFlowLang::Node node1, Config::FlowState state1, DataFlowLang::Node node2,
+      Config::FlowState state2
+    ) {
+      Config::isAdditionalFlowStep(node1, state1, node2, state2)
+      or
+      defaultAdditionalTaintStep(node1, node2) and
+      TaintConfig::isTaintFlowState(state1) and
+      state2 = state1
+    }
+
+    predicate allowImplicitRead(DataFlowLang::Node node, DataFlowLang::ContentSet c) {
+      Config::allowImplicitRead(node, c)
+      or
+      (
+        Config::isSink(node)
+        or
+        Config::isAdditionalFlowStep(node, _)
+        or
+        exists(FlowState state | TaintConfig::isTaintFlowState(state) |
+          // Flow state-specific implicit reads are not supported, so as a best approximation,
+          // include them at sinks and additional steps for any taint flow state, even though other flow states can use them.
+          Config::isSink(node, state) or
+          Config::isAdditionalFlowStep(node, state, _, _)
+        )
+      ) and
+      defaultImplicitTaintRead(node, c)
+    }
+  }
+
   /**
    * Constructs a global taint tracking computation.
    */
@@ -106,5 +162,23 @@ module TaintFlowMake<DF::InputSig DataFlowLang, InputSig<DataFlowLang> TaintTrac
     DataFlow::GlobalFlowSig
   {
     import GlobalWithState<Config>
+  }
+
+  /**
+   * Constructs a global taint tracking computation using flow state and taint-specific configuration.
+   */
+  module GlobalWithTaintConfig<
+    DataFlow::StateConfigSig Config, TaintConfigSig<Config::FlowState> TaintConfig> implements
+    DataFlow::GlobalFlowSig
+  {
+    private module Config0 implements DataFlowInternal::FullStateConfigSig {
+      import Config
+    }
+
+    private module C implements DataFlowInternal::FullStateConfigSig {
+      import AddTaintDefaultsWithTaintConfig<Config0, TaintConfig>
+    }
+
+    import DataFlowInternal::Impl<C>
   }
 }
