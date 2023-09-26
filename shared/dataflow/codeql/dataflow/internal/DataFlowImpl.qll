@@ -119,6 +119,16 @@ module MakeImpl<InputSig Lang> {
      * is not visualized (as it is in a `path-problem` query).
      */
     predicate includeHiddenNodes();
+
+    /**
+     * Holds if the source-sink pairs reported by this data flow configuration should not be
+     * associated with a specific pair of flow states.
+     *
+     * This can help avoid duplicate results when a source and/or sink have multiple flow states.
+     *
+     * If enabled, `PathNode.getState()` will have no result for sources and sinks reported by `flowPath`.
+     */
+    predicate hideFinalFlowStates();
   }
 
   /**
@@ -136,6 +146,8 @@ module MakeImpl<InputSig Lang> {
     predicate isAdditionalFlowStep(Node node1, FlowState state1, Node node2, FlowState state2) {
       none()
     }
+
+    predicate hideFinalFlowStates() { none() }
   }
 
   /**
@@ -472,6 +484,72 @@ module MakeImpl<InputSig Lang> {
         or
         allowParameterReturnInSelfCached(p.asNode())
       )
+    }
+
+    private predicate emptyLocation(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      filepath = "" and startline = 0 and startcolumn = 0 and endline = 0 and endcolumn = 0
+    }
+
+    private newtype TSourceGroup =
+      TNamedSourceGroup(string name) { Config::sourceGrouping(_, name) } or
+      TNodeSourceGroup(Node node) {
+        Config::hideFinalFlowStates() and
+        Config::isSource(node, _)
+      }
+
+    private class SourceGroup extends TSourceGroup {
+      string asNamedGroup() { this = TNamedSourceGroup(result) }
+
+      Node asNode() { this = TNodeSourceGroup(result) }
+
+      NodeEx asNodeEx() { this = TNodeSourceGroup(result.asNode()) }
+
+      string toString() {
+        result = this.asNamedGroup().toString() or result = this.asNode().toString()
+      }
+
+      predicate hasLocationInfo(
+        string filepath, int startline, int startcolumn, int endline, int endcolumn
+      ) {
+        this instanceof TNamedSourceGroup and
+        emptyLocation(filepath, startline, startcolumn, endline, endcolumn)
+        or
+        this.asNode().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+      }
+    }
+
+    private newtype TSinkGroup =
+      TNamedSinkGroup(string name) { Config::sinkGrouping(_, name) } or
+      TNodeSinkGroup(Node node) {
+        Config::hideFinalFlowStates() and
+        (
+          Config::isSink(node, _)
+          or
+          Config::isSink(node)
+        )
+      }
+
+    private class SinkGroup extends TSinkGroup {
+      string asNamedGroup() { this = TNamedSinkGroup(result) }
+
+      Node asNode() { this = TNodeSinkGroup(result) }
+
+      NodeEx asNodeEx() { this = TNodeSinkGroup(result.asNode()) }
+
+      string toString() {
+        result = this.asNamedGroup().toString() or result = this.asNode().toString()
+      }
+
+      predicate hasLocationInfo(
+        string filepath, int startline, int startcolumn, int endline, int endcolumn
+      ) {
+        this instanceof TNamedSinkGroup and
+        emptyLocation(filepath, startline, startcolumn, endline, endcolumn)
+        or
+        this.asNode().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+      }
     }
 
     private module Stage1 implements StageSig {
@@ -3174,12 +3252,8 @@ module MakeImpl<InputSig Lang> {
           state = sink.getState()
         )
       } or
-      TPathNodeSourceGroup(string sourceGroup) {
-        exists(PathNodeImpl source | sourceGroup = source.getSourceGroup())
-      } or
-      TPathNodeSinkGroup(string sinkGroup) {
-        exists(PathNodeSink sink | sinkGroup = sink.getSinkGroup())
-      }
+      TPathNodeSourceGroup(SourceGroup sourceGroup) or
+      TPathNodeSinkGroup(SinkGroup sinkGroup)
 
     /**
      * A list of `Content`s where nested tails are also paired with a
@@ -3375,9 +3449,13 @@ module MakeImpl<InputSig Lang> {
         )
       }
 
-      string getSourceGroup() {
+      SourceGroup getSourceGroup() {
         this.isSource() and
-        Config::sourceGrouping(this.getNodeEx().asNode(), result)
+        (
+          Config::sourceGrouping(this.getNodeEx().asNode(), result.asNamedGroup())
+          or
+          result.asNodeEx() = this.(PathNodeMid).getNodeEx()
+        )
       }
 
       predicate isFlowSource() {
@@ -3506,10 +3584,14 @@ module MakeImpl<InputSig Lang> {
       final predicate isSource() { super.isSource() }
 
       /** Holds if this node is a grouping of source nodes. */
-      final predicate isSourceGroup(string group) { this = TPathNodeSourceGroup(group) }
+      final predicate isSourceGroup(string group) {
+        this = TPathNodeSourceGroup(any(SourceGroup g | g.asNamedGroup() = group))
+      }
 
       /** Holds if this node is a grouping of sink nodes. */
-      final predicate isSinkGroup(string group) { this = TPathNodeSinkGroup(group) }
+      final predicate isSinkGroup(string group) {
+        this = TPathNodeSinkGroup(any(SinkGroup g | g.asNamedGroup() = group))
+      }
     }
 
     /**
@@ -3627,15 +3709,19 @@ module MakeImpl<InputSig Lang> {
 
       override predicate isSource() { sourceNode(node, state) }
 
-      string getSinkGroup() { Config::sinkGrouping(node.asNode(), result) }
+      SinkGroup getSinkGroup() {
+        Config::sinkGrouping(node.asNode(), result.asNamedGroup())
+        or
+        node = result.asNodeEx()
+      }
     }
 
     private class PathNodeSourceGroup extends PathNodeImpl, TPathNodeSourceGroup {
-      string sourceGroup;
+      SourceGroup sourceGroup;
 
       PathNodeSourceGroup() { this = TPathNodeSourceGroup(sourceGroup) }
 
-      override NodeEx getNodeEx() { none() }
+      override NodeEx getNodeEx() { result = sourceGroup.asNodeEx() }
 
       override FlowState getState() { none() }
 
@@ -3643,21 +3729,21 @@ module MakeImpl<InputSig Lang> {
 
       override predicate isSource() { none() }
 
-      override string toString() { result = sourceGroup }
+      override string toString() { result = sourceGroup.toString() }
 
       override predicate hasLocationInfo(
         string filepath, int startline, int startcolumn, int endline, int endcolumn
       ) {
-        filepath = "" and startline = 0 and startcolumn = 0 and endline = 0 and endcolumn = 0
+        sourceGroup.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
       }
     }
 
     private class PathNodeSinkGroup extends PathNodeImpl, TPathNodeSinkGroup {
-      string sinkGroup;
+      SinkGroup sinkGroup;
 
       PathNodeSinkGroup() { this = TPathNodeSinkGroup(sinkGroup) }
 
-      override NodeEx getNodeEx() { none() }
+      override NodeEx getNodeEx() { result = sinkGroup.asNodeEx() }
 
       override FlowState getState() { none() }
 
@@ -3665,12 +3751,12 @@ module MakeImpl<InputSig Lang> {
 
       override predicate isSource() { none() }
 
-      override string toString() { result = sinkGroup }
+      override string toString() { result = sinkGroup.toString() }
 
       override predicate hasLocationInfo(
         string filepath, int startline, int startcolumn, int endline, int endcolumn
       ) {
-        filepath = "" and startline = 0 and startcolumn = 0 and endline = 0 and endcolumn = 0
+        sinkGroup.hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
       }
     }
 
