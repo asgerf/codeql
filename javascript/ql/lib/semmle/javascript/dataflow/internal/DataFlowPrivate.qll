@@ -2,6 +2,7 @@ private import javascript
 private import semmle.javascript.dataflow.internal.CallGraphs
 private import semmle.javascript.dataflow.internal.DataFlowNode
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
+private import semmle.javascript.dataflow.internal.AdditionalFlowInternal
 private import semmle.javascript.dataflow.internal.Contents::Private
 private import semmle.javascript.dataflow.internal.VariableCapture
 private import semmle.javascript.dataflow.internal.sharedlib.DataFlowImplCommon as DataFlowImplCommon
@@ -38,6 +39,26 @@ class FlowSummaryIntermediateAwaitStoreNode extends DataFlow::Node,
   override string toString() {
     result = this.getSummaryNode().toString() + " [intermediate node for Awaited store]"
   }
+}
+
+class GenericSynthesizedNode extends DataFlow::Node, TGenericSynthesizedNode {
+  private AstNode node;
+  private string tag;
+  private DataFlowCallable container;
+
+  GenericSynthesizedNode() { this = TGenericSynthesizedNode(node, tag, container) }
+
+  override StmtContainer getContainer() { result = container.asSourceCallable() }
+
+  override string toString() { result = "[synthetic node] " + tag }
+
+  override predicate hasLocationInfo(
+    string filepath, int startline, int startcolumn, int endline, int endcolumn
+  ) {
+    node.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+  }
+
+  string getTag() { result = tag }
 }
 
 cached
@@ -235,6 +256,8 @@ DataFlowCallable nodeGetEnclosingCallable(Node node) {
   result.asLibraryCallable() = node.(FlowSummaryNode).getSummarizedCallable()
   or
   result.asLibraryCallable() = node.(FlowSummaryIntermediateAwaitStoreNode).getSummarizedCallable()
+  or
+  node = TGenericSynthesizedNode(_, _, result)
 }
 
 private newtype TDataFlowType =
@@ -255,6 +278,8 @@ predicate nodeIsHidden(Node node) {
   node instanceof FlowSummaryNode
   or
   node instanceof FlowSummaryIntermediateAwaitStoreNode
+  or
+  node instanceof GenericSynthesizedNode
 }
 
 predicate neverSkipInPathGraph(Node node) {
@@ -586,6 +611,9 @@ predicate simpleLocalFlowStep(Node node1, Node node2) {
     node1 = TFlowSummaryNode(input) and
     node2 = TFlowSummaryNode(output)
   )
+  or
+  // NOTE: For consistency with readStep/storeStep, we do not translate these steps to jump steps automatically.
+  DataFlow::AdditionalFlowStep::step(node1, node2)
 }
 
 predicate localMustFlowStep(Node node1, Node node2) { node1 = node2.getImmediatePredecessor() }
@@ -601,6 +629,8 @@ predicate jumpStep(Node node1, Node node2) {
   or
   FlowSummaryImpl::Private::Steps::summaryJumpStep(node1.(FlowSummaryNode).getSummaryNode(),
     node2.(FlowSummaryNode).getSummaryNode())
+  or
+  DataFlow::AdditionalFlowStep::jumpStep(node1, node2)
 }
 
 /**
@@ -629,6 +659,8 @@ predicate readStep(Node node1, ContentSet c, Node node2) {
     contentSet = MkAwaited() and
     c = ContentSet::promiseValue()
   )
+  or
+  DataFlow::AdditionalFlowStep::readStep(node1, c, node2)
 }
 
 /** Gets the post-update node for which `node` is the corresponding pre-update node. */
@@ -667,6 +699,8 @@ predicate storeStep(Node node1, ContentSet c, Node node2) {
     node2 = TFlowSummaryNode(output) and
     c = ContentSet::promiseValue()
   )
+  or
+  DataFlow::AdditionalFlowStep::storeStep(node1, c, node2)
 }
 
 /**
@@ -685,6 +719,8 @@ predicate clearsContent(Node n, ContentSet c) {
   FlowSummaryImpl::Private::Steps::summaryReadStep(_, MkAwaited(),
     n.(FlowSummaryNode).getSummaryNode()) and
   c = MkPromiseFilter()
+  or
+  any(AdditionalFlowInternal flow).clearsContent(n, c)
 }
 
 /**
@@ -699,6 +735,8 @@ predicate expectsContent(Node n, ContentSet c) {
   FlowSummaryImpl::Private::Steps::summaryStoreStep(_, MkAwaited(),
     n.(FlowSummaryNode).getSummaryNode()) and
   c = MkPromiseFilter()
+  or
+  any(AdditionalFlowInternal flow).expectsContent(n, c)
 }
 
 /**

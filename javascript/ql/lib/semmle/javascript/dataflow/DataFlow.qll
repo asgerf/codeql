@@ -1950,5 +1950,6 @@ module DataFlow {
   import TypeInference
   import Configuration
   import TypeTracking
+  import AdditionalFlowSteps
   import internal.FunctionWrapperSteps
 }
