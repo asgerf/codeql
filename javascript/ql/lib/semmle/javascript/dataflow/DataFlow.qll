@@ -794,6 +794,8 @@ module DataFlow {
     override Node getRhs() { result = TValueNode(prop.getParameter()) }
 
     override ControlFlowNode getWriteNode() { result = prop.getParameter() }
+
+    override StmtContainer getContainer() { parameter_fields(prop, result, _) }
   }
 
   /**
@@ -991,6 +993,12 @@ module DataFlow {
 
     override BasicBlock getBasicBlock() { result = function.getExit().getBasicBlock() }
 
+    override StmtContainer getContainer() {
+      // Override this to ensure a container exists even for unreachable returns,
+      // since an unreachable exit CFG node will not have a basic block
+      result = function
+    }
+
     /**
      * Gets the function corresponding to this exceptional return node.
      */
@@ -1016,6 +1024,12 @@ module DataFlow {
     }
 
     override BasicBlock getBasicBlock() { result = function.getExit().getBasicBlock() }
+
+    override StmtContainer getContainer() {
+      // Override this to ensure a container exists even for unreachable returns,
+      // since an unreachable exit CFG node will not have a basic block
+      result = function
+    }
 
     /**
      * Gets the function corresponding to this return node.
@@ -1380,6 +1394,8 @@ module DataFlow {
     }
 
     override string toString() { result = this.getTag().toString() }
+
+    override StmtContainer getContainer() { result = this.getTag().getInnerTopLevel() }
   }
 
   /**
