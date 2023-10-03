@@ -25,6 +25,7 @@ private import internal.DataFlowNode
 private import internal.AnalyzedParameters
 private import internal.PreCallGraphStep
 private import semmle.javascript.internal.CachedStages
+private import semmle.javascript.dataflow.internal.DataFlowPrivate as Private
 
 module DataFlow {
   /**
@@ -275,6 +276,13 @@ module DataFlow {
       this.getType().hasUnderlyingType(moduleName, typeName)
       or
       this.getFallbackTypeAnnotation().getAnUnderlyingType().hasQualifiedName(moduleName, typeName)
+    }
+
+    /**
+     * Gets the post-update node corresponding to this node, if any.
+     */
+    final DataFlow::Node getPostUpdateNode() {
+      result.(Private::PostUpdateNode).getPreUpdateNode() = this
     }
   }
 
@@ -1116,6 +1124,28 @@ module DataFlow {
       expr.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
     }
   }
+
+  /**
+   * A node representing the post-update node corresponding to implicit uses of `this` in a constructor.
+   */
+  private class ConstructorThisPostUpdateNode extends TConstructorThisPostUpdate, DataFlow::Node {
+    private Function constructor;
+
+    ConstructorThisPostUpdateNode() { this = TConstructorThisPostUpdate(constructor) }
+
+    override string toString() { result = "[post-update] 'this' parameter of " + constructor }
+
+    override StmtContainer getContainer() { result = constructor }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      constructor
+          .getLocation()
+          .hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+  }
+
   /**
    * INTERNAL. DO NOT USE.
    *
@@ -1396,6 +1426,27 @@ module DataFlow {
     override string toString() { result = this.getTag().toString() }
 
     override StmtContainer getContainer() { result = this.getTag().getInnerTopLevel() }
+  }
+
+  /**
+   * A post-update node whose pre-node corresponds to an expression.
+   */
+  class ExprPostUpdateNode extends DataFlow::Node, TExprPostUpdateNode, Private::PostUpdateNode {
+    private AST::ValueNode expr;
+
+    ExprPostUpdateNode() { this = TExprPostUpdateNode(expr) }
+
+    AST::ValueNode getExpr() { result = expr }
+
+    override StmtContainer getContainer() { result = expr.getContainer() }
+
+    override predicate hasLocationInfo(
+      string filepath, int startline, int startcolumn, int endline, int endcolumn
+    ) {
+      expr.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    }
+
+    override string toString() { result = "[post update] " + expr.toString() }
   }
 
   /**
