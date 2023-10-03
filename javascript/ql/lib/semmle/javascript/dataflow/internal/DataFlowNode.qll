@@ -39,5 +39,22 @@ private module Cached {
 import Cached
 
 /**
- * The raw data type underlying `DataFlow::Node`.
+ * A data-flow node that is not a flow summary node.
+ *
+ * This node exists to avoid an unwanted dependency on flow summaries in some parts of the codebase
+ * that should not depend on them.
+ *
+ * In particular, this dependency chain must not result in negative recursion:
+ * - Flow summaries can only be created after pruning irrelevant flow summaries
+ * - To prune irrelevant flow summaries, we must know which packages are imported
+ * - To know which packages are imported, module systems must be evaluated
+ * - The AMD and NodeJS module systems rely on data flow to find calls to `require` and similar.
+ *   These module systems must therefore use `TEarlyStageNode` instead of `DataFlow::Node`.
  */
+class TEarlyStageNode =
+  TValueNode or TSsaDefNode or TCapturedVariableNode or TPropNode or TRestPatternNode or
+      TElementPatternNode or TElementNode or TReflectiveCallNode or TThisNode or
+      TFunctionSelfReferenceNode or TDestructuredModuleImportNode or THtmlAttributeNode or
+      TFunctionReturnNode or TExceptionalFunctionReturnNode or TExceptionalInvocationReturnNode or
+      TGlobalAccessPathRoot or TTemplatePlaceholderTag or TReflectiveParametersNode or
+      TExprPostUpdateNode or TConstructorThisArgumentNode;
