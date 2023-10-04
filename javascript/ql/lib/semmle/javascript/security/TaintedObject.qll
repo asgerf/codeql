@@ -81,7 +81,22 @@ module TaintedObject {
   /**
    * A sanitizer guard that blocks deep object taint.
    */
-  abstract class SanitizerGuard extends TaintTracking::LabeledSanitizerGuardNode { }
+  abstract class SanitizerGuard extends TaintTracking::LabeledSanitizerGuardNode {
+    predicate blocksExpr(boolean outcome, Expr e) { none() }
+
+    predicate blocksExpr(boolean outcome, Expr e, FlowLabel label) { none() }
+
+    override predicate sanitizes(boolean outcome, Expr e, FlowLabel label) {
+      this.blocksExpr(outcome, e, label)
+    }
+
+    override predicate sanitizes(boolean outcome, Expr e) { this.blocksExpr(outcome, e) }
+  }
+
+  /**
+   * A sanitizer guard that blocks deep object taint.
+   */
+  module SanitizerGuard = DataFlow::MakeLabeledBarrierGuard<SanitizerGuard>;
 
   /**
    * A test of form `typeof x === "something"`, preventing `x` from being an object in some cases.
@@ -103,7 +118,7 @@ module TaintedObject {
       )
     }
 
-    override predicate sanitizes(boolean outcome, Expr e, FlowLabel label) {
+    override predicate blocksExpr(boolean outcome, Expr e, FlowLabel label) {
       polarity = outcome and
       e = operand and
       label = label()
@@ -117,7 +132,7 @@ module TaintedObject {
 
     NumberGuard() { TaintTracking::isNumberGuard(this, x, polarity) }
 
-    override predicate sanitizes(boolean outcome, Expr e) { e = x and outcome = polarity }
+    override predicate blocksExpr(boolean outcome, Expr e) { e = x and outcome = polarity }
   }
 
   /** A guard that checks whether an input a valid string identifier using `mongoose.Types.ObjectId.isValid` */
@@ -145,7 +160,7 @@ module TaintedObject {
 
     JsonSchemaValidationGuard() { this = call.getAValidationResultAccess(polarity) }
 
-    override predicate sanitizes(boolean outcome, Expr e, FlowLabel label) {
+    override predicate blocksExpr(boolean outcome, Expr e, FlowLabel label) {
       outcome = polarity and
       e = call.getInput().asExpr() and
       label = label()
