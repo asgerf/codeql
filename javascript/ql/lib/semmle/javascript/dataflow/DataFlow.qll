@@ -1939,5 +1939,6 @@ module DataFlow {
   import TypeTracking
   import AdditionalFlowSteps
   import internal.FunctionWrapperSteps
+  import internal.sharedlib.DataFlow
   import internal.BarrierGuards
 }
