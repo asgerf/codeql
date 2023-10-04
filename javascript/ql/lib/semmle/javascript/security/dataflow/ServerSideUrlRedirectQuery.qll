@@ -12,10 +12,29 @@ import RemoteFlowSources
 import UrlConcatenation
 import ServerSideUrlRedirectCustomizations::ServerSideUrlRedirect
 
+module ConfigurationArg implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node source) { source instanceof Source }
+
+  predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
+
+  predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
+
+  predicate isBarrierOut(DataFlow::Node node) { hostnameSanitizingPrefixEdge(node, _) }
+
+  predicate isAdditionalFlowStep(DataFlow::Node pred, DataFlow::Node succ) {
+    exists(HtmlSanitizerCall call |
+      pred = call.getInput() and
+      succ = call
+    )
+  }
+}
+
+module Configuration = TaintTracking::Global<ConfigurationArg>;
+
 /**
  * A taint-tracking configuration for reasoning about unvalidated URL redirections.
  */
-class Configuration extends TaintTracking::Configuration {
+deprecated class Configuration extends TaintTracking::Configuration {
   Configuration() { this = "ServerSideUrlRedirect" }
 
   override predicate isSource(DataFlow::Node source) { source instanceof Source }
@@ -27,7 +46,7 @@ class Configuration extends TaintTracking::Configuration {
     node instanceof Sanitizer
   }
 
-  override predicate isSanitizerOut(DataFlow::Node node) { hostnameSanitizingPrefixEdge(node, _) }
+  override predicate isSanitizerOut(DataFlow::Node node) { ConfigurationArg::isBarrierOut(node) }
 
   override predicate isSanitizerGuard(TaintTracking::SanitizerGuardNode guard) {
     guard instanceof LocalUrlSanitizingGuard or
@@ -35,10 +54,7 @@ class Configuration extends TaintTracking::Configuration {
   }
 
   override predicate isAdditionalTaintStep(DataFlow::Node pred, DataFlow::Node succ) {
-    exists(HtmlSanitizerCall call |
-      pred = call.getInput() and
-      succ = call
-    )
+    ConfigurationArg::isAdditionalFlowStep(pred, succ)
   }
 }
 
@@ -49,8 +65,9 @@ class Configuration extends TaintTracking::Configuration {
 class LocalUrlSanitizingGuard extends TaintTracking::SanitizerGuardNode, DataFlow::CallNode {
   LocalUrlSanitizingGuard() { this.getCalleeName().regexpMatch("(?i)(is_?)?local_?url") }
 
-  override predicate sanitizes(boolean outcome, Expr e) {
-    // `isLocalUrl(e)` sanitizes `e` if it evaluates to `true`
+  override predicate sanitizes(boolean outcome, Expr e) { this.blocksExpr(outcome, e) }
+
+  predicate blocksExpr(boolean outcome, Expr e) {
     this.getAnArgument().asExpr() = e and
     outcome = true
   }
