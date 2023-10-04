@@ -830,11 +830,16 @@ module TaintTracking {
       this.getNumArgument() = 1
     }
 
-    override predicate sanitizes(boolean outcome, Expr e) {
+    override predicate sanitizes(boolean outcome, Expr e) { this.blocksExpr(outcome, e) }
+
+    predicate blocksExpr(boolean outcome, Expr e) {
       outcome = true and
       e = this.getArgument(0).asExpr()
     }
   }
+
+  /** Barrier nodes derived from the `AdHocWhitelistCheckSanitizer` class. */
+  module AdHocWhitelistCheckSanitizer = DataFlow::MakeBarrierGuard<AdHocWhitelistCheckSanitizer>;
 
   /** A check of the form `if(x in o)`, which sanitizes `x` in its "then" branch. */
   class InSanitizer extends AdditionalSanitizerGuardNode, DataFlow::ValueNode {
