@@ -1,0 +1,3 @@
+| query-tests/Security/CWE-078/UnsafeShellCommandConstruction/lib/lib.js:612 | did not expect an alert, but found an alert for UnsafeShellCommandConstruction | OK | ComandInjection |
+| query-tests/Security/CWE-078/UnsafeShellCommandConstruction/lib/lib.js:616 | did not expect an alert, but found an alert for UnsafeShellCommandConstruction | OK | ComandInjection |
+| query-tests/Security/CWE-078/UnsafeShellCommandConstruction/lib/lib.js:620 | did not expect an alert, but found an alert for UnsafeShellCommandConstruction | OK | ComandInjection |
