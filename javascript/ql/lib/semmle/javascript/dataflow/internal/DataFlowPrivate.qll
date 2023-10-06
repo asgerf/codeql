@@ -348,10 +348,10 @@ predicate compatibleTypes(DataFlowType t1, DataFlowType t2) { any() }
 
 predicate forceHighPrecision(Content c) { none() }
 
-class ContentApprox extends Content { }
+class ContentApprox = Unit;
 
 pragma[inline]
-ContentApprox getContentApprox(Content c) { result = c }
+ContentApprox getContentApprox(Content c) { exists(result) and exists(c) }
 
 cached
 private newtype TDataFlowCall =
