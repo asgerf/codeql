@@ -729,21 +729,6 @@ private class FlowStepThroughImport extends SharedFlowStep {
 }
 
 /**
- * A step from a post-update node to the local sources of the corresponding pre-update node.
- *
- * This ensures that `getPostUpdateNode()` can be used in place of `getALocalSource()` when generating
- * store steps, and the resulting step will work in both data flow analyses.
- */
-private class LegacyPostUpdateStep extends LegacyFlowStep {
-  override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
-    exists(DataFlow::Node node |
-      pred = node.getPostUpdateNode() and
-      succ = node.getALocalSource()
-    )
-  }
-}
-
-/**
  * Holds if there is a flow step from `pred` to `succ` described by `summary`
  * under configuration `cfg`, disregarding barriers.
  *
