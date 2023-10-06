@@ -4,6 +4,7 @@ nodes
 | addEventListener.js:2:20:2:29 | event.data | semmle.label | event.data |
 | addEventListener.js:5:43:5:48 | data | semmle.label | data |
 | addEventListener.js:5:43:5:48 | {data} | semmle.label | {data} |
+| addEventListener.js:5:44:5:47 | data | semmle.label | data |
 | addEventListener.js:6:20:6:23 | data | semmle.label | data |
 | addEventListener.js:10:21:10:25 | event | semmle.label | event |
 | addEventListener.js:12:24:12:28 | event | semmle.label | event |
@@ -255,6 +256,7 @@ nodes
 | pages/[id].jsx:3:30:3:35 | params [q] | semmle.label | params [q] |
 | pages/[id].jsx:5:9:5:14 | { id } | semmle.label | { id } |
 | pages/[id].jsx:5:9:5:29 | id | semmle.label | id |
+| pages/[id].jsx:5:11:5:12 | id | semmle.label | id |
 | pages/[id].jsx:5:18:5:29 | router.query | semmle.label | router.query |
 | pages/[id].jsx:10:44:10:45 | id | semmle.label | id |
 | pages/[id].jsx:13:44:13:49 | params [id] | semmle.label | params [id] |
@@ -264,8 +266,10 @@ nodes
 | pages/[id].jsx:24:12:27:5 | {\\n      ... ,\\n    } [id] | semmle.label | {\\n      ... ,\\n    } [id] |
 | pages/[id].jsx:24:12:27:5 | {\\n      ... ,\\n    } [q] | semmle.label | {\\n      ... ,\\n    } [q] |
 | pages/[id].jsx:25:11:25:24 | context.params | semmle.label | context.params |
+| pages/[id].jsx:25:11:25:27 | context.params.id | semmle.label | context.params.id |
 | pages/[id].jsx:25:11:25:33 | context ... d \|\| "" | semmle.label | context ... d \|\| "" |
 | pages/[id].jsx:26:10:26:22 | context.query | semmle.label | context.query |
+| pages/[id].jsx:26:10:26:30 | context ... .foobar | semmle.label | context ... .foobar |
 | pages/[id].jsx:26:10:26:36 | context ... r \|\| "" | semmle.label | context ... r \|\| "" |
 | react-native.js:7:7:7:33 | tainted | semmle.label | tainted |
 | react-native.js:7:17:7:33 | req.param("code") | semmle.label | req.param("code") |
@@ -284,9 +288,11 @@ nodes
 | react-use-router.js:33:21:33:32 | router.query | semmle.label | router.query |
 | react-use-router.js:33:21:33:39 | router.query.foobar | semmle.label | router.query.foobar |
 | react-use-state.js:4:9:4:49 | state | semmle.label | state |
+| react-use-state.js:4:10:4:14 | state | semmle.label | state |
 | react-use-state.js:4:38:4:48 | window.name | semmle.label | window.name |
 | react-use-state.js:5:51:5:55 | state | semmle.label | state |
 | react-use-state.js:9:9:9:43 | state | semmle.label | state |
+| react-use-state.js:9:10:9:14 | state | semmle.label | state |
 | react-use-state.js:10:14:10:24 | window.name | semmle.label | window.name |
 | react-use-state.js:11:51:11:55 | state | semmle.label | state |
 | react-use-state.js:15:9:15:43 | state | semmle.label | state |
@@ -617,12 +623,14 @@ nodes
 | various-concat-obfuscations.js:15:10:15:83 | '<div a ... </div>' | semmle.label | '<div a ... </div>' |
 | various-concat-obfuscations.js:15:27:15:55 | (attrs. ... 'left') | semmle.label | (attrs. ... 'left') |
 | various-concat-obfuscations.js:15:28:15:32 | attrs | semmle.label | attrs |
+| various-concat-obfuscations.js:15:28:15:44 | attrs.defaultattr | semmle.label | attrs.defaultattr |
 | various-concat-obfuscations.js:17:24:17:28 | attrs | semmle.label | attrs |
 | various-concat-obfuscations.js:18:10:18:59 | '<div a ... 'left') | semmle.label | '<div a ... 'left') |
 | various-concat-obfuscations.js:18:10:18:88 | '<div a ... ntent)) | semmle.label | '<div a ... ntent)) |
 | various-concat-obfuscations.js:18:10:18:88 | '<div a ... ntent)) [ArrayElement] | semmle.label | '<div a ... ntent)) [ArrayElement] |
 | various-concat-obfuscations.js:18:10:18:105 | '<div a ... /div>') | semmle.label | '<div a ... /div>') |
 | various-concat-obfuscations.js:18:32:18:36 | attrs | semmle.label | attrs |
+| various-concat-obfuscations.js:18:32:18:48 | attrs.defaultattr | semmle.label | attrs.defaultattr |
 | various-concat-obfuscations.js:18:32:18:58 | attrs.d ...  'left' | semmle.label | attrs.d ...  'left' |
 | various-concat-obfuscations.js:20:4:20:47 | indirec ... .attrs) | semmle.label | indirec ... .attrs) |
 | various-concat-obfuscations.js:20:17:20:40 | documen ... .search | semmle.label | documen ... .search |
@@ -646,13 +654,15 @@ nodes
 | xmlRequest.js:21:11:21:38 | json | semmle.label | json |
 | xmlRequest.js:21:18:21:38 | JSON.pa ... p.body) | semmle.label | JSON.pa ... p.body) |
 | xmlRequest.js:21:29:21:32 | resp | semmle.label | resp |
+| xmlRequest.js:21:29:21:37 | resp.body | semmle.label | resp.body |
 | xmlRequest.js:22:24:22:27 | json | semmle.label | json |
 | xmlRequest.js:22:24:22:35 | json.message | semmle.label | json.message |
 edges
 | addEventListener.js:1:43:1:47 | event | addEventListener.js:2:20:2:24 | event |
 | addEventListener.js:2:20:2:24 | event | addEventListener.js:2:20:2:29 | event.data |
 | addEventListener.js:5:43:5:48 | data | addEventListener.js:6:20:6:23 | data |
-| addEventListener.js:5:43:5:48 | {data} | addEventListener.js:5:43:5:48 | data |
+| addEventListener.js:5:43:5:48 | {data} | addEventListener.js:5:44:5:47 | data |
+| addEventListener.js:5:44:5:47 | data | addEventListener.js:5:43:5:48 | data |
 | addEventListener.js:10:21:10:25 | event | addEventListener.js:12:24:12:28 | event |
 | addEventListener.js:12:24:12:28 | event | addEventListener.js:12:24:12:33 | event.data |
 | angular2-client.ts:24:44:24:69 | this.ro ... .params | angular2-client.ts:24:44:24:73 | this.ro ... ams.foo |
@@ -791,13 +801,13 @@ edges
 | json-stringify.jsx:7:5:14:5 | {\\n      ... ,\\n    } [item, @id] | json-stringify.jsx:6:26:23:3 | [\\n    { ...  },\\n  ] [0, item, @id] |
 | json-stringify.jsx:10:13:13:7 | {\\n      ...       } [@id] | json-stringify.jsx:7:5:14:5 | {\\n      ... ,\\n    } [item, @id] |
 | json-stringify.jsx:11:16:11:58 | `https: ... ocale}` | json-stringify.jsx:10:13:13:7 | {\\n      ...       } [@id] |
+| json-stringify.jsx:11:16:11:58 | `https: ... ocale}` | json-stringify.jsx:35:40:35:61 | JSON.st ... jsonLD) |
 | json-stringify.jsx:11:51:11:56 | locale | json-stringify.jsx:11:16:11:58 | `https: ... ocale}` |
-| json-stringify.jsx:11:51:11:56 | locale | json-stringify.jsx:35:40:35:61 | JSON.st ... jsonLD) |
 | json-stringify.jsx:15:5:22:5 | {\\n      ... ,\\n    } [item, @id] | json-stringify.jsx:6:26:23:3 | [\\n    { ...  },\\n  ] [1, item, @id] |
 | json-stringify.jsx:18:13:21:7 | {\\n      ...       } [@id] | json-stringify.jsx:15:5:22:5 | {\\n      ... ,\\n    } [item, @id] |
 | json-stringify.jsx:19:16:19:63 | `https: ... ocale}` | json-stringify.jsx:18:13:21:7 | {\\n      ...       } [@id] |
+| json-stringify.jsx:19:16:19:63 | `https: ... ocale}` | json-stringify.jsx:35:40:35:61 | JSON.st ... jsonLD) |
 | json-stringify.jsx:19:56:19:61 | locale | json-stringify.jsx:19:16:19:63 | `https: ... ocale}` |
-| json-stringify.jsx:19:56:19:61 | locale | json-stringify.jsx:35:40:35:61 | JSON.st ... jsonLD) |
 | json-stringify.jsx:24:9:28:3 | jsonLD [itemListElement, 0, item, @id] | json-stringify.jsx:35:55:35:60 | jsonLD [itemListElement, 0, item, @id] |
 | json-stringify.jsx:24:9:28:3 | jsonLD [itemListElement, 1, item, @id] | json-stringify.jsx:35:55:35:60 | jsonLD [itemListElement, 1, item, @id] |
 | json-stringify.jsx:24:18:28:3 | {\\n    " ... st,\\n  } [itemListElement, 0, item, @id] | json-stringify.jsx:24:9:28:3 | jsonLD [itemListElement, 0, item, @id] |
@@ -853,16 +863,19 @@ edges
 | optionalSanitizer.js:45:51:45:56 | target | optionalSanitizer.js:45:18:45:56 | sanitiz ...  target |
 | pages/[id].jsx:3:30:3:35 | params [id] | pages/[id].jsx:13:44:13:49 | params [id] |
 | pages/[id].jsx:3:30:3:35 | params [q] | pages/[id].jsx:16:44:16:49 | params [q] |
-| pages/[id].jsx:5:9:5:14 | { id } | pages/[id].jsx:5:9:5:29 | id |
+| pages/[id].jsx:5:9:5:14 | { id } | pages/[id].jsx:5:11:5:12 | id |
 | pages/[id].jsx:5:9:5:29 | id | pages/[id].jsx:10:44:10:45 | id |
+| pages/[id].jsx:5:11:5:12 | id | pages/[id].jsx:5:9:5:29 | id |
 | pages/[id].jsx:5:18:5:29 | router.query | pages/[id].jsx:5:9:5:14 | { id } |
 | pages/[id].jsx:13:44:13:49 | params [id] | pages/[id].jsx:13:44:13:52 | params.id |
 | pages/[id].jsx:16:44:16:49 | params [q] | pages/[id].jsx:16:44:16:51 | params.q |
 | pages/[id].jsx:24:12:27:5 | {\\n      ... ,\\n    } [id] | pages/[id].jsx:3:30:3:35 | params [id] |
 | pages/[id].jsx:24:12:27:5 | {\\n      ... ,\\n    } [q] | pages/[id].jsx:3:30:3:35 | params [q] |
-| pages/[id].jsx:25:11:25:24 | context.params | pages/[id].jsx:25:11:25:33 | context ... d \|\| "" |
+| pages/[id].jsx:25:11:25:24 | context.params | pages/[id].jsx:25:11:25:27 | context.params.id |
+| pages/[id].jsx:25:11:25:27 | context.params.id | pages/[id].jsx:25:11:25:33 | context ... d \|\| "" |
 | pages/[id].jsx:25:11:25:33 | context ... d \|\| "" | pages/[id].jsx:24:12:27:5 | {\\n      ... ,\\n    } [id] |
-| pages/[id].jsx:26:10:26:22 | context.query | pages/[id].jsx:26:10:26:36 | context ... r \|\| "" |
+| pages/[id].jsx:26:10:26:22 | context.query | pages/[id].jsx:26:10:26:30 | context ... .foobar |
+| pages/[id].jsx:26:10:26:30 | context ... .foobar | pages/[id].jsx:26:10:26:36 | context ... r \|\| "" |
 | pages/[id].jsx:26:10:26:36 | context ... r \|\| "" | pages/[id].jsx:24:12:27:5 | {\\n      ... ,\\n    } [q] |
 | react-native.js:7:7:7:33 | tainted | react-native.js:8:18:8:24 | tainted |
 | react-native.js:7:7:7:33 | tainted | react-native.js:9:27:9:33 | tainted |
@@ -875,9 +888,11 @@ edges
 | react-use-router.js:23:43:23:61 | router.query.foobar | react-use-router.js:23:31:23:36 | [post update] router |
 | react-use-router.js:33:21:33:32 | router.query | react-use-router.js:33:21:33:39 | router.query.foobar |
 | react-use-state.js:4:9:4:49 | state | react-use-state.js:5:51:5:55 | state |
-| react-use-state.js:4:38:4:48 | window.name | react-use-state.js:4:9:4:49 | state |
+| react-use-state.js:4:10:4:14 | state | react-use-state.js:4:9:4:49 | state |
+| react-use-state.js:4:38:4:48 | window.name | react-use-state.js:4:10:4:14 | state |
 | react-use-state.js:9:9:9:43 | state | react-use-state.js:11:51:11:55 | state |
-| react-use-state.js:10:14:10:24 | window.name | react-use-state.js:9:9:9:43 | state |
+| react-use-state.js:9:10:9:14 | state | react-use-state.js:9:9:9:43 | state |
+| react-use-state.js:10:14:10:24 | window.name | react-use-state.js:9:10:9:14 | state |
 | react-use-state.js:15:9:15:43 | state | react-use-state.js:17:51:17:55 | state |
 | react-use-state.js:15:10:15:14 | state | react-use-state.js:15:9:15:43 | state |
 | react-use-state.js:16:20:16:30 | window.name | react-use-state.js:15:10:15:14 | state |
@@ -1137,13 +1152,15 @@ edges
 | various-concat-obfuscations.js:12:19:12:25 | tainted | various-concat-obfuscations.js:12:4:12:34 | ["<div  ... "\\"/>"] |
 | various-concat-obfuscations.js:14:24:14:28 | attrs | various-concat-obfuscations.js:15:28:15:32 | attrs |
 | various-concat-obfuscations.js:15:27:15:55 | (attrs. ... 'left') | various-concat-obfuscations.js:15:10:15:83 | '<div a ... </div>' |
-| various-concat-obfuscations.js:15:28:15:32 | attrs | various-concat-obfuscations.js:15:27:15:55 | (attrs. ... 'left') |
+| various-concat-obfuscations.js:15:28:15:32 | attrs | various-concat-obfuscations.js:15:28:15:44 | attrs.defaultattr |
+| various-concat-obfuscations.js:15:28:15:44 | attrs.defaultattr | various-concat-obfuscations.js:15:27:15:55 | (attrs. ... 'left') |
 | various-concat-obfuscations.js:17:24:17:28 | attrs | various-concat-obfuscations.js:18:32:18:36 | attrs |
 | various-concat-obfuscations.js:18:10:18:59 | '<div a ... 'left') | various-concat-obfuscations.js:18:10:18:88 | '<div a ... ntent)) |
 | various-concat-obfuscations.js:18:10:18:59 | '<div a ... 'left') | various-concat-obfuscations.js:18:10:18:88 | '<div a ... ntent)) [ArrayElement] |
 | various-concat-obfuscations.js:18:10:18:88 | '<div a ... ntent)) | various-concat-obfuscations.js:18:10:18:105 | '<div a ... /div>') |
 | various-concat-obfuscations.js:18:10:18:88 | '<div a ... ntent)) [ArrayElement] | various-concat-obfuscations.js:18:10:18:105 | '<div a ... /div>') |
-| various-concat-obfuscations.js:18:32:18:36 | attrs | various-concat-obfuscations.js:18:32:18:58 | attrs.d ...  'left' |
+| various-concat-obfuscations.js:18:32:18:36 | attrs | various-concat-obfuscations.js:18:32:18:48 | attrs.defaultattr |
+| various-concat-obfuscations.js:18:32:18:48 | attrs.defaultattr | various-concat-obfuscations.js:18:32:18:58 | attrs.d ...  'left' |
 | various-concat-obfuscations.js:18:32:18:58 | attrs.d ...  'left' | various-concat-obfuscations.js:18:10:18:59 | '<div a ... 'left') |
 | various-concat-obfuscations.js:20:17:20:40 | documen ... .search | various-concat-obfuscations.js:20:17:20:46 | documen ... h.attrs |
 | various-concat-obfuscations.js:20:17:20:46 | documen ... h.attrs | various-concat-obfuscations.js:14:24:14:28 | attrs |
@@ -1164,7 +1181,8 @@ edges
 | xmlRequest.js:20:24:20:48 | got.get ... rl }}") | xmlRequest.js:20:18:20:48 | await g ... rl }}") |
 | xmlRequest.js:21:11:21:38 | json | xmlRequest.js:22:24:22:27 | json |
 | xmlRequest.js:21:18:21:38 | JSON.pa ... p.body) | xmlRequest.js:21:11:21:38 | json |
-| xmlRequest.js:21:29:21:32 | resp | xmlRequest.js:21:18:21:38 | JSON.pa ... p.body) |
+| xmlRequest.js:21:29:21:32 | resp | xmlRequest.js:21:29:21:37 | resp.body |
+| xmlRequest.js:21:29:21:37 | resp.body | xmlRequest.js:21:18:21:38 | JSON.pa ... p.body) |
 | xmlRequest.js:22:24:22:27 | json | xmlRequest.js:22:24:22:35 | json.message |
 subpaths
 | optionalSanitizer.js:34:28:34:35 | tainted2 | optionalSanitizer.js:28:24:28:24 | x | optionalSanitizer.js:29:12:29:12 | x | optionalSanitizer.js:34:16:34:36 | sanitiz ... inted2) |
