@@ -260,9 +260,7 @@ module DataFlow {
     /**
      * Gets the post-update node corresponding to this node, if any.
      */
-    final DataFlow::Node getPostUpdateNode() {
-      result.(Private::PostUpdateNode).getPreUpdateNode() = this
-    }
+    final PostUpdateNode getPostUpdateNode() { result.getPreUpdateNode() = this }
   }
 
   /**
@@ -1450,6 +1448,15 @@ module DataFlow {
     }
 
     override string toString() { result = "[post update] " + expr.toString() }
+  }
+
+  /**
+   * A post-update node.
+   */
+  class PostUpdateNode extends DataFlow::Node {
+    PostUpdateNode() { Private::postUpdatePair(_, this) }
+
+    final DataFlow::Node getPreUpdateNode() { Private::postUpdatePair(result, this) }
   }
 
   /**

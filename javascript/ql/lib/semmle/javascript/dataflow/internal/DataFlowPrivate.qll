@@ -11,6 +11,8 @@ private import sharedlib.FlowSummaryImpl as FlowSummaryImpl
 
 private class Node = DataFlow::Node;
 
+class PostUpdateNode = DataFlow::PostUpdateNode;
+
 class FlowSummaryNode extends DataFlow::Node, TFlowSummaryNode {
   FlowSummaryImpl::Private::SummaryNode getSummaryNode() { this = TFlowSummaryNode(result) }
 
@@ -144,7 +146,7 @@ OutNode getAnOutNode(DataFlowCall call, ReturnKind kind) { result = getAnOutNode
 abstract private class EmptyType extends DataFlow::Node { }
 
 cached
-private predicate postUpdatePair(Node pre, Node post) {
+predicate postUpdatePair(Node pre, Node post) {
   exists(AST::ValueNode expr |
     pre = TValueNode(expr) and
     post = TExprPostUpdateNode(expr)
@@ -169,12 +171,6 @@ private predicate postUpdatePair(Node pre, Node post) {
     pre.(FlowSummaryNode).getSummaryNode())
   or
   VariableCaptureOutput::capturePostUpdateNode(getClosureNode(post), getClosureNode(pre))
-}
-
-class PostUpdateNode extends DataFlow::Node {
-  PostUpdateNode() { postUpdatePair(_, this) }
-
-  final DataFlow::Node getPreUpdateNode() { postUpdatePair(result, this) }
 }
 
 class CastNode extends DataFlow::Node instanceof EmptyType { }
