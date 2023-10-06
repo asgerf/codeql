@@ -9,7 +9,7 @@ query predicate clientRequest_getADataNode(Electron::ElectronClientRequest cr, D
 query predicate clientRequest(Electron::ElectronClientRequest cr) { any() }
 
 query predicate ipcFlow(DataFlow::Node pred, DataFlow::Node succ) {
-  DataFlow::SharedFlowStep::step(pred, succ)
+  DataFlow::SharedFlowStep::step(pred, succ) and not pred instanceof DataFlow::ExprPostUpdateNode
 }
 
 query predicate remoteFlowSources(RemoteFlowSource source) { any() }

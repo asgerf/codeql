@@ -32,6 +32,8 @@ ipcFlow
 | electron.js:58:30:58:35 | 'ping' | electron.js:47:28:47:30 | arg |
 | electron.js:68:24:68:28 | "foo" | electron.js:67:23:67:25 | foo |
 | electron.js:69:24:69:28 | "bar" | electron.js:67:46:67:48 | bar |
+| electronTs.d.ts:2:30:2:29 | [post-update] 'this' parameter of () {} | file://:0:0:0:0 | this |
+| electronTs.d.ts:3:28:3:27 | [post-update] 'this' parameter of () {} | file://:0:0:0:0 | this |
 remoteFlowSources
 | electron.js:10:26:10:33 | response |
 | electron.js:11:28:11:32 | chunk |
