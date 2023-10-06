@@ -382,8 +382,8 @@ private class PathExprString extends PathString {
 }
 
 pragma[nomagic]
-private TEarlyStageNode getAPathExprAlias(PathExpr expr) {
-  result = TValueNode(expr)
+private EarlyStageNode getAPathExprAlias(PathExpr expr) {
+  DataFlow::Impl::earlyStageImmediateFlowStep(TValueNode(expr), result)
   or
   DataFlow::Impl::earlyStageImmediateFlowStep(getAPathExprAlias(expr), result)
 }
@@ -436,7 +436,7 @@ abstract class PathExprCandidate extends Expr {
   pragma[nomagic]
   private Expr getAPart1() { result = this or result = this.getAPart().getAChildExpr() }
 
-  private TEarlyStageNode getAnAliasedPart1() {
+  private EarlyStageNode getAnAliasedPart1() {
     result = TValueNode(this.getAPart1())
     or
     DataFlow::Impl::earlyStageImmediateFlowStep(result, this.getAnAliasedPart1())

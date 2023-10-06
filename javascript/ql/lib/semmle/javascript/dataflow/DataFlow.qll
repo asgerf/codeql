@@ -188,28 +188,7 @@ module DataFlow {
      */
     cached
     DataFlow::Node getImmediatePredecessor() {
-      lvalueFlowStep(result, this) and
-      not lvalueDefaultFlowStep(_, this)
-      or
       immediateFlowStep(result, this)
-      or
-      // Refinement of variable -> original definition of variable
-      exists(SsaRefinementNode refinement |
-        this = TSsaDefNode(refinement) and
-        result = TSsaDefNode(refinement.getAnInput())
-      )
-      or
-      exists(SsaPhiNode phi |
-        this = TSsaDefNode(phi) and
-        result = TSsaDefNode(phi.getRephinedVariable())
-      )
-      or
-      // IIFE call -> return value of IIFE
-      exists(Function fun |
-        localCall(this.asExpr(), fun) and
-        result = unique(Expr ret | ret = fun.getAReturnedExpr()).flow() and
-        not fun.getExit().isJoin() // can only reach exit by the return statement
-      )
       or
       FlowSteps::identityFunctionStep(result, this)
     }
@@ -1503,12 +1482,12 @@ module DataFlow {
   /**
    * INTERNAL: Use `parameterNode(Parameter)` instead.
    */
-  predicate parameterNode(TEarlyStageNode nd, Parameter p) { nd = TValueNode(p) }
+  predicate parameterNode(EarlyStageNode nd, Parameter p) { nd = TValueNode(p) }
 
   /**
    * INTERNAL: Use `thisNode(StmtContainer container)` instead.
    */
-  predicate thisNode(TEarlyStageNode node, StmtContainer container) { node = TThisNode(container) }
+  predicate thisNode(EarlyStageNode node, StmtContainer container) { node = TThisNode(container) }
 
   /**
    * Gets the node representing the receiver of the given function, or `this` in the given top-level.
@@ -1572,7 +1551,7 @@ module DataFlow {
    */
   Node lvalueNode(BindingPattern lvalue) { result = lvalueNodeInternal(lvalue) }
 
-  TEarlyStageNode lvalueNodeInternal(BindingPattern lvalue) {
+  EarlyStageNode lvalueNodeInternal(BindingPattern lvalue) {
     exists(SsaExplicitDefinition ssa |
       ssa.defines(lvalue.(LValue).getDefNode(), lvalue.(VarRef).getVariable()) and
       result = TSsaDefNode(ssa)
@@ -1620,7 +1599,7 @@ module DataFlow {
    * Holds if there is a step from `pred -> succ` due to an assignment
    * to an expression in l-value position.
    */
-  private predicate lvalueFlowStep(TEarlyStageNode pred, TEarlyStageNode succ) {
+  private predicate lvalueFlowStep(EarlyStageNode pred, EarlyStageNode succ) {
     exists(VarDef def |
       pred = TValueNode(defSourceNode(def)) and
       succ = lvalueNodeInternal(def.getTarget())
@@ -1652,7 +1631,7 @@ module DataFlow {
    * Holds if there is a step from `pred -> succ` from the default
    * value of a destructuring pattern or parameter.
    */
-  private predicate lvalueDefaultFlowStep(TEarlyStageNode pred, TEarlyStageNode succ) {
+  private predicate lvalueDefaultFlowStep(EarlyStageNode pred, EarlyStageNode succ) {
     exists(PropertyPattern pattern |
       pred = TValueNode(pattern.getDefault()) and
       succ = lvalueNodeInternal(pattern.getValuePattern())
@@ -1670,12 +1649,12 @@ module DataFlow {
   }
 
   /**
-   * Flow steps shared between `getImmediatePredecessor` and `localFlowStep`.
+   * Flow steps shared between `immediateFlowStep` and `localFlowStep`.
    *
    * Inlining is forced because the two relations are indexed differently.
    */
   pragma[inline]
-  private predicate immediateFlowStep(TEarlyStageNode pred, TEarlyStageNode succ) {
+  private predicate immediateFlowStepShared(EarlyStageNode pred, EarlyStageNode succ) {
     exists(SsaVariable v |
       pred = TSsaDefNode(v.getDefinition()) and
       succ = TValueNode(v.getAUse())
@@ -1722,18 +1701,45 @@ module DataFlow {
     )
   }
 
+  pragma[nomagic]
+  private predicate immediateFlowStep(EarlyStageNode pred, EarlyStageNode succ) {
+    lvalueFlowStep(pred, succ) and
+    not lvalueDefaultFlowStep(_, succ)
+    or
+    immediateFlowStepShared(pred, succ)
+    or
+    // Refinement of variable -> original definition of variable
+    exists(SsaRefinementNode refinement |
+      succ = TSsaDefNode(refinement) and
+      pred = TSsaDefNode(refinement.getAnInput())
+    )
+    or
+    exists(SsaPhiNode phi |
+      succ = TSsaDefNode(phi) and
+      pred = TSsaDefNode(phi.getRephinedVariable())
+    )
+    or
+    // IIFE call -> return value of IIFE
+    exists(Function fun, Expr expr |
+      succ = TValueNode(expr) and
+      localCall(expr, fun) and
+      pred = TValueNode(unique(Expr ret | ret = fun.getAReturnedExpr())) and
+      not fun.getExit().isJoin() // can only reach exit by the return statement
+    )
+  }
+
   /**
    * Holds if data can flow from `pred` to `succ` in one local step.
    */
   cached
-  predicate localFlowStep(TEarlyStageNode pred, TEarlyStageNode succ) {
+  predicate localFlowStep(EarlyStageNode pred, EarlyStageNode succ) {
     Stages::EarlyDataFlowStage::ref() and
     // flow from RHS into LHS
     lvalueFlowStep(pred, succ)
     or
     lvalueDefaultFlowStep(pred, succ)
     or
-    immediateFlowStep(pred, succ)
+    immediateFlowStepShared(pred, succ)
     or
     // From an assignment or implicit initialization of a captured variable to its flow-insensitive node.
     exists(SsaDefinition predDef |

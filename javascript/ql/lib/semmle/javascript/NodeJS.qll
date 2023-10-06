@@ -241,20 +241,20 @@ private class RequireVariable extends Variable {
  */
 private predicate moduleInFile(Module m, File f) { m.getFile() = f }
 
-private predicate isModuleModule(TEarlyStageNode nd) {
+private predicate isModuleModule(EarlyStageNode nd) {
   exists(ImportDeclaration imp | imp.getImportedPath().getValue() = "module" |
     nd = TDestructuredModuleImportNode(imp)
     or
     nd = TValueNode(imp.getASpecifier().(ImportNamespaceSpecifier))
   )
   or
-  exists(TEarlyStageNode other |
+  exists(EarlyStageNode other |
     isModuleModule(other) and
     DataFlow::localFlowStep(other, nd)
   )
 }
 
-private predicate isCreateRequire(TEarlyStageNode nd) {
+private predicate isCreateRequire(EarlyStageNode nd) {
   exists(PropAccess prop |
     isModuleModule(TValueNode(prop.getBase())) and
     prop.getPropertyName() = "createRequire" and
@@ -274,7 +274,7 @@ private predicate isCreateRequire(TEarlyStageNode nd) {
     nd = TValueNode(spec)
   )
   or
-  exists(TEarlyStageNode other |
+  exists(EarlyStageNode other |
     isCreateRequire(other) and
     DataFlow::localFlowStep(other, nd)
   )
@@ -284,7 +284,7 @@ private predicate isCreateRequire(TEarlyStageNode nd) {
  * Holds if `nd` may refer to `require`, either directly or modulo local data flow.
  */
 cached
-private predicate isRequire(TEarlyStageNode nd) {
+private predicate isRequire(EarlyStageNode nd) {
   exists(VarAccess access |
     access = any(RequireVariable v).getAnAccess() and
     nd = TValueNode(access) and
@@ -292,7 +292,7 @@ private predicate isRequire(TEarlyStageNode nd) {
     not access.getFile().getExtension() = "mjs"
   )
   or
-  exists(TEarlyStageNode other |
+  exists(EarlyStageNode other |
     isRequire(other) and
     DataFlow::localFlowStep(other, nd)
   )
