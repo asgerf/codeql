@@ -64,9 +64,10 @@ module MakeLabeledBarrierGuard<LabeledBarrierGuardSig BaseGuard> {
 private signature predicate isBarrierGuardSig(DataFlow::BarrierGuardNode node);
 
 /**
- * Converts a barrier guard class to a set of nodes to include in an implementation of `isBarrier(node)` and `isBarrier(node, label)`.
+ * Converts a labeled barrier guard class to a set of nodes to include in an implementation of `isBarrier(node)` and `isBarrier(node, label)`
+ * in a `DataFlow::StateConfigSig` implementation.
  */
-module MakeLegacyBarrierGuard<isBarrierGuardSig/1 isBarrierGuard> {
+module MakeLegacyBarrierGuardLabeled<isBarrierGuardSig/1 isBarrierGuard> {
   final private class FinalNode = DataFlow::Node;
 
   private class Adapter extends FinalNode instanceof DataFlow::BarrierGuardNode {
@@ -92,6 +93,30 @@ module MakeLegacyBarrierGuard<isBarrierGuardSig/1 isBarrierGuard> {
   DataFlow::Node getABarrierNode(DataFlow::FlowLabel label) {
     result = Guards::getABarrierNode(label)
   }
+}
+
+/**
+ * Converts a barrier guard class to a set of nodes to include in an implementation of `isBarrier(node)` in a `DataFlow::ConfigSig` implementation.
+ */
+module MakeLegacyBarrierGuard<isBarrierGuardSig/1 isBarrierGuard> {
+  final private class FinalNode = DataFlow::Node;
+
+  private class Adapter extends FinalNode instanceof DataFlow::BarrierGuardNode {
+    Adapter() { isBarrierGuard(this) }
+
+    predicate blocksExpr(boolean outcome, Expr e, string label) {
+      super.blocks(outcome, e, label)
+      or
+      super.blocks(outcome, e) and label = ""
+    }
+  }
+
+  private module Guards = MakeStateBarrierGuard<string, Adapter>;
+
+  /**
+   * Gets a node that is blocked by a barrier guard.
+   */
+  DataFlow::Node getABarrierNode() { result = Guards::getABarrierNode(["", "data", "taint"]) }
 }
 
 bindingset[this]

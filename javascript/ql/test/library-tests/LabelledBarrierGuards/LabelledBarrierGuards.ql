@@ -26,7 +26,7 @@ module TestConfig implements DataFlow::StateConfigSig {
   }
 
   predicate isBarrier(DataFlow::Node node, DataFlow::FlowLabel lbl) {
-    node = DataFlow::MakeLegacyBarrierGuard<isBarrierGuard/1>::getABarrierNode(lbl)
+    node = DataFlow::MakeLegacyBarrierGuardLabeled<isBarrierGuard/1>::getABarrierNode(lbl)
   }
 }
 
