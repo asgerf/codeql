@@ -41,6 +41,7 @@ nodes
 | TaintedPath.js:58:54:58:57 | path | semmle.label | path |
 | TaintedPath.js:60:29:60:61 | pathMod ... h(path) | semmle.label | pathMod ... h(path) |
 | TaintedPath.js:60:57:60:60 | path | semmle.label | path |
+| TaintedPath.js:71:26:71:31 | Cookie [MapValue[unsafe]] | semmle.label | Cookie [MapValue[unsafe]] |
 | TaintedPath.js:71:26:71:45 | Cookie.get("unsafe") | semmle.label | Cookie.get("unsafe") |
 | TaintedPath.js:77:31:77:70 | require ... eq.url) | semmle.label | require ... eq.url) |
 | TaintedPath.js:77:31:77:76 | require ... ).query | semmle.label | require ... ).query |
@@ -53,6 +54,7 @@ nodes
 | TaintedPath.js:79:60:79:66 | req.url | semmle.label | req.url |
 | TaintedPath.js:87:48:87:60 | req.params[0] | semmle.label | req.params[0] |
 | TaintedPath.js:95:30:95:31 | ev | semmle.label | ev |
+| TaintedPath.js:96:3:96:8 | [post update] Cookie [MapValue[unsafe]] | semmle.label | [post update] Cookie [MapValue[unsafe]] |
 | TaintedPath.js:96:24:96:25 | ev | semmle.label | ev |
 | TaintedPath.js:96:24:96:30 | ev.data | semmle.label | ev.data |
 | TaintedPath.js:100:6:100:47 | path | semmle.label | path |
@@ -525,6 +527,7 @@ edges
 | TaintedPath.js:56:48:56:51 | path | TaintedPath.js:56:29:56:52 | pathMod ... e(path) |
 | TaintedPath.js:58:54:58:57 | path | TaintedPath.js:58:29:58:61 | pathMod ... ath, z) |
 | TaintedPath.js:60:57:60:60 | path | TaintedPath.js:60:29:60:61 | pathMod ... h(path) |
+| TaintedPath.js:71:26:71:31 | Cookie [MapValue[unsafe]] | TaintedPath.js:71:26:71:45 | Cookie.get("unsafe") |
 | TaintedPath.js:77:31:77:70 | require ... eq.url) | TaintedPath.js:77:31:77:76 | require ... ).query |
 | TaintedPath.js:77:63:77:69 | req.url | TaintedPath.js:77:31:77:70 | require ... eq.url) |
 | TaintedPath.js:78:31:78:68 | require ... eq.url) | TaintedPath.js:78:31:78:74 | require ... ).query |
@@ -532,8 +535,10 @@ edges
 | TaintedPath.js:79:31:79:67 | require ... eq.url) | TaintedPath.js:79:31:79:73 | require ... ).query |
 | TaintedPath.js:79:60:79:66 | req.url | TaintedPath.js:79:31:79:67 | require ... eq.url) |
 | TaintedPath.js:95:30:95:31 | ev | TaintedPath.js:96:24:96:25 | ev |
+| TaintedPath.js:96:3:96:8 | [post update] Cookie [MapValue[unsafe]] | TaintedPath.js:71:26:71:31 | Cookie [MapValue[unsafe]] |
 | TaintedPath.js:96:24:96:25 | ev | TaintedPath.js:96:24:96:30 | ev.data |
 | TaintedPath.js:96:24:96:30 | ev.data | TaintedPath.js:71:26:71:45 | Cookie.get("unsafe") |
+| TaintedPath.js:96:24:96:30 | ev.data | TaintedPath.js:96:3:96:8 | [post update] Cookie [MapValue[unsafe]] |
 | TaintedPath.js:100:6:100:47 | path | TaintedPath.js:102:44:102:47 | path |
 | TaintedPath.js:100:6:100:47 | path | TaintedPath.js:103:14:103:17 | path |
 | TaintedPath.js:100:13:100:36 | url.par ... , true) | TaintedPath.js:100:13:100:42 | url.par ... ).query |
