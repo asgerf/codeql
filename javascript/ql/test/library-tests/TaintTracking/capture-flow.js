@@ -141,7 +141,7 @@ function flowSensitiveParamUpdate(x) {
         console.log(x);
     }
     captureX();
-    sink(x); // OK
+    sink(x); // OK [INCONSISTENCY] - captured variables are tracked without flow-sensitivity
 }
 flowSensitiveParamUpdate(source());
 

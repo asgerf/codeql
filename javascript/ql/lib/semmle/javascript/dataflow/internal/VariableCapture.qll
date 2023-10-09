@@ -62,15 +62,17 @@ module VariableCaptureConfig implements InputSig {
   }
 
   additional predicate captures(js::Function fun, CapturedVariable variable) {
-    (
-      variable.getAnAccess().getContainer().getFunctionBoundary() = fun
-      or
-      exists(js::Function inner |
-        captures(inner, variable) and
-        containsReferenceTo(fun, inner)
-      )
-    ) and
+    capturesOrDeclares(fun, variable) and
     not variable.getDeclaringContainer() = fun
+  }
+
+  additional predicate capturesOrDeclares(js::Function fun, CapturedVariable variable) {
+    variable.getAnAccess().getContainer().getFunctionBoundary() = fun
+    or
+    exists(js::Function inner |
+      captures(inner, variable) and
+      containsReferenceTo(fun, inner)
+    )
   }
 
   private predicate containsReferenceTo(js::Function fun, js::Function other) {
@@ -260,72 +262,4 @@ module VariableCaptureConfig implements InputSig {
   predicate entryBlock(BasicBlock bb) { bb instanceof js::EntryBasicBlock }
 
   predicate exitBlock(BasicBlock bb) { bb.getLastNode() instanceof js::ControlFlowExitNode }
-}
-
-module VariableCaptureOutput = Flow<VariableCaptureConfig>;
-
-predicate missingNode(VariableCaptureOutput::ClosureNode closureNode) {
-  not exists(getNodeFromClosureNode(closureNode)) and
-  (
-    VariableCaptureOutput::localFlowStep(closureNode, _)
-    or
-    VariableCaptureOutput::localFlowStep(_, closureNode)
-  )
-}
-
-js::DataFlow::Node getNodeFromClosureNode(VariableCaptureOutput::ClosureNode node) {
-  result = TValueNode(node.(VariableCaptureOutput::ExprNode).getExpr())
-  or
-  result = TValueNode(node.(VariableCaptureOutput::ParameterNode).getParameter().getADeclaration()) // TODO: is this subsumed by the ExprNode case?
-  or
-  result = TExprPostUpdateNode(node.(VariableCaptureOutput::ExprPostUpdateNode).getExpr())
-  or
-  // Note: the `this` parameter in the capture library is expected to be a parameter that refers to the lambda object itself,
-  // which for JS means the `TFunctionSelfReferenceNode`, not `TThisNode` as one might expect.
-  result = TFunctionSelfReferenceNode(node.(VariableCaptureOutput::ThisParameterNode).getCallable())
-  or
-  result = TSynthCaptureNode(node.(VariableCaptureOutput::SynthesizedCaptureNode))
-  or
-  result = node.(VariableCaptureOutput::VariableWriteSourceNode).getVariableWrite().getSource()
-  // or
-  // result = TConstructorThisArgumentNode(node.(VariableCaptureOutput::MallocNode).getClosureExpr())
-}
-
-VariableCaptureOutput::ClosureNode getClosureNode(js::DataFlow::Node node) {
-  node = getNodeFromClosureNode(result)
-}
-
-private module Debug {
-  private import VariableCaptureConfig
-
-  predicate relevantContainer(js::StmtContainer container) {
-    container.getEnclosingContainer*().(js::Function).getName() = "exists"
-  }
-
-  predicate localFlowStep(
-    VariableCaptureOutput::ClosureNode node1, VariableCaptureOutput::ClosureNode node2
-  ) {
-    VariableCaptureOutput::localFlowStep(node1, node2)
-  }
-
-  predicate localFlowStepMapped(js::DataFlow::Node node1, js::DataFlow::Node node2) {
-    localFlowStep(getClosureNode(node1), getClosureNode(node2)) and
-    relevantContainer(node1.getContainer())
-  }
-
-  predicate readBB(VariableRead read, BasicBlock bb, int i) { read.hasCfgNode(bb, i) }
-
-  predicate writeBB(VariableWrite write, BasicBlock bb, int i) { write.hasCfgNode(bb, i) }
-
-  int captureDegree(js::Function fun) {
-    result = strictcount(CapturedVariable v | captures(fun, v))
-  }
-
-  int maxDegree() { result = max(captureDegree(_)) }
-
-  int captureMax(js::Function fun) { result = captureDegree(fun) and result = maxDegree() }
-
-  int captureMax(js::Function fun, CapturedVariable v) {
-    result = captureDegree(fun) and result = maxDegree() and captures(fun, v)
-  }
 }

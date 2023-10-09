@@ -42,30 +42,6 @@ class FlowSummaryIntermediateAwaitStoreNode extends DataFlow::Node,
   }
 }
 
-class CaptureNode extends DataFlow::Node, TSynthCaptureNode {
-  /** Gets the underlying node from the variable-capture library. */
-  VariableCaptureOutput::SynthesizedCaptureNode getNode() {
-    this = TSynthCaptureNode(result) and DataFlowImplCommon::forceCachingInSameStage()
-  }
-
-  cached
-  override StmtContainer getContainer() { result = this.getNode().getEnclosingCallable() }
-
-  cached
-  private string toStringInternal() { result = this.getNode().toString() }
-
-  override string toString() { result = this.toStringInternal() } // cached in parent class
-
-  cached
-  private Location getLocation() { result = this.getNode().getLocation() }
-
-  override predicate hasLocationInfo(
-    string filepath, int startline, int startcolumn, int endline, int endcolumn
-  ) {
-    this.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
-  }
-}
-
 class GenericSynthesizedNode extends DataFlow::Node, TGenericSynthesizedNode {
   private AstNode node;
   private string tag;
@@ -86,17 +62,77 @@ class GenericSynthesizedNode extends DataFlow::Node, TGenericSynthesizedNode {
   string getTag() { result = tag }
 }
 
+class ScopedCapturedVariableNode extends DataFlow::Node, TScopedCapturedVariableNode {
+  private LocalVariable variable;
+  private StmtContainer container;
+  private CaptureNodeKind kind;
+
+  ScopedCapturedVariableNode() { this = TScopedCapturedVariableNode(variable, container, kind) }
+
+  override StmtContainer getContainer() { result = container }
+
+  override string toString() { result = "[" + kind.toString() + "] " + variable.getName() }
+
+  CaptureNodeKind getCaptureNodeKind() { result = kind }
+
+  override predicate hasLocationInfo(
+    string filepath, int startline, int startcolumn, int endline, int endcolumn
+  ) {
+    if container = variable.getDeclaringContainer()
+    then
+      variable.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+    else
+      container.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+  }
+}
+
+class ReturnFromImplicitCall extends DataFlow::Node, TReturnFromImplicitCall {
+  private Function function;
+  private boolean exceptional;
+
+  ReturnFromImplicitCall() { this = TReturnFromImplicitCall(function, exceptional) }
+
+  boolean getIsExceptional() { result = exceptional }
+
+  override StmtContainer getContainer() { result = function.getEnclosingContainer() }
+
+  override string toString() { result = "TReturnFromImplicitCall(" + exceptional + ")" }
+
+  Function getFunction() { result = function }
+
+  override predicate hasLocationInfo(
+    string filepath, int startline, int startcolumn, int endline, int endcolumn
+  ) {
+    function.getLocation().hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn)
+  }
+}
+
 cached
 newtype TReturnKind =
   MkNormalReturnKind() or
-  MkExceptionalReturnKind()
+  MkExceptionalReturnKind() or
+  MkCapturedVariableReturnKind(VariableCaptureConfig::CapturedVariable variable)
 
 class ReturnKind extends TReturnKind {
   string toString() {
     this = MkNormalReturnKind() and result = "return"
     or
     this = MkExceptionalReturnKind() and result = "exception"
+    or
+    result = "[capture-return] " + this.asCapturedVariable().toString()
   }
+
+  VariableCaptureConfig::CapturedVariable asCapturedVariable() {
+    this = MkCapturedVariableReturnKind(result)
+  }
+}
+
+ReturnKind getOrdinaryReturnKind(boolean exceptional) {
+  exceptional = false and
+  result = MkNormalReturnKind()
+  or
+  exceptional = true and
+  result = MkExceptionalReturnKind()
 }
 
 private predicate returnNodeImpl(DataFlow::Node node, ReturnKind kind) {
@@ -111,6 +147,12 @@ private predicate returnNodeImpl(DataFlow::Node node, ReturnKind kind) {
   )
   or
   FlowSummaryImpl::Private::summaryReturnNode(node.(FlowSummaryNode).getSummaryNode(), kind)
+  or
+  exists(LocalVariable variable, StmtContainer container |
+    node = TScopedCapturedVariableNode(variable, container, TCaptureNodeOutput()) and
+    kind = MkCapturedVariableReturnKind(variable) and
+    not variable.getDeclaringContainer() = container
+  )
 }
 
 private DataFlow::Node getAnOutNodeImpl(DataFlowCall call, ReturnKind kind) {
@@ -125,6 +167,23 @@ private DataFlow::Node getAnOutNodeImpl(DataFlowCall call, ReturnKind kind) {
   kind = MkNormalReturnKind() and result = call.asAccessorCall().(DataFlow::PropRead)
   or
   FlowSummaryImpl::Private::summaryOutNode(call, result.(FlowSummaryNode).getSummaryNode(), kind)
+  or
+  exists(
+    Function fun, VariableCaptureConfig::CapturedVariable variable, StmtContainer callContainer
+  |
+    VariableCaptureConfig::captures(fun, variable) and
+    kind = MkCapturedVariableReturnKind(variable) and
+    fun = viableCallable(call).asSourceCallable() and
+    callContainer = call.getEnclosingCallable().asSourceCallable() and
+    VariableCaptureConfig::capturesOrDeclares(callContainer, variable) and
+    result = TScopedCapturedVariableNode(variable, callContainer, TCaptureNodeOutput())
+  )
+  or
+  exists(Function fun, boolean exceptional |
+    call.asImpliedLambdaCall() = fun and
+    kind = getOrdinaryReturnKind(exceptional) and
+    result = TReturnFromImplicitCall(fun, exceptional)
+  )
 }
 
 class ReturnNode extends DataFlow::Node {
@@ -170,7 +229,10 @@ predicate postUpdatePair(Node pre, Node post) {
   FlowSummaryImpl::Private::summaryPostUpdateNode(post.(FlowSummaryNode).getSummaryNode(),
     pre.(FlowSummaryNode).getSummaryNode())
   or
-  VariableCaptureOutput::capturePostUpdateNode(getClosureNode(post), getClosureNode(pre))
+  exists(LocalVariable v, StmtContainer container |
+    pre = TScopedCapturedVariableNode(v, container, TCaptureNodeInput()) and
+    post = TScopedCapturedVariableNode(v, container, TCaptureNodePostUpdate())
+  )
 }
 
 class CastNode extends DataFlow::Node instanceof EmptyType { }
@@ -234,6 +296,13 @@ private predicate isParameterNodeImpl(Node p, DataFlowCallable c, ParameterPosit
     FlowSummaryImpl::Private::summaryParameterNode(summaryNode.getSummaryNode(), pos) and
     c.asLibraryCallable() = summaryNode.getSummarizedCallable()
   )
+  or
+  exists(LocalVariable variable, StmtContainer container |
+    p = TScopedCapturedVariableNode(variable, container, TCaptureNodeInput()) and
+    pos = MkCapturedVariableParameter(variable) and
+    not variable.getDeclaringContainer() = container and
+    container = c.asSourceCallable()
+  )
 }
 
 predicate isParameterNode(ParameterNode p, DataFlowCallable c, ParameterPosition pos) {
@@ -280,6 +349,17 @@ private predicate isArgumentNodeImpl(Node n, DataFlowCall call, ArgumentPosition
   pos.asPositional() = 0 and n = call.asAccessorCall().(DataFlow::PropWrite).getRhs()
   or
   FlowSummaryImpl::Private::summaryArgumentNode(call, n.(FlowSummaryNode).getSummaryNode(), pos)
+  or
+  exists(
+    Function fun, VariableCaptureConfig::CapturedVariable variable, StmtContainer callContainer
+  |
+    VariableCaptureConfig::captures(fun, variable) and
+    pos = MkCapturedVariableParameter(variable) and
+    fun = viableCallable(call).asSourceCallable() and
+    callContainer = call.getEnclosingCallable().asSourceCallable() and
+    VariableCaptureConfig::capturesOrDeclares(callContainer, variable) and
+    n = TScopedCapturedVariableNode(variable, callContainer, TCaptureNodeInput())
+  )
 }
 
 predicate isArgumentNode(ArgumentNode n, DataFlowCall call, ArgumentPosition pos) {
@@ -314,8 +394,6 @@ predicate nodeIsHidden(Node node) {
   node instanceof FlowSummaryNode
   or
   node instanceof FlowSummaryIntermediateAwaitStoreNode
-  or
-  node instanceof CaptureNode
   or
   // Hide function expressions, as capture-flow causes them to appear in unhelpful ways
   // TODO: Instead hide PathNodes with a capture content as the head of its access path?
@@ -546,7 +624,8 @@ newtype TParameterPosition =
   MkPositionalLowerBound(int n) { n = [0 .. getMaxArity()] } or
   MkThisParameter() or
   MkFunctionSelfReferenceParameter() or
-  MkArgumentsArrayParameter()
+  MkArgumentsArrayParameter() or
+  MkCapturedVariableParameter(VariableCaptureConfig::CapturedVariable variable)
 
 class ParameterPosition extends TParameterPosition {
   predicate isPositionalExact() { this instanceof MkPositionalParameter }
@@ -565,6 +644,10 @@ class ParameterPosition extends TParameterPosition {
 
   predicate isArgumentsArray() { this = MkArgumentsArrayParameter() }
 
+  VariableCaptureConfig::CapturedVariable asCapturedVariable() {
+    this = MkCapturedVariableParameter(result)
+  }
+
   string toString() {
     result = this.asPositional().toString()
     or
@@ -575,6 +658,8 @@ class ParameterPosition extends TParameterPosition {
     this.isFunctionSelfReference() and result = "function"
     or
     this.isArgumentsArray() and result = "arguments-array"
+    or
+    result = "[captured-variable] " + this.asCapturedVariable().toString()
   }
 }
 
@@ -705,10 +790,31 @@ predicate simpleLocalFlowStep(Node node1, Node node2) {
     node2 = TFlowSummaryNode(output)
   )
   or
-  VariableCaptureOutput::localFlowStep(getClosureNode(node1), getClosureNode(node2))
-  or
   // NOTE: For consistency with readStep/storeStep, we do not translate these steps to jump steps automatically.
   DataFlow::AdditionalFlowStep::step(node1, node2)
+  or
+  exists(LocalVariable variable, DataFlow::Node lvalue |
+    variable.isCaptured() and
+    lvalue = DataFlow::lvalueNode(variable.getAReference()) and
+    node1 = lvalue and
+    node2 = TScopedCapturedVariableNode(variable, lvalue.getContainer(), TCaptureNodeOutput())
+  )
+  or
+  exists(LocalVariable variable, StmtContainer container |
+    node1 = TScopedCapturedVariableNode(variable, container, TCaptureNodeOutput()) and
+    node2 = TScopedCapturedVariableNode(variable, container, TCaptureNodeInput())
+    or
+    node1 = TScopedCapturedVariableNode(variable, container, TCaptureNodePostUpdate()) and
+    node2 = TScopedCapturedVariableNode(variable, container, TCaptureNodeInput())
+    or
+    node1 = TScopedCapturedVariableNode(variable, container, TCaptureNodeInput()) and
+    exists(VarAccess access |
+      access = variable.getAnAccess() and
+      container = access.getContainer() and
+      access instanceof RValue and
+      node2 = TValueNode(access)
+    )
+  )
 }
 
 predicate localMustFlowStep(Node node1, Node node2) { node1 = node2.getImmediatePredecessor() }
@@ -768,12 +874,17 @@ predicate readStep(Node node1, ContentSet c, Node node2) {
     c = ContentSet::arrayElement()
   )
   or
-  exists(LocalVariable variable |
-    VariableCaptureOutput::readStep(getClosureNode(node1), variable, getClosureNode(node2)) and
-    c.asSingleton() = MkCapturedContent(variable)
-  )
-  or
   DataFlow::AdditionalFlowStep::readStep(node1, c, node2)
+  or
+  exists(DataFlow::InvokeNode invoke |
+    node1 = invoke.getCalleeNode() and
+    node2 = invoke and
+    c.asSingleton() = MkReturnValueContent(false)
+    or
+    node1 = invoke.getCalleeNode() and
+    node2 = invoke.getExceptionalReturn() and
+    c.asSingleton() = MkReturnValueContent(true)
+  )
 }
 
 /** Gets the post-update node for which `node` is the corresponding pre-update node. */
@@ -813,12 +924,13 @@ predicate storeStep(Node node1, ContentSet c, Node node2) {
     c = ContentSet::promiseValue()
   )
   or
-  exists(LocalVariable variable |
-    VariableCaptureOutput::storeStep(getClosureNode(node1), variable, getClosureNode(node2)) and
-    c.asSingleton() = MkCapturedContent(variable)
-  )
-  or
   DataFlow::AdditionalFlowStep::storeStep(node1, c, node2)
+  or
+  exists(Function fun, boolean exceptional |
+    node1 = TReturnFromImplicitCall(fun, exceptional) and
+    node2 = TValueNode(fun) and
+    c.asSingleton() = MkReturnValueContent(exceptional)
+  )
 }
 
 /**
@@ -839,13 +951,6 @@ predicate clearsContent(Node n, ContentSet c) {
   c = MkPromiseFilter()
   or
   any(AdditionalFlowInternal flow).clearsContent(n, c)
-  or
-  // When a function `f` captures itself, all its access paths can be prefixed by an arbitrary number of `f.f.f...`.
-  // For multiple functions `f,g` capture each other, these prefixes can become interleaved, like `f.g.f.g...`.
-  // To avoid creating these trivial prefixes, we never allow two consecutive captured variables in the access path.
-  // We implement this rule by clearing any captured-content before storing into another captured-content.
-  VariableCaptureOutput::storeStep(getClosureNode(n), _, _) and
-  c = MkAnyCapturedContent()
   or
   // Block flow into the "window.location" property, as any assignment/mutation to this causes a page load and stops execution.
   // The use of clearsContent here ensures we also block assignments like `window.location.href = ...`
@@ -890,11 +995,6 @@ int accessPathLimit() { result = 2 }
  */
 predicate allowParameterReturnInSelf(ParameterNode p) {
   FlowSummaryImpl::Private::summaryAllowParameterReturnInSelf(p)
-  or
-  exists(Function f |
-    VariableCaptureOutput::heuristicAllowInstanceParameterReturnInSelf(f) and
-    p = TFunctionSelfReferenceNode(f)
-  )
 }
 
 class LambdaCallKind = Unit; // TODO: not sure about this

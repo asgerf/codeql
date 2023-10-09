@@ -59,10 +59,38 @@ private module Cached {
     TFlowSummaryIntermediateAwaitStoreNode(FlowSummaryImpl::Private::SummaryNode sn) {
       FlowSummaryImpl::Private::Steps::summaryStoreStep(sn, MkAwaited(), _)
     } or
-    TSynthCaptureNode(VariableCapture::VariableCaptureOutput::SynthesizedCaptureNode node) or
     TGenericSynthesizedNode(AstNode node, string tag, DataFlowPrivate::DataFlowCallable container) {
       any(AdditionalFlowInternal flow).needsSynthesizedNode(node, tag, container)
+    } or
+    TScopedCapturedVariableNode(LocalVariable v, StmtContainer container, CaptureNodeKind kind) {
+      VariableCapture::VariableCaptureConfig::capturesOrDeclares(container, v) and
+      exists(kind)
+    } or
+    TReturnFromImplicitCall(Function fun, boolean exceptional) {
+      VariableCapture::VariableCaptureConfig::captures(fun, _) and
+      exceptional = [true, false]
     }
+
+  cached
+  newtype TCaptureNodeKind =
+    /** Node from which reads take their value. This is a parameter node, except in the declaring scope. */
+    TCaptureNodeInput() or
+    /** Node to which writes put the new value. This is a return node, except in the declaring scope. */
+    TCaptureNodeOutput() or
+    /** Post-update for mutations targeting the captured variable. This becomes a parameter post-update node, except in the declaring scope. */
+    TCaptureNodePostUpdate()
+
+  cached
+  class CaptureNodeKind extends TCaptureNodeKind {
+    cached
+    string toString() {
+      this = TCaptureNodeInput() and result = "TCaptureNodeInput"
+      or
+      this = TCaptureNodeOutput() and result = "TCaptureNodeOutput"
+      or
+      this = TCaptureNodePostUpdate() and result = "TCaptureNodePostUpdate"
+    }
+  }
 
   cached
   private module Backref {

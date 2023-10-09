@@ -1,4 +1,5 @@
 private import javascript
+private import DataFlowPrivate
 private import semmle.javascript.frameworks.data.internal.AccessPathSyntax as AccessPathSyntax
 
 module Private {
@@ -69,7 +70,7 @@ module Private {
     MkIteratorError() or
     MkPromiseValue() or
     MkPromiseError() or
-    MkCapturedContent(LocalVariable v) { v.isCaptured() }
+    MkReturnValueContent(boolean exceptional) { exceptional = [true, false] }
 
   cached
   newtype TContentSet =
@@ -81,7 +82,6 @@ module Private {
     MkPromiseFilter() or
     MkIteratorFilter() or
     MkAnyProperty() or
-    MkAnyCapturedContent() or
     // The following content sets are used exclusively as an intermediate value in flow summaries.
     // These are encoded as a ContentSummaryComponent, although the flow graphs we generate are different
     // than an ordinary content component. These special content sets should never appear in a step.
@@ -140,7 +140,9 @@ module Public {
       this = MkPromiseError() and
       result = "PromiseError"
       or
-      result = this.asCapturedVariable().getName()
+      exists(boolean exceptional | this = MkReturnValueContent(exceptional) |
+        if exceptional = false then result = "ReturnValue" else result = "ReturnValue[exception]"
+      )
     }
 
     /** Gets the property name represented by this content, if any. */
@@ -149,9 +151,6 @@ module Public {
     /** Gets the array index represented by this content, if any. */
     pragma[nomagic]
     int asArrayIndex() { result = this.asPropertyName().(PropertyName).asArrayIndex() }
-
-    /** Gets the captured variable represented by this content, if any. */
-    LocalVariable asCapturedVariable() { this = MkCapturedContent(result) }
 
     /** Holds if this represents values stored at an unknown array index. */
     predicate isUnknownArrayElement() { this = MkArrayElementUnknown() }
@@ -240,9 +239,6 @@ module Public {
         or
         result instanceof MkArrayElementUnknown
       )
-      or
-      this = ContentSet::anyCapturedContent() and
-      result instanceof Private::MkCapturedContent
     }
 
     /** Gets the singleton content to be accessed. */
@@ -282,9 +278,6 @@ module Public {
       this = MkAnyPropertyDeep() and result = "AnyMemberDeep"
       or
       this = MkArrayElementDeep() and result = "ArrayElementDeep"
-      or
-      this = MkAnyCapturedContent() and
-      result = "AnyCapturedContent"
     }
   }
 
@@ -484,10 +477,5 @@ module Public {
         else result = property(propertyName)
       )
     }
-
-    /**
-     * Gets a content set that reads from all captured variables stored on a function.
-     */
-    ContentSet anyCapturedContent() { result = Private::MkAnyCapturedContent() }
   }
 }
