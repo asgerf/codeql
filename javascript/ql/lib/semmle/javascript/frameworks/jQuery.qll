@@ -620,3 +620,20 @@ module JQuery {
     string getPluginName() { result = pluginName }
   }
 }
+
+private DataFlow::FunctionNode internalJQueryFunction() {
+  result.getFile().getBaseName().regexpMatch("jquery.*") and
+  result.getName() = "jQuery"
+}
+
+private class JQueryExtension extends ExtendCall {
+  JQueryExtension() {
+    this = internalJQueryFunction().getAMethodCall("extend") and this.getNumArgument() = 1
+  }
+
+  override DataFlow::Node getASourceOperand() { result = this.getArgument(0) }
+
+  override DataFlow::Node getDestinationOperand() { result = this.getReceiver() }
+
+  override predicate isDeep() { none() }
+}
