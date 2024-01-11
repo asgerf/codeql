@@ -49,7 +49,8 @@ private class ExtendCallWithFlag extends ExtendCall {
   ExtendCallWithFlag() {
     this = DataFlow::moduleImport(["extend", "extend2", "just-extend", "node.extend"]).getACall()
     or
-    this = localDollar().getAMemberCall("extend")
+    this = localDollar().getAMemberCall("extend") and
+    this.getNumArgument() > 1 // Diambiguate from jQuery.extend({}) which targets jQuery itself
   }
 
   /**
