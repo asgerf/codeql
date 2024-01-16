@@ -1272,6 +1272,12 @@ module ClassNode {
     func instanceof AbstractFunction // the join-order goes bad if `func` has type `AbstractFunction`.
   }
 
+  private DataFlow::FunctionNode getFunctionFromNode(DataFlow::SourceNode node) {
+    result = node
+    or
+    result.getFunction() = node.analyze().getAValue().(AbstractFunction).getFunction()
+  }
+
   /**
    * A function definition with prototype manipulation as a `ClassNode` instance.
    */
@@ -1310,10 +1316,10 @@ module ClassNode {
 
     override FunctionNode getInstanceMember(string name, MemberKind kind) {
       kind = MemberKind::method() and
-      result = this.getAPrototypeReference().getAPropertySource(name)
+      result = getFunctionFromNode(this.getAPrototypeReference().getAPropertySource(name))
       or
       kind = MemberKind::method() and
-      result = this.getConstructor().getReceiver().getAPropertySource(name)
+      result = getFunctionFromNode(this.getConstructor().getReceiver().getAPropertySource(name))
       or
       exists(PropertyAccessor accessor |
         accessor = this.getAnAccessor(kind) and
@@ -1324,10 +1330,10 @@ module ClassNode {
 
     override FunctionNode getAnInstanceMember(MemberKind kind) {
       kind = MemberKind::method() and
-      result = this.getAPrototypeReference().getAPropertySource()
+      result = getFunctionFromNode(this.getAPrototypeReference().getAPropertySource())
       or
       kind = MemberKind::method() and
-      result = this.getConstructor().getReceiver().getAPropertySource()
+      result = getFunctionFromNode(this.getConstructor().getReceiver().getAPropertySource())
       or
       exists(PropertyAccessor accessor |
         accessor = this.getAnAccessor(kind) and
@@ -1337,12 +1343,12 @@ module ClassNode {
 
     override FunctionNode getStaticMember(string name, MemberKind kind) {
       kind.isMethod() and
-      result = this.getAPropertySource(name)
+      result = getFunctionFromNode(this.getAPropertySource(name))
     }
 
     override FunctionNode getAStaticMember(MemberKind kind) {
       kind.isMethod() and
-      result = this.getAPropertySource()
+      result = getFunctionFromNode(this.getAPropertySource())
     }
 
     /**
