@@ -45,7 +45,10 @@ private API::Node genericWrapperStep(API::Node node) {
 private predicate isPackageExport(API::Node node) { node = API::moduleExport(_) }
 
 private predicate relevantEdge(API::Node pred, API::Node succ) {
-  succ = pred.getAMember() or succ = genericWrapperStep(pred)
+  succ = pred.getAMember() and
+  not isPrivateLike(succ)
+  or
+  succ = genericWrapperStep(pred)
 }
 
 /** Gets the shortest distance from a packaeg export to `nd` in the API graph. */
@@ -90,7 +93,6 @@ private API::Node getASuccessor(API::Node node, string name, int badness) {
   isExported(node) and
   exists(string member |
     result = node.getMember(member) and
-    not isPrivateLike(result) and
     if member = "default"
     then
       if defaultExportCanBeInterpretedAsNamespaceExport(node)
