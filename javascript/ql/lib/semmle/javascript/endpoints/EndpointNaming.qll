@@ -51,7 +51,7 @@ private predicate relevantEdge(API::Node pred, API::Node succ) {
   succ = genericWrapperStep(pred)
 }
 
-/** Gets the shortest distance from a packaeg export to `nd` in the API graph. */
+/** Gets the shortest distance from a package export to `nd` in the API graph. */
 private int distanceFromPackageExport(API::Node nd) =
   shortestDistances(isPackageExport/1, relevantEdge/2)(_, nd, result)
 
