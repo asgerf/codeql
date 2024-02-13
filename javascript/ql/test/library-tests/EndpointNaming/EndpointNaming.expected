@@ -2,6 +2,7 @@ testFailures
 ambiguousPreferredPredecessor
 ambiguousSinkName
 ambiguousClassObjectName
+failures
 ambiguousClassInstanceName
 ambiguousFunctionName
-failures
+nameForMultipleFunctions

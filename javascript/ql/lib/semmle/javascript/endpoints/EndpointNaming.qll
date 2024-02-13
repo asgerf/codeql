@@ -36,21 +36,28 @@ private string join(string x, string y) {
   if x = "" or y = "" then result = x + y else result = x + "." + y
 }
 
+private API::Node genericWrapperStep(API::Node node) {
+  result = node.getForwardingFunction() and
+  // Only use this step to look through calls to generic wrapper-creating functions
+  result.asSink() = any(DataFlow::InvokeNode invoke).getAnArgument()
+}
+
 private predicate isPackageExport(API::Node node) { node = API::moduleExport(_) }
 
-private predicate memberEdge(API::Node pred, API::Node succ) { succ = pred.getAMember() }
+private predicate relevantEdge(API::Node pred, API::Node succ) {
+  succ = pred.getAMember() or succ = genericWrapperStep(pred)
+}
 
 /** Gets the shortest distance from a packaeg export to `nd` in the API graph. */
 private int distanceFromPackageExport(API::Node nd) =
-  shortestDistances(isPackageExport/1, memberEdge/2)(_, nd, result)
+  shortestDistances(isPackageExport/1, relevantEdge/2)(_, nd, result)
 
 private predicate isExported(API::Node node) {
   isPackageExport(node)
   or
   exists(API::Node pred |
     isExported(pred) and
-    memberEdge(pred, node) and
-    not isPrivateLike(node)
+    relevantEdge(pred, node)
   )
 }
 
@@ -83,6 +90,7 @@ private API::Node getASuccessor(API::Node node, string name, int badness) {
   isExported(node) and
   exists(string member |
     result = node.getMember(member) and
+    not isPrivateLike(result) and
     if member = "default"
     then
       if defaultExportCanBeInterpretedAsNamespaceExport(node)
@@ -95,6 +103,11 @@ private API::Node getASuccessor(API::Node node, string name, int badness) {
       name = member and badness = 0
     )
   )
+  or
+  isExported(node) and
+  result = genericWrapperStep(node) and
+  name = "" and
+  badness = 1
 }
 
 private API::Node getAPredecessor(API::Node node, string name, int badness) {
@@ -332,9 +345,23 @@ private predicate functionHasNameCandidate(
   nameFromExterns(function, package, name, badness)
 }
 
+private predicate ambiguousFunctionNameCandidate(string package, string name) {
+  strictcount(DataFlow::FunctionNode function | functionHasNameCandidate(function, package, name, _)) >
+    1
+}
+
+private predicate isGenericWrapperFunction(DataFlow::FunctionNode function) {
+  DataFlow::functionForwardingStep(any(DataFlow::ParameterNode param).getALocalUse(), function) and
+  exists(string package, string name |
+    ambiguousFunctionNameCandidate(package, name) and
+    functionHasNameCandidate(function, package, name, _)
+  )
+}
+
 private predicate functionHasPrimaryName(
   DataFlow::FunctionNode function, string package, string name, int badness
 ) {
+  not isGenericWrapperFunction(function) and
   badness = min(int b | functionHasNameCandidate(function, _, _, b) | b) and
   package = min(string p | functionHasNameCandidate(function, p, _, badness) | p) and
   name =
@@ -493,5 +520,42 @@ module Debug {
       |
         renderName(package, name), ", "
       )
+  }
+
+  /**
+   * Holds if multiple functions in `toplevel` have the name candiate `(package, name)`.
+   *
+   * The restriction to being in the same top-level is to avoid noise in cases where an
+   * NPM package contains multiple compiled copies of the same codebase (usually targeting different
+   * module systems).
+   */
+  private predicate nameForMultipleFunctions(string package, string name, TopLevel toplevel) {
+    not toplevel.isExterns() and
+    not toplevel.isAmbient() and
+    strictcount(DataFlow::FunctionNode function |
+      not isGenericWrapperFunction(function) and
+      function.getTopLevel() = toplevel and
+      functionHasNameCandidate(function, package, name, _)
+    ) > 1
+  }
+
+  /**
+   * Gets a name that applies to multiple functions in the same toplevel, where `function` is
+   * bound to one of those functions.
+   *
+   * Note that in some cases this is benign, such as for code that conditionally chooses which function
+   * to export based on presence of native functions:
+   * ```js
+   * export const foo = nativeFoo ? nativeFoo : slowFoo
+   * ```
+   */
+  query string nameForMultipleFunctions(DataFlow::FunctionNode function) {
+    not isGenericWrapperFunction(function) and
+    exists(string package, string name, TopLevel toplevel |
+      nameForMultipleFunctions(package, name, toplevel) and
+      function.getTopLevel() = toplevel and
+      functionHasNameCandidate(function, package, name, _) and
+      result = renderName(package, name)
+    )
   }
 }

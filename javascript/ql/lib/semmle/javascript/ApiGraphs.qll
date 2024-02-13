@@ -784,6 +784,9 @@ module API {
                   .getStaticMember(name, DataFlow::MemberKind::getter())
                   .getAReturn()
           )
+          or
+          lbl = Label::forwardingFunction() and
+          DataFlow::functionForwardingStep(rhs, pred)
         )
         or
         exists(DataFlow::ClassNode cls, string name |
