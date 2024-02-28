@@ -31,7 +31,7 @@ newtype TAbstractProperty =
  */
 AbstractValue getAnInitialPropertyValue(DefiniteAbstractValue baseVal, string propertyName) {
   // initially, `module.exports === exports`
-  exists(Module m |
+  exists(ModuleLike m |
     baseVal = TAbstractModuleObject(m) and
     propertyName = "exports" and
     result = TAbstractExportsObject(m)

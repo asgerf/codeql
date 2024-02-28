@@ -286,7 +286,7 @@ private class AnalyzedAmdImport extends AnalyzedPropertyRead, DataFlow::Node {
   }
 
   override predicate reads(AbstractValue base, string propName) {
-    base = TAbstractModuleObject(required) and
+    base = TAbstractModuleObject(getModuleReprFromAmdModuleDefinition(required)) and
     propName = "exports"
   }
 }
@@ -300,6 +300,19 @@ private class AnalyzedAmdParameter extends AnalyzedVarDef, @var_decl {
   AnalyzedAmdParameter() { imp = DataFlow::parameterNode(this) }
 
   override AbstractValue getAnRhsValue() { result = imp.getALocalValue() }
+}
+
+/**
+ * Flow analysis for parameters corresponding to AMD `exports` parameters.
+ */
+private class AnalyzedAmdExportsParameter extends AnalyzedVarDef, @var_decl {
+  AmdModuleDefinition def;
+
+  AnalyzedAmdExportsParameter() { this = def.getExportsParameter() }
+
+  override AbstractValue getAnRhsValue() {
+    result = TAbstractExportsObject(getModuleReprFromAmdModuleDefinition(def))
+  }
 }
 
 /**

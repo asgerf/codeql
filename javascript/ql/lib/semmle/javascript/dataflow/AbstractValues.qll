@@ -391,6 +391,9 @@ class AbstractGlobalObject extends DefiniteAbstractValue, TAbstractGlobalObject 
  * An abstract value representing a CommonJS `module` object.
  */
 class AbstractModuleObject extends DefiniteAbstractValue, TAbstractModuleObject {
+  /** Gets the module-like AST node whose `module` object this abstract value represents. */
+  ModuleLike getModuleLike() { this = TAbstractModuleObject(result) }
+
   /** Gets the module whose `module` object this abstract value represents. */
   Module getModule() { this = TAbstractModuleObject(result) }
 
@@ -405,16 +408,23 @@ class AbstractModuleObject extends DefiniteAbstractValue, TAbstractModuleObject 
   override predicate hasLocationInfo(
     string path, int startline, int startcolumn, int endline, int endcolumn
   ) {
-    this.getModule().getLocation().hasLocationInfo(path, startline, startcolumn, endline, endcolumn)
+    this.getModuleLike()
+        .getLocation()
+        .hasLocationInfo(path, startline, startcolumn, endline, endcolumn)
   }
 
-  override string toString() { result = "module object of module " + this.getModule().getName() }
+  override string toString() {
+    result = "module object of module " + this.getModuleLike().getName()
+  }
 }
 
 /**
  * An abstract value representing a CommonJS `exports` object.
  */
 class AbstractExportsObject extends DefiniteAbstractValue, TAbstractExportsObject {
+  /** Gets the module-like AST node whose `exports` object this abstract value represents. */
+  ModuleLike getModuleLike() { this = TAbstractExportsObject(result) }
+
   /** Gets the module whose `exports` object this abstract value represents. */
   Module getModule() { this = TAbstractExportsObject(result) }
 
@@ -429,10 +439,14 @@ class AbstractExportsObject extends DefiniteAbstractValue, TAbstractExportsObjec
   override predicate hasLocationInfo(
     string path, int startline, int startcolumn, int endline, int endcolumn
   ) {
-    this.getModule().getLocation().hasLocationInfo(path, startline, startcolumn, endline, endcolumn)
+    this.getModuleLike()
+        .getLocation()
+        .hasLocationInfo(path, startline, startcolumn, endline, endcolumn)
   }
 
-  override string toString() { result = "exports object of module " + this.getModule().getName() }
+  override string toString() {
+    result = "exports object of module " + this.getModuleLike().getName()
+  }
 }
 
 /**

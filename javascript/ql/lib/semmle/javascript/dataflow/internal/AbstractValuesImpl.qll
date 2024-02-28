@@ -28,6 +28,12 @@ class ModuleLike extends AstNode {
     or
     this instanceof NonTopLevelModule
   }
+
+  string getName() {
+    result = this.(Module).getName()
+    or
+    result = this.(AmdModuleDefinition).getExplictModuleName()
+  }
 }
 
 /** An abstract value inferred by the flow analysis. */
