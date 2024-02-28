@@ -54,6 +54,17 @@ module AmdModuleDefinition {
  * array of dependencies, and the third argument a factory method or object.
  */
 class AmdModuleDefinition extends CallExpr instanceof AmdModuleDefinition::Range {
+  /**
+   * Gets the name of the module, as provided by the first argument of `define`, if any.
+   *
+   * For example, gets the `foo` in
+   * ```js
+   * define("foo", ["bar", ...], function(bar) {
+   * });
+   * ```
+   */
+  string getExplictModuleName() { result = this.getArgument(0).getStringValue() }
+
   /** Gets the array of module dependencies, if any. */
   ArrayExpr getDependencies() {
     result = this.getArgument(0) or
@@ -68,6 +79,11 @@ class AmdModuleDefinition extends CallExpr instanceof AmdModuleDefinition::Range
     result = this.getDependency(_) or
     result = this.getARequireCall().getAnArgument()
   }
+
+  /**
+   * Gets the factory value of this module definition.
+   */
+  Function getFactoryFunction() { this.getFactoryNode() = DataFlow::valueNode(result) }
 
   /**
    * Gets a data flow node containing the factory value of this module definition.
