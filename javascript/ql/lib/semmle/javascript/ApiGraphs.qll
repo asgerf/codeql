@@ -1655,4 +1655,6 @@ private Module importableModule(string m) {
     not result.isExterns() and
     m = pkg.getPackageName()
   )
+  or
+  result.(AmdModule).isEntryPointFor(m)
 }

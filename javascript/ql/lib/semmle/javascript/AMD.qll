@@ -335,6 +335,28 @@ private class AmdDependencyImport extends Import {
 }
 
 /**
+ * Holds if `top` contains `define`, which explicitly uses the same package name as the enclosing `package.json` file.
+ */
+pragma[nomagic]
+private predicate primaryNamedModuleDefinition(TopLevel top, AmdModuleDefinition define) {
+  exists(NpmPackage pkg |
+    pkg.getAFile() = define.getFile() and
+    pkg.getPackageName() = define.getExplictModuleName() and
+    amdModuleTopLevel(define, top)
+  )
+}
+
+/**
+ * Holds if `top` is an AMD module with `define` being its entry point.
+ */
+pragma[nomagic]
+private predicate primaryModuleDefinition(TopLevel top, AmdModuleDefinition define) {
+  define = unique(AmdModuleDefinition def | amdModuleTopLevel(def, top))
+  or
+  primaryNamedModuleDefinition(top, define)
+}
+
+/**
  * An AMD-style module.
  *
  * Example:
@@ -349,11 +371,22 @@ class AmdModule extends Module {
   cached
   AmdModule() {
     Stages::DataFlowStage::ref() and
-    exists(unique(AmdModuleDefinition def | amdModuleTopLevel(def, this)))
+    primaryModuleDefinition(this, _)
   }
 
   /** Gets the definition of this module. */
-  AmdModuleDefinition getDefine() { amdModuleTopLevel(result, this) }
+  AmdModuleDefinition getDefine() { primaryModuleDefinition(this, result) }
+
+  /**
+   * Holds if `packageName` is the name of the enclosing `package.json` file, and this module
+   * contains an AMD module definition of that name.
+   */
+  predicate isEntryPointFor(string packageName) {
+    exists(AmdModuleDefinition def |
+      primaryNamedModuleDefinition(this, def) and
+      def.getExplictModuleName() = packageName
+    )
+  }
 
   override DataFlow::Node getAnExportedValue(string name) {
     exists(DataFlow::PropWrite pwn | result = pwn.getRhs() |

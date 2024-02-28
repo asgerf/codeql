@@ -1,2 +1,1 @@
-| index.js:4:22:4:116 | // def= ... ("baz") | root has no outgoing edge labelled moduleImport("amd-named-modules"); it does have outgoing edges labelled moduleImport("amd-named-modules/lib"). |
-| index.js:11:22:11:99 | // def= ... ("bar") | root has no outgoing edge labelled moduleImport("amd-named-modules"); it does have outgoing edges labelled moduleImport("amd-named-modules/lib"). |
+| index.js:4:22:4:116 | // def= ... ("baz") | def moduleImport("amd-named-modules").getMember("exports").getMember("bar") has no outgoing edge labelled getMember("baz"); it has no outgoing edges at all. |
