@@ -5,6 +5,7 @@
 
 import javascript
 private import semmle.javascript.internal.CachedStages
+private import semmle.javascript.dataflow.internal.PreCallGraphStep
 private import Expressions.ExprHasNoEffect
 
 /**
@@ -64,6 +65,24 @@ module AmdModuleDefinition {
     exists(TopLevel top, string name |
       moduleDefinitionInTopLevel(top, name, targetModule) and
       moduleImportInTopLevel(top, name, importSite)
+    )
+  }
+}
+
+/**
+ * Treats intra-bundle imports as pre-call graph steps.
+ */
+private class ImportWithinSameBundleStep extends PreCallGraphStep {
+  override predicate step(DataFlow::Node pred, DataFlow::Node succ) {
+    exists(AmdModuleDefinition def |
+      pred = def.getExportsParameter().flow()
+      or
+      pred = def.getFactoryFunction().getAReturnedExpr().flow()
+      or
+      pred =
+        def.getModuleParameter().flow().(DataFlow::SourceNode).getAPropertyWrite("exports").getRhs()
+    |
+      AmdModuleDefinition::importWithinSameBundle(succ, def)
     )
   }
 }
