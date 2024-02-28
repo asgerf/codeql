@@ -9,6 +9,27 @@ import semmle.javascript.dataflow.AbstractValues
 private import semmle.javascript.dataflow.InferredTypes
 import semmle.javascript.dataflow.CustomAbstractValueDefinitions
 
+/**
+ * Something that defines a module without being a top-level.
+ *
+ * For the time being, this is any `AmdModuleDefinition` that is not the main
+ * definition of its enclosing AMD module.
+ */
+class NonTopLevelModule extends AstNode instanceof AmdModuleDefinition {
+  NonTopLevelModule() { not this = any(AmdModule mod).getDefine() }
+}
+
+/**
+ * A `Module` or an `NonTopLevelModule`.
+ */
+class ModuleLike extends AstNode {
+  ModuleLike() {
+    this instanceof Module
+    or
+    this instanceof NonTopLevelModule
+  }
+}
+
 /** An abstract value inferred by the flow analysis. */
 cached
 newtype TAbstractValue =
@@ -44,9 +65,9 @@ newtype TAbstractValue =
   /** An abstract representation of the global object. */
   TAbstractGlobalObject() or
   /** An abstract representation of a `module` object. */
-  TAbstractModuleObject(Module m) or
+  TAbstractModuleObject(ModuleLike m) or
   /** An abstract representation of a `exports` object. */
-  TAbstractExportsObject(Module m) or
+  TAbstractExportsObject(ModuleLike m) or
   /** An abstract representation of all objects arising from an object literal expression. */
   TAbstractObjectLiteral(ObjectExpr oe) or
   /**

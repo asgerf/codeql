@@ -237,16 +237,23 @@ class AnalyzedExternalModuleReference extends AnalyzedPropertyRead, DataFlow::Va
   }
 }
 
+pragma[nomagic]
+private ModuleLike getModuleReprFromAmdModuleDefinition(AmdModuleDefinition def) {
+  result.(AmdModule).getDefine() = def
+  or
+  result = def // Note: The charpred for ModuleLike ensures this is only holds when the clause above does not
+}
+
 /**
  * Flow analysis for AMD exports.
  */
 private class AnalyzedAmdExport extends AnalyzedPropertyWrite, DataFlow::ValueNode {
-  AmdModule amd;
+  AmdModuleDefinition def;
 
-  AnalyzedAmdExport() { astNode = amd.getDefine().getModuleExpr() }
+  AnalyzedAmdExport() { astNode = def.getModuleExpr() }
 
   override predicate writes(AbstractValue baseVal, string propName, DataFlow::AnalyzedNode source) {
-    baseVal = TAbstractModuleObject(amd) and
+    baseVal = TAbstractModuleObject(getModuleReprFromAmdModuleDefinition(def)) and
     propName = "exports" and
     source = this
   }
@@ -257,22 +264,24 @@ private class AnalyzedAmdExport extends AnalyzedPropertyWrite, DataFlow::ValueNo
  * the `module.exports` property of the imported module.
  */
 private class AnalyzedAmdImport extends AnalyzedPropertyRead, DataFlow::Node {
-  Module required;
+  ModuleLike required;
 
   AnalyzedAmdImport() {
-    exists(AmdModule amd, PathExpr dep |
+    exists(AmdModuleDefinition def, PathExpr dep |
       exists(Parameter p |
-        amd.getDefine().dependencyParameter(dep, p) and
+        def.dependencyParameter(dep, p) and
         this = DataFlow::parameterNode(p)
       )
       or
       exists(CallExpr requireCall |
-        requireCall = amd.getDefine().getARequireCall() and
+        requireCall = def.getARequireCall() and
         dep = requireCall.getAnArgument() and
         this = requireCall.flow()
       )
     |
       required = dep.(Import).getImportedModule()
+      or
+      AmdModuleDefinition::importWithinSameBundle(this, required)
     )
   }
 

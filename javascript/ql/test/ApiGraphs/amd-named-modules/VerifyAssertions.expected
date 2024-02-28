@@ -1,1 +1,0 @@
-| index.js:4:22:4:116 | // def= ... ("baz") | def moduleImport("amd-named-modules").getMember("exports").getMember("bar") has no outgoing edge labelled getMember("baz"); it has no outgoing edges at all. |

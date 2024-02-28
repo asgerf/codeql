@@ -33,6 +33,39 @@ module AmdModuleDefinition {
       )
     }
   }
+
+  pragma[nomagic]
+  private predicate moduleDefinitionInTopLevel(TopLevel top, string name, AmdModuleDefinition def) {
+    def.getTopLevel() = top and
+    (
+      name = def.getExplictModuleName()
+      or
+      name = "./" + def.getExplictModuleName()
+    )
+  }
+
+  pragma[nomagic]
+  private predicate moduleImportInTopLevel(TopLevel top, string name, DataFlow::Node importSite) {
+    exists(AmdModuleDefinition importer | importer.getTopLevel() = top |
+      importSite = importer.getDependencyParameter(name).flow()
+      or
+      exists(CallExpr require |
+        require = importer.getARequireCall() and
+        importSite = require.flow() and
+        name = require.getArgument(0).getStringValue()
+      )
+    )
+  }
+
+  /**
+   * Holds if `importSite` is an import of `targetModule` in the same AMD bundle.
+   */
+  predicate importWithinSameBundle(DataFlow::Node importSite, AmdModuleDefinition targetModule) {
+    exists(TopLevel top, string name |
+      moduleDefinitionInTopLevel(top, name, targetModule) and
+      moduleImportInTopLevel(top, name, importSite)
+    )
+  }
 }
 
 /**
