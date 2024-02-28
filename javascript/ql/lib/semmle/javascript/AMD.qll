@@ -118,9 +118,10 @@ class AmdModuleDefinition extends CallExpr instanceof AmdModuleDefinition::Range
   /**
    * Holds if `p` is the parameter corresponding to dependency `dep`.
    */
-  predicate dependencyParameter(PathExpr dep, Parameter p) {
+  predicate dependencyParameter(Expr dep, Parameter p) {
     exists(int i |
-      dep = this.getDependency(i) and
+      // Note: to avoid spurious recursion, do not depend on PathExpr here
+      dep = this.getDependencies().getElement(i) and
       p = this.getFactoryParameter(i)
     )
   }
@@ -138,9 +139,9 @@ class AmdModuleDefinition extends CallExpr instanceof AmdModuleDefinition::Range
    * `dep1` and `dep2`.
    */
   Parameter getDependencyParameter(string name) {
-    exists(PathExpr dep |
+    exists(Expr dep |
       this.dependencyParameter(dep, result) and
-      dep.getValue() = name
+      name = dep.getStringValue()
     )
   }
 
