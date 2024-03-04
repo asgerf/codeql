@@ -117,3 +117,5 @@ testlib.foo.bar.baz.fuzzyCall(getSource()) # NOT OK
 testlib.foo().bar().fuzzyCall(getSource()) # NOT OK
 testlib.foo(lambda x: x.fuzzyCall(getSource())) # NOT OK
 otherlib.fuzzyCall(getSource()) # OK
+
+mySink(testlib.NamedClass().m())  # NOT OK
