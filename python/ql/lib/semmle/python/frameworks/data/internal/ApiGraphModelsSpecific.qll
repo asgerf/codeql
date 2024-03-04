@@ -35,14 +35,64 @@ predicate isTypeUsed(string type) { API::moduleImportExists(type) }
  * Holds if `type` can be obtained from an instance of `otherType` due to
  * language semantics modeled by `getExtraNodeFromType`.
  */
-predicate hasImplicitTypeModel(string type, string otherType) { none() }
+bindingset[otherType]
+predicate hasImplicitTypeModel(string type, string otherType) {
+  // A.B! can be used to obtain A.B
+  parseType(otherType, type, _)
+}
 
 /** Gets a Python-specific interpretation of the `(type, path)` tuple after resolving the first `n` access path tokens. */
 bindingset[type, path]
 API::Node getExtraNodeFromPath(string type, AccessPath path, int n) { none() }
 
+bindingset[rawType]
+private predicate parseType(string rawType, string dotPath, string suffix) {
+  exists(string regexp |
+    regexp = "([^!]+)(!|)" and
+    dotPath = rawType.regexpCapture(regexp, 1) and
+    suffix = rawType.regexpCapture(regexp, 2)
+  )
+}
+
+private predicate parseRelevantType(string rawType, string typePath, string suffix) {
+  isRelevantType(rawType) and
+  parseType(rawType, typePath, suffix)
+}
+
+pragma[nomagic]
+private string getTypePathComponent(string typePath, int n) {
+  parseRelevantType(_, typePath, _) and
+  result = typePath.splitAt(".", n)
+}
+
+private int getNumTypePathComponents(string consts) {
+  result = strictcount(int n | exists(getTypePathComponent(consts, n)))
+}
+
+private API::Node getNodeFromTypePath(string typePath, int n) {
+  n = 1 and
+  result = API::moduleImport(getTypePathComponent(typePath, 0))
+  or
+  result = getNodeFromTypePath(typePath, n - 1).getMember(getTypePathComponent(typePath, n - 1))
+}
+
+private API::Node getNodeFromTypePath(string typePath) {
+  result = getNodeFromTypePath(typePath, getNumTypePathComponents(typePath))
+}
+
 /** Gets a Python-specific interpretation of the given `type`. */
-API::Node getExtraNodeFromType(string type) { result = API::moduleImport(type) }
+API::Node getExtraNodeFromType(string type) {
+  exists(string typePath, string suffix |
+    parseRelevantType(type, typePath, suffix) and
+    (
+      suffix = "" and
+      result = getNodeFromTypePath(typePath).getReturn()
+      or
+      suffix = "!" and
+      result = getNodeFromTypePath(typePath)
+    )
+  )
+}
 
 /**
  * Gets a Python-specific API graph successor of `node` reachable by resolving `token`.
