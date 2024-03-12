@@ -25,47 +25,47 @@ function _interopDefault(ex) {
 //
 // Plain import
 //
-const ed = require('./babel-export');
-const defaultInstance1 = new ed.default();
-/** calls:DefaultExportedClass.m */
+const ed = require('./babel-export1');
+const defaultInstance1 = new ed.default.C();
+/** calls:DefaultClass.m */
 defaultInstance1.m();
 
-const namedInstance1 = new ed.Named();
-/** calls:NamedExportedClass.m */
+const namedInstance1 = new ed.Named.C();
+/** calls:NamedClass.m */
 namedInstance1.m();
 
 //
 // _interopRequireDefault
 //
 const ed2 = _interopRequireDefault(ed);
-const defaultInstance2 = new ed2.default();
-/** calls:DefaultExportedClass.m */
+const defaultInstance2 = new ed2.default.C();
+/** calls:DefaultClass.m */
 defaultInstance2.m();
 
-const namedInstance2 = new ed2.Named();
-/** calls:NamedExportedClass.m */
+const namedInstance2 = new ed2.Named.C();
+/** calls:NamedClass.m */
 namedInstance2.m();
 
 //
 // _interopRequireWildcard
 //
 const ed3 = _interopRequireWildcard(ed);
-const defaultInstance3 = new ed3.default();
-/** calls:DefaultExportedClass.m */
+const defaultInstance3 = new ed3.default.C();
+/** calls:DefaultClass.m */
 defaultInstance3.m();
 
-const namedInstance3 = new ed3.Named();
-/** calls:NamedExportedClass.m */
+const namedInstance3 = new ed3.Named.C();
+/** calls:NamedClass.m */
 namedInstance3.m();
 
 //
 // _interopDefault
 //
 const ed4 = _interopDefault(ed);
-const defaultInstance4 = new ed4();
-/** calls:DefaultExportedClass.m */
+const defaultInstance4 = new ed4.C();
+/** calls:DefaultClass.m */
 defaultInstance4.m();
 
-const namedInstance4 = new ed4.Named();
+const namedInstance4 = new ed4.Named.C();
 /** calls:NONE */
 namedInstance4.m();
