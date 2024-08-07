@@ -10,7 +10,7 @@ lib.something(foo);
 
 function unrelated() {
     let ret = foo('safe', p => {
-        sink(p); // $ hasValueFlow=source_param [SPURIOUS]
+        sink(p);
     });
     sink(ret);
 }

@@ -172,3 +172,51 @@ function t16() {
     sink(array[2]); // $ hasValueFlow=t16.1
     sink(array); // $ hasTaintFlow=t16.1
 }
+
+function t17() {
+    function foo(param, callback) {
+        sink(param); // $ hasValueFlow=t17.1 hasValueFlow=t17.2
+        callback(...[param]);
+        return param;
+    }
+
+    let ret1 = foo(source('t17.1'), p => {
+        sink(p); // $ hasValueFlow=t17.1
+    });
+    sink(ret1); // $ hasValueFlow=t17.1
+
+    let ret2 = foo(source('t17.2'), p => {
+        sink(p); // $ hasValueFlow=t17.2
+    });
+    sink(ret2); // $ hasValueFlow=t17.2
+
+    let ret3 = foo('safe', p => {
+        sink(p);
+    });
+    sink(ret3);
+}
+
+function t18() {
+    // TODO: test both combinations of:
+    // - parameter invocation appears inside nested scope
+    // - callback post-update node appears inside nested scope
+    function foo(param, callback) {
+        sink(param); // $ hasValueFlow=t18.1
+        callback(param);
+        return param;
+    }
+
+    function callbackArg(p) {
+        sink(p); // $ MISSING: hasValueFlow=t18.1
+    }
+    function callbackArg2(p) {
+        sink(p);
+    }
+
+    window.addEventListener('onload', () => {
+        foo(source('t18.1'), callbackArg);
+    });
+    window.addEventListener('onload', () => {
+        foo('safe', callbackArg2);
+    });
+}

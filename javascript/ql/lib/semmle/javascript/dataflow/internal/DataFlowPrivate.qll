@@ -271,6 +271,28 @@ class ApplyCallTaintNode extends DataFlow::Node, TApplyCallTaintNode {
   DataFlow::Node getArrayNode() { result = apply.getArgument(1).flow() }
 }
 
+/**
+ * An argument that is passed to the given parameter at the implied lambda call site.
+ */
+class ImplicitArgumentNode extends DataFlow::Node, TImplicitArgumentNode {
+  private Function function;
+  private ArgumentPosition pos;
+
+  ImplicitArgumentNode() { this = TImplicitArgumentNode(function, pos) }
+
+  Function getFunction() { result = function }
+
+  ArgumentPosition getArgumentPosition() { result = pos }
+
+  override StmtContainer getContainer() { result = this.getFunction().getEnclosingContainer() }
+
+  override string toString() {
+    result = "[implicit argument] " + pos + " to " + function.describe()
+  }
+
+  override Location getLocation() { result = function.getLocation() }
+}
+
 cached
 newtype TReturnKind =
   MkNormalReturnKind() or
@@ -462,6 +484,8 @@ private predicate isArgumentNodeImpl(Node n, DataFlowCall call, ArgumentPosition
   or
   pos.isFunctionSelfReference() and n = call.asImpliedLambdaCall().flow()
   or
+  n = TImplicitArgumentNode(call.asImpliedLambdaCall(), pos)
+  or
   exists(Function fun |
     call.asImpliedLambdaCall() = fun and
     CallGraph::impliedReceiverStep(n, TThisNode(fun)) and
@@ -635,7 +659,8 @@ newtype TContentApprox =
   TApproxIteratorError() or
   TApproxPromiseValue() or
   TApproxPromiseError() or
-  TApproxCapturedContent()
+  TApproxCapturedContent() or
+  TApproxCallbackArgument()
 
 class ContentApprox extends TContentApprox {
   string toString() {
@@ -656,6 +681,8 @@ class ContentApprox extends TContentApprox {
     this = TApproxPromiseError() and result = "TApproxPromiseError"
     or
     this = TApproxCapturedContent() and result = "TApproxCapturedContent"
+    or
+    this = TApproxCallbackArgument() and result = "TApproxCallbackArgument"
   }
 }
 
@@ -682,6 +709,8 @@ ContentApprox getContentApprox(Content c) {
   c instanceof MkPromiseError and result = TApproxPromiseError()
   or
   c instanceof MkCapturedContent and result = TApproxCapturedContent()
+  or
+  c instanceof MkArgumentContent and result = TApproxCallbackArgument()
 }
 
 cached
@@ -699,9 +728,7 @@ private newtype TDataFlowCall =
     node = TValueNode(any(PropAccess p)) or
     node = TPropNode(any(PropertyPattern p))
   } or
-  MkImpliedLambdaCall(Function f) {
-    VariableCaptureConfig::captures(f, _) or CallGraph::impliedReceiverStep(_, TThisNode(f))
-  } or
+  MkImpliedLambdaCall(Function f) or
   MkSummaryCall(
     FlowSummaryImpl::Public::SummarizedCallable c, FlowSummaryImpl::Private::SummaryNode receiver
   ) {
@@ -1334,6 +1361,20 @@ predicate readStep(Node node1, ContentSet c, Node node2) {
       c = ContentSet::arrayElementLowerBound(pos.asPositionalLowerBound())
     )
   )
+  or
+  exists(Function function, ArgumentPosition pos |
+    // TODO: doesn't work for capture nodes, see failing test
+    node1.(PostUpdateNode).getPreUpdateNode().getALocalSource() = TValueNode(function) and
+    node2 = TImplicitArgumentNode(function, pos) and
+    sameContainer(node1, node2) and
+    c.asSingleton() = MkArgumentContent(pos)
+  )
+}
+
+bindingset[node1, node2]
+pragma[inline_late]
+private predicate sameContainer(Node node1, Node node2) {
+  node1.getContainer() = node2.getContainer()
 }
 
 /** Gets the post-update node for which `node` is the corresponding pre-update node. */
@@ -1370,6 +1411,13 @@ private Node getStoreTarget(DataFlow::Node base) {
 pragma[nomagic]
 private int firstSpreadArgumentIndex(InvokeExpr expr) {
   result = min(int i | expr.isSpreadArgument(i))
+}
+
+private class ContinuationCall extends DataFlow::CallNode {
+  ContinuationCall() {
+    this.getCalleeNode().getALocalSource() instanceof DataFlow::ParameterNode and
+    inVoidContext(this.asExpr())
+  }
 }
 
 /**
@@ -1427,6 +1475,13 @@ predicate storeStep(Node node1, ContentSet c, Node node2) {
     node1 = taintNode and
     node2 = taintNode.getArrayNode() and
     c = ContentSet::arrayElementUnknown()
+  )
+  or
+  exists(ContinuationCall call, ArgumentPosition pos |
+    isArgumentNodeImpl(node1, MkOrdinaryCall(call), pos) and
+    not node1 instanceof TImplicitArgumentNode and
+    node2 = call.getCalleeNode().getPostUpdateNode() and
+    c.asSingleton() = MkArgumentContent(pos)
   )
 }
 
@@ -1521,6 +1576,8 @@ predicate allowParameterReturnInSelf(ParameterNode p) {
 
 class LambdaCallKind = Unit;
 
+private import Expressions.ExprHasNoEffect
+
 /** Holds if `creation` is an expression that creates a lambda of kind `kind` for `c`. */
 predicate lambdaCreation(Node creation, LambdaCallKind kind, DataFlowCallable c) {
   creation.(DataFlow::FunctionNode).getFunction() = c.asSourceCallable() and exists(kind)
@@ -1530,9 +1587,13 @@ predicate lambdaCreation(Node creation, LambdaCallKind kind, DataFlowCallable c)
 predicate lambdaCall(DataFlowCall call, LambdaCallKind kind, Node receiver) {
   call.isSummaryCall(_, receiver.(FlowSummaryNode).getSummaryNode()) and exists(kind)
   or
-  receiver = call.asOrdinaryCall().getCalleeNode() and
-  exists(kind) and
-  receiver.getALocalSource() instanceof DataFlow::ParameterNode
+  exists(DataFlow::InvokeNode node |
+    node = call.asOrdinaryCall() and
+    not node instanceof ContinuationCall and
+    receiver = node.getCalleeNode() and
+    exists(kind) and
+    receiver.getALocalSource() instanceof DataFlow::ParameterNode
+  )
 }
 
 /** Extra data-flow steps needed for lambda flow analysis. */
