@@ -1037,7 +1037,7 @@ predicate isUnreachableInCall(NodeRegion n, DataFlowCall call) {
   none() // TODO: could be useful, but not currently implemented for JS
 }
 
-int accessPathLimit() { result = 2 }
+int accessPathLimit() { result = 5 }
 
 /**
  * Holds if flow is allowed to pass from parameter `p` and back to itself as a
