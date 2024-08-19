@@ -1,12 +1,14 @@
 import 'dummy';
 
-function f() {
+function f(x) {
     let captured;
-    function inner() { captured = "sdf"; return captured; }
+    function inner() { captured; captured = "sdf"; }
 
-    captured = [source(), "safe"];
+    captured = [source(), "safe", x];
     sink(captured); // NOT OK [INCONSISTENCY] - no implicit read of ArrayElement
-    g.apply(undefined, captured);
+    g.apply(undefined, captured); // with use-use flow the output of an implicit read might flow here
+
+    return captured;
 }
 
 function g(x, y) {
