@@ -570,8 +570,15 @@ predicate compatibleTypes(DataFlowType t1, DataFlowType t2) {
 
 predicate forceHighPrecision(Content c) { none() }
 
+private string approxPropertyName(PropertyName prop) {
+  result = prop.charAt(0)
+  or
+  prop = "" and result = ""
+}
+
 newtype TContentApprox =
-  TApproxPropertyContent() or
+  TApproxPropertyContent(string first) { first = approxPropertyName(_) } or
+  TApproxUnknownArrayElement() or
   TApproxMapKey() or
   TApproxMapValue() or
   TApproxSetElement() or
@@ -583,7 +590,11 @@ newtype TContentApprox =
 
 class ContentApprox extends TContentApprox {
   string toString() {
-    this = TApproxPropertyContent() and result = "TApproxPropertyContent"
+    exists(string first |
+      this = TApproxPropertyContent(first) and result = "TApproxPropertyContent('" + first + "')"
+    )
+    or
+    this = TApproxUnknownArrayElement() and result = "TApproxUnknownArrayElement"
     or
     this = TApproxMapKey() and result = "TApproxMapKey"
     or
@@ -605,9 +616,11 @@ class ContentApprox extends TContentApprox {
 
 pragma[inline]
 ContentApprox getContentApprox(Content c) {
-  c instanceof MkPropertyContent and result = TApproxPropertyContent()
+  exists(string prop |
+    c = MkPropertyContent(prop) and result = TApproxPropertyContent(approxPropertyName(prop))
+  )
   or
-  c instanceof MkArrayElementUnknown and result = TApproxPropertyContent()
+  c instanceof MkArrayElementUnknown and result = TApproxUnknownArrayElement()
   or
   c instanceof MkMapKey and result = TApproxMapKey()
   or
