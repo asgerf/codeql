@@ -3726,24 +3726,81 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       node.asNode() instanceof CastingNode or exists(node.asParamReturnNode())
     }
 
+    signature class ContentLike {
+      string toString();
+    }
+
+    module AccessPathWithHeadAndLength<ContentLike Cont> {
+      newtype TApOption =
+        TApNone() or
+        TApNil() or
+        TApCons(Cont content, int tailLength) {
+          // TODO: prune this based on info from previous stage
+          tailLength = [0 .. Config::accessPathLimit() - 1]
+        }
+
+      class ApOption extends TApOption {
+        string toString() {
+          this = TApNil() and result = "<none>"
+          or
+          this = TApNil() and result = "nil"
+          or
+          exists(Cont content, int tail |
+            this = TApCons(content, tail) and
+            if tail = 0 then result = content.toString() else result = content + " +" + tail
+          )
+        }
+
+        Cont getHead() { this = TApCons(result, _) }
+
+        /** Get the length of the tail, or has no result if this is nil. */
+        int getTailLength() { this = TApCons(_, result) }
+
+        int getLength() {
+          this = TApNil() and result = 0
+          or
+          exists(int tail | this = TApCons(_, tail) and result = tail + 1)
+        }
+
+        predicate isNil() { this = TApNil() }
+      }
+
+      class TAp = TApNil or TApCons;
+
+      class Ap extends ApOption, TAp { }
+
+      class ApNil extends Ap, TApNil { }
+    }
+
     private module Stage3Param implements MkStage<Stage2>::StageParam {
       private module PrevStage = Stage2;
 
       class Typ = Unit;
 
-      class Ap = ApproxAccessPathFront;
+      import AccessPathWithHeadAndLength<ContentApprox>
 
-      class ApNil = ApproxAccessPathFrontNil;
-
-      PrevStage::Ap getApprox(Ap ap) {
-        // TODO: returning multiple APs here is a hack
-        if ap = TApproxFrontNil() then result = 0 else result = [1 .. Config::accessPathLimit()]
-      }
+      PrevStage::Ap getApprox(Ap ap) { result = ap.getLength() }
 
       Typ getTyp(DataFlowType t) { any() }
 
+      pragma[nomagic]
+      additional Content getAHead(Ap ap) {
+        exists(ContentApprox cont |
+          ap.getHead() = cont and
+          cont = getContentApproxCached(result)
+        )
+      }
+
+      pragma[nomagic]
+      private Ap makeAccessPath(Content head, int tailLength) {
+        head = getAHead(result) and
+        tailLength = result.getTailLength()
+      }
+
       bindingset[c, t, tail]
-      Ap apCons(Content c, Typ t, Ap tail) { result.getAHead() = c and exists(t) and exists(tail) }
+      Ap apCons(Content c, Typ t, Ap tail) {
+        result = makeAccessPath(c, tail.getLength()) and exists(t)
+      }
 
       class ApHeadContent = ContentApprox;
 
@@ -3752,11 +3809,9 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       predicate projectToHeadContent = getContentApproxCached/1;
 
-      class ApOption = ApproxAccessPathFrontOption;
+      ApOption apNone() { result = TApNone() }
 
-      ApOption apNone() { result = TApproxAccessPathFrontNone() }
-
-      ApOption apSome(Ap ap) { result = TApproxAccessPathFrontSome(ap) }
+      ApOption apSome(Ap ap) { result = ap }
 
       private module CallContextSensitivityInput implements CallContextSensitivityInputSig {
         predicate relevantCallEdgeIn = PrevStage::relevantCallEdgeIn/2;
@@ -3813,7 +3868,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
           PrevStage::revFlow(node) and
           PrevStage::readStepCand(_, c, _) and
           expectsContentEx(node, c) and
-          c = ap.getAHead()
+          c = getAHead(ap)
         )
       }
 
@@ -3861,16 +3916,19 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       class Typ = DataFlowType;
 
-      class Ap = AccessPathFront;
+      import AccessPathWithHeadAndLength<Content>
 
-      class ApNil = AccessPathFrontNil;
-
-      PrevStage::Ap getApprox(Ap ap) { result = ap.toApprox() }
+      pragma[nomagic]
+      PrevStage::Ap getApprox(Ap ap) {
+        ap.isNil() and result.isNil()
+        or
+        ap = TApCons(Stage3Param::getAHead(result), result.getTailLength())
+      }
 
       Typ getTyp(DataFlowType t) { result = t }
 
       bindingset[c, t, tail]
-      Ap apCons(Content c, Typ t, Ap tail) { result.getHead() = c and exists(t) and exists(tail) }
+      Ap apCons(Content c, Typ t, Ap tail) { result = TApCons(c, tail.getLength()) and exists(t) }
 
       class ApHeadContent = Content;
 
@@ -3879,11 +3937,9 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       ApHeadContent projectToHeadContent(Content c) { result = c }
 
-      class ApOption = AccessPathFrontOption;
+      ApOption apNone() { result = TApNone() }
 
-      ApOption apNone() { result = TAccessPathFrontNone() }
-
-      ApOption apSome(Ap ap) { result = TAccessPathFrontSome(ap) }
+      ApOption apSome(Ap ap) { result = ap }
 
       import BooleanCallContext
 
@@ -3972,12 +4028,12 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
      */
     private predicate expensiveLen2unfolding(Content c) {
       exists(int tails, int nodes, int apLimit, int tupleLimit |
-        tails = strictcount(DataFlowType t, AccessPathFront apf | Stage4::consCand(c, t, apf)) and
+        tails = strictcount(DataFlowType t, Stage4::Ap apf | Stage4::consCand(c, t, apf)) and
         nodes =
           strictcount(NodeEx n, FlowState state |
-            Stage4::revFlow(n, state, any(AccessPathFrontHead apf | apf.getHead() = c))
+            Stage4::revFlow(n, state, any(Stage4::Ap apf | apf.getHead() = c))
             or
-            Stage4::nodeMayUseSummary(n, state, any(AccessPathFrontHead apf | apf.getHead() = c))
+            Stage4::nodeMayUseSummary(n, state, any(Stage4::Ap apf | apf.getHead() = c))
           ) and
         accessPathApproxCostLimits(apLimit, tupleLimit) and
         apLimit < tails and
@@ -3989,11 +4045,11 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
     private newtype TAccessPathApprox =
       TNil() or
       TConsNil(Content c, DataFlowType t) {
-        Stage4::consCand(c, t, TFrontNil()) and
+        Stage4::consCand(c, t, Stage4Param::TApNil()) and
         not expensiveLen2unfolding(c)
       } or
       TConsCons(Content c1, DataFlowType t, Content c2, int len) {
-        Stage4::consCand(c1, t, TFrontHead(c2)) and
+        Stage4::consCand(c1, t, Stage4Param::TApCons(c2, len - 2)) and
         len in [2 .. Config::accessPathLimit()] and
         not expensiveLen2unfolding(c1)
       } or
@@ -4116,7 +4172,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       override predicate isCons(Content head, DataFlowType typ, AccessPathApprox tail) {
         head = c and
         (
-          exists(Content c2 | Stage4::consCand(c, typ, TFrontHead(c2)) |
+          exists(Content c2 | Stage4::consCand(c, typ, Stage4Param::TApCons(c2, len - 1)) |
             tail = TConsCons(c2, _, _, len - 1)
             or
             len = 2 and
@@ -4126,7 +4182,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
           )
           or
           len = 1 and
-          Stage4::consCand(c, typ, TFrontNil()) and
+          Stage4::consCand(c, typ, Stage4Param::TApNil()) and
           tail = TNil()
         )
       }
@@ -4154,7 +4210,11 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       class ApNil = AccessPathApproxNil;
 
       pragma[nomagic]
-      PrevStage::Ap getApprox(Ap ap) { result = ap.getFront() }
+      PrevStage::Ap getApprox(Ap ap) {
+        ap = TNil() and result.isNil()
+        or
+        result = Stage4Param::TApCons(ap.getHead(), ap.len() - 1)
+      }
 
       Typ getTyp(DataFlowType t) { result = t }
 
