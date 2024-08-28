@@ -12,19 +12,14 @@ import HardcodedCredentialsCustomizations::HardcodedCredentials
 /**
  * A data flow tracking configuration for hardcoded credentials.
  */
-class Configuration extends DataFlow::Configuration {
-  Configuration() { this = "HardcodedCredentials" }
+module HardcodedCredentialsConfig implements DataFlow::ConfigSig {
+  predicate isSource(DataFlow::Node node) { node instanceof Source }
 
-  override predicate isSource(DataFlow::Node source) { source instanceof Source }
+  predicate isSink(DataFlow::Node node) { node instanceof Sink }
 
-  override predicate isSink(DataFlow::Node sink) { sink instanceof Sink }
+  predicate isBarrier(DataFlow::Node node) { node instanceof Sanitizer }
 
-  override predicate isBarrier(DataFlow::Node node) {
-    super.isBarrier(node) or
-    node instanceof Sanitizer
-  }
-
-  override predicate isAdditionalFlowStep(DataFlow::Node src, DataFlow::Node trg) {
+  predicate isAdditionalFlowStep(DataFlow::Node src, DataFlow::Node trg) {
     exists(Base64::Encode encode | src = encode.getInput() and trg = encode.getOutput())
     or
     trg.(StringOps::ConcatenationRoot).getALeaf() = src and
@@ -73,5 +68,32 @@ class Configuration extends DataFlow::Configuration {
       src = n.getACall().getArgument(0) and
       trg = n.getACall()
     )
+  }
+}
+
+/**
+ * Data flow for reasoning about hardcoded credentials.
+ */
+module HardcodedCredentials = DataFlow::Global<HardcodedCredentialsConfig>;
+
+/**
+ * DEPRECATED. Use the `HardcodedCredentials` module instead.
+ */
+deprecated class Configuration extends DataFlow::Configuration {
+  Configuration() { this = "HardcodedCredentials" }
+
+  override predicate isSource(DataFlow::Node source) {
+    HardcodedCredentialsConfig::isSource(source)
+  }
+
+  override predicate isSink(DataFlow::Node sink) { HardcodedCredentialsConfig::isSink(sink) }
+
+  override predicate isBarrier(DataFlow::Node node) {
+    super.isBarrier(node) or
+    HardcodedCredentialsConfig::isBarrier(node)
+  }
+
+  override predicate isAdditionalFlowStep(DataFlow::Node src, DataFlow::Node trg) {
+    HardcodedCredentialsConfig::isAdditionalFlowStep(src, trg)
   }
 }

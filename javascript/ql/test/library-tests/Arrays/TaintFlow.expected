@@ -1,3 +1,5 @@
+legacyDataFlowDifference
+flow
 | arrays.js:2:16:2:23 | "source" | arrays.js:5:8:5:14 | obj.foo |
 | arrays.js:2:16:2:23 | "source" | arrays.js:11:10:11:15 | arr[i] |
 | arrays.js:2:16:2:23 | "source" | arrays.js:15:27:15:27 | e |
@@ -24,5 +26,6 @@
 | arrays.js:33:37:33:44 | "source" | arrays.js:35:8:35:25 | arr4_variant.pop() |
 | arrays.js:53:4:53:11 | "source" | arrays.js:54:10:54:18 | ary.pop() |
 | arrays.js:53:4:53:11 | "source" | arrays.js:55:10:55:12 | ary |
-| arrays.js:95:9:95:16 | "source" | arrays.js:95:8:95:34 | ["sourc ... ) => x) |
-| arrays.js:96:9:96:16 | "source" | arrays.js:96:8:96:36 | ["sourc ... => !!x) |
+| arrays.js:95:9:95:16 | "source" | arrays.js:95:8:95:17 | ["source"] |
+| arrays.js:96:9:96:16 | "source" | arrays.js:96:8:96:40 | ["sourc ... ).pop() |
+| arrays.js:97:9:97:16 | "source" | arrays.js:97:8:97:42 | ["sourc ... ).pop() |
