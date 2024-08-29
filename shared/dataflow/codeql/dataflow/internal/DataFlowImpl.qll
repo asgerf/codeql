@@ -3734,12 +3734,18 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       string toString();
     }
 
-    module AccessPathWithHeadAndLength<ContentLike Cont> {
+    module WithContentLike<ContentLike C> {
+      signature predicate relevantAccessPathSig(C c, int tailLength);
+    }
+
+    module AccessPathWithHeadAndLength<
+      ContentLike Cont, WithContentLike<Cont>::relevantAccessPathSig/2 relevantAp>
+    {
       newtype TApOption =
         TApNone() or
         TApNil() or
         TApCons(Cont content, int tailLength) {
-          // TODO: prune this based on info from previous stage
+          relevantAp(content, tailLength) and
           tailLength = [0 .. Config::accessPathLimit() - 1]
         }
 
@@ -3781,11 +3787,25 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       class Typ = Unit;
 
-      import AccessPathWithHeadAndLength<ContentApprox>
+      private predicate relevantAp(ContentApprox approx, int tailLength) {
+        exists(Stage2Param::Ap prevAp, Content c |
+          Stage2::storeStepCand(_, prevAp, c, _, _, _) and
+          getContentApprox(c) = approx and
+          tailLength = prevAp
+        )
+      }
+
+      import AccessPathWithHeadAndLength<ContentApprox, relevantAp/2>
 
       PrevStage::Ap getApprox(Ap ap) { result = ap.getLength() }
 
       Typ getTyp(DataFlowType t) { any() }
+
+      private predicate noStringCont(ContentApprox ct) { not exists(ct.toString()) }
+
+      private predicate noStringAp(Ap ap) {
+        not exists(ap.toString()) and not noStringCont(ap.getHead())
+      }
 
       pragma[nomagic]
       additional Content getAHead(Ap ap) {
@@ -3920,7 +3940,14 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       class Typ = DataFlowType;
 
-      import AccessPathWithHeadAndLength<Content>
+      private predicate relevantAp(Content c, int tailLength) {
+        exists(Stage3Param::Ap prevAp |
+          Stage3::storeStepCand(_, prevAp, c, _, _, _) and
+          tailLength = prevAp.getLength()
+        )
+      }
+
+      import AccessPathWithHeadAndLength<Content, relevantAp/2>
 
       pragma[nomagic]
       PrevStage::Ap getApprox(Ap ap) {
