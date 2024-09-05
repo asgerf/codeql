@@ -3715,6 +3715,95 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       node.asNode() instanceof CastingNode or exists(node.asParamReturnNode())
     }
 
+    /** A bespoke stage in-between stage 2 and 3 for detecting nodes that are unreachable due to AP length restriction. */
+    private module ApLengthStage {
+      private module PrevStage = Stage2;
+
+      private class ApLengthDelta extends int {
+        ApLengthDelta() { this in [-Config::accessPathLimit() .. Config::accessPathLimit()] }
+      }
+
+      private class ApLength extends int {
+        ApLength() { this in [0 .. Config::accessPathLimit()] }
+      }
+
+      pragma[nomagic]
+      private predicate flowThroughParam(ParamNodeEx param, ReturnKindExt kind, ApLengthDelta delta) {
+        exists(NodeEx ret |
+          parameterFlow(param, ret, delta) and
+          ret.(RetNodeEx).getKind() = kind
+        )
+      }
+
+      // TODO: replace with an inline_late helper
+      pragma[noopt]
+      private predicate flowThroughCall(ArgNodeEx arg, NodeEx out, ApLengthDelta delta) {
+        exists(DataFlowCall call, ParamNodeEx param, ReturnKindExt kind, OutNode out1 |
+          flowThroughParam(param, kind, delta) and
+          viableParamArgEx(call, param, arg) and
+          out1 = kind.getAnOutNode(call) and
+          out.asNode() = out1
+        )
+      }
+
+      pragma[nomagic]
+      private predicate parameterFlow(ParamNodeEx param, NodeEx node, ApLengthDelta delta) {
+        PrevStage::parameterMayFlowThrough(param, _) and
+        node = param and
+        delta = 0
+        or
+        PrevStage::revFlow(node) and
+        exists(NodeEx midNode, int midDelta | parameterFlow(param, midNode, midDelta) |
+          localFlowStepEx(midNode, node, _) and delta = midDelta
+          or
+          storeEx(midNode, _, node, _, _) and delta = midDelta + 1
+          or
+          readSetEx(midNode, _, node) and delta = midDelta - 1
+          or
+          exists(int calleeDelta |
+            flowThroughCall(midNode, node, calleeDelta) and
+            delta = midDelta + calleeDelta
+          )
+        )
+      }
+
+      pragma[nomagic]
+      private predicate flow(NodeEx node, ApLength ap, boolean call) {
+        PrevStage::revFlow(node) and
+        sourceNode(node, _) and
+        ap = 0 and
+        call = false
+        or
+        PrevStage::revFlow(node) and
+        exists(NodeEx midNode, ApLength midAp, boolean midCall | flow(midNode, midAp, midCall) |
+          localFlowStepEx(midNode, node, _) and ap = midAp and call = midCall
+          or
+          jumpStepEx(midNode, node) and
+          ap = midAp and
+          call = false
+          or
+          storeEx(midNode, _, node, _, _) and ap = midAp + 1 and call = midCall
+          or
+          readSetEx(midNode, _, node) and ap = midAp - 1 and call = midCall
+          or
+          exists(int calleeDelta |
+            flowThroughCall(midNode, node, calleeDelta) and
+            ap = midAp + calleeDelta and
+            call = midCall
+          )
+          or
+          viableParamArgEx(_, midNode, node) and
+          ap = midAp and
+          call = true
+          or
+          viableReturnPosOutEx(_, midNode.(RetNodeEx).getReturnPosition(), node) and
+          midCall = false and
+          ap = midAp and
+          call = false
+        )
+      }
+    }
+
     private module Stage3Param implements MkStage<Stage2>::StageParam {
       private module PrevStage = Stage2;
 
