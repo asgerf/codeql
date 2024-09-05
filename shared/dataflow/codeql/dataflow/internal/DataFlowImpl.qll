@@ -1434,6 +1434,9 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         bindingset[typ, contentType]
         predicate typecheckStore(Typ typ, DataFlowType contentType);
 
+        bindingset[node1, c, node2]
+        default predicate filterStore(NodeEx node1, Content c, NodeEx node2) { any() }
+
         default predicate enableTypeFlow() { any() }
       }
 
@@ -1662,7 +1665,8 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
             not inBarrier(node2, state) and
             PrevStage::storeStepCand(node1, apa1, c, node2, contentType, containerType) and
             t2 = getTyp(containerType) and
-            typecheckStore(t1, contentType)
+            typecheckStore(t1, contentType) and
+            filterStore(node1, c, node2)
           )
         }
 
@@ -3754,7 +3758,9 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         or
         PrevStage::revFlow(node) and
         exists(NodeEx midNode, int midDelta | parameterFlow(param, midNode, midDelta) |
-          localFlowStepEx(midNode, node, _) and delta = midDelta
+          stepLocal(midNode, node, true) and delta = midDelta
+          or
+          stepLocal(midNode, node, false) and delta = midDelta and delta <= 0
           or
           storeEx(midNode, _, node, _, _) and delta = midDelta + 1
           or
@@ -3767,6 +3773,12 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         )
       }
 
+      bindingset[node1, preservesValue]
+      pragma[inline_late]
+      private predicate stepLocal(NodeEx node1, NodeEx node2, boolean preservesValue) {
+        Stage3Param::localFlowBigStep(node1, _, node2, _, preservesValue, _, _, _)
+      }
+
       pragma[nomagic]
       private predicate flow(NodeEx node, ApLength ap, boolean call) {
         PrevStage::revFlow(node) and
@@ -3776,7 +3788,14 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         or
         PrevStage::revFlow(node) and
         exists(NodeEx midNode, ApLength midAp, boolean midCall | flow(midNode, midAp, midCall) |
-          localFlowStepEx(midNode, node, _) and ap = midAp and call = midCall
+          stepLocal(midNode, node, true) and
+          ap = midAp and
+          call = midCall
+          or
+          stepLocal(midNode, node, false) and
+          midAp = 0 and
+          ap = midAp and
+          call = midCall
           or
           jumpStepEx(midNode, node) and
           ap = midAp and
@@ -3801,6 +3820,20 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
           ap = midAp and
           call = false
         )
+      }
+
+      pragma[nomagic]
+      predicate flow(NodeEx node) { flow(node, _, _) }
+
+      private predicate liveStore(NodeEx node1, Content c, NodeEx node2) {
+        storeEx(node1, c, node2, _, _) and flow(node1) and flow(node2)
+      }
+
+      private predicate prunedStore(NodeEx node1, Content c, NodeEx node2) {
+        storeEx(node1, c, node2, _, _) and
+        PrevStage::revFlow(node1) and
+        PrevStage::revFlow(node2) and
+        not liveStore(node1, c, node2)
       }
     }
 
@@ -3913,6 +3946,13 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       bindingset[typ, contentType]
       predicate typecheckStore(Typ typ, DataFlowType contentType) { any() }
+
+      bindingset[node1, c, node2]
+      predicate filterStore(NodeEx node1, Content c, NodeEx node2) {
+        ApLengthStage::flow(node1) and
+        ApLengthStage::flow(node2) and
+        exists(c)
+      }
     }
 
     private module Stage3 = MkStage<Stage2>::Stage<Stage3Param>;
