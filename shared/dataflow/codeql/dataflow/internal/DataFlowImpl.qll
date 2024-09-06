@@ -3847,6 +3847,13 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         PrevStage::revFlow(node2) and
         not liveStore(node1, c, node2)
       }
+
+      bindingset[node1, c, node2]
+      predicate filterStore(NodeEx node1, Content c, NodeEx node2) {
+        exists(node1) and
+        flow(node2) and
+        exists(c)
+      }
     }
 
     private module Stage3Param implements MkStage<Stage2>::StageParam {
@@ -3958,13 +3965,6 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       bindingset[typ, contentType]
       predicate typecheckStore(Typ typ, DataFlowType contentType) { any() }
-
-      bindingset[node1, c, node2]
-      predicate filterStore(NodeEx node1, Content c, NodeEx node2) {
-        ApLengthStage::flow(node1) and
-        ApLengthStage::flow(node2) and
-        exists(c)
-      }
     }
 
     private module Stage3 = MkStage<Stage2>::Stage<Stage3Param>;
@@ -3985,6 +3985,8 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
     private module Stage4Param implements MkStage<Stage3>::StageParam {
       private module PrevStage = Stage3;
+
+      predicate filterStore = ApLengthStage<PrevStage>::filterStore/3;
 
       class Typ = DataFlowType;
 
