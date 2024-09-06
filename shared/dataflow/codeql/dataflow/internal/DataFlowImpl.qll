@@ -3797,13 +3797,21 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
           ap = midAp and
           call = midCall
           or
-          jumpStepEx(midNode, node) and
+          (
+            jumpStepEx(midNode, node) or
+            additionalJumpStep(midNode, node, _) or
+            additionalJumpStateStep(midNode, _, node, _)
+          ) and
           ap = midAp and
           call = false
           or
-          storeEx(midNode, _, node, _, _) and ap = midAp + 1 and call = midCall
+          storeEx(midNode, _, node, _, _) and
+          ap = midAp + 1 and
+          call = midCall
           or
-          readSetEx(midNode, _, node) and ap = midAp - 1 and call = midCall
+          readSetEx(midNode, _, node) and
+          ap = midAp - 1 and
+          call = midCall
           or
           exists(int calleeDelta |
             flowThroughCall(midNode, node, calleeDelta) and
@@ -3811,7 +3819,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
             call = midCall
           )
           or
-          viableParamArgEx(_, midNode, node) and
+          viableParamArgEx(_, node, midNode) and
           ap = midAp and
           call = true
           or
