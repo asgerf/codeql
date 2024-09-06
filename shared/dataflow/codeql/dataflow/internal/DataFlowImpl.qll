@@ -3720,19 +3720,15 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
     }
 
     /** A bespoke stage in-between stage 2 and 3 for detecting nodes that are unreachable due to AP length restriction. */
-    private module ApLengthStage {
-      private module PrevStage = Stage2;
-
-      private class ApLengthDelta extends int {
-        ApLengthDelta() { this in [-Config::accessPathLimit() .. Config::accessPathLimit()] }
-      }
-
-      private class ApLength extends int {
-        ApLength() { this in [0 .. Config::accessPathLimit()] }
-      }
-
+    private module ApLengthStage<StageSig PrevStage> {
+      // private class ApLengthDelta extends int {
+      //   ApLengthDelta() { this in [-Config::accessPathLimit() .. Config::accessPathLimit()] }
+      // }
+      // private class ApLength extends int {
+      //   ApLength() { this in [0 .. Config::accessPathLimit()] }
+      // }
       pragma[nomagic]
-      private predicate flowThroughParam(ParamNodeEx param, ReturnKindExt kind, ApLengthDelta delta) {
+      private predicate flowThroughParam(ParamNodeEx param, ReturnKindExt kind, int delta) {
         exists(NodeEx ret |
           parameterFlow(param, ret, delta) and
           ret.(RetNodeEx).getKind() = kind
@@ -3741,7 +3737,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       // TODO: replace with an inline_late helper
       pragma[noopt]
-      private predicate flowThroughCall(ArgNodeEx arg, NodeEx out, ApLengthDelta delta) {
+      private predicate flowThroughCall(ArgNodeEx arg, NodeEx out, int delta) {
         exists(DataFlowCall call, ParamNodeEx param, ReturnKindExt kind, OutNode out1 |
           flowThroughParam(param, kind, delta) and
           viableParamArgEx(call, param, arg) and
@@ -3751,7 +3747,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       }
 
       pragma[nomagic]
-      private predicate parameterFlow(ParamNodeEx param, NodeEx node, ApLengthDelta delta) {
+      private predicate parameterFlow(ParamNodeEx param, NodeEx node, int delta) {
         PrevStage::parameterMayFlowThrough(param, _) and
         node = param and
         delta = 0
@@ -3762,13 +3758,18 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
           or
           stepLocal(midNode, node, false) and delta = midDelta and delta <= 0
           or
-          storeEx(midNode, _, node, _, _) and delta = midDelta + 1
+          storeEx(midNode, _, node, _, _) and
+          delta = midDelta + 1 and
+          delta <= Config::accessPathLimit()
           or
-          readSetEx(midNode, _, node) and delta = midDelta - 1
+          readSetEx(midNode, _, node) and
+          delta = midDelta - 1 and
+          delta >= -Config::accessPathLimit()
           or
           exists(int calleeDelta |
             flowThroughCall(midNode, node, calleeDelta) and
-            delta = midDelta + calleeDelta
+            delta = midDelta + calleeDelta and
+            delta in [-Config::accessPathLimit() .. Config::accessPathLimit()]
           )
         )
       }
@@ -3780,14 +3781,14 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       }
 
       pragma[nomagic]
-      private predicate flow(NodeEx node, ApLength ap, boolean call) {
+      private predicate flow(NodeEx node, int ap, boolean call) {
         PrevStage::revFlow(node) and
         sourceNode(node, _) and
         ap = 0 and
         call = false
         or
         PrevStage::revFlow(node) and
-        exists(NodeEx midNode, ApLength midAp, boolean midCall | flow(midNode, midAp, midCall) |
+        exists(NodeEx midNode, int midAp, boolean midCall | flow(midNode, midAp, midCall) |
           stepLocal(midNode, node, true) and
           ap = midAp and
           call = midCall
@@ -3807,15 +3808,18 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
           or
           storeEx(midNode, _, node, _, _) and
           ap = midAp + 1 and
+          ap <= Config::accessPathLimit() and
           call = midCall
           or
           readSetEx(midNode, _, node) and
           ap = midAp - 1 and
+          ap >= 0 and
           call = midCall
           or
           exists(int calleeDelta |
             flowThroughCall(midNode, node, calleeDelta) and
             ap = midAp + calleeDelta and
+            ap in [-Config::accessPathLimit() .. Config::accessPathLimit()] and
             call = midCall
           )
           or
