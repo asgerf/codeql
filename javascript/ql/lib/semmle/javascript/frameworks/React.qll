@@ -868,3 +868,9 @@ private class PropsFlowStep extends PreCallGraphStep {
     )
   }
 }
+
+private class ReactPropsTaintSource extends RemoteFlowSource {
+  ReactPropsTaintSource() { exists(ReactComponent c | this = c.getAPropRead()) }
+
+  override string getSourceType() { result = "React prop" }
+}
