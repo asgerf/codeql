@@ -48,6 +48,8 @@ private module Config implements DataFlow::ConfigSig {
     cs.isAny() and
     isSink(node)
   }
+
+  predicate isBarrierIn(DataFlow::Node node) { isSource(node) }
 }
 
 /**
