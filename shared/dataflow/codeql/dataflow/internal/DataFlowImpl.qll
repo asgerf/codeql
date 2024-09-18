@@ -3735,14 +3735,23 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       Typ getTyp(DataFlowType t) { any() }
 
       bindingset[c, t, tail]
-      Ap apCons(Content c, Typ t, Ap tail) { result.getAHead() = c and exists(t) and exists(tail) }
+      Ap apCons(Content c, Typ t, Ap tail) {
+        exists(t) and
+        if tail instanceof ApNil
+        then result.getSingletonHead() = c
+        else result.getANonSingletonHead() = c
+      }
 
-      class ApHeadContent = ContentApprox;
+      class ApHeadContent = ContentExactOrApprox;
 
       pragma[noinline]
       ApHeadContent getHeadContent(Ap ap) { result = ap.getHead() }
 
-      predicate projectToHeadContent = getContentApproxCached/1;
+      ApHeadContent projectToHeadContent(Content c) {
+        result = TExactContent(c)
+        or
+        result = TApproxContent(getContentApproxCached(c))
+      }
 
       class ApOption = ApproxAccessPathFrontOption;
 
@@ -3862,7 +3871,12 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       Typ getTyp(DataFlowType t) { result = t }
 
       bindingset[c, t, tail]
-      Ap apCons(Content c, Typ t, Ap tail) { result.getHead() = c and exists(t) and exists(tail) }
+      Ap apCons(Content c, Typ t, Ap tail) {
+        exists(t) and
+        if tail instanceof ApNil
+        then result.getSingletonHead() = c
+        else result.getNonSingletonHead() = c
+      }
 
       class ApHeadContent = Content;
 
@@ -4046,7 +4060,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       override int len() { result = 1 }
 
-      override AccessPathFront getFront() { result = TFrontHead(c) }
+      override AccessPathFront getFront() { result = TFrontSingleton(c) }
 
       override predicate isCons(Content head, DataFlowType typ, AccessPathApprox tail) {
         head = c and typ = t and tail = TNil()

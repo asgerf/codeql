@@ -1578,11 +1578,13 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
     cached
     newtype TAccessPathFront =
       TFrontNil() or
+      TFrontSingleton(Content c) or
       TFrontHead(Content c)
 
     cached
     newtype TApproxAccessPathFront =
       TApproxFrontNil() or
+      TApproxFrontSingleton(Content c) or
       TApproxFrontHead(ContentApprox c)
 
     cached
@@ -1594,6 +1596,11 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
     newtype TApproxAccessPathFrontOption =
       TApproxAccessPathFrontNone() or
       TApproxAccessPathFrontSome(ApproxAccessPathFront apf)
+
+    cached
+    newtype TContentExactOrApprox =
+      TExactContent(Content c) or
+      TApproxContent(ContentApprox approx)
   }
 
   bindingset[call, tgt]
@@ -2262,15 +2269,24 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
 
     abstract boolean toBoolNonEmpty();
 
-    ContentApprox getHead() { this = TApproxFrontHead(result) }
+    /** Gets the approximate head if this is an AP of length > 1. */
+    ContentApprox getApproxHead() { this = TApproxFrontHead(result) }
 
     pragma[nomagic]
-    Content getAHead() {
-      exists(ContentApprox cont |
-        this = TApproxFrontHead(cont) and
-        cont = getContentApproxCached(result)
-      )
+    Content getSingletonHead() { this = TApproxFrontSingleton(result) }
+
+    pragma[nomagic]
+    Content getANonSingletonHead() { getContentApproxCached(result) = this.getApproxHead() }
+
+    pragma[nomagic]
+    ContentExactOrApprox getHead() {
+      result = TExactContent(this.getSingletonHead())
+      or
+      result = TApproxContent(this.getApproxHead())
     }
+
+    pragma[nomagic]
+    Content getAHead() { result = this.getSingletonHead() or result = this.getANonSingletonHead() }
   }
 
   class ApproxAccessPathFrontNil extends ApproxAccessPathFront, TApproxFrontNil {
@@ -2283,6 +2299,16 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
     private ContentApprox c;
 
     ApproxAccessPathFrontHead() { this = TApproxFrontHead(c) }
+
+    override string toString() { result = c.toString() + "..." }
+
+    override boolean toBoolNonEmpty() { result = true }
+  }
+
+  class ApproxAccessPathFrontSingleton extends ApproxAccessPathFront, TApproxFrontSingleton {
+    private Content c;
+
+    ApproxAccessPathFrontSingleton() { this = TApproxFrontSingleton(c) }
 
     override string toString() { result = c.toString() }
 
@@ -2306,7 +2332,11 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
 
     abstract ApproxAccessPathFront toApprox();
 
-    Content getHead() { this = TFrontHead(result) }
+    Content getNonSingletonHead() { this = TFrontHead(result) }
+
+    Content getSingletonHead() { this = TFrontSingleton(result) }
+
+    Content getHead() { result = [this.getSingletonHead(), this.getNonSingletonHead()] }
   }
 
   class AccessPathFrontNil extends AccessPathFront, TFrontNil {
@@ -2320,9 +2350,21 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
 
     AccessPathFrontHead() { this = TFrontHead(c) }
 
+    override string toString() { result = c.toString() + "..." }
+
+    override ApproxAccessPathFront toApprox() {
+      result = TApproxFrontHead(getContentApproxCached(c))
+    }
+  }
+
+  class AccessPathFrontSingleton extends AccessPathFront, TFrontSingleton {
+    private Content c;
+
+    AccessPathFrontSingleton() { this = TFrontSingleton(c) }
+
     override string toString() { result = c.toString() }
 
-    override ApproxAccessPathFront toApprox() { result.getAHead() = c }
+    override ApproxAccessPathFront toApprox() { result = TApproxFrontSingleton(c) }
   }
 
   /** An optional access path front. */
@@ -2332,5 +2374,17 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
       or
       this = TAccessPathFrontSome(any(AccessPathFront apf | result = apf.toString()))
     }
+  }
+
+  class ContentExactOrApprox extends TContentExactOrApprox {
+    string toString() {
+      result = this.asExact().toString()
+      or
+      result = this.asApprox().toString()
+    }
+
+    Content asExact() { this = TExactContent(result) }
+
+    ContentApprox asApprox() { this = TApproxContent(result) }
   }
 }
