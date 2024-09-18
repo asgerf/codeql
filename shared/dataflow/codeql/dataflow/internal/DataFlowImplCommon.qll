@@ -2267,7 +2267,7 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
   abstract class ApproxAccessPathFront extends TApproxAccessPathFront {
     abstract string toString();
 
-    abstract boolean toBoolNonEmpty();
+    abstract int toLengthBound();
 
     /** Gets the approximate head if this is an AP of length > 1. */
     ContentApprox getApproxHead() { this = TApproxFrontHead(result) }
@@ -2292,7 +2292,7 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
   class ApproxAccessPathFrontNil extends ApproxAccessPathFront, TApproxFrontNil {
     override string toString() { result = "nil" }
 
-    override boolean toBoolNonEmpty() { result = false }
+    override int toLengthBound() { result = 0 }
   }
 
   class ApproxAccessPathFrontHead extends ApproxAccessPathFront, TApproxFrontHead {
@@ -2302,7 +2302,7 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
 
     override string toString() { result = c.toString() + "..." }
 
-    override boolean toBoolNonEmpty() { result = true }
+    override int toLengthBound() { result = 2 }
   }
 
   class ApproxAccessPathFrontSingleton extends ApproxAccessPathFront, TApproxFrontSingleton {
@@ -2312,7 +2312,7 @@ module MakeImplCommon<LocationSig Location, InputSig<Location> Lang> {
 
     override string toString() { result = c.toString() }
 
-    override boolean toBoolNonEmpty() { result = true }
+    override int toLengthBound() { result = 1 }
   }
 
   /** An optional approximated access path front. */
