@@ -1345,6 +1345,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         }
 
         class Ap {
+          bindingset[this]
           string toString();
         }
 
@@ -3628,10 +3629,16 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       class Typ = Unit;
 
-      class Ap = Boolean;
+      private int stage2ApLimit() {
+        if Config::accessPathLimit() = 2 then result = 2 else result = 1
+      }
+
+      class Ap extends int {
+        Ap() { this = [0 .. stage2ApLimit()] }
+      }
 
       class ApNil extends Ap {
-        ApNil() { this = false }
+        ApNil() { this = 0 }
       }
 
       bindingset[result, ap]
@@ -3641,24 +3648,26 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       bindingset[c, t, tail]
       Ap apCons(Content c, Typ t, Ap tail) {
-        result = true and
+        result = (tail + 1).minimum(stage2ApLimit()) and
         exists(c) and
         exists(t) and
-        if tail = true then Config::accessPathLimit() > 1 else any()
+        Config::accessPathLimit() >= (tail + 1)
       }
 
       class ApHeadContent = Unit;
 
       pragma[inline]
-      ApHeadContent getHeadContent(Ap ap) { exists(result) and ap = true }
+      ApHeadContent getHeadContent(Ap ap) { exists(result) and ap >= 1 }
 
       ApHeadContent projectToHeadContent(Content c) { any() }
 
-      class ApOption = BooleanOption;
+      class ApOption extends int {
+        ApOption() { this = -1 or this instanceof Ap }
+      }
 
-      ApOption apNone() { result = TBooleanNone() }
+      ApOption apNone() { result = -1 }
 
-      ApOption apSome(Ap ap) { result = TBooleanSome(ap) }
+      ApOption apSome(Ap ap) { result = ap }
 
       import CachedCallContextSensitivity
       import NoLocalCallContext
@@ -3698,7 +3707,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         (
           notExpectsContent(node)
           or
-          ap = true and
+          ap >= 1 and
           expectsContentCand(node)
         )
       }
@@ -3728,7 +3737,14 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       class ApNil = ApproxAccessPathFrontNil;
 
-      PrevStage::Ap getApprox(Ap ap) { result = ap.toBoolNonEmpty() }
+      pragma[nomagic]
+      private PrevStage::Ap getApproxHelper(boolean nonEmpty) {
+        nonEmpty = true and result >= 1
+        or
+        nonEmpty = false and result = 0
+      }
+
+      PrevStage::Ap getApprox(Ap ap) { result = getApproxHelper(ap.toBoolNonEmpty()) }
 
       Typ getTyp(DataFlowType t) { any() }
 
