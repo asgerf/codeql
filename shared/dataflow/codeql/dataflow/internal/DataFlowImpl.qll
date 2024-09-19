@@ -3987,9 +3987,9 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         tails = strictcount(DataFlowType t, AccessPathFront apf | Stage4::consCand(c, t, apf)) and
         nodes =
           strictcount(NodeEx n, FlowState state |
-            Stage4::revFlow(n, state, any(AccessPathFrontHead apf | apf.getHead() = c))
+            Stage4::revFlow(n, state, any(AccessPathFront apf | apf.getHead() = c))
             or
-            Stage4::nodeMayUseSummary(n, state, any(AccessPathFrontHead apf | apf.getHead() = c))
+            Stage4::nodeMayUseSummary(n, state, any(AccessPathFront apf | apf.getHead() = c))
           ) and
         accessPathApproxCostLimits(apLimit, tupleLimit) and
         apLimit < tails and
@@ -4005,12 +4005,26 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         not expensiveLen2unfolding(c)
       } or
       TConsCons(Content c1, DataFlowType t, Content c2, int len) {
-        Stage4::consCand(c1, t, TFrontHead(c2)) and
-        len in [2 .. Config::accessPathLimit()] and
+        (
+          Stage4::consCand(c1, t, TFrontSingleton(c2)) and
+          len = 2
+          or
+          Stage4::consCand(c1, t, TFrontHead(c2)) and
+          len in [3 .. Config::accessPathLimit()]
+        ) and
         not expensiveLen2unfolding(c1)
       } or
       TCons1(Content c, int len) {
-        len in [1 .. Config::accessPathLimit()] and
+        (
+          Stage4::consCand(c, _, TFrontNil()) and
+          len = 1
+          or
+          Stage4::consCand(c, _, TFrontSingleton(_)) and
+          len = 2
+          or
+          Stage4::consCand(c, _, TFrontHead(_)) and
+          len in [3 .. Config::accessPathLimit()]
+        ) and
         expensiveLen2unfolding(c)
       }
 
@@ -4123,18 +4137,23 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       override int len() { result = len }
 
-      override AccessPathFront getFront() { result = TFrontHead(c) }
+      override AccessPathFront getFront() {
+        if len = 1 then result = TFrontSingleton(c) else result = TFrontHead(c)
+      }
 
       override predicate isCons(Content head, DataFlowType typ, AccessPathApprox tail) {
         head = c and
         (
+          len >= 3 and
           exists(Content c2 | Stage4::consCand(c, typ, TFrontHead(c2)) |
             tail = TConsCons(c2, _, _, len - 1)
             or
-            len = 2 and
-            tail = TConsNil(c2, _)
-            or
             tail = TCons1(c2, len - 1)
+          )
+          or
+          len = 2 and
+          exists(Content c2 | Stage4::consCand(c, typ, TFrontSingleton(c2)) |
+            tail = TConsNil(c2, _)
           )
           or
           len = 1 and
@@ -4497,7 +4516,11 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         head = head_ and typ = t and tail = tail_
       }
 
-      override AccessPathFrontHead getFront() { result = TFrontHead(head_) }
+      override AccessPathFront getFront() {
+        if tail_ instanceof TAccessPathNil
+        then result = TFrontSingleton(head_)
+        else result = TFrontHead(head_)
+      }
 
       override AccessPathApproxCons getApprox() {
         result = TConsNil(head_, t) and tail_ = TAccessPathNil()
@@ -4588,7 +4611,9 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         tail.length() = len - 1
       }
 
-      override AccessPathFrontHead getFront() { result = TFrontHead(head_) }
+      override AccessPathFront getFront() {
+        if len = 1 then result = TFrontSingleton(head_) else result = TFrontHead(head_)
+      }
 
       override AccessPathApproxCons getApprox() { result = TCons1(head_, len) }
 
