@@ -999,14 +999,14 @@ private predicate valuePreservingStep(Node node1, Node node2) {
   or
   FlowSummaryPrivate::Steps::summaryLocalStep(node1.(FlowSummaryNode).getSummaryNode(),
     node2.(FlowSummaryNode).getSummaryNode(), true, _) // TODO: preserve 'model'
-  or
-  // Step from post-update nodes to local sources of the pre-update node. This emulates how JS usually tracks side effects.
-  exists(PostUpdateNode postUpdate |
-    node1 = postUpdate and
-    node2 = postUpdate.getPreUpdateNode().getALocalSource() and
-    node1 != node2 and // exclude trivial edges
-    sameContainer(node1, node2)
-  )
+  // or
+  // // Step from post-update nodes to local sources of the pre-update node. This emulates how JS usually tracks side effects.
+  // exists(PostUpdateNode postUpdate |
+  //   node1 = postUpdate and
+  //   node2 = postUpdate.getPreUpdateNode().getALocalSource() and
+  //   node1 != node2 and // exclude trivial edges
+  //   sameContainer(node1, node2)
+  // )
 }
 
 predicate knownSourceModel(Node sink, string model) { none() }
