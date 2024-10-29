@@ -980,7 +980,6 @@ module Make<LocationSig Location, InputSig<Location> Input> {
     }
 
     /** Gets the basic block to which this SSA definition belongs. */
-    cached // needed by BarrierGuards
     final BasicBlock getBasicBlock() { this.definesAt(_, result, _, _) }
 
     /** Gets a textual representation of this SSA definition. */
@@ -1670,6 +1669,17 @@ module Make<LocationSig Location, InputSig<Location> Input> {
       Node getABarrierNode() { result = StatefulBarrier::getABarrierNode(_) }
     }
 
+    cached
+    private predicate guardControlsPhi(
+      DfInput::Guard g, BasicBlock bb, boolean branch, SsaInputDefinitionExt phi
+    ) {
+      exists(int last |
+        g.hasCfgNode(bb, last) and
+        last = bb.length() - 1 and
+        DfInput::getAConditionalBasicBlockSuccessor(bb, branch) = phi.getBasicBlock()
+      )
+    }
+
     /**
      * Provides a set of barrier nodes for a guard that validates an expression.
      *
@@ -1705,11 +1715,7 @@ module Make<LocationSig Location, InputSig<Location> Input> {
           |
             DfInput::guardControlsBlock(g, bb, branch)
             or
-            exists(int last |
-              last = bb.length() - 1 and
-              g.hasCfgNode(bb, last) and
-              DfInput::getAConditionalBasicBlockSuccessor(bb, branch) = phi.getBasicBlock()
-            )
+            guardControlsPhi(g, bb, branch, phi)
           )
         )
       }
