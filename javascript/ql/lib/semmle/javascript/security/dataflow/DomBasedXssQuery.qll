@@ -103,7 +103,6 @@ module DomBasedXssConfig implements DataFlow::StateConfigSig {
     state1 = TaintedUrlSuffix::label() and
     state2 = prefixLabel()
     or
-    // FIXME: this fails to work in the test case at jquery.js:37
     exists(DataFlow::FunctionNode callback, DataFlow::Node arg |
       any(JQuery::MethodCall c).interpretsArgumentAsHtml(arg) and
       callback = arg.getABoundFunctionValue(_) and
