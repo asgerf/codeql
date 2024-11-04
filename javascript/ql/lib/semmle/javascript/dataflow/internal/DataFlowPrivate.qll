@@ -308,6 +308,18 @@ class ImplicitReturnNode extends DataFlow::Node, TImplicitReturnNode {
   override Location getLocation() { result = function.getLocation() }
 }
 
+class FlowSummaryAssumedExceptionalReturn extends DataFlow::Node,
+  TFlowSummaryAssumedExceptionalReturn
+{
+  private FlowSummaryImpl::Public::SummarizedCallable callable;
+
+  FlowSummaryAssumedExceptionalReturn() { this = TFlowSummaryAssumedExceptionalReturn(callable) }
+
+  override string toString() { result = "[assumed exceptional return] " + callable }
+
+  FlowSummaryImpl::Public::SummarizedCallable getSummarizedCallable() { result = callable }
+}
+
 cached
 newtype TReturnKind =
   MkNormalReturnKind() or
@@ -333,6 +345,18 @@ private predicate returnNodeImpl(DataFlow::Node node, ReturnKind kind) {
   )
   or
   FlowSummaryImpl::Private::summaryReturnNode(node.(FlowSummaryNode).getSummaryNode(), kind)
+  or
+  node instanceof TFlowSummaryAssumedExceptionalReturn and
+  kind = MkExceptionalReturnKind()
+}
+
+private predicate summaryHasExplicitExceptionalReturn(
+  FlowSummaryImpl::Public::SummarizedCallable callable
+) {
+  exists(FlowSummaryImpl::Private::SummaryNode out |
+    FlowSummaryImpl::Private::summaryReturnNode(out, MkExceptionalReturnKind()) and
+    out.getSummarizedCallable() = callable
+  )
 }
 
 private DataFlow::Node getAnOutNodeImpl(DataFlowCall call, ReturnKind kind) {
@@ -350,6 +374,17 @@ private DataFlow::Node getAnOutNodeImpl(DataFlowCall call, ReturnKind kind) {
     result.(FlowSummaryNode).getSummaryNode(), kind)
   or
   result = TImplicitReturnNode(call.asImpliedLambdaCall(), kind)
+  or
+  exists(
+    FlowSummaryImpl::Public::SummarizedCallable callable,
+    FlowSummaryImpl::Private::SummaryNode receiver
+  |
+    call.isSummaryCall(callable, receiver) and
+    not summaryHasExplicitExceptionalReturn(callable) and
+    not FlowSummaryImpl::Private::summaryOutNode(receiver, _, MkExceptionalReturnKind()) and
+    result = TFlowSummaryAssumedExceptionalReturn(callable) and
+    kind = MkExceptionalReturnKind()
+  )
 }
 
 class ReturnNode extends DataFlow::Node {
@@ -545,6 +580,8 @@ DataFlowCallable nodeGetEnclosingCallable(Node node) {
   result.asLibraryCallable() = node.(FlowSummaryDynamicParameterArrayNode).getSummarizedCallable()
   or
   result.asLibraryCallable() = node.(FlowSummaryIntermediateAwaitStoreNode).getSummarizedCallable()
+  or
+  result.asLibraryCallable() = node.(FlowSummaryAssumedExceptionalReturn).getSummarizedCallable()
   or
   node = TGenericSynthesizedNode(_, _, result)
 }

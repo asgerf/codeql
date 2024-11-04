@@ -112,6 +112,7 @@ private module Cached {
       //       So it doesn't cause negative recursion but it might look a bit surprising.
       FlowSummaryPrivate::Steps::summaryStoreStep(sn, MkAwaited(), _)
     } or
+    TFlowSummaryAssumedExceptionalReturn(FlowSummaryImpl::Public::SummarizedCallable callable) or
     TSynthCaptureNode(VariableCapture::VariableCaptureOutput::SynthesizedCaptureNode node) or
     TGenericSynthesizedNode(AstNode node, string tag, DataFlowPrivate::DataFlowCallable container) {
       any(AdditionalFlowInternal flow).needsSynthesizedNode(node, tag, container)
