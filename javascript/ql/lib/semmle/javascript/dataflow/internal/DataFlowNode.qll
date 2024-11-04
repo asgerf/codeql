@@ -77,6 +77,9 @@ private module Cached {
       or
       pos.isStaticArgumentArray()
     } or
+    TImplicitReturnNode(Function f, DataFlowPrivate::ReturnKind kind) {
+      kind = DataFlowPrivate::MkExceptionalReturnKind()
+    } or
     TDestructuredModuleImportNode(ImportDeclaration decl) {
       exists(decl.getASpecifier().getImportedName())
     } or

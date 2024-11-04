@@ -78,7 +78,10 @@ module Private {
     MkPromiseValue() or
     MkPromiseError() or
     MkCapturedContent(LocalVariableOrThis v) { v.isCaptured() } or
-    MkArgumentContent(DataFlowPrivate::ArgumentPosition pos)
+    MkArgumentContent(DataFlowPrivate::ArgumentPosition pos) or
+    MkReturnContent(DataFlowPrivate::ReturnKind kind) {
+      kind = DataFlowPrivate::MkExceptionalReturnKind() // currently only used for exception propagation
+    }
 
   cached
   newtype TContentSet =
@@ -159,7 +162,12 @@ module Public {
       or
       exists(DataFlowPrivate::ArgumentPosition pos |
         this = MkArgumentContent(pos) and
-        result = "Argument(" + pos + ")"
+        result = "Argument[" + pos + "]"
+      )
+      or
+      exists(DataFlowPrivate::ReturnKind kind |
+        this = MkReturnContent(kind) and
+        result = "ReturnValue[" + kind + "]"
       )
     }
 

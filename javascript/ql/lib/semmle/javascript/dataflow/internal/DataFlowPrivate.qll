@@ -286,9 +286,24 @@ class ImplicitArgumentNode extends DataFlow::Node, TImplicitArgumentNode {
 
   override StmtContainer getContainer() { result = this.getFunction().getEnclosingContainer() }
 
-  override string toString() {
-    result = "[implicit argument] " + pos + " to " + function.describe()
-  }
+  override string toString() { result = "[implicit argument " + pos + "] " + function.describe() }
+
+  override Location getLocation() { result = function.getLocation() }
+}
+
+class ImplicitReturnNode extends DataFlow::Node, TImplicitReturnNode {
+  private Function function;
+  private ReturnKind kind;
+
+  ImplicitReturnNode() { this = TImplicitReturnNode(function, kind) }
+
+  Function getFunction() { result = function }
+
+  ReturnKind getReturnKind() { result = kind }
+
+  override StmtContainer getContainer() { result = function.getEnclosingContainer() }
+
+  override string toString() { result = "[implicit " + kind + "]" + " " + function.describe() }
 
   override Location getLocation() { result = function.getLocation() }
 }
@@ -333,6 +348,8 @@ private DataFlow::Node getAnOutNodeImpl(DataFlowCall call, ReturnKind kind) {
   or
   FlowSummaryImpl::Private::summaryOutNode(call.(SummaryCall).getReceiver(),
     result.(FlowSummaryNode).getSummaryNode(), kind)
+  or
+  result = TImplicitReturnNode(call.asImpliedLambdaCall(), kind)
 }
 
 class ReturnNode extends DataFlow::Node {
@@ -660,7 +677,8 @@ newtype TContentApprox =
   TApproxPromiseValue() or
   TApproxPromiseError() or
   TApproxCapturedContent() or
-  TApproxCallbackArgument()
+  TApproxArgumentContent() or
+  TApproxReturnContent()
 
 class ContentApprox extends TContentApprox {
   string toString() {
@@ -682,7 +700,9 @@ class ContentApprox extends TContentApprox {
     or
     this = TApproxCapturedContent() and result = "TApproxCapturedContent"
     or
-    this = TApproxCallbackArgument() and result = "TApproxCallbackArgument"
+    this = TApproxArgumentContent() and result = "TApproxArgumentContent"
+    or
+    this = TApproxReturnContent() and result = "TApproxReturnContent"
   }
 }
 
@@ -710,7 +730,9 @@ ContentApprox getContentApprox(Content c) {
   or
   c instanceof MkCapturedContent and result = TApproxCapturedContent()
   or
-  c instanceof MkArgumentContent and result = TApproxCallbackArgument()
+  c instanceof MkArgumentContent and result = TApproxArgumentContent()
+  or
+  c instanceof MkReturnContent and result = TApproxReturnContent()
 }
 
 cached
@@ -1369,6 +1391,37 @@ predicate readStep(Node node1, ContentSet c, Node node2) {
     sameContainer(node1, node2) and
     c.asSingleton() = MkArgumentContent(pos)
   )
+  or
+  exists(DataFlow::InvokeNode invoke |
+    node1 = invoke.getCalleeNode() and
+    node2 = invoke.getExceptionalReturn() and
+    c.asSingleton() = MkReturnContent(MkExceptionalReturnKind())
+  )
+  or
+  exists(DataFlow::InvokeNode invoke |
+    // If call target is unknown, assume exceptions will propagate from all callbacks
+    not hasCallTarget(invoke) and
+    node1 = invoke.getAnArgument() and
+    node2 = invoke.getExceptionalReturn() and
+    c.asSingleton() = MkReturnContent(MkExceptionalReturnKind()) and
+    // Pragmatic restriction to avoid exception propagatino from event handlers
+    not invoke.getCalleeName() =
+      ["addEventListener", "addListener", "on", "once", "then", "catch", "finally", "Promise"]
+    // TODO: add default flow to ReturnValue[exception] if summary does not mention this value
+  )
+}
+
+/**
+ * Holds if `invoke` has a call target, not including externs, but including flow summaries.
+ *
+ * If it does not know have a call target we will make assumptions about exception flow.
+ */
+private predicate hasCallTarget(DataFlow::InvokeNode invoke) {
+  exists(DataFlowCall c, DataFlowCallable callable |
+    c.asOrdinaryCall() = invoke and
+    viableCallable(c) = callable and
+    exists(callable.asSourceCallableNotExterns())
+  )
 }
 
 bindingset[node1, node2]
@@ -1482,6 +1535,12 @@ predicate storeStep(Node node1, ContentSet c, Node node2) {
     not node1 instanceof TImplicitArgumentNode and
     node2 = call.getCalleeNode().getPostUpdateNode() and
     c.asSingleton() = MkArgumentContent(pos)
+  )
+  or
+  exists(Function f, ReturnKind kind |
+    node1 = TImplicitReturnNode(f, kind) and
+    node2 = TValueNode(f) and
+    c.asSingleton() = MkReturnContent(kind)
   )
 }
 
