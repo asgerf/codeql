@@ -729,6 +729,9 @@ module RustDataFlow implements InputSig<Location> {
 
   DataFlowType getNodeType(Node node) { any() }
 
+  /** Holds if a path node should be hidden when the access path contains `content`. */
+  predicate contentIsHidden(Content c) { none() }
+
   predicate nodeIsHidden(Node node) {
     node instanceof Node::SsaNode
     or
