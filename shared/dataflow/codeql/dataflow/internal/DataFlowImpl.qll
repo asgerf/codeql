@@ -1350,6 +1350,8 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
         ApOption apSome(Ap ap);
 
+        default predicate apIsHidden(Ap ap) { none() }
+
         class Cc {
           string toString();
         }
@@ -2923,7 +2925,11 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
             predicate isHidden() {
               not Config::includeHiddenNodes() and
-              hiddenNode(this.getNodeEx()) and
+              (
+                hiddenNode(this.getNodeEx())
+                or
+                apIsHidden(this.(PathNodeMid).getAp())
+              ) and
               not this.isSource() and
               not this instanceof PathNodeSink
             }
@@ -2987,6 +2993,8 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
             override NodeEx getNodeEx() { result = node }
 
             override FlowState getState() { result = state }
+
+            Ap getAp() { result = ap }
 
             private PathNodeMid getSuccMid(string label) {
               localStep(this, result, label)
@@ -4421,6 +4429,14 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       ApOption apNone() { result.isNone() }
 
       ApOption apSome(Ap ap) { result = ApOption::some(ap) }
+
+      predicate apIsHidden(Ap ap) {
+        exists(Content head, Ap tail | ap.isCons(head, tail) |
+          contentIsHidden(head)
+          or
+          apIsHidden(tail)
+        )
+      }
 
       private module CallContextSensitivityInput implements CallContextSensitivityInputSig {
         predicate relevantCallEdgeIn = PrevStage::relevantCallEdgeIn/2;

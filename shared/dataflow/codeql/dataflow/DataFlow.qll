@@ -63,6 +63,9 @@ signature module InputSig<LocationSig Location> {
 
   predicate nodeIsHidden(Node node);
 
+  /** Holds if a path node should be hidden when the access path contains `content`. */
+  predicate contentIsHidden(Content content);
+
   class DataFlowExpr;
 
   /** Gets the node corresponding to `e`. */
