@@ -580,6 +580,9 @@ predicate forceHighPrecision(Content c) {
   c instanceof ArrayContent or c instanceof CollectionContent or c instanceof MapValueContent
 }
 
+/** Holds if a path node should be hidden when the access path contains `content`. */
+predicate contentIsHidden(Content content) { content instanceof TCapturedVariableContent }
+
 /** Holds if `n` should be hidden from path explanations. */
 predicate nodeIsHidden(Node n) { n instanceof FlowSummaryNode }
 
