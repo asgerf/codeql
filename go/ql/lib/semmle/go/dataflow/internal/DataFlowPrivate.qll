@@ -418,6 +418,9 @@ Node getArgument(CallNode c, int i) {
   i = -1
 }
 
+/** Holds if a path node should be hidden when the access path contains `content`. */
+predicate contentIsHidden(Content c) { none() }
+
 /** Holds if `n` should be hidden from path explanations. */
 predicate nodeIsHidden(Node n) { n instanceof FlowSummaryNode }
 
