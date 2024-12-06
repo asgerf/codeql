@@ -702,6 +702,9 @@ class TElementContent = TKnownElementContent or TUnknownElementContent;
 
 import Cached
 
+/** Holds if a path node should be hidden when the access path contains `content`. */
+predicate contentIsHidden(Content content) { content instanceof TCapturedVariableContent }
+
 /** Holds if `n` should be hidden from path explanations. */
 predicate nodeIsHidden(Node n) {
   n.(SsaNode).isHidden()
