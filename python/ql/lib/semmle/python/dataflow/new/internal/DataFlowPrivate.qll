@@ -1044,6 +1044,9 @@ predicate isUnreachableInCall(NodeRegion nr, DataFlowCall call) { none() }
  */
 predicate forceHighPrecision(Content c) { none() }
 
+/** Holds if a path node should be hidden when the access path contains `content`. */
+predicate contentIsHidden(Content content) { content instanceof TCapturedVariableContent }
+
 /** Holds if `n` should be hidden from path explanations. */
 predicate nodeIsHidden(Node n) {
   n instanceof ModuleVariableNode
