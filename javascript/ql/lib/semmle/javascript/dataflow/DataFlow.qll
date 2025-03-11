@@ -27,6 +27,7 @@ private import internal.PreCallGraphStep
 private import semmle.javascript.internal.CachedStages
 private import semmle.javascript.dataflow.internal.DataFlowPrivate as Private
 private import semmle.javascript.dataflow.internal.VariableOrThis
+private import semmle.javascript.TypeResolution
 
 module DataFlow {
   /**
@@ -248,9 +249,10 @@ module DataFlow {
     cached
     predicate hasUnderlyingType(string moduleName, string typeName) {
       Stages::TypeTracking::ref() and
-      this.getType().hasUnderlyingType(moduleName, typeName)
-      or
-      this.getFallbackTypeAnnotation().getAnUnderlyingType().hasQualifiedName(moduleName, typeName)
+      // this.getType().hasUnderlyingType(moduleName, typeName)
+      // or
+      // this.getFallbackTypeAnnotation().getAnUnderlyingType().hasQualifiedName(moduleName, typeName)
+      TypeResolution::nodeHasUnderlyingType(this.getFallbackTypeAnnotation(), moduleName, typeName)
     }
 
     /**
