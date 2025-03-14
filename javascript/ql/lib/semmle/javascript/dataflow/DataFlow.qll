@@ -451,7 +451,10 @@ module DataFlow {
      * By default, this predicate is undefined for dynamic property references
      * such as `e[computePropertyName()]` and for spread/rest properties.
      */
-    string getPropertyName() { result = TypeResolution::getStringValue(this.getPropertyNameExpr()) }
+    string getPropertyName() {
+      result = TypeResolution::getStringValue(this.getPropertyNameExpr()) or
+      result = TypeResolution::getIntValue(this.getPropertyNameExpr()).toString()
+    }
 
     /**
      * Holds if this data flow node accesses property `p` on base node `base`.

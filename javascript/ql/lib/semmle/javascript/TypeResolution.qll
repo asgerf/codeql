@@ -346,6 +346,16 @@ module TypeResolution {
     )
   }
 
+  cached
+  int getIntValue(Node node) {
+    result = node.(Expr).getIntValue()
+    or
+    exists(Node mid |
+      result = getIntValue(mid) and
+      ValueFlow::defUseStep(mid, node)
+    )
+  }
+
   string getStringValueTest(Node node) {
     result = getStringValue(node) and
     not exists(node.(Expr).getStringValue())
