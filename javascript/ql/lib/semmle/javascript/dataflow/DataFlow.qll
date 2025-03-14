@@ -237,9 +237,7 @@ module DataFlow {
     cached
     predicate hasUnderlyingType(string globalName) {
       Stages::TypeTracking::ref() and
-      this.getType().hasUnderlyingType(globalName)
-      or
-      this.getFallbackTypeAnnotation().getAnUnderlyingType().hasQualifiedName(globalName)
+      TypeResolution::nodeHasUnderlyingType(this.getFallbackTypeAnnotation(), "global", globalName)
     }
 
     /**
@@ -249,9 +247,7 @@ module DataFlow {
     cached
     predicate hasUnderlyingType(string moduleName, string typeName) {
       Stages::TypeTracking::ref() and
-      // this.getType().hasUnderlyingType(moduleName, typeName)
-      // or
-      // this.getFallbackTypeAnnotation().getAnUnderlyingType().hasQualifiedName(moduleName, typeName)
+      moduleName != "global" and
       TypeResolution::nodeHasUnderlyingType(this.getFallbackTypeAnnotation(), moduleName, typeName)
     }
 
