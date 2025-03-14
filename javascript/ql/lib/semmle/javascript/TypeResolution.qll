@@ -218,26 +218,33 @@ module TypeResolution {
   }
 
   bindingset[name]
-  private string normalizePackageName(string name) {
+  private string normalizeModuleName(string name) {
     result =
       name.regexpReplaceAll("^node:", "")
           .regexpReplaceAll("\\.[jt]sx?$", "")
           .regexpReplaceAll("/(index)?$", "")
   }
 
-  predicate externalModuleRef(Node node, string mod, string name) {
+  /**
+   * Holds if `node` is a reference to the given module, or a qualified name rooted in that module.
+   *
+   * If `qualifiedName` is empty, `node` refers to the module itself.
+   *
+   * If `mod` is the string `"global"`, `node` refers to a global access path.
+   */
+  predicate nodeRefersToModule(Node node, string mod, string qualifiedName) {
     exists(Import imprt |
       node = imprt.getImportedPath() and
-      mod = normalizePackageName(imprt.getImportedPath().getValue()) and
+      mod = normalizeModuleName(imprt.getImportedPath().getValue()) and
       isExternalModuleName(mod) and
-      name = ""
+      qualifiedName = ""
     )
     or
     mod = "global" and
     exists(LocalNamespaceAccess access |
       node = access and
       not exists(access.getLocalNamespaceName()) and
-      access.getName() = name
+      access.getName() = qualifiedName
     )
     or
     // Additionally track through bulk re-exports (`export * from 'mod`).
@@ -245,20 +252,20 @@ module TypeResolution {
     // but has no effect when the ultimate re-exported module is not resolved to a Module.
     // We propagate external module refs through bulk re-exports and ignore shadowing rules.
     exists(BulkReExportDeclaration reExport |
-      externalModuleRef(reExport.getImportedPath(), mod, name) and
+      nodeRefersToModule(reExport.getImportedPath(), mod, qualifiedName) and
       node = reExport.getContainer()
     )
     or
     exists(Node mid |
-      externalModuleRef(mid, mod, name) and
+      nodeRefersToModule(mid, mod, qualifiedName) and
       ValueFlow::defUseStep(mid, node) and
       not node instanceof Variable // avoid a lot of unnecessary tuples
     )
     or
     exists(Node mid, string prefix, string step |
-      externalModuleRef(mid, mod, prefix) and
+      nodeRefersToModule(mid, mod, prefix) and
       readStepCommon(mid, step, node) and
-      name = append(prefix, step)
+      qualifiedName = append(prefix, step)
     )
   }
 
@@ -309,7 +316,7 @@ module TypeResolution {
 
   predicate nodeHasUnderlyingType(Node node, string mod, string name) {
     exists(Node mid, string prefix, string step |
-      externalModuleRef(mid, mod, prefix) and
+      nodeRefersToModule(mid, mod, prefix) and
       readStepCommon(mid, step, node) and
       name = append(prefix, step)
     )
