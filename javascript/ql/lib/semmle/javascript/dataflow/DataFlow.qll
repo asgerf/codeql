@@ -191,26 +191,6 @@ module DataFlow {
     }
 
     /**
-     * Gets the static type of this node as determined by the TypeScript type system.
-     */
-    private Type getType() {
-      exists(AST::ValueNode node |
-        this = TValueNode(node) and
-        ast_node_type(node, result)
-      )
-      or
-      exists(BindingPattern pattern |
-        this = lvalueNode(pattern) and
-        ast_node_type(pattern, result)
-      )
-      or
-      exists(MethodDefinition def |
-        this = TThisNode(def.getInit()) and
-        ast_node_type(def.getDeclaringClass(), result)
-      )
-    }
-
-    /**
      * Gets the type annotation describing the type of this node,
      * provided that a static type could not be found.
      *
