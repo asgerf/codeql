@@ -332,8 +332,11 @@ module TypeResolution {
     nodeHasUnderlyingType(node, mod, name)
   }
 
+  cached
   string getStringValue(Node node) {
     result = node.(Expr).getStringValue()
+    or
+    result = node.(Label).getName()
     or
     exists(Node mid |
       result = getStringValue(mid) and

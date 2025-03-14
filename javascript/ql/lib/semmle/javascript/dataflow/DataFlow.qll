@@ -471,7 +471,7 @@ module DataFlow {
      * By default, this predicate is undefined for dynamic property references
      * such as `e[computePropertyName()]` and for spread/rest properties.
      */
-    abstract string getPropertyName();
+    string getPropertyName() { result = TypeResolution::getStringValue(this.getPropertyNameExpr()) }
 
     /**
      * Holds if this data flow node accesses property `p` on base node `base`.
@@ -563,8 +563,6 @@ module DataFlow {
 
     override Expr getPropertyNameExpr() { result = astNode.getPropertyNameExpr() }
 
-    override string getPropertyName() { result = astNode.getPropertyName() }
-
     override Node getRhs() { result = valueNode(astNode.(LValue).getRhs()) }
 
     override ControlFlowNode getWriteNode() { result = astNode.(LValue).getDefNode() }
@@ -580,8 +578,6 @@ module DataFlow {
     override Node getBase() { result = valueNode(prop.getObjectExpr()) }
 
     override Expr getPropertyNameExpr() { result = prop.getNameExpr() }
-
-    override string getPropertyName() { result = prop.getName() }
 
     override Node getRhs() { result = valueNode(prop.(ValueProperty).getInit()) }
 
@@ -615,8 +611,6 @@ module DataFlow {
 
     override Expr getPropertyNameExpr() { result = astNode.getArgument(1) }
 
-    override string getPropertyName() { result = astNode.getArgument(1).getStringValue() }
-
     override Node getRhs() {
       exists(DataFlow::SourceNode descriptor |
         descriptor = astNode.getArgument(2).flow().getALocalSource()
@@ -648,8 +642,6 @@ module DataFlow {
     override Node getBase() { result = valueNode(prop.getDeclaringClass()) }
 
     override Expr getPropertyNameExpr() { result = prop.getNameExpr() }
-
-    override string getPropertyName() { result = prop.getName() }
 
     override Node getRhs() {
       not prop instanceof AccessorMethodDefinition and
@@ -683,8 +675,6 @@ module DataFlow {
 
     override Expr getPropertyNameExpr() { result = prop.getNameExpr() }
 
-    override string getPropertyName() { result = prop.getName() }
-
     override Node getRhs() {
       not prop instanceof AccessorMethodDefinition and
       result = valueNode(prop.getInit())
@@ -714,8 +704,6 @@ module DataFlow {
     override Node getBase() { result = valueNode(prop.getElement()) }
 
     override Expr getPropertyNameExpr() { result = prop.getNameExpr() }
-
-    override string getPropertyName() { result = prop.getName() }
 
     override Node getRhs() { result = valueNode(prop.getValue()) }
 
@@ -758,8 +746,6 @@ module DataFlow {
     override Node getBase() { result = TImplicitThisUse(prop, false) }
 
     override Expr getPropertyNameExpr() { result = prop.getNameExpr() }
-
-    override string getPropertyName() { result = prop.getName() }
 
     override Node getRhs() { result = valueNode(prop.getInit()) }
 
@@ -808,8 +794,6 @@ module DataFlow {
     override Node getBase() { result = valueNode(astNode.getBase()) }
 
     override Expr getPropertyNameExpr() { result = astNode.getPropertyNameExpr() }
-
-    override string getPropertyName() { result = astNode.getPropertyName() }
   }
 
   /**
@@ -825,8 +809,6 @@ module DataFlow {
     override Node getBase() { result = TValueNode(prop.getObjectPattern()) }
 
     override Expr getPropertyNameExpr() { result = prop.getNameExpr() }
-
-    override string getPropertyName() { result = prop.getName() }
   }
 
   /**
