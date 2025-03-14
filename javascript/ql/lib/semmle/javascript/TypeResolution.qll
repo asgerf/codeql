@@ -350,4 +350,42 @@ module TypeResolution {
     result = getStringValue(node) and
     not exists(node.(Expr).getStringValue())
   }
+
+  /**
+   * Holds if `node` refers to the type `number`, `boolean`, `null`, `undefined`, `void`, `never`
+   * or some combination thereof.
+   */
+  predicate isSanitizingPrimitiveType(Node node) {
+    node.(TypeExpr).isNumbery()
+    or
+    node.(TypeExpr).isBooleany()
+    or
+    node.(TypeExpr).isNull()
+    or
+    node.(TypeExpr).isUndefined()
+    or
+    node.(TypeExpr).isVoid()
+    or
+    node.(TypeExpr).isNever()
+    or
+    isSanitizingPrimitiveTypeUnion(node)
+    or
+    isSanitizingPrimitiveType(node.(IntersectionTypeExpr).getAnElementType())
+    or
+    exists(Node mid |
+      isSanitizingPrimitiveType(mid) and
+      TypeFlow::defUseStep(mid, node)
+    )
+  }
+
+  private predicate isSanitizingPrimitiveTypeUnion(UnionTypeExpr node, int n) {
+    isSanitizingPrimitiveType(node.getElementType(0)) and n = 1
+    or
+    isSanitizingPrimitiveTypeUnion(node, n - 1) and
+    isSanitizingPrimitiveType(node.getElementType(n - 1))
+  }
+
+  private predicate isSanitizingPrimitiveTypeUnion(UnionTypeExpr node) {
+    isSanitizingPrimitiveTypeUnion(node, node.getNumElementType())
+  }
 }
