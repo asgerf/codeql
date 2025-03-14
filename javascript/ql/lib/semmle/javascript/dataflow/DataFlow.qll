@@ -107,7 +107,7 @@ module DataFlow {
     }
 
     /** Gets the string value of this node, if it is a string literal or constant string concatenation. */
-    string getStringValue() { result = this.asExpr().getStringValue() }
+    string getStringValue() { result = TypeResolution::getStringValue(this.asExpr()) }
 
     /** Holds if this node may evaluate to the Boolean value `b`. */
     predicate mayHaveBooleanValue(boolean b) {

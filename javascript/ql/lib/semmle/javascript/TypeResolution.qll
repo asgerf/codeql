@@ -331,4 +331,20 @@ module TypeResolution {
   predicate nodeHasUnderlyingType2(TypeExpr node, string mod, string name) {
     nodeHasUnderlyingType(node, mod, name)
   }
+
+  string getStringValue(Node node) {
+    result = node.(Expr).getStringValue()
+    or
+    exists(Node mid |
+      result = getStringValue(mid) and
+      ValueFlow::defUseStep(mid, node) and
+      // Exclude steps where we use the import path as representative for the imported module
+      not mid = any(Import imprt).getImportedPath()
+    )
+  }
+
+  string getStringValueTest(Node node) {
+    result = getStringValue(node) and
+    not exists(node.(Expr).getStringValue())
+  }
 }
