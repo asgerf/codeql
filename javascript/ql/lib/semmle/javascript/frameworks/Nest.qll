@@ -317,14 +317,6 @@ module NestJS {
     }
   }
 
-  private predicate isStringType(Type type) {
-    type instanceof StringType
-    or
-    type instanceof AnyType
-    or
-    isStringType(type.(PromiseType).getElementType().unfold())
-  }
-
   /**
    * A return value from a route handler, seen as an argument to `res.send()`.
    *
@@ -342,12 +334,7 @@ module NestJS {
 
     ReturnValueAsResponseSend() {
       handler.isReturnValueReflected() and
-      this = handler.getAReturn() and
-      // Only returned strings are sinks
-      not exists(Type type |
-        type = this.asExpr().getType() and
-        not isStringType(type.unfold())
-      )
+      this = handler.getAReturn()
     }
 
     override Http::RouteHandler getRouteHandler() { result = handler }
