@@ -1,0 +1,16 @@
+name: "lean"
+display_name: "Lean"
+version: 0.0.1
+column_kind: "utf8"
+legacy_qltest_extraction: true
+build_modes:
+  - none
+github_api_languages:
+  - Lean
+scc_languages:
+  - Lean
+file_types:
+  - name: JS
+    display_name: JavaScript files
+    extensions:
+       - .js
