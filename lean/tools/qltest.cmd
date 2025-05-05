@@ -2,7 +2,7 @@
 
 type NUL && "%CODEQL_DIST%\codeql.exe" database index-files ^
     --prune=**/*.testproj ^
-    --include-extension=.php ^
+    --include-extension=.js ^
     --size-limit=5m ^
     --language=lean ^
     --working-dir=. ^

@@ -4,7 +4,7 @@ set -eu
 
 "${CODEQL_DIST}/codeql" database index-files \
     --prune="**/*.testproj" \
-    --include-extension=.php \
+    --include-extension=.js \
     --size-limit=5m \
     --language=ql \
     --working-dir=.\
