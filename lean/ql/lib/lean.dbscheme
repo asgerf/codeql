@@ -1182,7 +1182,7 @@ case @js_token.kind of
 ;
 
 
-@js_ast_node = @js_arguments | @js_array | @js_array_pattern | @js_arrow_function | @js_assignment_expression | @js_assignment_pattern | @js_augmented_assignment_expression | @js_await_expression | @js_binary_expression | @js_break_statement | @js_call_expression | @js_catch_clause | @js_class | @js_class_body | @js_class_declaration | @js_class_heritage | @js_class_static_block | @js_computed_property_name | @js_continue_statement | @js_decorator | @js_do_statement | @js_else_clause | @js_export_clause | @js_export_specifier | @js_export_statement | @js_expression_statement | @js_field_definition | @js_finally_clause | @js_for_in_statement | @js_for_statement | @js_formal_parameters | @js_function_declaration | @js_function_expression | @js_generator_function | @js_generator_function_declaration | @js_if_statement | @js_import_attribute | @js_import_clause | @js_import_specifier | @js_import_statement | @js_jsx_attribute | @js_jsx_closing_element | @js_jsx_element | @js_jsx_expression | @js_jsx_namespace_name | @js_jsx_opening_element | @js_jsx_self_closing_element | @js_labeled_statement | @js_lexical_declaration | @js_member_expression | @js_method_definition | @js_named_imports | @js_namespace_export | @js_namespace_import | @js_new_expression | @js_object | @js_object_assignment_pattern | @js_object_pattern | @js_pair | @js_pair_pattern | @js_parenthesized_expression | @js_program | @js_regex | @js_rest_pattern | @js_return_statement | @js_sequence_expression | @js_spread_element | @js_statement_block | @js_string__ | @js_subscript_expression | @js_switch_body | @js_switch_case | @js_switch_default | @js_switch_statement | @js_template_string | @js_template_substitution | @js_ternary_expression | @js_throw_statement | @js_token | @js_try_statement | @js_unary_expression | @js_update_expression | @js_variable_declaration | @js_variable_declarator | @js_while_statement | @js_with_statement | @js_yield_expression
+@js_ast_node = @js_arguments | @js_array | @js_array_pattern | @js_arrow_function | @js_assignment_expression | @js_assignment_pattern | @js_augmented_assignment_expression | @js_await_expression | @js_binary_expression | @js_break_statement | @js_call_expression | @js_catch_clause | @js_class | @js_class_body | @js_class_declaration | @js_class_heritage | @js_class_static_block | @js_computed_property_name | @js_continue_statement | @js_decorator | @js_do_statement | @js_else_clause | @js_export_clause | @js_export_specifier | @js_export_statement | @js_expression_statement | @js_field_definition | @js_finally_clause | @js_for_in_statement | @js_for_statement | @js_formal_parameters | @js_function_declaration | @js_function_expression | @js_generator_function | @js_generator_function_declaration | @js_if_statement | @js_import_attribute | @js_import_clause | @js_import_specifier | @js_import_statement | @js_jsx_attribute | @js_jsx_closing_element | @js_jsx_element | @js_jsx_expression | @js_jsx_namespace_name | @js_jsx_opening_element | @js_jsx_self_closing_element | @js_labeled_statement | @js_lexical_declaration | @js_member_expression | @js_method_definition | @js_named_imports | @js_namespace_export | @js_namespace_import | @js_new_expression | @js_object | @js_object_assignment_pattern | @js_object_pattern | @js_pair | @js_pair_pattern | @js_parenthesized_expression | @js_program | @js_regex | @js_rest_pattern | @js_return_statement | @js_sequence_expression | @js_spread_element | @js_statement_block | @js_string__ | @js_subscript_expression | @js_switch_body | @js_switch_case | @js_switch_default | @js_switch_statement | @js_synthetic_node | @js_template_string | @js_template_substitution | @js_ternary_expression | @js_throw_statement | @js_token | @js_try_statement | @js_unary_expression | @js_update_expression | @js_variable_declaration | @js_variable_declarator | @js_while_statement | @js_with_statement | @js_yield_expression
 
 js_ast_node_location(
   unique int node: @js_ast_node ref,
@@ -1194,5 +1194,12 @@ js_ast_node_parent(
   unique int node: @js_ast_node ref,
   int parent: @js_ast_node ref,
   int parent_index: int ref
+);
+
+#keyset[parent, tag]
+js_synthetic_node_def(
+  unique int id: @js_synthetic_node,
+  int parent: @js_ast_node ref,
+  string tag: string ref
 );
 
