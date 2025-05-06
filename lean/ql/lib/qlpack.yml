@@ -5,6 +5,7 @@ groups:
   - queries
 dbscheme: lean.dbscheme
 extractor: lean
+upgrades: upgrades
 dependencies:
   codeql/typos: ${workspace}
   codeql/util: ${workspace}

@@ -26,5 +26,11 @@ $CODEQL_BINARY query format -i ql/lib/codeql/js/GeneratedAst.qll
 rm -rf extractor-pack
 mkdir -p extractor-pack
 cp -r codeql-extractor.yml tools ql/lib/lean.dbscheme ql/lib/lean.dbscheme.stats extractor-pack/
+
+# Post-processing pack
+cp -r ql/lib/upgrades/post-process extractor-pack/post-process
+cp ql/lib/lean.dbscheme extractor-pack/post-process/lean.dbscheme
+cp ql/lib/lean.dbscheme extractor-pack/post-process/old.dbscheme
+
 mkdir -p extractor-pack/tools/${platform}
 cp target/release/codeql-extractor-lean extractor-pack/tools/${platform}/extractor
