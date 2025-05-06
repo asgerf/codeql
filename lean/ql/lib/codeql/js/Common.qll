@@ -69,3 +69,23 @@ predicate isInLValuePosition(AstNode node) {
 predicate isLikelyArrayAccess(SubscriptExpression e) {
   none() // TODO
 }
+
+string inferNameFromNode(Node node) {
+  result = node.(Identifier).getValue()
+  or
+  result = node.(PropertyIdentifier).getValue()
+  or
+  result = node.(PropAccess).getPropertyNameNode().(PropertyIdentifier).getValue()
+}
+
+string inferNameFromContext(Node context) {
+  exists(AssignmentExpression assign |
+    context = assign.getRight() and
+    result = inferNameFromNode(assign.getLeft())
+  )
+  or
+  exists(Pair pair |
+    context = pair.getValue() and
+    result = pair.getKey().(PropertyIdentifier).getValue()
+  )
+}
