@@ -1,5 +1,0 @@
-name: codeql/lean-postprocess
-version: 1.0.0-dev
-dependencies:
-  codeql/lean: ${workspace}
-warnOnImplicitThis: true

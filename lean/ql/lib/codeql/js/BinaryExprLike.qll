@@ -16,7 +16,7 @@ abstract private class BinaryExpressionLikeImpl extends Node {
 /**
  * A binary expression synthesized from a compound assignment operator.
  */
-class BinaryExpressionInAssignment extends Node, BinaryExpressionLikeImpl, @js_synthetic_node {
+class BinaryExpressionInAssignment extends Node, BinaryExpressionLikeImpl {
   private AugmentedAssignmentExpression assignment;
 
   BinaryExpressionInAssignment() { this = getSyntheticNode(assignment, "binary-operator") }
@@ -28,8 +28,6 @@ class BinaryExpressionInAssignment extends Node, BinaryExpressionLikeImpl, @js_s
   override Node getRight() { result = assignment.getRight() }
 
   override string getOperator() { result + "=" = assignment.getOperator() }
-
-  override string getAPrimaryQlClass() { result = "BinaryExpressionInAssignment" }
 }
 
 private class BinaryExpressionAsLike extends BinaryExpressionLikeImpl instanceof BinaryExpression {

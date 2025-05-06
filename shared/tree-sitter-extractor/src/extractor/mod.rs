@@ -7,7 +7,6 @@ use std::collections::BTreeSet as Set;
 use std::env;
 use std::path::Path;
 
-use streaming_iterator::StreamingIterator;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::Layer;
 use tracing_subscriber::filter::Filtered;
@@ -15,8 +14,6 @@ use tracing_subscriber::fmt::format::DefaultFields;
 use tracing_subscriber::fmt::format::Format;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tree_sitter::Query;
-use tree_sitter::QueryCursor;
 use tree_sitter::{Language, Node, Parser, Range, Tree};
 
 pub mod simple;
@@ -241,25 +238,6 @@ pub fn extract(
     );
     traverse(&tree, &mut visitor);
 
-    let query = Query::new(language, "(source_file) @source_file").expect("Error compiling query");
-    let mut cursor = QueryCursor::new();
-    let mut captures = cursor.captures(&query, tree.root_node(), source);
-    while let item = captures.next() {
-        let node = capture.node;
-        if node.is_missing() {
-            continue;
-        }
-        let loc = location_for(&mut visitor, file_label, node);
-        let loc_label = location_label(trap_writer, loc);
-        trap_writer.add_tuple(
-            "source_file",
-            vec![
-                trap::Arg::Label(file_label),
-                trap::Arg::Label(loc_label),
-                sliced_source_arg(source, node),
-            ],
-        );
-    }
     parser.reset();
 }
 

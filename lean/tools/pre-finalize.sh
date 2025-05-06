@@ -1,4 +1,0 @@
-#!/bin/sh
-
-echo "Pre finalize script!"
-echo "CODEQL_EXTRACTOR_LEAN_WIP_DATABASE = $CODEQL_EXTRACTOR_LEAN_WIP_DATABASE"
