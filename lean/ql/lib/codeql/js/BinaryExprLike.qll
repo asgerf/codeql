@@ -16,10 +16,10 @@ abstract private class BinaryExpressionLikeImpl extends Node {
 /**
  * A binary expression synthesized from a compound assignment operator.
  */
-class BinaryExpressionInAssignment extends Node, BinaryExpressionLikeImpl {
+class BinaryExpressionInAssignment extends SyntheticNode, BinaryExpressionLikeImpl {
   private AugmentedAssignmentExpression assignment;
 
-  BinaryExpressionInAssignment() { this = getSyntheticNode(assignment, "binary-operator") }
+  BinaryExpressionInAssignment() { this = assignment.getSyntheticNode("binary-operator") }
 
   AugmentedAssignmentExpression getAssignment() { result = assignment }
 

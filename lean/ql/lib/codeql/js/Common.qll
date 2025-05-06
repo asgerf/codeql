@@ -10,8 +10,6 @@ ContentSet getContentSetFromKey(Node key) {
   result = ContentSet::arrayElementKnown(getIntValueFromNode(key))
 }
 
-Node getSyntheticNode(AstNode base, string name) { none() }
-
 Node getPostUpdate(Node node) { result = node } // TODO
 
 /**
@@ -26,7 +24,7 @@ Node getPostUpdate(Node node) { result = node } // TODO
 Node getLValueNode(AstNode node) {
   isInPureLValuePosition(node) and result = node
   or
-  isInImpureLValuePosition(node) and result = getSyntheticNode(node, "lvalue")
+  isInImpureLValuePosition(node) and result = node.getSyntheticNode("lvalue")
 }
 
 /**
