@@ -133,7 +133,7 @@ pub fn create_ast_node_class<'a>(
     };
     let get_synthetic_node = ql::Predicate {
         qldoc: Some(String::from("Gets a synthetic node attached to this node.")),
-        name: "getSyntheticNode",
+        name: "getSyntheticChildNode",
         overridden: false,
         is_final: true,
         return_type: Some(ql::Type::Normal("SyntheticNode")),

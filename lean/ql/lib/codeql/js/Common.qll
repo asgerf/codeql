@@ -24,7 +24,7 @@ Node getPostUpdate(Node node) { result = node } // TODO
 Node getLValueNode(AstNode node) {
   isInPureLValuePosition(node) and result = node
   or
-  isInImpureLValuePosition(node) and result = node.getSyntheticNode("lvalue")
+  isInImpureLValuePosition(node) and result = node.getSyntheticChildNode("lvalue")
 }
 
 /**

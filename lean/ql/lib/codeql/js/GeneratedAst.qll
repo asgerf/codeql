@@ -36,7 +36,9 @@ module JS {
     string getPrimaryQlClasses() { result = concat(this.getAPrimaryQlClass(), ",") }
 
     /** Gets a synthetic node attached to this node. */
-    final SyntheticNode getSyntheticNode(string tag) { js_synthetic_node_def(result, this, tag) }
+    final SyntheticNode getSyntheticChildNode(string tag) {
+      js_synthetic_node_def(result, this, tag)
+    }
   }
 
   /** A token. */
