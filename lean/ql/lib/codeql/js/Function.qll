@@ -2,7 +2,7 @@ private import javascript
 
 final class Function = FunctionImpl;
 
-final class FunctionOrProgram = FunctionImpl;
+final class FunctionOrProgram = FunctionOrProgramImpl;
 
 abstract private class FunctionOrProgramImpl extends AstNode { }
 
