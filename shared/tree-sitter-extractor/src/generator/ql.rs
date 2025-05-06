@@ -143,6 +143,7 @@ pub enum Expression<'a> {
     Or(Vec<Expression<'a>>),
     Equals(Box<Expression<'a>>, Box<Expression<'a>>),
     Dot(Box<Expression<'a>>, &'a str, Vec<Expression<'a>>),
+    Binary(Box<Expression<'a>>, &'a str, Box<Expression<'a>>),
     Aggregate {
         name: &'a str,
         vars: Vec<FormalParameter<'a>>,
@@ -204,6 +205,10 @@ impl fmt::Display for Expression<'_> {
                     write!(f, "{}", arg)?;
                 }
                 write!(f, ")")
+            }
+            Expression::Binary(left, operator, right) => {
+                // Note: for now we always insert parentheses to ensure correct precedence.
+                write!(f, "({} {} {})", left, operator, right)
             }
             Expression::Aggregate {
                 name,

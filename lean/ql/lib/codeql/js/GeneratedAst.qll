@@ -15,9 +15,15 @@ module JS {
     final L::Location getLocation() { js_ast_node_location(this, result) }
 
     /** Gets the parent of this element. */
-    final AstNode getParent() { js_ast_node_parent(this, result, _) }
+    final AstNode getParent() {
+      js_ast_node_parent(this, result, _) or js_synthetic_node_def(this, result, _)
+    }
 
-    /** Gets the index of this node among the children of its parent. */
+    /**
+     * Gets the index of this node among the children of its parent.
+     *
+     * Has no result for synthetic nodes.
+     */
     final int getParentIndex() { js_ast_node_parent(this, _, result) }
 
     /** Gets a field or child node of this node. */
@@ -28,6 +34,9 @@ module JS {
 
     /** Gets a comma-separated list of the names of the primary CodeQL classes to which this element belongs. */
     string getPrimaryQlClasses() { result = concat(this.getAPrimaryQlClass(), ",") }
+
+    /** Gets a synthetic node attached to this node. */
+    final SyntheticNode getSyntheticNode(string tag) { js_synthetic_node_def(result, this, tag) }
   }
 
   /** A token. */
@@ -46,6 +55,17 @@ module JS {
   class ReservedWord extends @js_reserved_word, Token {
     /** Gets the name of the primary QL class for this element. */
     final override string getAPrimaryQlClass() { result = "ReservedWord" }
+  }
+
+  /** A synthetic node inserted to simplify analysis. */
+  class SyntheticNode extends @js_synthetic_node, AstNode {
+    /** Gets the name of the primary QL class for this element. */
+    override string getAPrimaryQlClass() { result = "SyntheticNode" }
+
+    /** Gets the tag of this synthetic node. */
+    final string getTag() { js_synthetic_node_def(this, _, result) }
+
+    override string toString() { result = ("SyntheticNode: " + this.getTag()) }
   }
 
   /** A class representing `arguments` nodes. */

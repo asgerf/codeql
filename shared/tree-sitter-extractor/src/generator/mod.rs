@@ -96,9 +96,14 @@ pub fn generate(
                 &ast_node_name,
                 &node_location_table_name,
                 &node_parent_table_name,
+                &synthetic_node_table_name,
             )),
             ql::TopLevel::Class(ql_gen::create_token_class(&token_name, &tokeninfo_name)),
             ql::TopLevel::Class(ql_gen::create_reserved_word_class(&reserved_word_name)),
+            ql::TopLevel::Class(ql_gen::create_synthetic_node_class(
+                &synthetic_node_name,
+                &synthetic_node_table_name,
+            )),
         ];
         body.append(&mut ql_gen::convert_nodes(&nodes));
         ql::write(
@@ -457,7 +462,11 @@ fn create_token_case<'a>(name: &'a str, token_kinds: Map<&'a str, usize>) -> dbs
 /// - `name` - the name of the table to create.
 /// - `synthetic_node_name` - the name of the synthetic node type
 /// - `ast_node_name` - the name of the AST node type (parent of the synthetic node).
-fn create_synthetic_node_table<'a>(name: &'a str, synthetic_node_name: &'a str, ast_node_name: &'a str) -> dbscheme::Table<'a> {
+fn create_synthetic_node_table<'a>(
+    name: &'a str,
+    synthetic_node_name: &'a str,
+    ast_node_name: &'a str,
+) -> dbscheme::Table<'a> {
     dbscheme::Table {
         name,
         columns: vec![

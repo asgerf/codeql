@@ -8,6 +8,7 @@ pub fn create_ast_node_class<'a>(
     ast_node: &'a str,
     node_location_table: &'a str,
     node_parent_table: &'a str,
+    synthetic_node_table: &'a str,
 ) -> ql::Class<'a> {
     // Default implementation of `toString` calls `this.getAPrimaryQlClass()`
     let to_string = ql::Predicate {
@@ -53,18 +54,28 @@ pub fn create_ast_node_class<'a>(
         is_final: true,
         return_type: Some(ql::Type::Normal("AstNode")),
         formal_parameters: vec![],
-        body: ql::Expression::Pred(
-            node_parent_table,
-            vec![
-                ql::Expression::Var("this"),
-                ql::Expression::Var("result"),
-                ql::Expression::Var("_"),
-            ],
-        ),
+        body: ql::Expression::Or(vec![
+            ql::Expression::Pred(
+                node_parent_table,
+                vec![
+                    ql::Expression::Var("this"),
+                    ql::Expression::Var("result"),
+                    ql::Expression::Var("_"),
+                ],
+            ),
+            ql::Expression::Pred(
+                synthetic_node_table,
+                vec![
+                    ql::Expression::Var("this"),
+                    ql::Expression::Var("result"),
+                    ql::Expression::Var("_"),
+                ],
+            ),
+        ]),
     };
     let get_parent_index = ql::Predicate {
         qldoc: Some(String::from(
-            "Gets the index of this node among the children of its parent.",
+            "Gets the index of this node among the children of its parent.\n\n Has no result for synthetic nodes.",
         )),
         name: "getParentIndex",
         overridden: false,
@@ -120,6 +131,25 @@ pub fn create_ast_node_class<'a>(
             }),
         ),
     };
+    let get_synthetic_node = ql::Predicate {
+        qldoc: Some(String::from("Gets a synthetic node attached to this node.")),
+        name: "getSyntheticNode",
+        overridden: false,
+        is_final: true,
+        return_type: Some(ql::Type::Normal("SyntheticNode")),
+        formal_parameters: vec![ql::FormalParameter {
+            name: "tag",
+            param_type: ql::Type::String,
+        }],
+        body: ql::Expression::Pred(
+            synthetic_node_table,
+            vec![
+                ql::Expression::Var("result"),
+                ql::Expression::Var("this"),
+                ql::Expression::Var("tag"),
+            ],
+        ),
+    };
     ql::Class {
         qldoc: Some(String::from("The base class for all AST nodes")),
         name: "AstNode",
@@ -134,7 +164,63 @@ pub fn create_ast_node_class<'a>(
             get_a_field_or_child,
             get_a_primary_ql_class,
             get_primary_ql_classes,
+            get_synthetic_node,
         ],
+    }
+}
+
+pub fn create_synthetic_node_class<'a>(
+    synthetic_node_name: &'a str,
+    synthetic_node_table_name: &'a str,
+) -> ql::Class<'a> {
+    let get_a_primary_ql_class = create_get_a_primary_ql_class("SyntheticNode", false);
+    let get_tag = ql::Predicate {
+        qldoc: Some(String::from("Gets the tag of this synthetic node.")),
+        name: "getTag",
+        overridden: false,
+        is_final: true,
+        return_type: Some(ql::Type::String),
+        formal_parameters: vec![],
+        body: ql::Expression::Pred(
+            synthetic_node_table_name,
+            vec![
+                ql::Expression::Var("this"),
+                ql::Expression::Var("_"),
+                ql::Expression::Var("result"),
+            ],
+        ),
+    };
+    let to_string = ql::Predicate {
+        qldoc: None,
+        name: "toString",
+        overridden: true,
+        is_final: false,
+        return_type: Some(ql::Type::String),
+        formal_parameters: vec![],
+        body: ql::Expression::Equals(
+            ql::Expression::Var("result").into(),
+            ql::Expression::Binary(
+                ql::Expression::String("SyntheticNode: ").into(),
+                "+",
+                ql::Expression::Dot(ql::Expression::Var("this").into(), "getTag", vec![]).into(),
+            )
+            .into(),
+        ),
+    };
+    ql::Class {
+        qldoc: Some(String::from(
+            "A synthetic node inserted to simplify analysis.",
+        )),
+        name: "SyntheticNode",
+        is_abstract: false,
+        supertypes: vec![
+            ql::Type::At(synthetic_node_name),
+            ql::Type::Normal("AstNode"),
+        ]
+        .into_iter()
+        .collect(),
+        characteristic_predicate: None,
+        predicates: vec![get_a_primary_ql_class, get_tag, to_string],
     }
 }
 
