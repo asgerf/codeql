@@ -10,7 +10,7 @@ github_api_languages:
 scc_languages:
   - Lean
 file_types:
-  - name: JS
+  - name: js
     display_name: JavaScript files
     extensions:
        - .js
