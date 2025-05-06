@@ -8,4 +8,4 @@ set -eu
     --size-limit=5m \
     --language=ql \
     --working-dir=.\
-    "$CODEQL_EXTRACTOR_QL_WIP_DATABASE"
+    "$CODEQL_EXTRACTOR_LEAN_WIP_DATABASE"

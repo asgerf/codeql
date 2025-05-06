@@ -6,7 +6,7 @@ type NUL && "%CODEQL_DIST%\codeql.exe" database index-files ^
     --size-limit=5m ^
     --language=lean ^
     --working-dir=. ^
-    "%CODEQL_EXTRACTOR_QL_WIP_DATABASE%"
+    "%CODEQL_EXTRACTOR_LEAN_WIP_DATABASE%"
 
 IF %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
 
