@@ -10,7 +10,6 @@ function strip_imports() {
 }
 
 cat \
-    "$ROOT_DIR"/ql/lib/codeql/js/GeneratedAst.qll \
-    "$ROOT_DIR"/ql/lib/codeql/js/PostProcessing.qll \
+    "$ROOT_DIR"/ql/lib/codeql/js/base/*.qll \
     "$ROOT_DIR"/ql/lib/upgrades/post-process/PostProcess.ql \
     | strip_imports
