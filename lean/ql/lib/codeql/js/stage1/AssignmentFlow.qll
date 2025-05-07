@@ -1,5 +1,6 @@
 private import javascript
 private import Stage1
+private import LeftHandValues
 
 /**
  * Flow rules for anything that causes flow into an L-value.

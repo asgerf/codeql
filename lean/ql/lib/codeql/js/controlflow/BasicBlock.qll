@@ -1,5 +1,6 @@
 private import javascript
 private import codeql.controlflow.BasicBlock
+private import LeftHandValues
 
 private module Input implements InputSig<Location> {
   newtype SuccessorType =
@@ -17,7 +18,7 @@ private module Input implements InputSig<Location> {
 
   predicate nodeGetCfgScope = getEnclosingFunctionOrProgram/1;
 
-  private Node simpleBranch(Node condition, Node trueCase, Node falseCase) {
+  private predicate simpleBranch(Node condition, Node trueCase, Node falseCase) {
     exists(TernaryExpression expr |
       condition = expr.getCondition() and
       trueCase = expr.getConsequence() and
