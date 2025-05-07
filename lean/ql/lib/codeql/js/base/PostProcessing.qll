@@ -9,5 +9,7 @@ module PostProcessing {
     LeftHandValues::isInImpureLValuePosition(node) and tag = "lvalue"
     or
     Conditions::isCondition(node) and tag = ["true-outcome", "false-outcome"]
+    or
+    node instanceof AugmentedAssignmentExpression and tag = "binary-operator"
   }
 }
