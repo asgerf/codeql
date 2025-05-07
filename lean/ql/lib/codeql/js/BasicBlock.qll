@@ -2,10 +2,7 @@ private import javascript
 private import codeql.controlflow.BasicBlock
 
 private module Input implements InputSig<Location> {
-  newtype SuccessorType =
-    additional TNormalSuccessor() or
-    additional TTrueSuccessor() or
-    additional TFalseSuccessor()
+  import ControlFlowGraph
 
   predicate successorTypeIsCondition(SuccessorType t) {
     t = TTrueSuccessor() or t = TFalseSuccessor()
@@ -17,7 +14,7 @@ private module Input implements InputSig<Location> {
 
   predicate nodeGetCfgScope = getEnclosingFunctionOrProgram/1;
 
-  private Node simpleBranch(Node condition, Node trueCase, Node falseCase) {
+  private predicate simpleBranch(Node condition, Node trueCase, Node falseCase) {
     exists(TernaryExpression expr |
       condition = expr.getCondition() and
       trueCase = expr.getConsequence() and
@@ -57,8 +54,17 @@ private module Input implements InputSig<Location> {
       trueCase = stmt.getBody() and
       falseCase = stmt.getSyntheticChildNode("false-case")
     )
-    or
-    exists(BinaryExpressionLike binary |
+  }
+
+  /**
+   * Like `simpleBranch`, with the additional `operator` parameter that denotes the
+   * operator to be short circuited in one of the branches.
+   *
+   * Concretely, if a case refers to `operator` it is interpreted to mean the end of that node,
+   * as opposed to its beginning.
+   */
+  private Node shortCircuit(Node condition, Node trueCase, Node falseCase, Node operator) {
+    exists(BinaryExpressionLike binary | operator = binary |
       binary.getOperator() = "&&" and
       condition = binary.getLeft() and
       trueCase = binary.getRight() and
