@@ -22,8 +22,8 @@ else
 fi
 
 cargo build --release
-cargo run --release --bin codeql-extractor-lean -- generate --dbscheme ql/lib/lean.dbscheme --library ql/lib/codeql/js/GeneratedAst.qll
-$CODEQL_BINARY query format -i ql/lib/codeql/js/GeneratedAst.qll
+cargo run --release --bin codeql-extractor-lean -- generate --dbscheme ql/lib/lean.dbscheme --library ql/lib/codeql/js/base/GeneratedAst.qll
+$CODEQL_BINARY query format -i ql/lib/codeql/js/base/GeneratedAst.qll
 
 rm -rf extractor-pack
 mkdir -p extractor-pack
