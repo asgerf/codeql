@@ -3,7 +3,25 @@ private import Stage1
 
 class BasicFlow extends Stage1 {
   override predicate valueStep(Node node1, Node node2) {
-    ControlFlow::controlExpressionFlow(node1, node2)
+    exists(BinaryExpressionLike expr |
+      expr.getOperator() = ["||", "??"] and
+      node1 = [expr.getLeft(), expr.getRight()] and
+      node2 = expr
+      or
+      expr.getOperator() = "&&" and
+      node1 = expr.getRight() and
+      node2 = expr
+    )
+    or
+    exists(TernaryExpression expr |
+      node1 = [expr.getConsequence(), expr.getAlternative()] and
+      node2 = expr
+    )
+    or
+    exists(ParenthesizedExpression expr |
+      node1 = expr.getChild() and
+      node2 = expr
+    )
   }
 
   override predicate taintStep(Node node1, Node node2) {
