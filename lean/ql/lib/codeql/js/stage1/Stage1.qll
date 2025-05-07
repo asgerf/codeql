@@ -1,5 +1,8 @@
 private import javascript
 private import codeql.util.Unit
+import codeql.js.common.CommonLayer
+
+class Node = AstNode;
 
 /**
  * Flow steps contributed to stage 1.

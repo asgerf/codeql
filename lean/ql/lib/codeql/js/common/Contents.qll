@@ -1,4 +1,4 @@
-private import javascript
+private import CommonLayer
 
 newtype TContent =
   TProperty(string name) { name = any(PropertyIdentifier e).getValue() } or

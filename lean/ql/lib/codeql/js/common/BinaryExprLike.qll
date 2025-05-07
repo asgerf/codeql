@@ -1,14 +1,14 @@
-private import javascript
+private import CommonLayer
 
 /**
  * A binary expression, possibly one synthesized from a compound assignment operator.
  */
 final class BinaryExpressionLike = BinaryExpressionLikeImpl;
 
-abstract private class BinaryExpressionLikeImpl extends Node {
-  abstract Node getLeft();
+abstract private class BinaryExpressionLikeImpl extends AstNode {
+  abstract AstNode getLeft();
 
-  abstract Node getRight();
+  abstract AstNode getRight();
 
   abstract string getOperator();
 }
@@ -23,17 +23,17 @@ class BinaryExpressionInAssignment extends SyntheticNode, BinaryExpressionLikeIm
 
   AugmentedAssignmentExpression getAssignment() { result = assignment }
 
-  override Node getLeft() { result = assignment.getLeft() }
+  override AstNode getLeft() { result = assignment.getLeft() }
 
-  override Node getRight() { result = assignment.getRight() }
+  override AstNode getRight() { result = assignment.getRight() }
 
   override string getOperator() { result + "=" = assignment.getOperator() }
 }
 
 private class BinaryExpressionAsLike extends BinaryExpressionLikeImpl instanceof BinaryExpression {
-  override Node getLeft() { result = BinaryExpression.super.getLeft() }
+  override AstNode getLeft() { result = BinaryExpression.super.getLeft() }
 
-  override Node getRight() { result = BinaryExpression.super.getRight() }
+  override AstNode getRight() { result = BinaryExpression.super.getRight() }
 
   override string getOperator() { result = BinaryExpression.super.getOperator() }
 }

@@ -1,4 +1,4 @@
-private import javascript
+private import CommonLayer
 
 final class Function = FunctionImpl;
 
@@ -9,13 +9,13 @@ abstract private class FunctionOrProgramImpl extends AstNode { }
 private class ProgramAsImpl extends FunctionOrProgramImpl instanceof Program { }
 
 abstract private class FunctionImpl extends FunctionOrProgramImpl {
-  abstract Node getParameter(int i);
+  abstract AstNode getParameter(int i);
 
   int getNumParameter() { result = count(int i | exists(this.getParameter(i))) }
 
-  abstract Node getBody();
+  abstract AstNode getBody();
 
-  Node getNameNode() { none() }
+  AstNode getNameNode() { none() }
 
   string getName() {
     result = inferNameFromNode(this.getNameNode())
@@ -44,7 +44,7 @@ abstract private class FunctionImpl extends FunctionOrProgramImpl {
  * Gets the nearest enclosing function or program, possibly `node` itself.
  */
 pragma[nomagic]
-FunctionOrProgram getEnclosingFunctionOrProgram(Node node) {
+FunctionOrProgram getEnclosingFunctionOrProgram(AstNode node) {
   result = node
   or
   not node instanceof Function and
@@ -53,7 +53,7 @@ FunctionOrProgram getEnclosingFunctionOrProgram(Node node) {
 }
 
 private class ArrowFunctionAsImpl extends FunctionImpl instanceof ArrowFunction {
-  override Node getParameter(int i) {
+  override AstNode getParameter(int i) {
     // `(x) => { ... }`
     result = super.getParameters().getChild(i)
     or
@@ -61,46 +61,46 @@ private class ArrowFunctionAsImpl extends FunctionImpl instanceof ArrowFunction 
     result = super.getParameter() and i = 0
   }
 
-  override Node getBody() { result = ArrowFunction.super.getBody() }
+  override AstNode getBody() { result = ArrowFunction.super.getBody() }
 }
 
 private class FunctionDeclarationAsImpl extends FunctionImpl instanceof FunctionDeclaration {
-  override Node getParameter(int i) { result = super.getParameters().getChild(i) }
+  override AstNode getParameter(int i) { result = super.getParameters().getChild(i) }
 
-  override Node getNameNode() { result = FunctionDeclaration.super.getName() }
+  override AstNode getNameNode() { result = FunctionDeclaration.super.getName() }
 
-  override Node getBody() { result = FunctionDeclaration.super.getBody() }
+  override AstNode getBody() { result = FunctionDeclaration.super.getBody() }
 }
 
 private class FunctionExpressionAsImpl extends FunctionImpl instanceof FunctionExpression {
-  override Node getParameter(int i) { result = super.getParameters().getChild(i) }
+  override AstNode getParameter(int i) { result = super.getParameters().getChild(i) }
 
-  override Node getNameNode() { result = FunctionExpression.super.getName() }
+  override AstNode getNameNode() { result = FunctionExpression.super.getName() }
 
-  override Node getBody() { result = FunctionExpression.super.getBody() }
+  override AstNode getBody() { result = FunctionExpression.super.getBody() }
 }
 
 private class GeneratorFunctionAsImpl extends FunctionImpl instanceof GeneratorFunction {
-  override Node getParameter(int i) { result = super.getParameters().getChild(i) }
+  override AstNode getParameter(int i) { result = super.getParameters().getChild(i) }
 
-  override Node getNameNode() { result = GeneratorFunction.super.getName() }
+  override AstNode getNameNode() { result = GeneratorFunction.super.getName() }
 
-  override Node getBody() { result = GeneratorFunction.super.getBody() }
+  override AstNode getBody() { result = GeneratorFunction.super.getBody() }
 }
 
 private class GeneratorFunctionDeclarationAsImpl extends FunctionImpl instanceof GeneratorFunctionDeclaration
 {
-  override Node getParameter(int i) { result = super.getParameters().getChild(i) }
+  override AstNode getParameter(int i) { result = super.getParameters().getChild(i) }
 
-  override Node getNameNode() { result = GeneratorFunctionDeclaration.super.getName() }
+  override AstNode getNameNode() { result = GeneratorFunctionDeclaration.super.getName() }
 
-  override Node getBody() { result = GeneratorFunctionDeclaration.super.getBody() }
+  override AstNode getBody() { result = GeneratorFunctionDeclaration.super.getBody() }
 }
 
 private class MethodDefinitionAsImpl extends FunctionImpl instanceof MethodDefinition {
-  override Node getParameter(int i) { result = super.getParameters().getChild(i) }
+  override AstNode getParameter(int i) { result = super.getParameters().getChild(i) }
 
-  override Node getNameNode() { result = MethodDefinition.super.getName() }
+  override AstNode getNameNode() { result = MethodDefinition.super.getName() }
 
-  override Node getBody() { result = MethodDefinition.super.getBody() }
+  override AstNode getBody() { result = MethodDefinition.super.getBody() }
 }

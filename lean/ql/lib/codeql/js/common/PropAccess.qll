@@ -1,4 +1,4 @@
-private import javascript
+private import CommonLayer
 
 /**
  * An expression that accesses a property, either via a dot expression (`foo.bar`) or subscript (`foo[bar]`).
@@ -8,19 +8,19 @@ private import javascript
 final class PropAccess = PropAccessImpl;
 
 abstract private class PropAccessImpl extends Expression {
-  abstract Node getObject();
+  abstract AstNode getObject();
 
-  abstract Node getPropertyNameNode();
+  abstract AstNode getPropertyNameNode();
 }
 
 private class MemberExpressionAsPropAccess extends PropAccessImpl instanceof MemberExpression {
-  override Node getObject() { result = MemberExpression.super.getObject() }
+  override AstNode getObject() { result = MemberExpression.super.getObject() }
 
-  override Node getPropertyNameNode() { result = MemberExpression.super.getProperty() }
+  override AstNode getPropertyNameNode() { result = MemberExpression.super.getProperty() }
 }
 
 private class SubscriptExpressionAsPropAccess extends PropAccessImpl instanceof SubscriptExpression {
-  override Node getObject() { result = SubscriptExpression.super.getObject() }
+  override AstNode getObject() { result = SubscriptExpression.super.getObject() }
 
-  override Node getPropertyNameNode() { result = SubscriptExpression.super.getIndex() }
+  override AstNode getPropertyNameNode() { result = SubscriptExpression.super.getIndex() }
 }

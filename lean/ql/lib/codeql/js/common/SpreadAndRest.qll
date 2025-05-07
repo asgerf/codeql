@@ -1,4 +1,4 @@
-private import javascript
+private import CommonLayer
 
 /** A spread element in an object literal, such as `{ ...x }` */
 class ObjectSpreadElement extends SpreadElement {

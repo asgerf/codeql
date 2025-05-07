@@ -1,5 +1,5 @@
 /**
- * Contains the predicates to be shared with the post-processing upgrade script.
+ * Contains predicates to be called from the generated post-processing upgrade script.
  */
 
 private import codeql.js.base.BaseLayer
