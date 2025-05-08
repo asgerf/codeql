@@ -1,5 +1,7 @@
 private import codeql.js.base.BaseLayer
 
+predicate getLValueNode = LeftHandValues::getLValueNode/1;
+
 module LeftHandValues {
   /**
    * Holds if `node` appears in a position where it is written to and not read from.
