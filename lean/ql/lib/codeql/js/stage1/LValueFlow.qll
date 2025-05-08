@@ -66,6 +66,13 @@ class LValueNode extends Stage1 {
       node1 = rest.getObjectPattern() and
       node2 = getLValueNode(rest.getChild())
     )
+    or
+    exists(AssignmentPattern assign |
+      // Example:
+      //
+      //   let {x: y = 3} = z
+      //
+      // This is equivalent to:
       //
       //   let y = z.x ?? 3
       //
