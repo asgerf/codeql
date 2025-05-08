@@ -32,22 +32,29 @@ module Conditions {
   }
 
   pragma[nomagic]
-  SyntheticNode getThenOutcome(AstNode node) { result = node.getSyntheticChildNode("then-outcome") }
-
-  pragma[nomagic]
-  AstNode tryGetThenOutcome(AstNode node) {
-    result = getThenOutcome(node)
-    or
-    not exists(getThenOutcome(node)) and result = node
+  SyntheticNode getOutcome(AstNode node, string kind) {
+    kind = ["true-outcome", "false-outcome"] and
+    isCondition(node) and
+    result = node.getSyntheticChildNode(kind)
   }
 
   pragma[nomagic]
-  SyntheticNode getElseOutcome(AstNode node) { result = node.getSyntheticChildNode("else-outcome") }
+  SyntheticNode getTrueOutcome(AstNode node) { result = getOutcome(node, "true-outcome") }
 
   pragma[nomagic]
-  AstNode tryGetElseOutcome(AstNode node) {
-    result = getElseOutcome(node)
+  AstNode tryGetTrueOutcome(AstNode node) {
+    result = getTrueOutcome(node)
     or
-    not exists(getElseOutcome(node)) and result = node
+    not exists(getTrueOutcome(node)) and result = node
+  }
+
+  pragma[nomagic]
+  SyntheticNode getFalseOutcome(AstNode node) { result = getOutcome(node, "false-outcome") }
+
+  pragma[nomagic]
+  AstNode tryGetFalseOutcome(AstNode node) {
+    result = getFalseOutcome(node)
+    or
+    not exists(getFalseOutcome(node)) and result = node
   }
 }
