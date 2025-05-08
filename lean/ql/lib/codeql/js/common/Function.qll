@@ -9,9 +9,12 @@ abstract private class FunctionOrProgramImpl extends AstNode { }
 private class ProgramAsImpl extends FunctionOrProgramImpl instanceof Program { }
 
 abstract private class FunctionImpl extends FunctionOrProgramImpl {
-  abstract AstNode getParameter(int i);
+  /** Gets the `i`th parameter of this function. */
+  final Parameter getParameter(int i) { result = this.getRawParameter(i) }
 
-  int getNumParameter() { result = count(int i | exists(this.getParameter(i))) }
+  abstract AstNode getRawParameter(int i);
+
+  int getNumParameter() { result = count(int i | exists(this.getRawParameter(i))) }
 
   abstract AstNode getBody();
 
@@ -53,7 +56,7 @@ FunctionOrProgram getEnclosingFunctionOrProgram(AstNode node) {
 }
 
 private class ArrowFunctionAsImpl extends FunctionImpl instanceof ArrowFunction {
-  override AstNode getParameter(int i) {
+  override AstNode getRawParameter(int i) {
     // `(x) => { ... }`
     result = super.getParameters().getChild(i)
     or
@@ -65,7 +68,7 @@ private class ArrowFunctionAsImpl extends FunctionImpl instanceof ArrowFunction 
 }
 
 private class FunctionDeclarationAsImpl extends FunctionImpl instanceof FunctionDeclaration {
-  override AstNode getParameter(int i) { result = super.getParameters().getChild(i) }
+  override AstNode getRawParameter(int i) { result = super.getParameters().getChild(i) }
 
   override AstNode getNameNode() { result = FunctionDeclaration.super.getName() }
 
@@ -73,7 +76,7 @@ private class FunctionDeclarationAsImpl extends FunctionImpl instanceof Function
 }
 
 private class FunctionExpressionAsImpl extends FunctionImpl instanceof FunctionExpression {
-  override AstNode getParameter(int i) { result = super.getParameters().getChild(i) }
+  override AstNode getRawParameter(int i) { result = super.getParameters().getChild(i) }
 
   override AstNode getNameNode() { result = FunctionExpression.super.getName() }
 
@@ -81,7 +84,7 @@ private class FunctionExpressionAsImpl extends FunctionImpl instanceof FunctionE
 }
 
 private class GeneratorFunctionAsImpl extends FunctionImpl instanceof GeneratorFunction {
-  override AstNode getParameter(int i) { result = super.getParameters().getChild(i) }
+  override AstNode getRawParameter(int i) { result = super.getParameters().getChild(i) }
 
   override AstNode getNameNode() { result = GeneratorFunction.super.getName() }
 
@@ -90,7 +93,7 @@ private class GeneratorFunctionAsImpl extends FunctionImpl instanceof GeneratorF
 
 private class GeneratorFunctionDeclarationAsImpl extends FunctionImpl instanceof GeneratorFunctionDeclaration
 {
-  override AstNode getParameter(int i) { result = super.getParameters().getChild(i) }
+  override AstNode getRawParameter(int i) { result = super.getParameters().getChild(i) }
 
   override AstNode getNameNode() { result = GeneratorFunctionDeclaration.super.getName() }
 
@@ -98,9 +101,22 @@ private class GeneratorFunctionDeclarationAsImpl extends FunctionImpl instanceof
 }
 
 private class MethodDefinitionAsImpl extends FunctionImpl instanceof MethodDefinition {
-  override AstNode getParameter(int i) { result = super.getParameters().getChild(i) }
+  override AstNode getRawParameter(int i) { result = super.getParameters().getChild(i) }
 
   override AstNode getNameNode() { result = MethodDefinition.super.getName() }
 
   override AstNode getBody() { result = MethodDefinition.super.getBody() }
+}
+
+class Parameter extends AstNode {
+  private Function function;
+  private int index;
+
+  Parameter() { this = function.getRawParameter(index) }
+
+  Function getFunction() { result = function }
+
+  int getIndex() { result = index }
+
+  Expression getDefaultValue() { result = this.(AssignmentPattern).getRight() }
 }
