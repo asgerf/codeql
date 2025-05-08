@@ -66,5 +66,15 @@ class LValueNode extends Stage1 {
       node1 = rest.getObjectPattern() and
       node2 = getLValueNode(rest.getChild())
     )
+      //
+      //   let y = z.x ?? 3
+      //
+      // We generate the same steps as for the '??' operator
+      node1 = getLValueNode(assign) and
+      node2 = getLValueNode(assign.getLeft())
+      or
+      node1 = assign.getRight() and
+      node2 = getLValueNode(assign.getLeft())
+    )
   }
 }

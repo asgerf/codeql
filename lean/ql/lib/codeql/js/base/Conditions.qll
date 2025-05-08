@@ -25,6 +25,8 @@ module Conditions {
       node = expr.getLeft()
     )
     or
+    node instanceof AssignmentPattern
+    or
     // The `x` in `x?.foo` needs to be checked
     node = OptionalChaining::getImmediateOptionalChainRoot(_)
   }

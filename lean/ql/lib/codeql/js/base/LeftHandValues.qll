@@ -20,6 +20,8 @@ module LeftHandValues {
     or
     node = any(ArrayPattern p).getChild(_) and not node instanceof RestPattern
     or
+    node = any(AssignmentPattern p).getLeft()
+    or
     node = any(RestPattern p).getChild()
     // TODO: parentheses
   }
