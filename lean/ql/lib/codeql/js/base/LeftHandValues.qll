@@ -12,7 +12,10 @@ module LeftHandValues {
   predicate isInPureLValuePosition(AstNode node) {
     node = any(AssignmentExpression e).getLeft()
     or
-    node = any(VariableDeclarator v).getName()
+    exists(VariableDeclarator v |
+      exists(v.getValue()) and
+      node = v.getName()
+    )
     or
     node = any(ForInStatement e).getLeft()
     or
@@ -36,6 +39,10 @@ module LeftHandValues {
     or
     node = any(UpdateExpression e).getArgument()
     // TODO: parentheses
+  }
+
+  predicate isConditionInLValue(AstNode node) {
+    node instanceof AssignmentPattern // pattern with a default value
   }
 
   predicate isInLValuePosition(AstNode node) {
