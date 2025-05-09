@@ -1,0 +1,14 @@
+{
+    "JS": {
+        "syntheticNodes": {
+            "AugmentedAssignmentExpression": [
+                "getBinaryExpression"
+            ]
+        },
+        "baseTypes": {
+            "AugmentedAssignmentExpression": [
+                "BinaryExprLike"
+            ]
+        }
+    }
+}

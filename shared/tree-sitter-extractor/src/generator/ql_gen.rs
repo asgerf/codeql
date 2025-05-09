@@ -2,6 +2,8 @@ use std::collections::BTreeSet;
 
 use crate::{generator::ql, node_types};
 
+use super::patch_spec::LanguagePatch;
+
 /// Creates the hard-coded `AstNode` class that acts as a supertype of all
 /// classes we generate.
 pub fn create_ast_node_class<'a>(
@@ -9,6 +11,7 @@ pub fn create_ast_node_class<'a>(
     node_location_table: &'a str,
     node_parent_table: &'a str,
     synthetic_node_table: &'a str,
+    language_patch: &LanguagePatch,
 ) -> ql::Class<'a> {
     // Default implementation of `toString` calls `this.getAPrimaryQlClass()`
     let to_string = ql::Predicate {
