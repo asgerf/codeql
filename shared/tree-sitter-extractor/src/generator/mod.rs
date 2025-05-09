@@ -1,18 +1,14 @@
 use std::collections::BTreeMap as Map;
 use std::collections::BTreeSet as Set;
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::LineWriter;
 use std::io::Write;
 use std::path::PathBuf;
 
-use patch_spec::PatchSpec;
-
 use crate::node_types;
 
 pub mod dbscheme;
 pub mod language;
-pub mod patch_spec;
 pub mod ql;
 pub mod ql_gen;
 
@@ -21,7 +17,6 @@ pub fn generate(
     languages: Vec<language::Language>,
     dbscheme_path: PathBuf,
     ql_library_path: PathBuf,
-    ast_patch_path: Option<PathBuf>,
 ) -> std::io::Result<()> {
     let dbscheme_file = File::create(dbscheme_path).map_err(|e| {
         tracing::error!("Failed to create dbscheme file: {}", e);
@@ -36,30 +31,6 @@ pub fn generate(
     )?;
 
     writeln!(dbscheme_writer, include_str!("prefix.dbscheme"))?;
-
-    // If ast_patch_path is given, read all the lines of the file and parse as JSON
-    let ast_patch_spec = if let Some(patch_path) = &ast_patch_path {
-        let file = File::open(patch_path).map_err(|e| {
-            tracing::error!("Failed to open AST patch file: {}", e);
-            e
-        })?;
-        let content = std::io::read_to_string(file)?;
-
-        match serde_json::from_str::<patch_spec::PatchSpec>(&content) {
-            Ok(spec) => spec,
-            Err(e) => {
-                tracing::error!("Failed to parse AST patch file as JSON: {}", e);
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    format!("Failed to parse AST patch file: {}", e),
-                ));
-            }
-        }
-    } else {
-        PatchSpec {
-            languages: HashMap::new(),
-        }
-    };
 
     let mut ql_writer = LineWriter::new(File::create(ql_library_path)?);
     writeln!(
@@ -79,7 +50,6 @@ pub fn generate(
     )?;
 
     for language in languages {
-        let language_patch = ast_patch_spec.language_patch_mut(language.name.as_str());
         let prefix = node_types::to_snake_case(&language.name);
         let ast_node_name = format!("{}_ast_node", &prefix);
         let node_location_table_name = format!("{}_ast_node_location", &prefix);
@@ -127,7 +97,6 @@ pub fn generate(
                 &node_location_table_name,
                 &node_parent_table_name,
                 &synthetic_node_table_name,
-                &language_patch,
             )),
             ql::TopLevel::Class(ql_gen::create_token_class(&token_name, &tokeninfo_name)),
             ql::TopLevel::Class(ql_gen::create_reserved_word_class(&reserved_word_name)),
