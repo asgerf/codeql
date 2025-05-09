@@ -49,8 +49,6 @@ class ForStatementCfg extends CfgNodeBase, ForStatement {
     or
     node1 = this.getInitializer() and node2 = this.getCondition(0)
     or
-    node1 = this.getCondition(0) and node2 = this.getBody()
-    or
     node1 = this.getBody() and node2 = this.getIncrement()
     or
     node1 = this.getIncrement() and node2 = this.getCondition(0)
@@ -73,7 +71,7 @@ class BinaryExpressionLikeCfg extends CfgNodeBase instanceof BinaryExpressionLik
     (
       // For compound assignment operators, the entire assignment is short-circuited
       if this instanceof BinaryExpressionInAssignment
-      then thenCase = this.(BinaryExpressionInAssignment).getAssignment()
+      then thenCase = getLastCfgNode(this.(BinaryExpressionInAssignment).getAssignment())
       else thenCase = this
     ) and
     elseCase = super.getRight()
