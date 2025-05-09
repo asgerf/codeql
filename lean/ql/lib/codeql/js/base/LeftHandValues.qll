@@ -54,8 +54,6 @@ module LeftHandValues {
    * This helps avoids an N^2 case explosion that would typically arise if these concerns are not properly decoupled.
    */
   AstNode getLValueNode(AstNode node) {
-    isInPureLValuePosition(node) and result = node
-    or
-    isInImpureLValuePosition(node) and result = node.getSyntheticChildNode("lvalue")
+    isInLValuePosition(node) and result = node.getSyntheticChildNode("lvalue")
   }
 }

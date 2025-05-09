@@ -14,3 +14,4 @@ import codeql.js.base.GeneratedAst::JS
 import codeql.js.base.Conditions
 import codeql.js.base.LeftHandValues
 import codeql.js.base.OptionalChaining
+import codeql.js.base.ExecutionOrder
