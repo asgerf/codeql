@@ -21,11 +21,6 @@ class FreshEntity extends Fresh::EntityId {
 class TOldOrNewNode = @js_ast_node or Fresh::EntityId;
 
 class OldOrNewNode extends TOldOrNewNode {
-  OldOrNewNode() {
-    // remove pre-existing synthetic nodes in case re-running post-processing after an upgrade
-    not this instanceof @js_synthetic_node
-  }
-
   string toString() { none() }
 }
 
@@ -34,10 +29,11 @@ query predicate new_js_synthetic_node_def(FreshEntity id, AstNode parent, string
 }
 
 query predicate new_js_ast_node_location(OldOrNewNode id, L::Location location) {
+  not id instanceof @js_synthetic_node and
   js_ast_node_location(id, location)
   or
   exists(AstNode node |
-    js_synthetic_node_def(id, node, _) and
+    new_js_synthetic_node_def(id, node, _) and
     js_ast_node_location(node, location)
   )
 }
