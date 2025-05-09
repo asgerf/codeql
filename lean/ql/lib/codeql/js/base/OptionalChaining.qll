@@ -49,6 +49,23 @@ module OptionalChaining {
   }
 
   /**
+   * The root expression of an optional chain, such as the `x` in `x?.y.z.w`.
+   */
+  class OptionalChainRoot extends Expression {
+    OptionalChainRoot() { this = getImmediateOptionalChainRoot(_) }
+
+    OptionalChainInnerAccessor getInnermostAccessor() { this = result.getRoot() }
+
+    OptionalChainOuterAccessor getOutermostAccessor() { this = result.getRoot() }
+
+    /** Gets a synthetic node representing the value of the root expression if it was not null or undefined. */
+    SyntheticNode getTrueOutcome() { result = this.getSyntheticChildNode("true-outcome") }
+
+    /** Gets a synthetic node representing the value of the root expression if it was null or undefined. */
+    SyntheticNode getFalseOutcome() { result = this.getSyntheticChildNode("false-outcome") }
+  }
+
+  /**
    * The innermost accessor in an optional chain, such as the `x?.y` in `x?.y.z.w`.
    */
   class OptionalChainInnerAccessor extends Expression {
@@ -59,11 +76,14 @@ module OptionalChaining {
     /** Gets the `x` in `x?.y.z.w` */
     AstNode getRoot() { result = root }
 
-    /** Gets a synthetic node representing the value of the root expression if it was a non-null value. */
-    SyntheticNode getTrueOutcomeForRootExpr() {
-      result = this.getRoot().getSyntheticChildNode("true-outcome")
-    }
+    OptionalChainOuterAccessor getOutermostAccessor() { result.getRoot() = root }
   }
+
+  class OptionalMemberExpression extends OptionalChainInnerAccessor, MemberExpression { }
+
+  class OptionalSubscriptExpression extends OptionalChainInnerAccessor, SubscriptExpression { }
+
+  class OptionalCallExpression extends OptionalChainInnerAccessor, CallExpression { }
 
   /**
    * The outermost accessor in an optional chain, such as `x?.y.z.w`.
@@ -83,10 +103,5 @@ module OptionalChaining {
 
     /** Gets the `x?.y` in `x?.y.z.w` */
     OptionalChainInnerAccessor getInnermostAccessor() { result.getRoot() = root }
-
-    /** Gets a synthetic node representing the value of the root expression if it was a non-null value. */
-    SyntheticNode getTrueOutcomeForRootExpr() {
-      result = this.getRoot().getSyntheticChildNode("true-outcome")
-    }
   }
 }

@@ -14,11 +14,16 @@ module PostProcessing {
     or
     node instanceof AugmentedAssignmentExpression and tag = "binary-operator"
     or
-    ExecutionOrder::isExecutedOutOfOrder(node) and tag = ["begin", "end"]
+    needsCfg(node) and
+    not node instanceof Token and
+    tag = "begin"
+  }
+
+  private predicate needsCfg(AstNode node) {
+    node instanceof Expression
     or
-    ExecutionOrder::isPreOrder(node) and tag = "end"
+    node instanceof Statement
     or
-    node instanceof OptionalChaining::OptionalChainInnerAccessor and
-    tag = "optionalnon-null-base-outcome"
+    node instanceof Program
   }
 }
