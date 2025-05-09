@@ -1,5 +1,5 @@
-private import codeql.js.GeneratedAst
-private import codeql.js.PostProcessing
+private import codeql.js.base.GeneratedAst
+private import codeql.js.base.PostProcessing
 private import JS
 
 module L {
