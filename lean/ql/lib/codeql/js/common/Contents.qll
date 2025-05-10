@@ -1,4 +1,4 @@
-private import CommonLayer
+private import All
 
 newtype TContent =
   TProperty(string name) { name = any(PropertyIdentifier e).getValue() } or

@@ -1,9 +1,0 @@
-import codeql.js.base.BaseLayer
-import BinaryExprLike
-import Util
-import Contents
-import Function
-import PropAccess
-import SpreadAndRest
-import LogicalNot
-import UpdateExpressions

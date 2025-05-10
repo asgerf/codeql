@@ -1,6 +1,5 @@
-private import javascript
+private import All
 private import codeql.util.Unit
-import codeql.js.common.CommonLayer
 
 class Node = AstNode;
 

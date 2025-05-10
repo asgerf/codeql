@@ -1,5 +1,4 @@
-private import CommonLayer
-private import LeftHandValues
+private import All
 
 string getStringValueFromNode(AstNode node) { result = node.(StringFragment).getValue() or none() }
 

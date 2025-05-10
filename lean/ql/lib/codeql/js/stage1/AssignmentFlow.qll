@@ -1,5 +1,4 @@
-private import javascript
-private import Stage1
+private import All
 
 /**
  * Flow rules for anything that causes flow into an L-value.

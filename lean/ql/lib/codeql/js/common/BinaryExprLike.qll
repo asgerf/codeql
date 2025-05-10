@@ -1,4 +1,4 @@
-private import CommonLayer
+private import All
 
 /**
  * A binary expression, possibly one synthesized from a compound assignment operator.
@@ -30,7 +30,7 @@ class BinaryExpressionInAssignment extends SyntheticNode, BinaryExpressionLikeIm
   override string getOperator() { result + "=" = assignment.getOperator() }
 }
 
-private class BinaryExpressionAsLike extends BinaryExpressionLikeImpl instanceof BinaryExpression {
+private class BinaryExpressionAsImpl extends BinaryExpressionLikeImpl instanceof BinaryExpression {
   override AstNode getLeft() { result = BinaryExpression.super.getLeft() }
 
   override AstNode getRight() { result = BinaryExpression.super.getRight() }

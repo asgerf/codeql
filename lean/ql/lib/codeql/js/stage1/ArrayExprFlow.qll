@@ -1,5 +1,4 @@
-private import javascript
-private import Stage1
+private import All
 
 private int getFirstSpreadElementIndex(Array array) {
   result = min(int i | array.getChild(i) instanceof SpreadElement)

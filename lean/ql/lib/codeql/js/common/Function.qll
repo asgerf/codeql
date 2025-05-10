@@ -1,14 +1,8 @@
-private import CommonLayer
+private import All
 
 final class Function = FunctionImpl;
 
-final class FunctionOrProgram = FunctionOrProgramImpl;
-
-abstract private class FunctionOrProgramImpl extends AstNode { }
-
-private class ProgramAsImpl extends FunctionOrProgramImpl instanceof Program { }
-
-abstract private class FunctionImpl extends FunctionOrProgramImpl {
+abstract private class FunctionImpl extends AstNode {
   /** Gets the `i`th parameter of this function. */
   final Parameter getParameter(int i) { result = this.getRawParameter(i) }
 
@@ -31,7 +25,7 @@ abstract private class FunctionImpl extends FunctionOrProgramImpl {
     result = this.getBody() // arrow function with expression body
     or
     exists(ReturnStatement ret |
-      getEnclosingFunctionOrProgram(ret) = this and
+      getCfgScope(ret) = this and
       result = ret.getChild()
     )
   }
@@ -41,18 +35,6 @@ abstract private class FunctionImpl extends FunctionOrProgramImpl {
     or
     not exists(this.getName()) and result = "anonymous function"
   }
-}
-
-/**
- * Gets the nearest enclosing function or program, possibly `node` itself.
- */
-pragma[nomagic]
-FunctionOrProgram getEnclosingFunctionOrProgram(AstNode node) {
-  result = node
-  or
-  not node instanceof Function and
-  not node instanceof Program and
-  result = getEnclosingFunctionOrProgram(node.getParent())
 }
 
 private class ArrowFunctionAsImpl extends FunctionImpl instanceof ArrowFunction {

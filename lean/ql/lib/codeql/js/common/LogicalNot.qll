@@ -1,4 +1,4 @@
-private import codeql.js.common.CommonLayer
+private import All
 
 class LogicalNot extends UnaryExpression {
   LogicalNot() { this.getOperator() = "!" }

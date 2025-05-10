@@ -1,4 +1,4 @@
-private import codeql.js.base.BaseLayer
+private import codeql.js.base.GeneratedAst::JS
 
 module OptionalChaining {
   /**

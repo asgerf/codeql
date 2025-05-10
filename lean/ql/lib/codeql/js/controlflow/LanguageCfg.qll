@@ -1,46 +1,15 @@
-private import javascript
-private import codeql.js.controlflow.ControlFlowShared
-private import ValueFilter
+private import codeql.js.common.All
+private import codeql.shared.LanguageCfg::ControlFlow<Location, LanguageBase, LanguageCommon>
 private import OptionalChaining
 
-private class CfgNode extends AstNode {
-  // Set bindingset to help catch missing bindings
-  bindingset[this]
-  CfgNode() { any() }
-
-  predicate isBefore(AstNode node) { this = node.getSyntheticChildNode("begin") }
-
-  predicate isAfter(AstNode node) { this = node }
-
-  predicate isAfterTrue(AstNode node) {
-    Conditions::isCondition(node) and
-    this = node.getSyntheticChildNode("true-outcome")
-  }
-
-  predicate isAfterFalse(AstNode node) {
-    Conditions::isCondition(node) and
-    this = node.getSyntheticChildNode("false-outcome")
-  }
-
-  predicate isAfterShortCircuit(AstNode node) { this.isAfterTrue(node) }
-
-  predicate isAfterNoShortCircuit(AstNode node) { this.isAfterFalse(node) }
-
-  predicate isBeforeAssigningTo(AstNode lvalue) { this = lvalue.getSyntheticChildNode("lvalue") }
-
-  predicate isBeforeAssigningToTrue(AstNode lvalue) {
-    this = lvalue.getSyntheticChildNode("lvalue-true")
-  }
-
-  predicate isBeforeAssigningToFalse(AstNode lvalue) {
-    this = lvalue.getSyntheticChildNode("lvalue-false")
-  }
-
-  predicate isAfterAssigningTo(AstNode lvalue) { this = lvalue.getSyntheticChildNode("lvalue-end") }
-}
-
+/**
+ * An explicit step from `node1` to `node2`.
+ *
+ * The existence of an explicit step `node1 -> node2` suppresses the default left-to-right edge out of `node1` and
+ * as well as the default left-to-right edge into `node2`.
+ */
 pragma[nomagic]
-predicate succ(CfgNode node1, CfgNode node2) {
+predicate explicitStep(CfgNode node1, CfgNode node2) {
   exists(IfStatement stmt |
     node1.isAfterTrue(stmt.getCondition()) and
     node2.isBefore(stmt.getConsequence())
@@ -113,9 +82,9 @@ predicate succ(CfgNode node1, CfgNode node2) {
     node2.isBefore(stmt.getRight())
     or
     node1.isAfter(stmt.getRight()) and
-    node2.isBefore(stmt.getSyntheticChildNode("loop-header"))
+    node2 = stmt.getSyntheticChildNode("loop-header")
     or
-    node1.isAfter(stmt.getSyntheticChildNode("loop-header")) and
+    node1 = stmt.getSyntheticChildNode("loop-header") and
     node2.isBefore(stmt.getLeft())
     or
     node1.isAfter(stmt.getLeft()) and
@@ -224,9 +193,7 @@ predicate succ(CfgNode node1, CfgNode node2) {
   )
 }
 
-module Debug {
-  predicate missingFlowIntoLValue(Node node) {
-    LeftHandValues::isInLValuePosition(node) and
-    not succ(_, getLValueNode(node))
-  }
-}
+private import MakeCfg<explicitStep/2> as Cfg
+import Cfg
+
+predicate step = Cfg::step/2;

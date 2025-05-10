@@ -1,16 +1,36 @@
 private import codeql.js.base.GeneratedAst
-private import codeql.js.base.PostProcessing
+private import codeql.js.base.LanguageBase
 private import JS
 
+private predicate shouldSynthesize(AstNode node, string tag) {
+  LanguageBase::synthesizeNode(node, tag)
+  or
+  (
+    LanguageBase::isInPureLValuePosition(node)
+    or
+    LanguageBase::isInImpureLValuePosition(node)
+  ) and
+  tag = ["lvalue", "lvalue-end"]
+  or
+  LanguageBase::isConditionInLValue(node) and tag = ["lvalue-true", "lvalue-false"]
+  or
+  LanguageBase::isCondition(node) and tag = ["true-outcome", "false-outcome"]
+  or
+  LanguageBase::needsCfg(node) and
+  not node instanceof Token and
+  tag = "cfg-begin"
+}
+
 module L {
+  signature class LocationSig;
+
   // This is needed as replacement for the import in GeneratedAst.qll
   class Location extends @location_default {
     string toString() { none() }
   }
 }
 
-newtype TFresh =
-  MkFresh(AstNode node, string tag) { PostProcessing::shouldSynthesizeNode(node, tag) }
+newtype TFresh = MkFresh(AstNode node, string tag) { shouldSynthesize(node, tag) }
 
 module Fresh = QlBuiltins::NewEntity<TFresh>;
 

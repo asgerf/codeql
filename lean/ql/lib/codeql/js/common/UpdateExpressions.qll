@@ -1,4 +1,4 @@
-private import codeql.js.common.CommonLayer
+private import All
 
 class PrefixUpdateExpression extends UpdateExpression {
   PrefixUpdateExpression() { this.getArgument().getParentIndex() = 1 }
