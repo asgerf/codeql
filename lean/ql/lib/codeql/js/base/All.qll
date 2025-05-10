@@ -13,4 +13,4 @@
 import codeql.Locations
 import codeql.js.base.GeneratedAst::JS
 import codeql.js.base.LanguageBase
-import codeql.js.base.OptionalChaining
+import codeql.js.base.OptionalChainExpresson
