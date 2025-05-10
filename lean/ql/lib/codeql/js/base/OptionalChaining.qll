@@ -1,107 +1,67 @@
 private import codeql.js.base.GeneratedAst::JS
 
-module OptionalChaining {
-  /**
-   * Gets the `root` in `root?.x`, `root?.[x]`, or `root?.()`.
-   */
-  AstNode getImmediateOptionalChainRoot(AstNode node) {
-    // `object?.x`
-    exists(MemberExpression member |
-      node = member and
-      exists(member.getOptionalChain()) and
-      result = member.getObject()
-    )
+/**
+ * An expression that may be part of an optional chain: member `e.f`, subscript `e[f]`, and calls `f()`.
+ */
+final class ChainableExpression = ChainableExpressionImpl;
+
+abstract private class ChainableExpressionImpl extends Expression {
+  abstract Expression getBase();
+
+  abstract predicate isOptional();
+}
+
+private class ChainableMemberExpression extends ChainableExpressionImpl, MemberExpression {
+  override Expression getBase() { result = this.getObject() }
+
+  override predicate isOptional() { exists(this.getOptionalChain()) }
+}
+
+private class ChainableSubscriptExpression extends ChainableExpressionImpl, SubscriptExpression {
+  override Expression getBase() { result = this.getObject() }
+
+  override predicate isOptional() { exists(this.getOptionalChain()) }
+}
+
+private class ChainableCallExpression extends ChainableExpressionImpl, CallExpression {
+  override Expression getBase() { result = this.getFunction() }
+
+  override predicate isOptional() { exists(this.getOptionalChain()) }
+}
+
+/**
+ * The innermost accessor in an optional chain expression, such as `x?.y`, `x?.[y]`, or `x?.()`.
+ */
+class OptionalChainExpression extends ChainableExpression {
+  OptionalChainExpression() { this.isOptional() }
+
+  private ChainableExpression getAnAccessorInChain() {
+    result = this
     or
-    // `object?.[x]`
-    exists(SubscriptExpression member |
-      node = member and
-      exists(member.getOptionalChain()) and
-      result = member.getObject()
-    )
-    or
-    // `fun?.()`
-    exists(CallExpression call |
-      node = call and
-      exists(call.getOptionalChain()) and
-      result = call.getFunction()
-    )
+    result.getBase() = this.getAnAccessorInChain() and
+    not result.isOptional()
   }
 
   /**
-   * Gets the rooot of the optional chain for `node`, such as `root` in `root?.x.y.foo()`.
+   * Gets the outermost accessor in an optional chain. For example, this could map from `x?.y` to `x?.y.z.w`.
    */
-  AstNode getOptionalChainRoot(AstNode node) {
-    result = getImmediateOptionalChainRoot(node)
-    or
-    not exists(getImmediateOptionalChainRoot(node)) and
-    result = getOptionalChainRoot(getChainBase(node))
-  }
-
-  /**
-   * Get the base of `expr` if `expr` is a type of expression that can be part of an optional chain.
-   */
-  Expression getChainBase(Expression expr) {
-    result = expr.(MemberExpression).getObject()
-    or
-    result = expr.(SubscriptExpression).getObject()
-    or
-    result = expr.(CallExpression).getFunction()
-  }
-
-  /**
-   * The root expression of an optional chain, such as the `x` in `x?.y.z.w`.
-   */
-  class OptionalChainRoot extends Expression {
-    OptionalChainRoot() { this = getImmediateOptionalChainRoot(_) }
-
-    OptionalChainInnerAccessor getInnermostAccessor() { this = result.getRoot() }
-
-    OptionalChainOuterAccessor getOutermostAccessor() { this = result.getRoot() }
-
-    /** Gets a synthetic node representing the value of the root expression if it was not null or undefined. */
-    SyntheticNode getTrueOutcome() { result = this.getSyntheticChildNode("true-outcome") }
-
-    /** Gets a synthetic node representing the value of the root expression if it was null or undefined. */
-    SyntheticNode getFalseOutcome() { result = this.getSyntheticChildNode("false-outcome") }
-  }
-
-  /**
-   * The innermost accessor in an optional chain, such as the `x?.y` in `x?.y.z.w`.
-   */
-  class OptionalChainInnerAccessor extends Expression {
-    private AstNode root;
-
-    OptionalChainInnerAccessor() { root = getImmediateOptionalChainRoot(this) }
-
-    /** Gets the `x` in `x?.y.z.w` */
-    AstNode getRoot() { result = root }
-
-    OptionalChainOuterAccessor getOutermostAccessor() { result.getRoot() = root }
-  }
-
-  class OptionalMemberExpression extends OptionalChainInnerAccessor, MemberExpression { }
-
-  class OptionalSubscriptExpression extends OptionalChainInnerAccessor, SubscriptExpression { }
-
-  class OptionalCallExpression extends OptionalChainInnerAccessor, CallExpression { }
-
-  /**
-   * The outermost accessor in an optional chain, such as `x?.y.z.w`.
-   *
-   * The intermediate expressions in a long chain are not instances of this class.
-   */
-  class OptionalChainOuterAccessor extends Expression {
-    private AstNode root;
-
-    OptionalChainOuterAccessor() {
-      root = getOptionalChainRoot(this) and
-      not this = getChainBase(_)
-    }
-
-    /** Gets the `x` in `x?.y.z.w` */
-    AstNode getRoot() { result = root }
-
-    /** Gets the `x?.y` in `x?.y.z.w` */
-    OptionalChainInnerAccessor getInnermostAccessor() { result.getRoot() = root }
+  ChainableExpression getOutermostAccessor() {
+    result = this.getAnAccessorInChain() and
+    not result = any(ChainableExpression e).getBase()
   }
 }
+
+final private class FinalMemberExpression = MemberExpression;
+
+/** An expression of form `x?.y` */
+class OptionalMemberExpression extends OptionalChainExpression, FinalMemberExpression { }
+
+final private class FinalSubscriptExpression = SubscriptExpression;
+
+/** An expression of form `x?.[y]` */
+class OptionalSubscriptExpression extends OptionalChainExpression, FinalSubscriptExpression { }
+
+final private class FinalCallExpression = CallExpression;
+
+/** An expression of form `f?.()` */
+class OptionalCallExpression extends OptionalChainExpression, FinalCallExpression { }

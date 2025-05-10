@@ -1,6 +1,5 @@
 private import codeql.js.common.All
 private import codeql.shared.LanguageCfg::ControlFlow<Location, LanguageBase, LanguageCommon>
-private import OptionalChaining
 
 /**
  * An explicit step from `node1` to `node2`.

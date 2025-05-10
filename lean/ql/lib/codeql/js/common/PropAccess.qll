@@ -11,9 +11,6 @@ abstract private class PropAccessImpl extends Expression {
   abstract AstNode getObject();
 
   abstract AstNode getPropertyNameNode();
-
-  /** Holds if this is an expression of form `foo?.bar` or `foo?.[bar]`. */
-  predicate isOptionalChain() { this instanceof OptionalChaining::OptionalChainInnerAccessor }
 }
 
 private class MemberExpressionAsPropAccess extends PropAccessImpl instanceof MemberExpression {

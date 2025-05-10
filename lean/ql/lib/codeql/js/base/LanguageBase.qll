@@ -92,7 +92,7 @@ module LanguageBase implements LanguageBaseSig<Location> {
     )
     or
     // The `x` in `x?.foo` needs to be checked
-    node = OptionalChaining::getImmediateOptionalChainRoot(_)
+    node = any(OptionalChainExpression expr).getBase()
   }
 
   /**
