@@ -12,6 +12,9 @@ module LanguageCommon implements LanguageCommonSig<Location, LanguageBase> {
     exists(BinaryExpressionLike binary |
       node = binary.getLeft() and
       result = getShortCircuitingCondition(binary.getOperator())
+      or
+      node = binary.getRight() and
+      result = getSpecialConditionFilter(binary)
     )
     or
     node = any(OptionalChainExpression e).getBase() and
@@ -19,6 +22,11 @@ module LanguageCommon implements LanguageCommonSig<Location, LanguageBase> {
     or
     node instanceof AssignmentPattern and
     result = ValueFilter::TNotNullLike()
+    or
+    exists(ParenthesizedExpression expr |
+      node = expr.getChild() and
+      result = getSpecialConditionFilter(expr)
+    )
   }
 }
 

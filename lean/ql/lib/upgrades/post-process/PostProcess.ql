@@ -19,6 +19,9 @@ private predicate shouldSynthesize(AstNode node, string tag) {
   LanguageBase::needsCfg(node) and
   not node instanceof Token and
   tag = "cfg-begin"
+  or
+  LanguageBase::isCfgScope(node) and
+  tag = ["cfg-enter", "cfg-exit"]
 }
 
 module L {

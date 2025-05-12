@@ -9,6 +9,7 @@ module ControlFlow<
 {
   private import L
   private import C
+  private import MakeLanguageBase<Location, L>
   private import MakeLanguageCommon<Location, L, C>
 
   pragma[nomagic]
@@ -216,10 +217,10 @@ module ControlFlow<
         isCondition(condition) and
         node1 = condition
       |
-        node2 = condition.getSyntheticChildNode("condition-true") and
+        node2 = getTrueOutcomeNode(condition) and
         filter = getConditionFilter(condition)
         or
-        node2 = condition.getSyntheticChildNode("condition-false") and
+        node2 = getFalseOutcomeNode(condition) and
         filter = getConditionFilter(condition).negate()
       )
       or
@@ -281,10 +282,10 @@ module ControlFlow<
           isCondition(condition) and
           node = condition
         |
-          result = condition.getSyntheticChildNode("condition-true") and
+          result = getTrueOutcomeNode(condition) and
           t.asBoolean() = true
           or
-          result = condition.getSyntheticChildNode("condition-false") and
+          result = getFalseOutcomeNode(condition) and
           t.asBoolean() = false
         )
         or
@@ -300,10 +301,14 @@ module ControlFlow<
         )
       }
 
-      predicate nodeIsDominanceEntry(Node node) { none() } // TODO
+      predicate nodeIsDominanceEntry(Node node) { node = getCfgEntryPoint(_) }
 
-      predicate nodeIsPostDominanceExit(Node node) { none() } // TODO
+      predicate nodeIsPostDominanceExit(Node node) { node = getCfgExitPoint(_) }
     }
+
+    module BasicBlocks = BB::Make<Location, BasicBlockConfig>;
+
+    class BasicBlock = BasicBlocks::BasicBlock;
 
     module Debug {
       query predicate noSucc(AstNode node) {
@@ -341,6 +346,12 @@ module ControlFlow<
         isSplitSlow(node) and not isSplitFast(node) and problem = "missing split"
         or
         not isSplitSlow(node) and isSplitFast(node) and problem = "spurious split"
+      }
+
+      query predicate counts(int numCfgNodes, int numBBs, float averageBBLength) {
+        numCfgNodes = count(Node node | needsCfg(node)) and
+        numBBs = count(BasicBlock b) and
+        averageBBLength = numCfgNodes.(float) / numBBs.(float)
       }
     }
   }
