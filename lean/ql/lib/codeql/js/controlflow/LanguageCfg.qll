@@ -13,7 +13,6 @@ private import codeql.js.controlflow.ValueFilter::ValueFilter
 pragma[nomagic]
 predicate explicitStep(CfgNode node1, CfgNode node2) {
   exists(IfStatement stmt |
-    // node1.isAfterTrue(stmt.getCondition()) and
     node1.isAfterTrue(stmt.getCondition()) and
     node2.isBefore(stmt.getConsequence())
     or
