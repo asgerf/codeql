@@ -112,10 +112,10 @@ module MakeLanguageBase<LocationSig Location, LanguageBaseSig<Location> L> {
   }
 
   SyntheticNode getCfgEntryPoint(AstNode node) {
-    isCfgScope(node) and result = node.getSyntheticChildNode("cfg-entry")
+    isCfgScope(node) and result = node.getSyntheticChildNode("cfg-entry-point")
   }
 
   SyntheticNode getCfgExitPoint(AstNode node) {
-    isCfgScope(node) and result = node.getSyntheticChildNode("cfg-exit")
+    isCfgScope(node) and result = node.getSyntheticChildNode("cfg-exit-point")
   }
 }

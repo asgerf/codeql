@@ -207,6 +207,14 @@ module ControlFlow<
         node1 = getNthNode(scope, n) and
         node2 = getNthNode(scope, n + 1)
       )
+      or
+      exists(CfgScope scope |
+        node1 = getCfgEntryPoint(scope) and
+        node2 = getNthNode(scope, 0)
+        or
+        node1 = max(int n | | getNthNode(scope, n) order by n) and
+        node2 = getCfgExitPoint(scope)
+      )
     }
 
     /**

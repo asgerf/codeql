@@ -21,7 +21,7 @@ private predicate shouldSynthesize(AstNode node, string tag) {
   tag = "cfg-begin"
   or
   LanguageBase::isCfgScope(node) and
-  tag = ["cfg-enter", "cfg-exit"]
+  tag = ["cfg-entry-point", "cfg-exit-point"]
 }
 
 module L {
