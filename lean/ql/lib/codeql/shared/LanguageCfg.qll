@@ -1,6 +1,7 @@
 private import codeql.util.Location
 private import LanguageBase
 private import LanguageCommon
+private import codeql.js.controlflow.ValueFilter
 
 module ControlFlow<
   LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
@@ -40,6 +41,11 @@ module ControlFlow<
     predicate isAfterFalse(AstNode node) {
       isCondition(node) and
       this = node.getSyntheticChildNode("false-outcome")
+    }
+
+    predicate isAfterValueIs(AstNode node, ValueFilter filter) {
+      isCondition(node) and
+      this = node.getSyntheticChildNode("true-outcome")
     }
 
     predicate isAfterShortCircuit(AstNode node) { this.isAfterTrue(node) }

@@ -1,4 +1,4 @@
-private import javascript
+private import codeql.js.common.All
 
 module ValueFilter {
   newtype TValueFilter =

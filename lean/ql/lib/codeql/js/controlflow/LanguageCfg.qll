@@ -1,5 +1,9 @@
 private import codeql.js.common.All
+private import codeql.js.controlflow.ValueFilter
 private import codeql.shared.LanguageCfg::ControlFlow<Location, LanguageBase, LanguageCommon>
+// TODO: how to ensure true/false outcomes are reached
+// TODO: pass in ValueFilter in isCondition?
+private import codeql.js.controlflow.ValueFilter::ValueFilter
 
 /**
  * An explicit step from `node1` to `node2`.
@@ -10,6 +14,7 @@ private import codeql.shared.LanguageCfg::ControlFlow<Location, LanguageBase, La
 pragma[nomagic]
 predicate explicitStep(CfgNode node1, CfgNode node2) {
   exists(IfStatement stmt |
+    // node1.isAfterTrue(stmt.getCondition()) and
     node1.isAfterTrue(stmt.getCondition()) and
     node2.isBefore(stmt.getConsequence())
     or
@@ -189,6 +194,14 @@ predicate explicitStep(CfgNode node1, CfgNode node2) {
     or
     node1.isAfterAssigningTo(expr.getArgument()) and
     node2.isAfter(expr)
+  )
+  or
+  exists(LogicalNot expr |
+    node1.isAfterTrue(expr.getArgument()) and
+    node2.isAfterFalse(expr)
+    or
+    node1.isAfterFalse(expr.getArgument()) and
+    node2.isAfterTrue(expr)
   )
 }
 
