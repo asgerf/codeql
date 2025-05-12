@@ -1,8 +1,6 @@
 private import codeql.js.common.All
-private import codeql.js.controlflow.ValueFilter
 private import codeql.shared.LanguageCfg::ControlFlow<Location, LanguageBase, LanguageCommon>
-// TODO: pass in ValueFilter in isCondition?
-private import codeql.js.controlflow.ValueFilter::ValueFilter
+private import ValueFilter
 
 /**
  * An explicit step from `node1` to `node2`.
@@ -11,7 +9,7 @@ private import codeql.js.controlflow.ValueFilter::ValueFilter
  * as well as the default left-to-right edge into `node2`.
  */
 pragma[nomagic]
-predicate explicitStep(CfgNode node1, CfgNode node2) {
+predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
   exists(IfStatement stmt |
     node1.isAfterTrue(stmt.getCondition()) and
     node2.isBefore(stmt.getConsequence())
@@ -87,7 +85,7 @@ predicate explicitStep(CfgNode node1, CfgNode node2) {
     node2 = stmt.getSyntheticChildNode("loop-header")
     or
     node1 = stmt.getSyntheticChildNode("loop-header") and
-    node2.isBefore(stmt.getLeft())
+    node2.isBefore(stmt.getLeft()) // Visit 'left' inside the loop. `for (g().x in y)` will cause `g()` to be called in every iteration.
     or
     node1.isAfter(stmt.getLeft()) and
     node2.isBeforeAssigningTo(stmt.getLeft())
@@ -97,45 +95,38 @@ predicate explicitStep(CfgNode node1, CfgNode node2) {
   )
   or
   exists(AssignmentPattern pattern |
-    node1.isBeforeAssigningToTrue(pattern) and
+    node1.isBeforeAssigningTo(pattern, TNotNullLike()) and
     node2.isBeforeAssigningTo(pattern.getLeft())
     or
-    node1.isBeforeAssigningToFalse(pattern) and
+    node1.isBeforeAssigningTo(pattern, TNullLike()) and
     node2.isBefore(pattern.getRight())
     or
     node1.isAfter(pattern.getRight()) and
     node2.isBeforeAssigningTo(pattern.getLeft())
   )
   or
-  exists(BinaryExpression binary | binary.getOperator() = ["&&", "||", "??"] |
-    node1.isAfterShortCircuit(binary.getLeft()) and
-    node2.isAfterFalse(binary)
+  exists(BinaryExpression binary, ValueFilter shortCircuit |
+    shortCircuit = getShortCircuitingCondition(binary.getOperator())
+  |
+    node1.isAfter(binary.getLeft(), shortCircuit) and
+    node2.isAfter(binary, shortCircuit)
     or
-    node1.isAfterNoShortCircuit(binary.getLeft()) and
+    node1.isAfter(binary.getLeft(), shortCircuit.negate()) and
     node2.isBefore(binary.getRight())
     or
     node1.isAfter(binary.getRight()) and
     node2.isAfter(binary)
   )
   or
-  exists(AugmentedAssignmentExpression assign | assign.getOperator() = ["&&=", "||=", "??="] |
-    node1.isAfterShortCircuit(assign.getLeft()) and
+  exists(AugmentedAssignmentExpression assign, ValueFilter shortCircuit |
+    shortCircuit = getShortCircuitingCondition(assign.getOperator())
+  |
+    node1.isAfter(assign.getLeft(), shortCircuit) and
+    node2.isAfter(assign, shortCircuit)
+    or
+    node1.isAfter(assign.getLeft(), shortCircuit.negate()) and
     node2.isBefore(assign.getRight())
     or
-    node1.isAfterFalse(assign.getLeft()) and
-    node2.isAfterFalse(assign)
-    or
-    node1.isAfter(assign.getRight()) and
-    node2 = assign.getSyntheticChildNode("binary-operator")
-    or
-    node1 = assign.getSyntheticChildNode("binary-operator") and
-    node2.isBeforeAssigningTo(assign.getLeft())
-    or
-    node1.isAfterAssigningTo(assign.getLeft()) and
-    node2.isAfter(assign)
-  )
-  or
-  exists(AugmentedAssignmentExpression assign | not assign.getOperator() = ["&&=", "||=", "??="] |
     node1.isAfter(assign.getRight()) and
     node2 = assign.getSyntheticChildNode("binary-operator")
     or
@@ -147,31 +138,35 @@ predicate explicitStep(CfgNode node1, CfgNode node2) {
   )
   or
   exists(OptionalMemberExpression expr |
-    node1.isAfterTrue(expr.getObject()) and
+    node1.isAfter(expr.getObject(), TNotNullLike()) and
     node2.isAfter(expr)
     or
-    node1.isAfterFalse(expr.getObject()) and
-    node2.isAfter(expr.getOutermostAccessor())
+    node1.isAfter(expr.getObject(), TNullLike()) and
+    node2.isAfter(expr.getOutermostAccessor(), TNullLike())
   )
   or
   exists(OptionalSubscriptExpression expr |
-    node1.isAfterTrue(expr.getObject()) and
+    node1.isAfter(expr.getObject(), TNotNullLike()) and
     node2.isBefore(expr.getIndex())
     or
-    node1.isAfterFalse(expr.getObject()) and
-    node2.isAfter(expr.getOutermostAccessor())
+    node1.isAfter(expr.getObject(), TNullLike()) and
+    node2.isAfter(expr.getOutermostAccessor(), TNullLike())
   )
   or
   exists(OptionalCallExpression expr |
-    node1.isAfterTrue(expr.getFunction()) and
+    node1.isAfter(expr.getFunction(), TNotNullLike()) and
     node2.isBefore(expr.getArguments())
     or
-    node1.isAfterFalse(expr.getFunction()) and
-    node2.isAfter(expr.getOutermostAccessor())
+    node1.isAfter(expr.getFunction(), TNullLike()) and
+    node2.isAfter(expr.getOutermostAccessor(), TNullLike())
   )
   or
   exists(VariableDeclarator decl |
     node1.isAfter(decl.getValue()) and
+    node2.isBeforeAssigningTo(decl.getName())
+    or
+    not exists(decl.getValue()) and
+    node1.isBefore(decl) and
     node2.isBeforeAssigningTo(decl.getName())
     or
     node1.isAfterAssigningTo(decl.getName()) and

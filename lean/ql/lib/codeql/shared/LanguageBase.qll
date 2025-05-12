@@ -99,10 +99,10 @@ module MakeLanguageBase<LocationSig Location, LanguageBaseSig<Location> L> {
   }
 
   SyntheticNode getTrueOutcomeNode(AstNode node) {
-    isCondition(node) and result = node.getSyntheticChildNode("true-outcome")
+    isCondition(node) and result = node.getSyntheticChildNode("condition-true")
   }
 
   SyntheticNode getFalseOutcomeNode(AstNode node) {
-    isCondition(node) and result = node.getSyntheticChildNode("false-outcome")
+    isCondition(node) and result = node.getSyntheticChildNode("condition-false")
   }
 }

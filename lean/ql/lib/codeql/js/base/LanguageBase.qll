@@ -35,10 +35,7 @@ module LanguageBase implements LanguageBaseSig<Location> {
   predicate isInPureLValuePosition(AstNode node) {
     node = any(AssignmentExpression e).getLeft()
     or
-    exists(VariableDeclarator v |
-      exists(v.getValue()) and
-      node = v.getName()
-    )
+    node = any(VariableDeclarator v).getName()
     or
     node = any(ForInStatement e).getLeft()
     or

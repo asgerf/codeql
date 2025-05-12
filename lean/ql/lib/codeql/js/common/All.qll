@@ -12,5 +12,7 @@ import codeql.js.common.LanguageCommon
 import codeql.js.common.LogicalNot
 import codeql.js.common.PropAccess
 import codeql.js.common.SpreadAndRest
+import codeql.js.common.ShortCircuitingOperators
 import codeql.js.common.UpdateExpressions
 import codeql.js.common.Util
+import codeql.js.common.ValueFilter

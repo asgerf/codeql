@@ -12,9 +12,9 @@ private predicate shouldSynthesize(AstNode node, string tag) {
   ) and
   tag = ["lvalue", "lvalue-end"]
   or
-  LanguageBase::isConditionInLValue(node) and tag = ["lvalue-true", "lvalue-false"]
+  LanguageBase::isCondition(node) and tag = ["condition-true", "condition-false"]
   or
-  LanguageBase::isCondition(node) and tag = ["true-outcome", "false-outcome"]
+  LanguageBase::isConditionInLValue(node) and tag = ["lvalue-true", "lvalue-false"]
   or
   LanguageBase::needsCfg(node) and
   not node instanceof Token and

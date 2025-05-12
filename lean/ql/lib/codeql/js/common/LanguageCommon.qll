@@ -3,4 +3,23 @@ private import codeql.shared.LanguageCommon
 
 module LanguageCommon implements LanguageCommonSig<Location, LanguageBase> {
   import CfgScope
+
+  class ValueFilter = ValueFilter::ValueFilter;
+
+  ValueFilter truthyCondition() { result = ValueFilter::TTruthy() }
+
+  ValueFilter getSpecialConditionFilter(AstNode node) {
+    exists(BinaryExpressionLike binary |
+      node = binary.getLeft() and
+      result = getShortCircuitingCondition(binary.getOperator())
+    )
+    or
+    node = any(OptionalChainExpression e).getBase() and
+    result = ValueFilter::TNotNullLike()
+    or
+    node instanceof AssignmentPattern and
+    result = ValueFilter::TNotNullLike()
+  }
 }
+
+import MakeLanguageCommon<Location, LanguageBase, LanguageCommon>
