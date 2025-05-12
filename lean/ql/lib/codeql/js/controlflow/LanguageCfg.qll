@@ -1,7 +1,6 @@
 private import codeql.js.common.All
 private import codeql.js.controlflow.ValueFilter
 private import codeql.shared.LanguageCfg::ControlFlow<Location, LanguageBase, LanguageCommon>
-// TODO: how to ensure true/false outcomes are reached
 // TODO: pass in ValueFilter in isCondition?
 private import codeql.js.controlflow.ValueFilter::ValueFilter
 

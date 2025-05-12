@@ -122,18 +122,20 @@ module ControlFlow<
       )
     }
 
-    private predicate stepEx(Node node1, Node node2) {
+    private predicate conditionStep(Node node1, Node node2) {
       isCondition(node1) and
-      node1.getSyntheticChildNode(["true-outcome", "false-outcome"]) = node2 and
-      not explicitStep(_, node2)
+      node1.getSyntheticChildNode(["true-outcome", "false-outcome"]) = node2
     }
 
     predicate step(Node node1, Node node2) {
       adjacent(node1, node2) and
       not explicitStep(node1, _) and
-      not explicitStep(_, node2)
+      not explicitStep(_, node2) and
+      not isCondition(node1)
       or
       explicitStep(node1, node2)
+      or
+      conditionStep(node1, node2)
     }
   }
 }
