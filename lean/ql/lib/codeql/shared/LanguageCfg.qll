@@ -1,6 +1,8 @@
 private import codeql.util.Location
 private import LanguageBase
 private import LanguageCommon
+private import codeql.controlflow.BasicBlock as BB
+private import codeql.util.Boolean
 
 module ControlFlow<
   LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
@@ -32,14 +34,6 @@ module ControlFlow<
   pragma[nomagic]
   private string getKnownOutcomeAsTag(ValueFilter condition, ValueFilter checkedValue) {
     result = "condition-" + getKnownOutcome(condition, checkedValue)
-  }
-
-  /**
-   * Like `getKnownOutcome` but gets the tag of the corresponding lvalue conditional successor.
-   */
-  pragma[nomagic]
-  private string getKnownOutcomeAsLValueTag(ValueFilter condition, ValueFilter checkedValue) {
-    result = "lvalue-" + getKnownOutcome(condition, checkedValue)
   }
 
   class CfgNode instanceof AstNode {
@@ -241,15 +235,113 @@ module ControlFlow<
       )
     }
 
-    predicate step(Node node1, Node node2) {
+    predicate unconditionalStep(Node node1, Node node2) {
       adjacent(node1, node2) and
       not explicitStep(node1, _) and
       not explicitStep(_, node2) and
       not isCondition(node1)
       or
       explicitStep(node1, node2)
+    }
+
+    predicate step(Node node1, Node node2) {
+      unconditionalStep(node1, node2)
       or
       conditionalStep(node1, _, node2)
+    }
+
+    private module BasicBlockConfig implements BB::InputSig<Location> {
+      private newtype TSuccessorType =
+        TSimple() or
+        TBoolean(Boolean b)
+
+      class SuccessorType extends TSuccessorType {
+        boolean asBoolean() { this = TBoolean(result) }
+
+        string toString() {
+          this instanceof TSimple and result = "TSimple"
+          or
+          result = "TBoolean(" + this.asBoolean() + ")"
+        }
+      }
+
+      predicate successorTypeIsCondition(SuccessorType t) { t instanceof TBoolean }
+
+      class CfgScope = C::CfgScope;
+
+      class Node = AstNode;
+
+      predicate nodeGetCfgScope = getCfgScope/1;
+
+      Node nodeGetASuccessor(Node node, SuccessorType t) {
+        unconditionalStep(node, result) and
+        t = TSimple()
+        or
+        exists(AstNode condition |
+          isCondition(condition) and
+          node = condition
+        |
+          result = condition.getSyntheticChildNode("condition-true") and
+          t.asBoolean() = true
+          or
+          result = condition.getSyntheticChildNode("condition-false") and
+          t.asBoolean() = false
+        )
+        or
+        exists(AstNode lvalue |
+          isConditionInLValue(lvalue) and
+          node = lvalue.getSyntheticChildNode("lvalue")
+        |
+          result = lvalue.getSyntheticChildNode("lvalue-true") and
+          t.asBoolean() = true
+          or
+          result = lvalue.getSyntheticChildNode("lvalue-false") and
+          t.asBoolean() = false
+        )
+      }
+
+      predicate nodeIsDominanceEntry(Node node) { none() } // TODO
+
+      predicate nodeIsPostDominanceExit(Node node) { none() } // TODO
+    }
+
+    module Debug {
+      query predicate noSucc(AstNode node) {
+        needsCfg(node) and
+        not step(node, _)
+      }
+
+      query predicate noPred(AstNode node) {
+        needsCfg(node) and
+        not step(node, _)
+      }
+
+      //
+      // Experiments with faster basic block construction due to more upfront knowledge about the CFG steps.
+      //
+      private predicate isJoinSlow(Node node) { strictcount(Node pred | step(pred, node)) > 1 }
+
+      private predicate isSplitSlow(Node node) { strictcount(Node succ | step(node, succ)) > 1 }
+
+      private predicate isJoinFast(Node node) {
+        strictcount(Node pred | explicitStep(pred, node)) > 1
+      }
+
+      private predicate isSplitFast(Node node) {
+        conditionalStep(node, _, _)
+        or
+        strictcount(Node succ | explicitStep(node, succ)) > 1
+      }
+
+      query predicate badJoinOrSplit(AstNode node, string problem) {
+        isJoinSlow(node) and not isJoinFast(node) and problem = "missing join"
+        or
+        not isJoinSlow(node) and isJoinFast(node) and problem = "spurious join"
+        or
+        isSplitSlow(node) and not isSplitFast(node) and problem = "missing split"
+        or
+        not isSplitSlow(node) and isSplitFast(node) and problem = "spurious split"
+      }
     }
   }
 }
