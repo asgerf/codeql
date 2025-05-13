@@ -1012,6 +1012,13 @@ module Make<LocationSig Location, InputSig<Location> Input> {
     variableRead(bb, i, v, _)
   }
 
+  private predicate ssaDefReachesRead2(
+    SourceVariable v, Definition def, BasicBlock bb, int i, ControlFlowNode node
+  ) {
+    ssaDefReachesRead(v, def, bb, i) and
+    node = bb.getNode(i)
+  }
+
   /**
    * NB: If this predicate is exposed, it should be cached.
    *

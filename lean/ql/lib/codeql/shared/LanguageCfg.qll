@@ -3,6 +3,27 @@ private import LanguageBase
 private import LanguageCommon
 private import codeql.controlflow.BasicBlock as BB
 private import codeql.util.Boolean
+private import codeql.ssa.Ssa as Ssa
+
+signature module LanguageCfgSig<
+  LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
+{
+  class SourceVariable {
+    string toString();
+
+    Location getLocation();
+  }
+
+  predicate isVariableRead(L::AstNode node, SourceVariable var);
+
+  predicate isVariableWrite(L::SyntheticNode lvalueNode, SourceVariable var);
+
+  /**
+   * Holds if it is statically known that a write to `var` appears before all reads to `var`,
+   * and its default initialization can therefore be omitted.
+   */
+  default predicate definitelyInitialized(SourceVariable var) { none() }
+}
 
 module ControlFlow<
   LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
@@ -217,6 +238,11 @@ module ControlFlow<
         node1 = max(int n | | getNthNode(scope, n) order by n) and
         node2 = getCfgExitPoint(scope)
       )
+      or
+      exists(AstNode lvalue |
+        node1 = lvalue.getSyntheticChildNode("lvalue") and
+        node2 = lvalue.getSyntheticChildNode("lvalue-end")
+      )
     }
 
     /**
@@ -320,21 +346,112 @@ module ControlFlow<
 
     class BasicBlock = BasicBlocks::BasicBlock;
 
+    signature module LanguageSsaSig {
+      class LocalVariable {
+        VariableReference getAReference();
+
+        string toString();
+
+        Location getLocation();
+
+        CfgScope getCfgScope();
+
+        predicate isCaptured();
+      }
+
+      class VariableReference extends Node;
+
+      default predicate assignmentIsUncertain(L::SyntheticNode lvalueNode) { none() }
+
+      default predicate readIsUncertain(VariableReference ref) { none() }
+
+      default predicate definitelyInitialized(LocalVariable v) { none() }
+    }
+
+    module LanguageSsa<LanguageSsaSig LanguageSsaInput> {
+      private import LanguageSsaInput
+
+      private module NonCapturedSsaConfig implements Ssa::InputSig<Location> {
+        class BasicBlock = BasicBlocks::BasicBlock;
+
+        class ControlFlowNode = AstNode;
+
+        BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) {
+          result.immediatelyDominates(bb)
+        }
+
+        BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
+
+        final private class FinalLocalVariable = LocalVariable;
+
+        class SourceVariable extends FinalLocalVariable {
+          SourceVariable() { not this.isCaptured() }
+        }
+
+        pragma[nomagic]
+        private BasicBlock getEntryBlock(CfgScope scope) {
+          result.getANode() = getCfgEntryPoint(scope)
+        }
+
+        predicate variableWrite(BasicBlock bb, int i, SourceVariable v, boolean certain) {
+          exists(Node lvalueNode |
+            lvalueNode = getLValueNode(v.getAReference()) and
+            bb.getNode(i) = lvalueNode and
+            if assignmentIsUncertain(lvalueNode) then certain = false else certain = true
+          )
+          or
+          // For variables that are not definitely initialized, put a synthetic initializer in the entry block
+          not definitelyInitialized(v) and
+          bb = getEntryBlock(v.getCfgScope()) and
+          i = -1 and
+          certain = true
+        }
+
+        private predicate debugLocation(Location loc) {
+          exists(string file |
+            loc.hasLocationInfo(file, _, _, _, _) and
+            file.matches("%/apps.js")
+          )
+        }
+
+        predicate variableWriteDebug(
+          BasicBlock bb, int i, SourceVariable v, boolean certain, string bbStr
+        ) {
+          variableWrite(bb, i, v, certain) and
+          v.toString() = "e" and
+          debugLocation(v.getLocation()) and
+          bbStr = concat(int k | | bb.getNode(k).toString(), "," order by k)
+        }
+
+        predicate bbDebug(BasicBlock bb, int i, Node node) {
+          variableWriteDebug(bb, _, _, _, _) and
+          node = bb.getNode(i)
+        }
+
+        predicate variableRead(BasicBlock bb, int i, SourceVariable v, boolean certain) {
+          exists(Node ref |
+            ref = v.getAReference() and
+            not isInPureLValuePosition(ref) and // not a read if pure lvalue
+            bb.getNode(i) = ref and
+            if readIsUncertain(ref) then certain = false else certain = true
+          )
+        }
+      }
+
+      import Ssa::Make<Location, NonCapturedSsaConfig>
+    }
+
     module Debug {
       query predicate noSucc(AstNode node) {
-        needsCfg(node) and
+        (needsCfg(node) or node = getTrueOutcomeNode(_) or node = getFalseOutcomeNode(_)) and
         not step(node, _) and
         not node = getCfgExitPoint(_)
       }
 
-      private predicate noPred1(AstNode node) {
+      query predicate noPred(AstNode node) {
         needsCfg(node) and
         not step(_, node) and
-        not node = getCfgEntryPoint(_)
-      }
-
-      query predicate noPred(AstNode node) {
-        noPred1(node) and
+        not node = getCfgEntryPoint(_) and
         not step(_, getTrueOutcomeNode(node)) and
         not step(_, getFalseOutcomeNode(node))
       }

@@ -111,8 +111,7 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
     node1.isAfter(binary.getLeft(), shortCircuit.negate()) and
     node2.isBefore(binary.getRight())
     or
-    node1.isAfter(binary.getRight()) and
-    node2.isAfter(binary)
+    propagateExactly(binary.getRight(), binary, node1, node2)
   )
   or
   exists(AugmentedAssignmentExpression assign, ValueFilter shortCircuit |
@@ -141,8 +140,7 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
     node1.isAfterFalse(expr.getCondition()) and
     node2.isBefore(expr.getAlternative())
     or
-    node1.isAfter([expr.getConsequence(), expr.getAlternative()]) and
-    node2.isAfter(expr)
+    propagateExactly([expr.getConsequence(), expr.getAlternative()], expr, node1, node2)
   )
   or
   exists(OptionalMemberExpression expr |
@@ -205,10 +203,28 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
     node1.isAfterFalse(expr.getArgument()) and
     node2.isAfterTrue(expr)
   )
+  or
+  exists(ParenthesizedExpression expr | propagateExactly(expr.getChild(), expr, node1, node2))
 }
 
 import MakeCfg<explicitStep/2> as Cfg
 
 private module Consistency {
   import Cfg::Debug
+}
+
+bindingset[expr1, expr2]
+pragma[inline_late]
+private predicate propagateExactly(AstNode expr1, AstNode expr2, CfgNode1 node1, CfgNode2 node2) {
+  exists(ValueFilter filter | filter = getConditionFilter(expr2) |
+    node1.isAfter(expr1, filter) and
+    node2.isAfter(expr2, filter)
+    or
+    node1.isAfter(expr1, filter.negate()) and
+    node2.isAfter(expr2, filter.negate())
+  )
+  or
+  not exists(getConditionFilter(expr2)) and
+  node1.isAfter(expr1) and
+  node2.isAfter(expr2)
 }

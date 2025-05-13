@@ -59,6 +59,8 @@ final class VariableReference = VariableReferenceImpl;
 
 abstract private class VariableReferenceImpl extends AstNode {
   abstract string getName();
+
+  final LocalVariable getVariable() { result.getAReference() = this }
 }
 
 private class IdentifierAsVarRef extends VariableReferenceImpl instanceof Identifier {

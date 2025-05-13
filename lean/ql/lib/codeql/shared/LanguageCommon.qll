@@ -28,7 +28,7 @@ signature module LanguageCommonSig<LocationSig Location, LanguageBaseSig<Locatio
    * Concretely, has the following effects:
    * - If `getConditionFilter` has no result for a given condition node, this filter is used as the value filter for that condition.
    * - `CfgNode.isAfterTrue(node)` and `CfgNode.isAfterFalse(node)` refer to this condition under the hood, as more readable
-   *   shorthand for `isAfterValueMatches`.
+   *   shorthand for the 2-argument call `isAfter(node, filter)`.
    */
   ValueFilter truthyCondition();
 
@@ -189,10 +189,26 @@ module MakeLanguageCommon<
 
       VariableAccess getAnAccess() { resolveToScope(result, name, scope) }
 
-      VariableDeclarationSite getADeclarationSite() { variableDeclaredInScope(result, scope) }
+      VariableDeclarationSite getADeclarationSite() {
+        variableDeclaredInScope(result, scope) and
+        result.getName() = name
+      }
 
       VariableReference getAReference() {
         result = this.getAnAccess() or result = this.getADeclarationSite()
+      }
+
+      CfgScope getCfgScope() {
+        result = scope
+        or
+        not scope instanceof CfgScope and
+        result = getCfgScope(scope)
+      }
+
+      predicate isCaptured() { this.isCapturingAccess(_) }
+
+      predicate isCapturingAccess(VariableAccess access) {
+        access = this.getAnAccess() and getCfgScope(access) != this.getCfgScope()
       }
 
       Location getLocation() {
@@ -212,6 +228,12 @@ module MakeLanguageCommon<
       query predicate unresolvedVariableAccesses(VariableAccess access) {
         not exists(access.getVariable())
       }
+
+      query predicate ambiguousToString(LocalVariable v) { count(v.toString()) != 1 }
+
+      query predicate ambiguousLocation(LocalVariable v) { count(v.getLocation()) != 1 }
+
+      query predicate ambiguousCfgScope(LocalVariable v) { count(v.getCfgScope()) != 1 }
     }
   }
 }
