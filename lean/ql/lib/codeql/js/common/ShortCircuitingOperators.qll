@@ -12,5 +12,5 @@ ValueFilter getShortCircuitingCondition(string operator) {
   or
   operator = ["||", "||="] and result = ValueFilter::TTruthy()
   or
-  operator = ["??", "??="] and result = ValueFilter::TNullLike()
+  operator = ["??", "??="] and result = ValueFilter::TNotNullLike()
 }

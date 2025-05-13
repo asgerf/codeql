@@ -5,26 +5,6 @@ private import codeql.controlflow.BasicBlock as BB
 private import codeql.util.Boolean
 private import codeql.ssa.Ssa as Ssa
 
-signature module LanguageCfgSig<
-  LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
-{
-  class SourceVariable {
-    string toString();
-
-    Location getLocation();
-  }
-
-  predicate isVariableRead(L::AstNode node, SourceVariable var);
-
-  predicate isVariableWrite(L::SyntheticNode lvalueNode, SourceVariable var);
-
-  /**
-   * Holds if it is statically known that a write to `var` appears before all reads to `var`,
-   * and its default initialization can therefore be omitted.
-   */
-  default predicate definitelyInitialized(SourceVariable var) { none() }
-}
-
 module ControlFlow<
   LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
 {
@@ -181,10 +161,18 @@ module ControlFlow<
     predicate isAfterFalse(AstNode node) { this.isAfter(node, falsyCondition()) }
   }
 
-  signature predicate explicitStepSig(CfgNode1 node1, CfgNode2 node2);
+  signature module ControlFlowGraphSig {
+    predicate explicitStep(CfgNode1 node1, CfgNode2 node2);
 
-  module MakeCfg<explicitStepSig/2 explicitStep> {
+    predicate logicalValueStep(AstNode node1, AstNode node2);
+
+    predicate logicalValueStep(AstNode node1, ValueFilter filter, AstNode node2);
+  }
+
+  module MakeControlFlowGraph<ControlFlowGraphSig CfgConfig> {
     private class Node = AstNode;
+
+    private import CfgConfig
 
     private int getNodeDepth(Node node) {
       not exists(node.getParent()) and result = 0
@@ -272,13 +260,55 @@ module ControlFlow<
       )
     }
 
-    predicate unconditionalStep(Node node1, Node node2) {
+    /**
+     * If `node` is a conditional outcome node, gets the associated value filter.
+     */
+    private Node getConditionalOutcomeWithFilter(Node condition, ValueFilter filter) {
+      exists(boolean outcome | result = getConditionalOutcomeNode(condition, outcome) |
+        outcome = true and
+        filter = getConditionFilter(condition)
+        or
+        outcome = false and
+        filter = getConditionFilter(condition).negate()
+      )
+    }
+
+    /**
+     * Holds if the CFG edge `orig1 -> orig2` can safely be replaed by the more accurate `node1 -> node2`,
+     * preserving more knowledge of conditional outcomes.
+     */
+    private predicate sharpenedStep(Node orig1, Node orig2, CfgNode1 node1, CfgNode2 node2) {
+      exists(ValueFilter filter |
+        logicalValueStep(orig1, orig2) and
+        isCondition(orig2) and
+        node1 = getConditionalOutcomeWithFilter(orig1, filter) and
+        node2.isAfter(orig2, filter)
+      )
+      or
+      exists(AstNode condition, ValueFilter filter1 |
+        logicalValueStep(condition, filter1, orig2) and
+        isCondition(orig2) and
+        node1 = getConditionalOutcomeWithFilter(condition, filter1) and
+        node2.isAfter(orig2, filter1) and
+        node1 = orig1 and
+        not node2 = orig2 // ignore if the new edge is identical
+      )
+    }
+
+    private predicate unconditionalStep1(Node node1, Node node2) {
       adjacent(node1, node2) and
       not explicitStep(node1, _) and
       not explicitStep(_, node2) and
       not isCondition(node1)
       or
       explicitStep(node1, node2)
+    }
+
+    predicate unconditionalStep(Node node1, Node node2) {
+      unconditionalStep1(node1, node2) and
+      not sharpenedStep(node1, node2, _, _)
+      or
+      sharpenedStep(_, _, node1, node2)
     }
 
     predicate step(Node node1, Node node2) {
@@ -405,27 +435,6 @@ module ControlFlow<
           bb = getEntryBlock(v.getCfgScope()) and
           i = -1 and
           certain = true
-        }
-
-        private predicate debugLocation(Location loc) {
-          exists(string file |
-            loc.hasLocationInfo(file, _, _, _, _) and
-            file.matches("%/apps.js")
-          )
-        }
-
-        predicate variableWriteDebug(
-          BasicBlock bb, int i, SourceVariable v, boolean certain, string bbStr
-        ) {
-          variableWrite(bb, i, v, certain) and
-          v.toString() = "e" and
-          debugLocation(v.getLocation()) and
-          bbStr = concat(int k | | bb.getNode(k).toString(), "," order by k)
-        }
-
-        predicate bbDebug(BasicBlock bb, int i, Node node) {
-          variableWriteDebug(bb, _, _, _, _) and
-          node = bb.getNode(i)
         }
 
         predicate variableRead(BasicBlock bb, int i, SourceVariable v, boolean certain) {

@@ -111,6 +111,10 @@ module MakeLanguageBase<LocationSig Location, LanguageBaseSig<Location> L> {
     isCondition(node) and result = node.getSyntheticChildNode("condition-false")
   }
 
+  SyntheticNode getConditionalOutcomeNode(AstNode node, boolean branch) {
+    isCondition(node) and result = node.getSyntheticChildNode("condition-" + branch)
+  }
+
   SyntheticNode getCfgEntryPoint(AstNode node) {
     isCfgScope(node) and result = node.getSyntheticChildNode("cfg-entry-point")
   }
