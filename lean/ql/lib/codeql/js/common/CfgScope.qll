@@ -6,6 +6,13 @@ private AstNode getParentOverride(AstNode node) {
     node = decl.getName() and
     result = decl.getParent()
   )
+  or
+  // The 'cfg-begin' node represents the beginning of the lambda expression within
+  // the outer function scope. It is not part of the inner scope.
+  exists(CfgScope scope |
+    node = scope.getSyntheticChildNode("cfg-begin") and
+    result = scope.getParent()
+  )
   // TODO: instance field initializers go inside the class constructor
 }
 
@@ -29,6 +36,8 @@ CfgScope getCfgScope(AstNode node) {
     not parent instanceof CfgScope and
     result = getCfgScope(parent)
   )
+  or
+  node instanceof Program and result = node
 }
 
 final class CfgScope = CfgScopeImpl;

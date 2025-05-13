@@ -45,12 +45,14 @@ module ControlFlow<
     /**
      * Holds if this is the beginning of the execution of the given AST node.
      *
-     * Has no result for synthetic nodes. Use those directly instead.
+     * If `node` is a synthetic node, this is bound to that node.
      */
     predicate isBefore(AstNode node) {
       this = node.getSyntheticChildNode("cfg-begin")
       or
       node instanceof Token and this = node
+      or
+      this = node.(SyntheticNode)
     }
 
     /**
@@ -321,39 +323,42 @@ module ControlFlow<
     module Debug {
       query predicate noSucc(AstNode node) {
         needsCfg(node) and
-        not step(node, _)
+        not step(node, _) and
+        not node = getCfgExitPoint(_)
+      }
+
+      private predicate noPred1(AstNode node) {
+        needsCfg(node) and
+        not step(_, node) and
+        not node = getCfgEntryPoint(_)
       }
 
       query predicate noPred(AstNode node) {
+        noPred1(node) and
+        not step(_, getTrueOutcomeNode(node)) and
+        not step(_, getFalseOutcomeNode(node))
+      }
+
+      query predicate edgeInvolvingNonCfgNode(Node node1, Node node2, string problem) {
+        step(node1, node2) and
+        not needsCfg(node1) and
+        not node1 instanceof SyntheticNode and
+        problem = "needsCfg(node1) does not hold"
+        or
+        step(node1, node2) and
+        not needsCfg(node2) and
+        not node2 instanceof SyntheticNode and
+        problem = "needsCfg(node2) does not hold"
+      }
+
+      query predicate differentCfgScope(Node node1, Node node2) {
+        (adjacent(node1, node2) or step(node1, node2)) and
+        not getCfgScope(node1) = getCfgScope(node2)
+      }
+
+      query predicate noCfgScope(Node node) {
         needsCfg(node) and
-        not step(node, _)
-      }
-
-      //
-      // Experiments with faster basic block construction due to more upfront knowledge about the CFG steps.
-      //
-      private predicate isJoinSlow(Node node) { strictcount(Node pred | step(pred, node)) > 1 }
-
-      private predicate isSplitSlow(Node node) { strictcount(Node succ | step(node, succ)) > 1 }
-
-      private predicate isJoinFast(Node node) {
-        strictcount(Node pred | explicitStep(pred, node)) > 1
-      }
-
-      private predicate isSplitFast(Node node) {
-        conditionalStep(node, _, _)
-        or
-        strictcount(Node succ | explicitStep(node, succ)) > 1
-      }
-
-      query predicate badJoinOrSplit(AstNode node, string problem) {
-        isJoinSlow(node) and not isJoinFast(node) and problem = "missing join"
-        or
-        not isJoinSlow(node) and isJoinFast(node) and problem = "spurious join"
-        or
-        isSplitSlow(node) and not isSplitFast(node) and problem = "missing split"
-        or
-        not isSplitSlow(node) and isSplitFast(node) and problem = "spurious split"
+        not exists(getCfgScope(node))
       }
 
       query predicate counts(int numCfgNodes, int numBBs, float averageBBLength) {

@@ -1,4 +1,4 @@
-private import codeql.js.common.All
+private import All
 private import codeql.shared.LanguageCfg::ControlFlow<Location, LanguageBase, LanguageCommon>
 private import ValueFilter
 
@@ -58,23 +58,20 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
   )
   or
   exists(ForStatement stmt |
-    node1.isBefore(stmt) and
-    node2.isBefore(stmt.getInitializer())
-    or
     node1.isAfter(stmt.getInitializer()) and
-    node2.isBefore(stmt.getCondition(0))
+    node2.isBefore([stmt.getCondition(0), stmt.getSyntheticChildNode("empty-condition")])
     or
-    node1.isAfterTrue(stmt.getCondition(0)) and
+    node1.isAfterTrue([stmt.getCondition(0), stmt.getSyntheticChildNode("empty-condition")]) and
     node2.isBefore(stmt.getBody())
     or
-    node1.isAfterFalse(stmt.getCondition(0)) and
+    node1.isAfterFalse([stmt.getCondition(0), stmt.getSyntheticChildNode("empty-condition")]) and
     node2.isAfter(stmt)
     or
     node1.isAfter(stmt.getBody()) and
-    node2.isBefore(stmt.getIncrement())
+    node2.isBefore([stmt.getIncrement(), stmt.getSyntheticChildNode("empty-increment")])
     or
-    node1.isAfter(stmt.getIncrement()) and
-    node2.isBefore(stmt.getCondition(0))
+    node1.isAfter([stmt.getIncrement(), stmt.getSyntheticChildNode("empty-increment")]) and
+    node2.isBefore(stmt.getBody())
   )
   or
   exists(ForInStatement stmt |
@@ -137,6 +134,17 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
     node2.isAfter(assign)
   )
   or
+  exists(TernaryExpression expr |
+    node1.isAfterTrue(expr.getCondition()) and
+    node2.isBefore(expr.getConsequence())
+    or
+    node1.isAfterFalse(expr.getCondition()) and
+    node2.isBefore(expr.getAlternative())
+    or
+    node1.isAfter([expr.getConsequence(), expr.getAlternative()]) and
+    node2.isAfter(expr)
+  )
+  or
   exists(OptionalMemberExpression expr |
     node1.isAfter(expr.getObject(), TNotNullLike()) and
     node2.isAfter(expr)
@@ -162,11 +170,12 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
   )
   or
   exists(VariableDeclarator decl |
-    node1.isAfter(decl.getValue()) and
-    node2.isBeforeAssigningTo(decl.getName())
-    or
-    not exists(decl.getValue()) and
-    node1.isBefore(decl) and
+    (
+      node1.isAfter(decl.getValue())
+      or
+      not exists(decl.getValue()) and
+      node1.isBefore(decl.getName())
+    ) and
     node2.isBeforeAssigningTo(decl.getName())
     or
     node1.isAfterAssigningTo(decl.getName()) and
@@ -198,7 +207,8 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
   )
 }
 
-private import MakeCfg<explicitStep/2> as Cfg
-import Cfg
+import MakeCfg<explicitStep/2> as Cfg
 
-predicate step = Cfg::step/2;
+private module Consistency {
+  import Cfg::Debug
+}

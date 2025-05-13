@@ -11,6 +11,18 @@ module LanguageBase implements LanguageBaseSig<Location> {
    */
   predicate synthesizeNode(AstNode node, string tag) {
     node instanceof AugmentedAssignmentExpression and tag = "binary-operator"
+    or
+    node instanceof ForInStatement and tag = "loop-header"
+    or
+    exists(ForStatement stmt | node = stmt |
+      // Add placeholders for optional parts of the `for` statement.
+      // Note that the intializer is not optional as it will default to being an empty statement.
+      not exists(stmt.getCondition(0)) and
+      tag = "empty-condition"
+      or
+      not exists(stmt.getIncrement()) and
+      tag = "empty-increment"
+    )
   }
 
   /**
@@ -24,6 +36,10 @@ module LanguageBase implements LanguageBaseSig<Location> {
     node instanceof Statement
     or
     node instanceof Program
+    or
+    node instanceof VariableDeclarator
+    or
+    node instanceof SequenceExpression // TODO: this should be an Expression. Fix in tree-sitter grammar
   }
 
   /**
