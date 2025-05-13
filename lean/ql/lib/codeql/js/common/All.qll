@@ -1,5 +1,5 @@
 /**
- * The "common" layer contains most AST abstactions, the definition of "content" as well as general utility code
+ * The "common" layer contains most AST abstactions, local variable resolution, the definition of "content" as well as general utility code
  * that isn't needed in the post-processing upgrade script, and does not depend on control flow or dataflow.
  */
 
