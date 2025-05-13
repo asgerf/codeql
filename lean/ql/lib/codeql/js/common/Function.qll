@@ -12,6 +12,9 @@ abstract private class FunctionImpl extends AstNode {
 
   abstract AstNode getBody();
 
+  /**
+   * Gets the identifier declared as part of this function.
+   */
   AstNode getNameNode() { none() }
 
   string getName() {

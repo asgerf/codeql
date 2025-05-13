@@ -73,4 +73,145 @@ module MakeLanguageCommon<
       result = truthyCondition()
     )
   }
+
+  signature module ResolveVariablesSig {
+    class VariableReference extends AstNode {
+      string getName();
+    }
+
+    /**
+     * Holds if `ref` is a declaration of a variable that will exist in the given `scope`.
+     */
+    predicate variableDeclaredInScope(VariableReference ref, AstNode scope);
+
+    /**
+     * Holds if a variable named `name` is implicitly in scope in the given `scope`.
+     */
+    predicate variableImplicitlyInScope(string name, AstNode scope);
+
+    /**
+     * Holds the variable `ref` should begin its lookup in `scope` instead of its parent node.
+     *
+     * For example, the `this` variable in an instance field initializer might need to be resolved
+     * relative to a constructor body.
+     *
+     * If `scope` declares a variable with the name of `ref`, then `scope` is guaranteed to be the
+     * scope that `ref` ultimately resolves to. This can thus be used to take full control of scope resolution for
+     * for specific types of references.
+     */
+    default predicate lookupStartsAt(VariableReference ref, AstNode scope) { none() }
+  }
+
+  module ResolveVariables<ResolveVariablesSig Res> {
+    private import Res
+
+    final private class FinalAstNode = AstNode;
+
+    private predicate variableInScope(string name, AstNode scope) {
+      exists(VariableReference ref |
+        variableDeclaredInScope(ref, scope) and
+        name = ref.getName()
+      )
+      or
+      variableImplicitlyInScope(name, scope)
+    }
+
+    private class VariableScope extends FinalAstNode {
+      VariableScope() { variableInScope(_, this) }
+
+      predicate hasVariable(string name) { variableInScope(name, this) }
+
+      AstNode getANodeInScope() {
+        result = this
+        or
+        result.getParent() = this.getANodeInScope() and
+        not result instanceof VariableScope
+      }
+
+      VariableScope getParentScope() { result.getANodeInScope() = this.getParent() }
+    }
+
+    final private class FinalVariableReference = VariableReference;
+
+    /**
+     * An access to a variable that is not a declaration.
+     */
+    class VariableAccess extends FinalVariableReference {
+      VariableAccess() { not variableDeclaredInScope(this, _) }
+
+      LocalVariable getVariable() { this = result.getAnAccess() }
+    }
+
+    /**
+     * An identifier that declares a variable.
+     */
+    class VariableDeclarationSite extends FinalVariableReference {
+      VariableDeclarationSite() { variableDeclaredInScope(this, _) }
+
+      LocalVariable getVariable() { this = result.getADeclarationSite() }
+    }
+
+    private predicate tryResolveToScope(VariableAccess ref, string name, VariableScope scope) {
+      ref.getName() = name and
+      (
+        lookupStartsAt(ref, scope)
+        or
+        not lookupStartsAt(ref, _) and
+        scope.getANodeInScope() = ref
+      )
+      or
+      exists(VariableScope innerScope |
+        tryResolveToScope(ref, name, innerScope) and
+        not innerScope.hasVariable(name) and
+        scope = innerScope.getParentScope()
+      )
+    }
+
+    private predicate resolveToScope(VariableAccess ref, string name, VariableScope scope) {
+      tryResolveToScope(ref, name, scope) and
+      scope.hasVariable(name)
+    }
+
+    private newtype TLocalVariable =
+      MkLocalVariable(AstNode scope, string name) { variableInScope(name, scope) }
+
+    class LocalVariable extends TLocalVariable {
+      private AstNode scope;
+      private string name;
+
+      LocalVariable() { this = MkLocalVariable(scope, name) }
+
+      AstNode getScope() { result = scope }
+
+      string getName() { result = name }
+
+      string toString() { result = name }
+
+      VariableAccess getAnAccess() { resolveToScope(result, name, scope) }
+
+      VariableDeclarationSite getADeclarationSite() { variableDeclaredInScope(result, scope) }
+
+      VariableReference getAReference() {
+        result = this.getAnAccess() or result = this.getADeclarationSite()
+      }
+
+      Location getLocation() {
+        result =
+          min(Location loc |
+            loc = this.getADeclarationSite().getLocation()
+          |
+            loc order by loc.getStartLine(), loc.getStartColumn()
+          )
+        or
+        not exists(this.getADeclarationSite()) and
+        result = scope.getLocation()
+      }
+    }
+
+    module Debug {
+      query predicate unresolvedVariableAccesses(VariableAccess access) {
+        not exists(access.getVariable())
+      }
+    }
+  }
 }

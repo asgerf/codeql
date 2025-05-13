@@ -1,5 +1,19 @@
 private import All
 
+private predicate objectPatternKeyValue(ObjectPattern pattern, Node key, Node value) {
+  exists(PairPattern pair |
+    pattern.getChild(_) = pair and
+    key = pair.getKey() and
+    value = getLValueNode(pair.getValue())
+  )
+  or
+  exists(ShorthandPropertyIdentifierPattern shorthand |
+    pattern.getChild(_) = shorthand and
+    key = shorthand and
+    value = getLValueNode(shorthand)
+  )
+}
+
 /**
  * Steps generated from flow into LValue nodes.
  */
@@ -29,12 +43,7 @@ class LValueNode extends Stage1 {
 
   override predicate readStep(Node node1, ContentSet contents, Node node2) {
     // Flow into `{ p: v }` results in a read of `p` into the nested lvalue `v`
-    exists(ObjectPattern pattern, PairPattern pair, Node key |
-      node1 = pattern and
-      pattern.getChild(_) = pair and
-      node2 = getLValueNode(pair.getValue()) and
-      key = pair.getKey()
-    |
+    exists(Node key | objectPatternKeyValue(node1, key, node2) |
       contents = getContentSetFromKey(key)
       or
       not exists(getContentSetFromKey(key)) and

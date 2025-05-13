@@ -16,3 +16,4 @@ import codeql.js.common.ShortCircuitingOperators
 import codeql.js.common.UpdateExpressions
 import codeql.js.common.Util
 import codeql.js.common.ValueFilter
+import codeql.js.common.Variables

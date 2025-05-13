@@ -1,0 +1,110 @@
+private import All
+
+/**
+ * A `StatementBlock` or `Program`.
+ */
+final class BlockScope = BlockScopeImpl;
+
+abstract private class BlockScopeImpl extends AstNode { }
+
+private class StatementBlockAsBlockScopeImpl extends BlockScopeImpl instanceof StatementBlock { }
+
+private class ProgramAsBlockScopeImpl extends BlockScopeImpl instanceof Program { }
+
+private AstNode getEnclosingBlockScope(AstNode node) {
+  node instanceof BlockScope and
+  result = node
+  or
+  not node instanceof BlockScope and
+  result = getEnclosingBlockScope(node.getParent())
+}
+
+private predicate isInDeclarationContext(AstNode node, AstNode scope) {
+  exists(VariableDeclarator decl |
+    node = decl.getName() and
+    if decl.getParent() instanceof LexicalDeclaration
+    then scope = getEnclosingBlockScope(decl)
+    else scope = getCfgScope(decl)
+  )
+  or
+  node instanceof Parameter and scope = getCfgScope(node)
+  or
+  node = any(FunctionDeclaration d).getName() and scope = getCfgScope(node) // note: this refers to the outer scope (as it should) due to how getCfgScope is defined
+  or
+  exists(FunctionExpression fun |
+    node = fun.getName() and
+    scope = fun
+  )
+  or
+  node = any(Class cls).getName() and scope = getEnclosingBlockScope(node)
+  or
+  node = any(ClassDeclaration cls).getName() and scope = getEnclosingBlockScope(node)
+  or
+  exists(CatchClause catch | node = catch.getParameter() and scope = catch)
+  or
+  exists(AstNode parent | isInDeclarationContext(parent, scope) |
+    node = parent.(ObjectPattern).getChild(_)
+    or
+    node = parent.(ArrayPattern).getChild(_)
+    or
+    node = parent.(PairPattern).getValue()
+    or
+    node = parent.(RestPattern).getChild()
+    or
+    node = parent.(AssignmentPattern).getLeft()
+  )
+}
+
+final class VariableReference = VariableReferenceImpl;
+
+abstract private class VariableReferenceImpl extends AstNode {
+  abstract string getName();
+}
+
+private class IdentifierAsVarRef extends VariableReferenceImpl instanceof Identifier {
+  override string getName() { result = super.getValue() }
+}
+
+private class ShorthandPropertyIdentifierAsVarRef extends VariableReferenceImpl instanceof ShorthandPropertyIdentifier
+{
+  override string getName() { result = super.getValue() }
+}
+
+private class ShorthandPropertyIdentifierPatternAsVarRef extends VariableReferenceImpl instanceof ShorthandPropertyIdentifierPattern
+{
+  override string getName() { result = super.getValue() }
+}
+
+private class ThisAsVarRef extends VariableReferenceImpl instanceof This {
+  override string getName() { result = "this" }
+}
+
+private module ResolveVariableConfig implements ResolveVariablesSig {
+  final class VariableReference = VariableReferenceImpl;
+
+  predicate variableDeclaredInScope(VariableReference declarationSite, AstNode scope) {
+    isInDeclarationContext(declarationSite, scope)
+  }
+
+  predicate variableImplicitlyInScope(string name, AstNode scope) {
+    scope instanceof CfgScope and
+    not scope instanceof ArrowFunction and
+    name = ["this", "arguments"]
+  }
+}
+
+private import ResolveVariables<ResolveVariableConfig> as Res
+
+class LocalVariable = Res::LocalVariable;
+
+class LocalVariableAccess extends Res::VariableAccess {
+  LocalVariableAccess() { exists(this.getVariable()) }
+}
+
+/**
+ * An access to a variable with no declaration in scope, either because it is global
+ * or because a module system implicitly put it in scope.
+ */
+class UnresolvedVariableAccess extends VariableReference instanceof Res::VariableAccess {
+  UnresolvedVariableAccess() { not exists(this.getVariable()) }
+}

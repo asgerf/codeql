@@ -6,6 +6,8 @@ int getIntValueFromNode(AstNode node) { result = node.(Number).getValue().toInt(
 
 ContentSet getContentSetFromKey(AstNode key) {
   result.asPropertyName() = key.(PropertyIdentifier).getValue() or
+  result.asPropertyName() = key.(ShorthandPropertyIdentifier).getValue() or
+  result.asPropertyName() = key.(ShorthandPropertyIdentifierPattern).getValue() or
   result.asPropertyName() = getStringValueFromNode(key) or
   result = ContentSet::arrayElementKnown(getIntValueFromNode(key))
 }
