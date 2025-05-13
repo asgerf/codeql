@@ -58,14 +58,14 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
     node1.isAfterTrue([stmt.getCondition(0), stmt.getSyntheticChildNode("empty-condition")]) and
     node2.isBefore(stmt.getBody())
     or
-    node1.isAfterFalse([stmt.getCondition(0), stmt.getSyntheticChildNode("empty-condition")]) and
+    node1.isAfterFalse(stmt.getCondition(0)) and // Note: omit the 'empty-condition' node here is it is always true
     node2.isAfter(stmt)
     or
     node1.isAfter(stmt.getBody()) and
     node2.isBefore([stmt.getIncrement(), stmt.getSyntheticChildNode("empty-increment")])
     or
     node1.isAfter([stmt.getIncrement(), stmt.getSyntheticChildNode("empty-increment")]) and
-    node2.isBefore(stmt.getBody())
+    node2.isBefore([stmt.getCondition(0), stmt.getSyntheticChildNode("empty-condition")])
   )
   or
   exists(ForInStatement stmt |
@@ -87,7 +87,7 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
     node1.isAfter(stmt.getBody()) and
     node2 = stmt.getSyntheticChildNode("loop-header")
     or
-    node1 = stmt.getSyntheticChildNode("loop-header") and
+    node1 = stmt.getSyntheticChildNode("loop-header") and // We don't model the exit condition, the loop header just has two outgoing edges
     node2.isAfter(stmt)
   )
   or
