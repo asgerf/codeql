@@ -451,14 +451,20 @@ module ControlFlow<
     }
 
     module Debug {
+      private predicate needsCfgEx(Node node) {
+        needsCfg(node)
+        or
+        needsCfg(node.(SyntheticNode).getParent())
+      }
+
       query predicate noSucc(AstNode node) {
-        (needsCfg(node) or node = getTrueOutcomeNode(_) or node = getFalseOutcomeNode(_)) and
+        needsCfgEx(node) and
         not step(node, _) and
         not node = getCfgExitPoint(_)
       }
 
       query predicate noPred(AstNode node) {
-        needsCfg(node) and
+        needsCfgEx(node) and
         not step(_, node) and
         not node = getCfgEntryPoint(_) and
         not step(_, getTrueOutcomeNode(node)) and

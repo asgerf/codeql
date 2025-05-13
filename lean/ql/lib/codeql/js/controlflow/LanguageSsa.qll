@@ -15,13 +15,6 @@ private Ssa::WriteDefinition getSsaWriteNode(VariableReference def) {
   )
 }
 
-private Ssa::Definition getSsaReadNode(VariableReference ref) {
-  exists(Cfg::BasicBlock bb, int i |
-    ref = bb.getNode(i) and
-    result.definesAt(ref.getVariable(), bb, i)
-  )
-}
-
 predicate defUse(VariableReference def, VariableReference use) {
   exists(LocalVariable v, Ssa::Definition ssaDef, Cfg::BasicBlock bb, int i |
     Ssa::ssaDefReachesRead(v, ssaDef, bb, i) and
