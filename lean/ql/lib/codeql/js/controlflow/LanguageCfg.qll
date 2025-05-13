@@ -30,9 +30,6 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
   )
   or
   exists(WhileStatement stmt |
-    node1.isBefore(stmt) and
-    node2.isBefore(stmt.getCondition())
-    or
     node1.isAfterTrue(stmt.getCondition()) and
     node2.isBefore(stmt.getBody())
     or
@@ -44,17 +41,14 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
   )
   or
   exists(DoStatement stmt |
-    node1.isBefore(stmt) and
-    node2.isBefore(stmt.getBody())
-    or
-    node1.isAfter(stmt.getBody()) and
-    node2.isBefore(stmt.getCondition())
-    or
     node1.isAfterTrue(stmt.getCondition()) and
     node2.isBefore(stmt.getBody())
     or
     node1.isAfterFalse(stmt.getCondition()) and
     node2.isAfter(stmt)
+    or
+    node1.isAfter(stmt.getBody()) and
+    node2.isBefore(stmt.getCondition())
   )
   or
   exists(ForStatement stmt |
@@ -89,6 +83,12 @@ predicate explicitStep(CfgNode1 node1, CfgNode2 node2) {
     or
     node1.isAfterAssigningTo(stmt.getLeft()) and
     node2.isBefore(stmt.getBody())
+    or
+    node1.isAfter(stmt.getBody()) and
+    node2 = stmt.getSyntheticChildNode("loop-header")
+    or
+    node1 = stmt.getSyntheticChildNode("loop-header") and
+    node2.isAfter(stmt)
   )
   or
   exists(AssignmentPattern pattern |
