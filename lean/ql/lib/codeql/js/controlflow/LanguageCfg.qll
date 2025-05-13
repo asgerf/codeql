@@ -144,6 +144,19 @@ private module ControlFlowGraphInput implements ControlFlowGraphSig {
       node2.isAfter(assign)
     )
     or
+    exists(AugmentedAssignmentExpression assign |
+      not exists(getShortCircuitingCondition(assign.getOperator()))
+    |
+      node1.isAfter(assign.getRight()) and
+      node2 = assign.getSyntheticChildNode("binary-operator")
+      or
+      node1 = assign.getSyntheticChildNode("binary-operator") and
+      node2.isBeforeAssigningTo(assign.getLeft())
+      or
+      node1.isAfterAssigningTo(assign.getLeft()) and
+      node2.isAfter(assign)
+    )
+    or
     exists(TernaryExpression expr |
       node1.isAfterTrue(expr.getCondition()) and
       node2.isBefore(expr.getConsequence())
