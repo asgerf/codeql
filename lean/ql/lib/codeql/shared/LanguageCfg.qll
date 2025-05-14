@@ -163,8 +163,6 @@ module ControlFlow<
 
   signature module ControlFlowGraphSig {
     predicate explicitStep(CfgNode1 node1, CfgNode2 node2);
-
-    predicate logicalValueStep(AstNode node1, AstNode node2);
   }
 
   module MakeControlFlowGraph<ControlFlowGraphSig CfgConfig> {

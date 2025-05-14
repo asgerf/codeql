@@ -38,6 +38,8 @@ signature module LanguageCommonSig<LocationSig Location, LanguageBaseSig<Locatio
    * If not specified for a given condition, `truthyCondition()` is used for that condition.
    */
   ValueFilter getSpecialConditionFilter(L::AstNode node);
+
+  predicate logicalValueStep(L::AstNode node1, L::AstNode node2);
 }
 
 module MakeLanguageCommon<
@@ -46,6 +48,15 @@ module MakeLanguageCommon<
   private import L
   private import C
 
+  private ValueFilter getSpecialConditionFilterEx(AstNode node) {
+    result = getSpecialConditionFilter(node)
+    or
+    exists(AstNode condition |
+      logicalValueStep(node, condition) and
+      result = getSpecialConditionFilter(condition)
+    )
+  }
+
   /**
    * Gets the set of values resulting in the "true" outcome of the given condition.
    */
@@ -53,9 +64,9 @@ module MakeLanguageCommon<
   ValueFilter getConditionFilter(AstNode node) {
     isCondition(node) and
     (
-      result = getSpecialConditionFilter(node)
+      result = getSpecialConditionFilterEx(node)
       or
-      not exists(getSpecialConditionFilter(node)) and
+      not exists(getSpecialConditionFilterEx(node)) and
       result = truthyCondition()
     )
   }
@@ -67,9 +78,9 @@ module MakeLanguageCommon<
   ValueFilter getLValueConditionFilter(AstNode node) {
     isConditionInLValue(node) and
     (
-      result = getSpecialConditionFilter(node)
+      result = getSpecialConditionFilterEx(node)
       or
-      not exists(getSpecialConditionFilter(node)) and
+      not exists(getSpecialConditionFilterEx(node)) and
       result = truthyCondition()
     )
   }

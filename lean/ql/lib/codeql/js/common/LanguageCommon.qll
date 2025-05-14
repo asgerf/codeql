@@ -12,9 +12,6 @@ module LanguageCommon implements LanguageCommonSig<Location, LanguageBase> {
     exists(BinaryExpressionLike binary |
       binary.getOperator() = "??" and
       result = ValueFilter::TNotNullLike()
-      or
-      node = binary.getRight() and
-      result = getSpecialConditionFilter(binary)
     )
     or
     node = any(OptionalChainExpression e).getBase() and
@@ -22,10 +19,27 @@ module LanguageCommon implements LanguageCommonSig<Location, LanguageBase> {
     or
     node instanceof AssignmentPattern and
     result = ValueFilter::TNotNullLike()
+  }
+
+  predicate logicalValueStep(AstNode node1, AstNode node2) {
+    exists(BinaryExpressionLike expr | expr.getOperator() = ["||", "??", "&&"] |
+      node1 = expr.getRight() and
+      node2 = expr
+    )
+    or
+    exists(TernaryExpression expr |
+      node1 = [expr.getConsequence(), expr.getAlternative()] and
+      node2 = expr
+    )
     or
     exists(ParenthesizedExpression expr |
-      node = expr.getChild() and
-      result = getSpecialConditionFilter(expr)
+      node1 = expr.getChild() and
+      node2 = expr
+    )
+    or
+    exists(SequenceExpression expr |
+      node1 = max(int i | | expr.getChild(i) order by i) and
+      node2 = expr
     )
   }
 }
