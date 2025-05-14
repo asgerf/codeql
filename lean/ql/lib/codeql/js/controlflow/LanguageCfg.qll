@@ -116,7 +116,7 @@ private module ControlFlowGraphInput implements ControlFlowGraphSig {
       shortCircuit = getShortCircuitingCondition(binary.getOperator())
     |
       node1.isAfter(binary.getLeft(), shortCircuit) and
-      node2.isAfter(binary)
+      node2.isAfter(binary, shortCircuit)
       or
       node1.isAfter(binary.getLeft(), shortCircuit.negate()) and
       node2.isBefore(binary.getRight())
@@ -254,20 +254,6 @@ private module ControlFlowGraphInput implements ControlFlowGraphSig {
     exists(SequenceExpression expr |
       node1 = max(int i | | expr.getChild(i) order by i) and
       node2 = expr
-    )
-  }
-
-  predicate logicalValueStep(AstNode node1, ValueFilter filter, AstNode node2) {
-    exists(BinaryExpressionLike expr |
-      node1 = expr.getLeft() and
-      filter = getShortCircuitingCondition(expr.getOperator()) and
-      node2 = expr
-    )
-    or
-    exists(OptionalChainExpression expr |
-      node1 = expr.getBase() and
-      filter = TNullLike() and
-      node2 = expr.getOutermostAccessor()
     )
   }
 }

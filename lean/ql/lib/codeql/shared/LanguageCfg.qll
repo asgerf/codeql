@@ -165,8 +165,6 @@ module ControlFlow<
     predicate explicitStep(CfgNode1 node1, CfgNode2 node2);
 
     predicate logicalValueStep(AstNode node1, AstNode node2);
-
-    predicate logicalValueStep(AstNode node1, ValueFilter filter, AstNode node2);
   }
 
   module MakeControlFlowGraph<ControlFlowGraphSig CfgConfig> {
@@ -283,15 +281,6 @@ module ControlFlow<
         isCondition(orig2) and
         node1 = getConditionalOutcomeWithFilter(orig1, filter) and
         node2.isAfter(orig2, filter)
-      )
-      or
-      exists(AstNode condition, ValueFilter filter1 |
-        logicalValueStep(condition, filter1, orig2) and
-        isCondition(orig2) and
-        node1 = getConditionalOutcomeWithFilter(condition, filter1) and
-        node2.isAfter(orig2, filter1) and
-        node1 = orig1 and
-        not node2 = orig2 // ignore if the new edge is identical
       )
     }
 
