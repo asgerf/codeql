@@ -232,6 +232,16 @@ module ControlFlow<
     }
 
     /**
+     * Holds if `node1 -> node2` is a step in left-to-right evaluation order that has
+     * not been suppressed by an explicit step.
+     */
+    private predicate leftToRightStep(Node node1, Node node2) {
+      adjacent(node1, node2) and
+      not explicitStep(node1, _) and
+      not explicitStep(_, node2)
+    }
+
+    /**
      * Holds if the CFG step from `node1` to `node2` is only taken if the value of `node1` matches `filter`.
      */
     predicate conditionalStep(Node node1, ValueFilter filter, Node node2) {
@@ -271,6 +281,12 @@ module ControlFlow<
       )
     }
 
+    private predicate sharpenStepCandidate(Node node1, Node node2) {
+      explicitStep(node1, node2)
+      or
+      leftToRightStep(node1, node2)
+    }
+
     /**
      * Holds if the CFG edge `orig1 -> orig2` can safely be replaed by the more accurate `node1 -> node2`,
      * preserving more knowledge of conditional outcomes.
@@ -278,26 +294,23 @@ module ControlFlow<
     private predicate sharpenedStep(Node orig1, Node orig2, CfgNode1 node1, CfgNode2 node2) {
       exists(ValueFilter filter |
         logicalValueStep(orig1, orig2) and
+        sharpenStepCandidate(orig1, orig2) and
         isCondition(orig2) and
         node1 = getConditionalOutcomeWithFilter(orig1, filter) and
         node2.isAfter(orig2, filter)
       )
     }
 
-    private predicate unconditionalStep1(Node node1, Node node2) {
-      adjacent(node1, node2) and
-      not explicitStep(node1, _) and
-      not explicitStep(_, node2) and
-      not isCondition(node1)
-      or
-      explicitStep(node1, node2)
-    }
-
     predicate unconditionalStep(Node node1, Node node2) {
-      unconditionalStep1(node1, node2) and
-      not sharpenedStep(node1, node2, _, _)
-      or
       sharpenedStep(_, _, node1, node2)
+      or
+      not sharpenedStep(node1, node2, _, _) and
+      (
+        explicitStep(node1, node2)
+        or
+        leftToRightStep(node1, node2) and
+        not isCondition(node1)
+      )
     }
 
     predicate step(Node node1, Node node2) {
@@ -498,9 +511,13 @@ module ControlFlow<
         not exists(getCfgScope(node))
       }
 
+      /**
+       * Holds if `node1 -> node2` is a logical value step, but there is no CFG edge from `node1 -> node2` which could be improved
+       * by the logical step.
+       */
       query predicate logicalStepMissingFromCfg(Node node1, Node node2) {
         logicalValueStep(node1, node2) and
-        not explicitStep(node1, node2)
+        not sharpenStepCandidate(node1, node2)
       }
 
       query predicate logicalStepPredIsNotCondition(Node node1, Node node2, string problem) {
