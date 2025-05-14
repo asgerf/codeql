@@ -2,7 +2,7 @@ private import All
 private import codeql.shared.LanguageCfg::LanguageCfgBuilder<Location, LanguageBase, LanguageCommon>
 private import ValueFilter
 
-private module LanguageCfg implements LanguageCfgSig {
+module LanguageCfg implements LanguageCfgSig {
   /**
    * An explicit step from `node1` to `node2`.
    *
@@ -237,7 +237,3 @@ private module LanguageCfg implements LanguageCfgSig {
 }
 
 import MakeLanguageCfg<LanguageCfg> as Cfg
-
-private module Consistency {
-  import Cfg::Debug
-}
