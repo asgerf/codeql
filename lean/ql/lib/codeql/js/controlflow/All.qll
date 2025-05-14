@@ -1,2 +1,2 @@
 import codeql.js.common.All
-import codeql.js.controlflow.ControlFlowGraph
+import codeql.js.controlflow.LanguageCfgJS

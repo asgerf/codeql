@@ -81,6 +81,10 @@ signature module LanguageBaseSig<LocationSig Location> {
 module MakeLanguageBase<LocationSig Location, LanguageBaseSig<Location> L> {
   private import L
 
+  predicate isInPureLValuePosition = L::isInPureLValuePosition/1;
+
+  predicate isCondition = L::isCondition/1;
+
   /**
    * Holds if `node` appears in left-hand position relative to an assignment or in a parameter position.
    */

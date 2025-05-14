@@ -1,8 +1,8 @@
 private import All
-private import codeql.shared.LanguageCfg::ControlFlow<Location, LanguageBase, LanguageCommon>
+private import codeql.shared.LanguageCfg::LanguageCfgBuilder<Location, LanguageBase, LanguageCommon>
 private import ValueFilter
 
-private module ControlFlowGraphInput implements ControlFlowGraphSig {
+private module LanguageCfg implements LanguageCfgSig {
   /**
    * An explicit step from `node1` to `node2`.
    *
@@ -236,7 +236,7 @@ private module ControlFlowGraphInput implements ControlFlowGraphSig {
   }
 }
 
-import MakeControlFlowGraph<ControlFlowGraphInput> as Cfg
+import MakeLanguageCfg<LanguageCfg> as Cfg
 
 private module Consistency {
   import Cfg::Debug

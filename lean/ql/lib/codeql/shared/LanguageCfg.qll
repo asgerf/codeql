@@ -5,7 +5,7 @@ private import codeql.controlflow.BasicBlock as BB
 private import codeql.util.Boolean
 private import codeql.ssa.Ssa as Ssa
 
-module ControlFlow<
+module LanguageCfgBuilder<
   LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
 {
   private import L
@@ -161,11 +161,11 @@ module ControlFlow<
     predicate isAfterFalse(AstNode node) { this.isAfter(node, falsyCondition()) }
   }
 
-  signature module ControlFlowGraphSig {
+  signature module LanguageCfgSig {
     predicate explicitStep(CfgNode1 node1, CfgNode2 node2);
   }
 
-  module MakeControlFlowGraph<ControlFlowGraphSig CfgConfig> {
+  module MakeLanguageCfg<LanguageCfgSig CfgConfig> {
     private class Node = AstNode;
 
     private import CfgConfig
