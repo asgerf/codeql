@@ -35,7 +35,7 @@ signature module LanguageCommonSig<LocationSig Location, LanguageBaseSig<Locatio
   /**
    * Gets the set of values resulting in the "true" outcome of the given condition.
    *
-   * If not specified for a given condition, `truthyCondition()` is used for that condition.
+   * If not specified for a given condition, it is taken from  `truthyCondition()` is used for that condition.
    */
   ValueFilter getSpecialConditionFilter(L::AstNode node);
 
