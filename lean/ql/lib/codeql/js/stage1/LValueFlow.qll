@@ -54,8 +54,7 @@ class LValueNode extends Stage1 {
     exists(ArrayPattern pattern, int n |
       node1 = pattern and
       contents = ContentSet::arrayElementKnown(n) and
-      node2 = getLValueNode(pattern.getChild(n)) and
-      not node2 instanceof RestPattern
+      node2 = getLValueNode(pattern.getChild(n))
     )
     or
     // Flow into `[ x, ...rest ]` results in a read into `...rest` followed by a store into the nested lvalue `rest`.

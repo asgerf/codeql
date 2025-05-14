@@ -155,3 +155,5 @@ module LanguageBase implements LanguageBaseSig<Location> {
 }
 
 import MakeLanguageBase<Location, LanguageBase>
+
+predicate isInPureLValuePosition = LanguageBase::isInPureLValuePosition/1;

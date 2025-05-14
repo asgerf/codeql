@@ -60,7 +60,7 @@ module ControlFlow<
      * Holds if this is the end of the execution of the given AST node.
      *
      * This equals the node itself since all nodes are executed in post-order,
-     * but for readability this is best to use this predicate when constructing step relations.
+     * but for readability it is best to use this predicate when constructing step relations.
      */
     predicate isAfter(AstNode node) { this = node }
 
@@ -459,14 +459,14 @@ module ControlFlow<
 
       query predicate noSucc(AstNode node) {
         needsCfgEx(node) and
-        not step(node, _) and
-        not node = getCfgExitPoint(_)
+        not node = getCfgExitPoint(_) and
+        not step(node, _)
       }
 
       query predicate noPred(AstNode node) {
         needsCfgEx(node) and
-        not step(_, node) and
         not node = getCfgEntryPoint(_) and
+        not step(_, node) and
         not step(_, getTrueOutcomeNode(node)) and
         not step(_, getFalseOutcomeNode(node))
       }
@@ -491,6 +491,11 @@ module ControlFlow<
       query predicate noCfgScope(Node node) {
         needsCfg(node) and
         not exists(getCfgScope(node))
+      }
+
+      query predicate logicalStepMissingFromCfg(Node node1, Node node2) {
+        logicalValueStep(node1, node2) and
+        not explicitStep(node1, node2)
       }
 
       query predicate counts(int numCfgNodes, int numBBs, float averageBBLength) {
