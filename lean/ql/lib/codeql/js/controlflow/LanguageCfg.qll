@@ -250,6 +250,11 @@ private module ControlFlowGraphInput implements ControlFlowGraphSig {
       node1 = expr.getChild() and
       node2 = expr
     )
+    or
+    exists(SequenceExpression expr |
+      node1 = max(int i | | expr.getChild(i) order by i) and
+      node2 = expr
+    )
   }
 
   predicate logicalValueStep(AstNode node1, ValueFilter filter, AstNode node2) {

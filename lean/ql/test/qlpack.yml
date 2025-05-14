@@ -1,0 +1,7 @@
+name: codeql/lean-tests
+groups: [lean, test]
+dependencies:
+  codeql/lean: ${workspace}
+extractor: lean
+tests: .
+warnOnImplicitThis: true

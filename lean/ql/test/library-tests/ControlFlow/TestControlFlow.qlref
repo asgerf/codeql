@@ -1,0 +1,2 @@
+query: TestControlFlow.ql
+postprocess: utils/test/InlineExpectationsTestQuery.ql

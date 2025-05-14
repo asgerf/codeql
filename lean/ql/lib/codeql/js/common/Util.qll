@@ -1,6 +1,9 @@
 private import All
 
-string getStringValueFromNode(AstNode node) { result = node.(StringFragment).getValue() or none() }
+string getStringValueFromNode(AstNode node) {
+  result = node.(StringFragment).getValue() or
+  result = getStringValueFromNode(node.(String).getChild(0))
+}
 
 int getIntValueFromNode(AstNode node) { result = node.(Number).getValue().toInt() or none() }
 

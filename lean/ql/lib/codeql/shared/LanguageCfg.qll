@@ -376,6 +376,22 @@ module ControlFlow<
 
     class BasicBlock = BasicBlocks::BasicBlock;
 
+    bindingset[node1, node2]
+    pragma[inline_late]
+    predicate dominates(Node node1, Node node2) {
+      exists(BasicBlock bb, int i, int j |
+        bb.getNode(i) = node1 and
+        bb.getNode(j) = node2 and
+        i < j
+      )
+      or
+      exists(BasicBlock bb1, BasicBlock bb2 |
+        bb1.getANode() = node1 and
+        bb2.getANode() = node2 and
+        bb1.strictlyDominates(bb2)
+      )
+    }
+
     signature module LanguageSsaSig {
       class LocalVariable {
         VariableReference getAReference();
@@ -496,6 +512,13 @@ module ControlFlow<
       query predicate logicalStepMissingFromCfg(Node node1, Node node2) {
         logicalValueStep(node1, node2) and
         not explicitStep(node1, node2)
+      }
+
+      query predicate logicalStepPredIsNotCondition(Node node1, Node node2, string problem) {
+        logicalValueStep(node1, node2) and
+        isCondition(node2) and
+        not isCondition(node1) and
+        problem = "node2 is a condition, but node1 is not"
       }
 
       query predicate counts(int numCfgNodes, int numBBs, float averageBBLength) {

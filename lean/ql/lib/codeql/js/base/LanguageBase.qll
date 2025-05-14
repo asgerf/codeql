@@ -140,6 +140,11 @@ module LanguageBase implements LanguageBaseSig<Location> {
       node = expr.getChild()
     )
     or
+    exists(SequenceExpression expr |
+      isCondition(expr) and
+      node = max(int i | | expr.getChild(i) order by i)
+    )
+    or
     // The `x` in `x?.foo` is checked for nullness
     node = any(OptionalChainExpression expr).getBase()
   }
@@ -157,3 +162,5 @@ module LanguageBase implements LanguageBaseSig<Location> {
 import MakeLanguageBase<Location, LanguageBase>
 
 predicate isInPureLValuePosition = LanguageBase::isInPureLValuePosition/1;
+
+predicate isCondition = LanguageBase::isCondition/1;
