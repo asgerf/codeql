@@ -1,13 +1,9 @@
 module JS {
   private import GeneratedAst::JS as G
-  import G // This module must re-export the generated AST
-
-  class CallExpression extends G::CallExpression {
-    AstNode getArgument(int i) {
-      result = this.getArguments().(Arguments).getChild(i) or
-      result = this.getArguments().(TemplateString).getChild(i)
-    }
-  }
+  // This module re-exports the generated AST, shadowing the classes we have a facade for.
+  // The generated AST refers to this module when referencing a type name, so predicates
+  // have a more useful return type.
+  import G
 
   /**
    * A compound assignment such as `x += e`.
