@@ -107,6 +107,10 @@ module MakeLanguageBase<LocationSig Location, LanguageBaseSig<Location> L> {
     isInLValuePosition(node) and result = node.getSyntheticChildNode("lvalue")
   }
 
+  SyntheticNode getLValueEndNode(AstNode node) {
+    isInLValuePosition(node) and result = node.getSyntheticChildNode("lvalue-end")
+  }
+
   SyntheticNode getTrueOutcomeNode(AstNode node) {
     isCondition(node) and result = node.getSyntheticChildNode("condition-true")
   }
@@ -126,4 +130,6 @@ module MakeLanguageBase<LocationSig Location, LanguageBaseSig<Location> L> {
   SyntheticNode getCfgExitPoint(AstNode node) {
     isCfgScope(node) and result = node.getSyntheticChildNode("cfg-exit-point")
   }
+
+  SyntheticNode getCfgBegin(AstNode node) { result = node.getSyntheticChildNode("cfg-begin") }
 }

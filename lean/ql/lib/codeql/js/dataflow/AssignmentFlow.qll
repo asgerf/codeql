@@ -14,9 +14,9 @@ class AssignmentFlow extends Stage1 {
       node2 = [asn, getLValueNode(asn.getLeft())]
     )
     or
-    exists(BinaryExpressionInAssignment expr |
-      node1 = expr and
-      node2 = getLValueNode(expr.getAssignment().getLeft())
+    exists(AugmentedAssignmentExpression asn |
+      node1 = asn.getBinaryOperatorNode() and
+      node2 = [asn, getLValueNode(asn.getLeft())]
     )
     or
     exists(ForInStatement stmt |
