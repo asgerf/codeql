@@ -12,4 +12,5 @@ dependencies:
   codeql/yaml: ${workspace}
   codeql/ssa: ${workspace}
   codeql/controlflow: ${workspace}
+  codeql/dataflow: ${workspace}
 warnOnImplicitThis: true
