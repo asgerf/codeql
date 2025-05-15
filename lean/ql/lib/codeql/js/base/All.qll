@@ -11,6 +11,6 @@
  */
 
 import codeql.Locations
-import codeql.js.base.GeneratedAst::JS
+import codeql.js.base.FacadeAst::JS
 import codeql.js.base.LanguageBaseJS
 import codeql.js.base.OptionalChainExpresson

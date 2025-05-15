@@ -17,12 +17,10 @@ pub struct Options {
 pub fn run(options: Options) -> std::io::Result<()> {
     codeql_extractor::extractor::set_tracing_level("ql");
 
-    let languages = vec![
-        Language {
-            name: "JS".to_owned(),
-            node_types: tree_sitter_javascript::NODE_TYPES,
-        },
-    ];
+    let languages = vec![Language {
+        name: "JS".to_owned(),
+        node_types: tree_sitter_javascript::NODE_TYPES,
+    }];
 
-    generate(languages, options.dbscheme, options.library)
+    generate(languages, options.dbscheme, options.library, true)
 }

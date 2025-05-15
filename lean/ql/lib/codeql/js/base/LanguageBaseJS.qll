@@ -2,7 +2,7 @@ import All
 private import codeql.shared.LanguageBase
 
 module LanguageBase implements LanguageBaseSig<Location> {
-  import codeql.js.base.GeneratedAst::JS
+  import codeql.js.base.FacadeAst::JS
 
   /**
    * Holds if a language-specific synthetic node with the given `tag` should be synthesized as a child of `node`.

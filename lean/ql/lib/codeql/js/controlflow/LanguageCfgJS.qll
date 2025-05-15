@@ -63,19 +63,19 @@ module LanguageCfg implements LanguageCfgSig {
       node2.isBefore(stmt.getInitializer())
       or
       node1.isAfter(stmt.getInitializer()) and
-      node2.isBefore([stmt.getCondition(0), stmt.getSyntheticChildNode("empty-condition")])
+      node2.isBefore(stmt.getConditionOrEmptyNode())
       or
-      node1.isAfterTrue([stmt.getCondition(0), stmt.getSyntheticChildNode("empty-condition")]) and
+      node1.isAfterTrue(stmt.getConditionOrEmptyNode()) and
       node2.isBefore(stmt.getBody())
       or
-      node1.isAfterFalse(stmt.getCondition(0)) and // Note: omit the 'empty-condition' node here as it is always true
+      node1.isAfterFalse(stmt.getCondition(0)) and // Note: omit the 'empty-condition' node here as it acts as always true
       node2.isAfter(stmt)
       or
       node1.isAfter(stmt.getBody()) and
-      node2.isBefore([stmt.getIncrement(), stmt.getSyntheticChildNode("empty-increment")])
+      node2.isBefore(stmt.getIncrementOrEmptyNode())
       or
-      node1.isAfter([stmt.getIncrement(), stmt.getSyntheticChildNode("empty-increment")]) and
-      node2.isBefore([stmt.getCondition(0), stmt.getSyntheticChildNode("empty-condition")])
+      node1.isAfter(stmt.getIncrementOrEmptyNode()) and
+      node2.isBefore(stmt.getConditionOrEmptyNode())
     )
     or
     exists(ForInStatement stmt |
@@ -83,9 +83,9 @@ module LanguageCfg implements LanguageCfgSig {
       node2.isBefore(stmt.getRight())
       or
       node1.isAfter(stmt.getRight()) and
-      node2 = stmt.getSyntheticChildNode("loop-header")
+      node2.isBefore(stmt.getLoopHeader())
       or
-      node1 = stmt.getSyntheticChildNode("loop-header") and
+      node1.isAfter(stmt.getLoopHeader()) and
       node2.isBefore(stmt.getLeft()) // Visit 'left' inside the loop. `for (g().x in y)` will cause `g()` to be called in every iteration.
       or
       node1.isAfter(stmt.getLeft()) and
@@ -95,9 +95,9 @@ module LanguageCfg implements LanguageCfgSig {
       node2.isBefore(stmt.getBody())
       or
       node1.isAfter(stmt.getBody()) and
-      node2 = stmt.getSyntheticChildNode("loop-header")
+      node2.isBefore(stmt.getLoopHeader())
       or
-      node1 = stmt.getSyntheticChildNode("loop-header") and // We don't model the exit condition, the loop header just has two outgoing edges
+      node1.isAfter(stmt.getLoopHeader()) and // We don't model the exit condition, the loop header just has two outgoing edges
       node2.isAfter(stmt)
     )
     or
@@ -135,9 +135,9 @@ module LanguageCfg implements LanguageCfgSig {
       node2.isBefore(assign.getRight())
       or
       node1.isAfter(assign.getRight()) and
-      node2 = assign.getSyntheticChildNode("binary-operator")
+      node2.isBefore(assign.getBinaryOperatorNode())
       or
-      node1 = assign.getSyntheticChildNode("binary-operator") and
+      node1.isAfter(assign.getBinaryOperatorNode()) and
       node2.isBeforeAssigningTo(assign.getLeft())
       or
       node1.isAfterAssigningTo(assign.getLeft()) and
@@ -148,9 +148,9 @@ module LanguageCfg implements LanguageCfgSig {
       not exists(getShortCircuitingCondition(assign.getOperator()))
     |
       node1.isAfter(assign.getRight()) and
-      node2 = assign.getSyntheticChildNode("binary-operator")
+      node2.isBefore(assign.getBinaryOperatorNode())
       or
-      node1 = assign.getSyntheticChildNode("binary-operator") and
+      node1.isAfter(assign.getBinaryOperatorNode()) and
       node2.isBeforeAssigningTo(assign.getLeft())
       or
       node1.isAfterAssigningTo(assign.getLeft()) and
