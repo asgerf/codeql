@@ -4,6 +4,7 @@ private import LanguageCommon
 private import codeql.controlflow.BasicBlock as BB
 private import codeql.util.Boolean
 private import codeql.ssa.Ssa as Ssa
+private import codeql.dataflow.VariableCapture as VariableCapture
 
 module LanguageCfgBuilder<
   LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
@@ -412,10 +413,18 @@ module LanguageCfgBuilder<
       default predicate readIsUncertain(VariableReference ref) { none() }
 
       default predicate definitelyInitialized(LocalVariable v) { none() }
+
+      /**
+       * Gets the lambda expression or anonymous class creation expression that encloses
+       * the given callable. Variable captured by `callable` will be stored on this object.
+       */
+      AstNode getClosureExprFromNestedCallable(CfgScope callable);
     }
 
     module LanguageSsa<LanguageSsaSig LanguageSsaInput> {
       private import LanguageSsaInput
+
+      final private class FinalLocalVariable = LocalVariable;
 
       private module NonCapturedSsaConfig implements Ssa::InputSig<Location> {
         class BasicBlock = BasicBlocks::BasicBlock;
@@ -427,8 +436,6 @@ module LanguageCfgBuilder<
         }
 
         BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
-
-        final private class FinalLocalVariable = LocalVariable;
 
         class SourceVariable extends FinalLocalVariable {
           SourceVariable() { not this.isCaptured() }
@@ -463,7 +470,76 @@ module LanguageCfgBuilder<
         }
       }
 
-      import Ssa::Make<Location, NonCapturedSsaConfig>
+      import Ssa::Make<Location, NonCapturedSsaConfig> as NonCapture
+
+      private module CapturedSsaConfig implements VariableCapture::InputSig<Location> {
+        final private class FinalBasicBlock = BasicBlocks::BasicBlock;
+
+        class BasicBlock extends FinalBasicBlock {
+          Callable getEnclosingCallable() { result = super.getScope() }
+        }
+
+        class ControlFlowNode = AstNode;
+
+        BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) {
+          result.immediatelyDominates(bb)
+        }
+
+        BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
+
+        class CapturedVariable extends FinalLocalVariable {
+          CapturedVariable() { this.isCaptured() }
+
+          Callable getCallable() { result = this.getCfgScope() }
+        }
+
+        class CapturedParameter extends CapturedVariable {
+          CapturedParameter() { none() } // Not needed due to how we model L-values
+        }
+
+        final private class FinalAstNode = AstNode;
+
+        class Expr extends FinalAstNode {
+          predicate hasCfgNode(BasicBlock bb, int i) { bb.getNode(i) = this }
+        }
+
+        class VariableWrite extends Expr {
+          private CapturedVariable variable;
+
+          VariableWrite() { this = getLValueNode(variable.getAReference()) }
+
+          CapturedVariable getVariable() { result = variable }
+        }
+
+        class VariableRead extends Expr {
+          private CapturedVariable variable;
+
+          VariableRead() { this = variable.getAReference() and not isInPureLValuePosition(this) }
+
+          CapturedVariable getVariable() { result = variable }
+        }
+
+        class ClosureExpr extends Expr {
+          predicate hasBody(Callable body) { this = getClosureExprFromNestedCallable(body) }
+
+          /**
+           * Holds if `f` is an expression that may hold the value of the closure and
+           * may occur in a position where the value escapes or where the closure may
+           * be invoked.
+           *
+           * For example, if a lambda is assigned to a variable, then references to
+           * that variable in return or argument positions should be included.
+           */
+          predicate hasAliasedAccess(Expr f) { none() } // TODO
+        }
+
+        final private class FinalCfgScope = CfgScope;
+
+        class Callable extends FinalCfgScope {
+          /** Holds if this callable is a constructor. */
+          predicate isConstructor() { none() } // TODO
+        }
+      }
     }
 
     module Debug {

@@ -233,6 +233,19 @@ module LanguageCfg implements LanguageCfgSig {
       node1.isAfter(expr.getChild()) and
       node2.isAfter(expr)
     )
+    or
+    exists(ObjectPattern pattern |
+      node1.isBeforeAssigningTo(pattern) and
+      node2.isBeforeAssigningTo(pattern.getChild(0))
+      or
+      exists(int i |
+        node1.isAfterAssigningTo(pattern.getChild(i)) and
+        node2.isBeforeAssigningTo(pattern.getChild(i + 1))
+      )
+      or
+      node1.isAfterAssigningTo(max(int i | | pattern.getChild(i) order by i)) and
+      node2.isAfterAssigningTo(pattern)
+    )
   }
 }
 

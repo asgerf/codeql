@@ -10,6 +10,7 @@ module LanguageCommon implements LanguageCommonSig<Location, LanguageBase> {
 
   ValueFilter getSpecialConditionFilter(AstNode node) {
     exists(BinaryExpressionLike binary |
+      node = binary.getLeft() and
       binary.getOperator() = "??" and
       result = ValueFilter::TNotNullLike()
     )
