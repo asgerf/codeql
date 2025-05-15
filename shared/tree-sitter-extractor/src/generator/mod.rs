@@ -17,6 +17,7 @@ pub fn generate(
     languages: Vec<language::Language>,
     dbscheme_path: PathBuf,
     ql_library_path: PathBuf,
+    use_facade_ast: bool,
 ) -> std::io::Result<()> {
     let dbscheme_file = File::create(dbscheme_path).map_err(|e| {
         tracing::error!("Failed to create dbscheme file: {}", e);
@@ -44,6 +45,7 @@ pub fn generate(
     ql::write(
         &mut ql_writer,
         &[ql::TopLevel::Import(ql::Import {
+            privacy: ql::Privacy::Public,
             module: "codeql.Locations",
             alias: Some("L"),
         })],
@@ -61,6 +63,11 @@ pub fn generate(
         let synthetic_node_name = format!("{}_synthetic_node", &prefix);
         let nodes = node_types::read_node_types_str(&prefix, language.node_types)?;
         let (dbscheme_entries, mut ast_node_members, token_kinds) = convert_nodes(&nodes);
+        let facade_import_name = if use_facade_ast {
+            format!("FacadeAst::{}", &language.name)
+        } else {
+            language.name.clone()
+        };
         ast_node_members.insert(&token_name);
         ast_node_members.insert(&synthetic_node_name);
         writeln!(&mut dbscheme_writer, "/*- {} dbscheme -*/", language.name)?;
@@ -92,6 +99,11 @@ pub fn generate(
         )?;
 
         let mut body = vec![
+            ql::TopLevel::Import(ql::Import {
+                privacy: ql::Privacy::Private,
+                module: &facade_import_name,
+                alias: Some("F"),
+            }),
             ql::TopLevel::Class(ql_gen::create_ast_node_class(
                 &ast_node_name,
                 &node_location_table_name,
