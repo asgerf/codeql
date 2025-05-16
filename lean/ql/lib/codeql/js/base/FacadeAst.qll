@@ -45,4 +45,34 @@ module JS {
       result = this.getSyntheticChildNode("empty-increment")
     }
   }
+
+  abstract private class ImportOrExportStatementImpl extends Statement {
+    /** Gets a synthetic node representing the imported module. */
+    SyntheticNode getImportedModuleNode() { result = this.getSyntheticChildNode("imported-module") }
+  }
+
+  final class ImportOrExportStatement = ImportOrExportStatementImpl;
+
+  class ImportStatement extends G::ImportStatement, ImportOrExportStatementImpl {
+    ImportClause getImportClause() { result = this.getChild(_) }
+
+    /** Gets a `NamspaceImport`, `ImportSpecifier` or `Identifier` (for default import). */
+    AstNode getASpecifier() {
+      result = this.getImportClause().getDefaultImport()
+      or
+      result = this.getImportClause().getAsNamespaceImport()
+      or
+      result = this.getImportClause().getAsNamedImports().getChild(_)
+    }
+  }
+
+  class ExportStatement extends G::ExportStatement, ImportOrExportStatementImpl { }
+
+  class ImportClause extends G::ImportClause {
+    Identifier getDefaultImport() { result = this.getChild(_) }
+
+    NamespaceImport getAsNamespaceImport() { result = this.getChild(_) }
+
+    NamedImports getAsNamedImports() { result = this.getChild(_) }
+  }
 }

@@ -6,7 +6,8 @@ private import All
 class AssignmentFlow extends Stage1 {
   override predicate valueStep(Node node1, Node node2) {
     exists(VariableDeclarator decl |
-      node1 = decl.getValue() and node2 = getLValueNode(decl.getName())
+      node1 = decl.getValue() and
+      node2 = getLValueNode(decl.getName())
     )
     or
     exists(AssignmentExpression asn |

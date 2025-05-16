@@ -23,6 +23,9 @@ module LanguageBase implements LanguageBaseSig<Location> {
       not exists(stmt.getIncrement()) and
       tag = "empty-increment"
     )
+    or
+    node instanceof ImportOrExportStatement and
+    tag = "imported-module"
   }
 
   /**
@@ -159,4 +162,6 @@ module LanguageBase implements LanguageBaseSig<Location> {
   }
 }
 
-import MakeLanguageBase<Location, LanguageBase>
+private module Base = MakeLanguageBase<Location, LanguageBase>;
+
+import Base
