@@ -7,14 +7,6 @@ string getStringValueFromNode(AstNode node) {
 
 int getIntValueFromNode(AstNode node) { result = node.(Number).getValue().toInt() or none() }
 
-ContentSet getContentSetFromKey(AstNode key) {
-  result.asPropertyName() = key.(PropertyIdentifier).getValue() or
-  result.asPropertyName() = key.(ShorthandPropertyIdentifier).getValue() or
-  result.asPropertyName() = key.(ShorthandPropertyIdentifierPattern).getValue() or
-  result.asPropertyName() = getStringValueFromNode(key) or
-  result = ContentSet::arrayElementKnown(getIntValueFromNode(key))
-}
-
 AstNode getPostUpdate(AstNode node) { result = node } // TODO
 
 predicate isLikelyArrayAccess(SubscriptExpression e) {

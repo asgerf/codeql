@@ -75,4 +75,9 @@ module JS {
 
     NamedImports getAsNamedImports() { result = this.getChild(_) }
   }
+
+  class Array extends G::Array {
+    /** Gets the index of the first spread element in this array literal, if any. */
+    int getFirstSpreadIndex() { result = min(int i | this.getChild(i) instanceof SpreadElement) }
+  }
 }

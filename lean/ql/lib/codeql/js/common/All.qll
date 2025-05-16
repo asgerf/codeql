@@ -6,7 +6,6 @@
 import codeql.js.base.All
 import codeql.js.common.BinaryExprLike
 import codeql.js.common.CfgScope
-import codeql.js.common.Contents
 import codeql.js.common.Function
 import codeql.js.common.LanguageCommonJS
 import codeql.js.common.LogicalNot
