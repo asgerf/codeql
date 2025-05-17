@@ -80,4 +80,14 @@ module JS {
     /** Gets the index of the first spread element in this array literal, if any. */
     int getFirstSpreadIndex() { result = min(int i | this.getChild(i) instanceof SpreadElement) }
   }
+
+  class ImportSpecifier extends G::ImportSpecifier {
+    /** Gets the `v` in `import { x as v }` or in `import { v }`. */
+    AstNode getLocalName() {
+      result = this.getAlias()
+      or
+      not exists(this.getAlias()) and
+      result = this.getName()
+    }
+  }
 }

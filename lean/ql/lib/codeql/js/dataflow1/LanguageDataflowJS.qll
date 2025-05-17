@@ -112,9 +112,9 @@ private module Dataflow2 = Make2<LanguageContentSet>;
 import Dataflow2
 
 module Contents {
-  module Array = ArrayContentAccessor<ArrayContainerKind>;
+  module ArrayContent = ArrayContentAccessor<ArrayContainerKind>;
 
-  module Map = MapContentAccessor<ArrayContainerKind>;
+  module MapContent = MapContentAccessor<ArrayContainerKind>;
 
   ContentSet property(string name) {
     result.asSingleton().asLanguageContent().asPropertyName() = name

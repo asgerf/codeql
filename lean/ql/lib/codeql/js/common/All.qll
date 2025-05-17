@@ -9,9 +9,11 @@ import codeql.js.common.CfgScope
 import codeql.js.common.Function
 import codeql.js.common.LanguageCommonJS
 import codeql.js.common.LogicalNot
+import codeql.js.common.PairLike
+import codeql.js.common.PairPatternLike
 import codeql.js.common.PropAccess
-import codeql.js.common.SpreadAndRest
 import codeql.js.common.ShortCircuitingOperators
+import codeql.js.common.SpreadAndRest
 import codeql.js.common.UpdateExpressions
 import codeql.js.common.Util
 import codeql.js.common.ValueFilter

@@ -269,8 +269,8 @@ module LanguageDataFlow<
          *
          * Reading from this content set will also observe values that were originally stored at an unknown index.
          *
-         * Has no result for negative indices. Always has a result for non-negative indices.
-         * Indices above a certain threshold will be associated with a less precise content set.
+         * Has no result for negative indices. Always has a result for non-negative indices,
+         * but indices above a certain threshold will be associated with a less precise content set.
          */
         bindingset[index]
         ContentSet elementAt(int index) {
