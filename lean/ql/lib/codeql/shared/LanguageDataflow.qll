@@ -1,6 +1,7 @@
 private import codeql.util.Location
 private import LanguageBase
 private import LanguageCommon
+private import LanguageCfg
 private import codeql.controlflow.BasicBlock as BB
 private import codeql.util.Boolean
 private import codeql.util.Unit
@@ -29,6 +30,12 @@ module LanguageDataFlow<
     }
 
     class VariableReference extends Base::AstNode;
+
+    default predicate assignmentIsUncertain(Base::SyntheticNode lvalueNode) { none() }
+
+    default predicate readIsUncertain(VariableReference ref) { none() }
+
+    default predicate definitelyInitialized(LocalVariable v) { none() }
 
     class Constant {
       int asArrayIndex();
@@ -80,6 +87,10 @@ module LanguageDataFlow<
       string toString();
 
       Location getLocation();
+    }
+
+    class ClosureExpr extends AstNode {
+      predicate hasBody(CfgScope scope);
     }
   }
 
@@ -351,28 +362,28 @@ module LanguageDataFlow<
       }
 
       private newtype TStep =
-        TValue() or
-        TTaint() or
-        TRead(ContentSet contents) or
-        TStore(ContentSet contents) or
-        TWithContent(ContentSet contents) or
-        TWithoutContent(ContentSet contents)
+        TValueStep() or
+        TTaintStep() or
+        TReadStep(ContentSet contents) or
+        TStoreStep(ContentSet contents) or
+        TWithContentStep(ContentSet contents) or
+        TWithoutContentStep(ContentSet contents)
 
       class Step extends TStep {
         bindingset[this]
         Step() { any() } // Help catch some bugs in pracitce
 
-        predicate value() { this = TValue() }
+        predicate value() { this = TValueStep() }
 
-        predicate taint() { this = TTaint() }
+        predicate taint() { this = TTaintStep() }
 
-        predicate read(ContentSet contents) { this = TRead(contents) }
+        predicate read(ContentSet contents) { this = TReadStep(contents) }
 
-        predicate store(ContentSet contents) { this = TStore(contents) }
+        predicate store(ContentSet contents) { this = TStoreStep(contents) }
 
-        predicate withContent(ContentSet contents) { this = TWithContent(contents) }
+        predicate withContent(ContentSet contents) { this = TWithContentStep(contents) }
 
-        predicate withoutContent(ContentSet contents) { this = TWithoutContent(contents) }
+        predicate withoutContent(ContentSet contents) { this = TWithoutContentStep(contents) }
 
         string toString() {
           this.value() and result = "value"
@@ -406,14 +417,114 @@ module LanguageDataFlow<
 
       signature predicate dataflowStepSig(DataFlowBuilder node1, Step step, DataFlowBuilder node2);
 
-      module Make3<dataflowStepSig/3 dataflowStep> {
-        private newtype TDataFlowNode =
+      private import LanguageCfgBuilder<Location, Base, Common>
+
+      module Make3<dataflowStepSig/3 dataflowStep, LanguageCfgSig CfgSig> {
+        private import MakeLanguageCfg<CfgSig>
+
+        final private class FinalLocalVariable = LocalVariable;
+
+        private module NonCapturedSsaConfig implements Ssa::InputSig<Location> {
+          class BasicBlock = BasicBlocks::BasicBlock;
+
+          class ControlFlowNode = AstNode;
+
+          BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) {
+            result.immediatelyDominates(bb)
+          }
+
+          BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
+
+          class SourceVariable extends FinalLocalVariable {
+            SourceVariable() { not this.isCaptured() }
+          }
+
+          pragma[nomagic]
+          private BasicBlock getEntryBlock(CfgScope scope) {
+            result.getANode() = getCfgEntryPoint(scope)
+          }
+
+          predicate variableWrite(BasicBlock bb, int i, SourceVariable v, boolean certain) {
+            exists(AstNode lvalueNode |
+              lvalueNode = getLValueNode(v.getAReference()) and
+              bb.getNode(i) = lvalueNode and
+              if assignmentIsUncertain(lvalueNode) then certain = false else certain = true
+            )
+            or
+            // For variables that are not definitely initialized, put a synthetic initializer in the entry block
+            not definitelyInitialized(v) and
+            bb = getEntryBlock(v.getCfgScope()) and
+            i = -1 and
+            certain = true
+          }
+
+          predicate variableRead(BasicBlock bb, int i, SourceVariable v, boolean certain) {
+            exists(AstNode ref |
+              ref = v.getAReference() and
+              not isInPureLValuePosition(ref) and // not a read if pure lvalue
+              bb.getNode(i) = ref and
+              if readIsUncertain(ref) then certain = false else certain = true
+            )
+          }
+        }
+
+        import Ssa::Make<Location, NonCapturedSsaConfig> as LocalSsa
+
+        predicate valueStep(AstNode node1, AstNode node) { dataflowStep(node1, TValueStep(), node) }
+
+        pragma[nomagic]
+        private LocalVariable getCapturedVariableFromLValue(SyntheticNode lvalue) {
+          result.isCaptured() and
+          lvalue = getLValueNode(result.getAReference())
+        }
+
+        bindingset[node1]
+        pragma[inline_late]
+        predicate captureStepApprox(SyntheticNode node1, VariableReference node2) {
+          exists(LocalVariable v |
+            v = getCapturedVariableFromLValue(node1) and
+            node2 = v.getAReference() and
+            not isInPureLValuePosition(node2)
+          )
+        }
+
+        predicate closureExprHasAliasExpr(ClosureExpr expr, AstNode alias) {
+          alias = expr
+          or
+          exists(AstNode pred | closureExprHasAliasExpr(expr, pred) |
+            valueStep(pred, alias)
+            or
+            captureStepApprox(pred, alias)
+          )
+          or
+          exists(LocalSsa::Definition def, LocalVariable v, BasicBlock bb, int i |
+            closureExprHasAliasSsa(expr, def) and
+            LocalSsa::ssaDefReachesRead(v, def, bb, i) and
+            bb.getNode(i) = alias and
+            v.getAReference() = alias
+          )
+        }
+
+        predicate closureExprHasAliasSsa(ClosureExpr expr, LocalSsa::Definition alias) {
+          exists(BasicBlock bb, int i |
+            closureExprHasAliasExpr(expr, bb.getNode(i)) and
+            alias.(LocalSsa::WriteDefinition).definesAt(_, bb, i)
+          )
+          or
+          exists(LocalSsa::Definition prev, LocalVariable v, BasicBlock bb, int i |
+            closureExprHasAliasSsa(expr, prev) and
+            LocalSsa::ssaDefReachesRead(v, prev, bb, i) and
+            alias.definesAt(v, bb, i)
+          )
+        }
+
+        newtype TDataFlowNode =
           TValueNode(AstNode node) or
           TWithContentHelper(ContentSet contents, AstNode target) {
-            dataflowStep(_, TWithContent(contents), target)
+            dataflowStep(_, TWithContentStep(contents), target)
           } or
           TWithoutContentHelper(ContentSet contents, AstNode target) {
-            dataflowStep(_, TWithoutContent(contents), target)
+            dataflowStep(_, TWithoutContentStep(contents), target)
           } or
           TFlowSummaryNode() // TODO
       }

@@ -76,6 +76,10 @@ module LanguageDataFlowInput implements LanguageDataFlowSig {
 
     Location getLocation() { none() }
   }
+
+  class ClosureExpr extends Function {
+    predicate hasBody(CfgScope scope) { scope = this }
+  }
 }
 
 private import LanguageDataFlowInput
