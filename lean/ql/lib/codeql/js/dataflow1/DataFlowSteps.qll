@@ -1,4 +1,5 @@
 private import codeql.js.common.All
+private import codeql.js.controlflow.All
 private import LanguageDataflowJS
 private import Contents
 
@@ -206,4 +207,4 @@ predicate dataflowStep(DataFlowBuilder node1, Step step, DataFlowBuilder node2) 
   )
 }
 
-import Make3<dataflowStep/3>
+import Make3<dataflowStep/3, LanguageCfg>

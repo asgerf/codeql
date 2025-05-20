@@ -16,6 +16,8 @@ module LanguageDataFlow<
   private import MakeLanguageBase<Location, Base>
   private import MakeLanguageCommon<Location, Base, Common>
 
+  final private class FinalAstNode = AstNode;
+
   signature module LanguageDataFlowSig {
     class LocalVariable {
       VariableReference getAReference();
@@ -249,7 +251,6 @@ module LanguageDataFlow<
 
       /** Generates a module with accessors for content sets related to the given array-like container kind. */
       module ArrayContentAccessor<IndexedContainerKindSig Kind> {
-        // TODO: map too-large indices to a lower bound content set
         private Kind kind() { any() }
 
         private Constant preciseKey() { kind().trackValuesAssociatedWithKey(result) }
@@ -424,7 +425,10 @@ module LanguageDataFlow<
 
         final private class FinalLocalVariable = LocalVariable;
 
-        private module NonCapturedSsaConfig implements Ssa::InputSig<Location> {
+        /**
+         * Instantiation of SSA for non-captured variables.
+         */
+        private module LocalSsaConfig implements Ssa::InputSig<Location> {
           class BasicBlock = BasicBlocks::BasicBlock;
 
           class ControlFlowNode = AstNode;
@@ -468,7 +472,34 @@ module LanguageDataFlow<
           }
         }
 
-        import Ssa::Make<Location, NonCapturedSsaConfig> as LocalSsa
+        private module LocalSsa = Ssa::Make<Location, LocalSsaConfig>;
+
+        private module LocalSsaDataFlowConfig implements LocalSsa::DataFlowIntegrationInputSig {
+          class Expr extends FinalAstNode {
+            predicate hasCfgNode(BasicBlock bb, int i) { this = bb.getNode(i) }
+          }
+
+          class Guard extends FinalAstNode {
+            Guard() { isCondition(this) }
+
+            BasicBlock getOutcomeBlock(boolean branch) {
+              result.getANode() = getConditionalOutcomeNode(this, branch)
+            }
+
+            predicate controlsBranchEdge(BasicBlock bb1, BasicBlock bb2, boolean branch) {
+              bb1.getNode(_) = this and
+              bb2 = this.getOutcomeBlock(branch)
+            }
+          }
+
+          predicate guardDirectlyControlsBlock(Guard guard, BasicBlock bb, boolean branch) {
+            guard.getOutcomeBlock(branch).dominates(bb)
+          }
+
+          predicate includeWriteDefsInFlowStep() { none() } // not needed as we have lvalue nodes already
+        }
+
+        private module LocalSsaDataFlow = LocalSsa::DataFlowIntegration<LocalSsaDataFlowConfig>;
 
         predicate valueStep(AstNode node1, AstNode node) { dataflowStep(node1, TValueStep(), node) }
 
@@ -478,6 +509,7 @@ module LanguageDataFlow<
           lvalue = getLValueNode(result.getAReference())
         }
 
+        /** Holds if `node1 -> node2` steps from a write of a captured variable to any of its reads. */
         bindingset[node1]
         pragma[inline_late]
         predicate captureStepApprox(SyntheticNode node1, VariableReference node2) {
@@ -518,6 +550,76 @@ module LanguageDataFlow<
           )
         }
 
+        module VariableCaptureConfig implements VariableCapture::InputSig<Location> {
+          class BasicBlock extends BasicBlocks::BasicBlock {
+            Callable getEnclosingCallable() { result = this.getScope() }
+          }
+
+          class ControlFlowNode = AstNode;
+
+          BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) {
+            result.immediatelyDominates(bb)
+          }
+
+          BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
+
+          class CapturedVariable extends FinalLocalVariable {
+            CapturedVariable() { this.isCaptured() }
+
+            /** Gets the callable that defines this variable. */
+            Callable getCallable() { result = this.getCfgScope() }
+          }
+
+          class CapturedParameter extends CapturedVariable {
+            CapturedParameter() { none() } // Not needed here, as parameters and local variable writes (lvalues) are separate nodes
+          }
+
+          class Expr extends FinalAstNode {
+            /** Holds if the `i`th node of basic block `bb` evaluates this expression. */
+            predicate hasCfgNode(BasicBlock bb, int i) { bb.getNode(i) = this }
+          }
+
+          class VariableWrite extends Expr {
+            private CapturedVariable v;
+            private VariableReference ref;
+
+            VariableWrite() {
+              this = getLValueNode(ref) and
+              v.getAReference() = ref
+            }
+
+            CapturedVariable getVariable() { result = v }
+          }
+
+          final private class FinalVariableReference = VariableReference;
+
+          class VariableRead extends Expr, FinalVariableReference {
+            private CapturedVariable v;
+
+            VariableRead() { this = v.getAReference() and not isInPureLValuePosition(this) }
+
+            CapturedVariable getVariable() { result = v }
+          }
+
+          final private class FinalClosureExprBase = D::ClosureExpr;
+
+          class ClosureExpr extends Expr, FinalClosureExprBase {
+            predicate hasAliasedAccess(Expr f) { closureExprHasAliasExpr(this, f) }
+
+            predicate hasBody(Callable callable) { FinalClosureExprBase.super.hasBody(callable) }
+          }
+
+          final private class FinalCfgScope = CfgScope;
+
+          class Callable extends FinalCfgScope {
+            predicate isConstructor() {
+              none() // TODO
+            }
+          }
+        }
+
+        private module CaptureSsa = VariableCapture::Flow<Location, VariableCaptureConfig>;
+
         newtype TDataFlowNode =
           TValueNode(AstNode node) or
           TWithContentHelper(ContentSet contents, AstNode target) {
@@ -526,7 +628,118 @@ module LanguageDataFlow<
           TWithoutContentHelper(ContentSet contents, AstNode target) {
             dataflowStep(_, TWithoutContentStep(contents), target)
           } or
+          TLocalSsaNode(LocalSsaDataFlow::SsaNode node) or
+          TCaptureSsaNode(CaptureSsa::SynthesizedCaptureNode node) or
           TFlowSummaryNode() // TODO
+
+        class DataFlowNode extends TDataFlowNode {
+          pragma[nomagic]
+          AstNode asAstNode() { this = TValueNode(result) }
+
+          /** Holds if this represents the value abut to be assigned to the given `lvalue`. */
+          predicate isValueBeingAssignedTo(AstNode lvalue) {
+            this.asAstNode() = getLValueNode(lvalue)
+          }
+
+          string toString() {
+            result = this.asAstNode().toString()
+            or
+            exists(ContentSet contents, AstNode target |
+              this = TWithContentHelper(contents, target) and
+              result = "withContent " + contents + " " + target
+            )
+            or
+            exists(ContentSet contents, AstNode target |
+              this = TWithoutContentHelper(contents, target) and
+              result = "withoutContent " + contents + " " + target
+            )
+            or
+            exists(LocalSsaDataFlow::SsaNode node |
+              this = TLocalSsaNode(node) and
+              result = "SSA " + node
+            )
+            or
+            exists(CaptureSsa::SynthesizedCaptureNode node |
+              this = TCaptureSsaNode(node) and
+              result = "Capture " + node
+            )
+            or
+            this = TFlowSummaryNode() and
+            result = "FlowSummaryNode"
+          }
+
+          Location getLocation() {
+            result = this.asAstNode().getLocation()
+            or
+            exists(ContentSet contents, AstNode target |
+              this = TWithContentHelper(contents, target) and
+              result = target.getLocation()
+            )
+            or
+            exists(ContentSet contents, AstNode target |
+              this = TWithoutContentHelper(contents, target) and
+              result = target.getLocation()
+            )
+            or
+            exists(LocalSsaDataFlow::SsaNode node |
+              this = TLocalSsaNode(node) and
+              result = node.getLocation()
+            )
+            or
+            exists(CaptureSsa::SynthesizedCaptureNode node |
+              this = TCaptureSsaNode(node) and
+              result = node.getLocation()
+            )
+          }
+        }
+
+        private AstNode getPostUpdateNode(AstNode node) {
+          none() // TODO
+        }
+
+        bindingset[node]
+        pragma[inline_late]
+        private DataFlowNode getNodeFromLocalSsa(LocalSsaDataFlow::Node node) {
+          result = TLocalSsaNode(node) // Note: only holds for SsaNode subclass
+          or
+          result.asAstNode() = node.(LocalSsaDataFlow::ExprNode).getExpr()
+          or
+          exists(BasicBlock bb, int i |
+            node.(LocalSsaDataFlow::WriteDefSourceNode).getDefinition().definesAt(_, bb, i) and
+            result.asAstNode() = bb.getNode(i) // Gets the LValue node
+          )
+          or
+          result.asAstNode() =
+            getPostUpdateNode(node.(LocalSsaDataFlow::ExprPostUpdateNode).getExpr())
+        }
+
+        bindingset[node]
+        pragma[inline_late]
+        private DataFlowNode getNodeFromCaptureSsa(CaptureSsa::ClosureNode node) {
+          result = TCaptureSsaNode(node) // Note: only holds for SynthesizedCaptureNode subclass
+          or
+          result.asAstNode() = node.(CaptureSsa::ExprNode).getExpr()
+          or
+          result.asAstNode() = node.(CaptureSsa::VariableWriteSourceNode).getVariableWrite() // Gets the LValue node
+          or
+          result.asAstNode() = getPostUpdateNode(node.(CaptureSsa::ExprPostUpdateNode).getExpr())
+        }
+
+        predicate localFlowStep(DataFlowNode node1, DataFlowNode node2) {
+          dataflowStep(node1.asAstNode(), TValueStep(), node2.asAstNode())
+          or
+          exists(LocalSsaDataFlow::Node n1, LocalSsaDataFlow::Node n2 |
+            LocalSsaDataFlow::localFlowStep(_, n1, n2, _) and
+            node1 = getNodeFromLocalSsa(n1) and
+            node2 = getNodeFromLocalSsa(n2)
+          )
+          or
+          exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
+            CaptureSsa::localFlowStep(n1, n2) and
+            node1 = getNodeFromCaptureSsa(n1) and
+            node2 = getNodeFromCaptureSsa(n2)
+          )
+        }
       }
     }
   }
