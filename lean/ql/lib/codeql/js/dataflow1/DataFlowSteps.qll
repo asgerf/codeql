@@ -1,7 +1,6 @@
-private import codeql.js.common.All
-private import codeql.js.controlflow.All
-private import LanguageDataflowJS
+private import All
 private import Contents
+private import DataFlowBuilder
 
 ContentSet getContentSetFromKey(AstNode key) {
   result = property(key.(PropertyIdentifier).getValue()) or
@@ -11,7 +10,7 @@ ContentSet getContentSetFromKey(AstNode key) {
   result = ArrayContent::elementAt(getIntValueFromNode(key))
 }
 
-predicate dataflowStep(DataFlowBuilder node1, Step step, DataFlowBuilder node2) {
+predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
   //
   // Flow out of expressions
   //
@@ -206,5 +205,3 @@ predicate dataflowStep(DataFlowBuilder node1, Step step, DataFlowBuilder node2) 
     node2 = getLValueNode(assign.getLeft())
   )
 }
-
-import Make3<dataflowStep/3, LanguageCfg>

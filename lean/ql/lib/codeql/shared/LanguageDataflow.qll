@@ -7,6 +7,7 @@ private import codeql.util.Boolean
 private import codeql.util.Unit
 private import codeql.ssa.Ssa as Ssa
 private import codeql.dataflow.VariableCapture as VariableCapture
+private import codeql.dataflow.DataFlow as DataFlow
 
 module LanguageDataFlow<
   LocationSig Location, LanguageBaseSig<Location> Base, LanguageCommonSig<Location, Base> Common>
@@ -370,57 +371,68 @@ module LanguageDataFlow<
         TWithContentStep(ContentSet contents) or
         TWithoutContentStep(ContentSet contents)
 
-      class Step extends TStep {
-        bindingset[this]
-        Step() { any() } // Help catch some bugs in pracitce
+      /** Provides classes for constructing data flow steps. */
+      module DataFlowBuilder {
+        /** A type of data flow type. */
+        class Step extends TStep {
+          bindingset[this]
+          Step() { any() } // Help catch some bugs in pracitce
 
-        predicate value() { this = TValueStep() }
+          predicate value() { this = TValueStep() }
 
-        predicate taint() { this = TTaintStep() }
+          predicate taint() { this = TTaintStep() }
 
-        predicate read(ContentSet contents) { this = TReadStep(contents) }
+          predicate read(ContentSet contents) { this = TReadStep(contents) }
 
-        predicate store(ContentSet contents) { this = TStoreStep(contents) }
+          predicate store(ContentSet contents) { this = TStoreStep(contents) }
 
-        predicate withContent(ContentSet contents) { this = TWithContentStep(contents) }
+          predicate withContent(ContentSet contents) { this = TWithContentStep(contents) }
 
-        predicate withoutContent(ContentSet contents) { this = TWithoutContentStep(contents) }
+          predicate withoutContent(ContentSet contents) { this = TWithoutContentStep(contents) }
 
-        string toString() {
-          this.value() and result = "value"
-          or
-          this.taint() and result = "taint"
-          or
-          exists(ContentSet contents |
-            this.read(contents) and result = "read(" + contents.toString() + ")"
+          string toString() {
+            this.value() and result = "value"
             or
-            this.store(contents) and result = "store(" + contents.toString() + ")"
+            this.taint() and result = "taint"
             or
-            this.withContent(contents) and result = "withContent(" + contents.toString() + ")"
-            or
-            this.withoutContent(contents) and result = "withoutContent(" + contents.toString() + ")"
-          )
+            exists(ContentSet contents |
+              this.read(contents) and result = "read(" + contents.toString() + ")"
+              or
+              this.store(contents) and result = "store(" + contents.toString() + ")"
+              or
+              this.withContent(contents) and result = "withContent(" + contents.toString() + ")"
+              or
+              this.withoutContent(contents) and
+              result = "withoutContent(" + contents.toString() + ")"
+            )
+          }
         }
+
+        private class Node instanceof AstNode {
+          bindingset[this]
+          Node() { any() }
+
+          string toString() { result = super.toString() }
+
+          Location getLocation() { result = super.getLocation() }
+
+          predicate isBeingAssignedTo(AstNode node) { this = getLValueNode(node) }
+
+          predicate isValueOf(AstNode node) { this = node }
+        }
+
+        /** A node that can be used as the source of a data flow step. */
+        class Node1 = Node;
+
+        /** A node that can be used as the destination of a data flow step. */
+        class Node2 = Node;
+
+        signature predicate dataflowStepSig(Node1 node1, Step step, Node2 node2);
       }
-
-      class DataFlowBuilder instanceof AstNode {
-        bindingset[this]
-        DataFlowBuilder() { any() }
-
-        string toString() { result = super.toString() }
-
-        Location getLocation() { result = super.getLocation() }
-
-        predicate isBeingAssignedTo(AstNode node) { this = getLValueNode(node) }
-
-        predicate isValueOf(AstNode node) { this = node }
-      }
-
-      signature predicate dataflowStepSig(DataFlowBuilder node1, Step step, DataFlowBuilder node2);
 
       private import LanguageCfgBuilder<Location, Base, Common>
 
-      module Make3<dataflowStepSig/3 dataflowStep, LanguageCfgSig CfgSig> {
+      module Make3<DataFlowBuilder::dataflowStepSig/3 dataflowStep, LanguageCfgSig CfgSig> {
         private import MakeLanguageCfg<CfgSig>
 
         final private class FinalLocalVariable = LocalVariable;
@@ -728,6 +740,28 @@ module LanguageDataFlow<
         predicate localFlowStep(DataFlowNode node1, DataFlowNode node2) {
           dataflowStep(node1.asAstNode(), TValueStep(), node2.asAstNode())
           or
+          // With/WithoutContentHelpers are intermediate nodes with expects/clearsContent
+          // and a value step to their intended target node.
+          exists(AstNode source, ContentSet contents, AstNode target |
+            dataflowStep(source, TWithContentStep(contents), target)
+          |
+            node1.asAstNode() = source and
+            node2 = TWithContentHelper(contents, target)
+            or
+            node1 = TWithContentHelper(contents, target) and
+            node2.asAstNode() = target
+          )
+          or
+          exists(AstNode source, ContentSet contents, AstNode target |
+            dataflowStep(source, TWithoutContentStep(contents), target)
+          |
+            node1.asAstNode() = source and
+            node2 = TWithoutContentHelper(contents, target)
+            or
+            node1 = TWithoutContentHelper(contents, target) and
+            node2.asAstNode() = target
+          )
+          or
           exists(LocalSsaDataFlow::Node n1, LocalSsaDataFlow::Node n2 |
             LocalSsaDataFlow::localFlowStep(_, n1, n2, _) and
             node1 = getNodeFromLocalSsa(n1) and
@@ -740,6 +774,37 @@ module LanguageDataFlow<
             node2 = getNodeFromCaptureSsa(n2)
           )
         }
+
+        predicate readStep(DataFlowNode node1, ContentSet contents, DataFlowNode node2) {
+          dataflowStep(node1.asAstNode(), TReadStep(contents), node2.asAstNode())
+          or
+          exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
+            CaptureSsa::readStep(n1, contents.asSingleton().asCapturedVariable(), n2) and
+            node1 = getNodeFromCaptureSsa(n1) and
+            node2 = getNodeFromCaptureSsa(n2)
+          )
+        }
+
+        predicate storeStep(DataFlowNode node1, ContentSet contents, DataFlowNode node2) {
+          dataflowStep(node1.asAstNode(), TStoreStep(contents), node2.asAstNode())
+          or
+          exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
+            CaptureSsa::storeStep(n1, contents.asSingleton().asCapturedVariable(), n2) and
+            node1 = getNodeFromCaptureSsa(n1) and
+            node2 = getNodeFromCaptureSsa(n2)
+          )
+        }
+
+        predicate clearsContent(DataFlowNode node, ContentSet contents) {
+          node = TWithoutContentHelper(contents, _)
+        }
+
+        predicate expectsContent(DataFlowNode node, ContentSet contents) {
+          node = TWithContentHelper(contents, _)
+        }
+        // private module DataFlowInput implements DataFlow::InputSig<Location> {
+        //   class Node = DataFlowNode;
+        // }
       }
     }
   }
