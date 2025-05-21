@@ -27,20 +27,36 @@ private predicate isInDeclarationContext(AstNode node, AstNode scope) {
     else scope = getCfgScope(decl)
   )
   or
-  node instanceof Parameter and scope = getCfgScope(node)
-  or
-  node = any(FunctionDeclaration d).getName() and scope = getCfgScope(node) // note: this refers to the outer scope (as it should) due to how getCfgScope is defined
+  exists(FunctionDeclaration decl |
+    // note: this refers to the outer scope (as it should) due to how getCfgScope is defined
+    node = decl.getName() and
+    scope = getCfgScope(node)
+  )
   or
   exists(FunctionExpression fun |
     node = fun.getName() and
     scope = fun
   )
   or
-  node = any(Class cls).getName() and scope = getEnclosingBlockScope(node)
+  exists(Class cls |
+    node = cls.getName() and
+    scope = cls
+  )
   or
-  node = any(ClassDeclaration cls).getName() and scope = getEnclosingBlockScope(node)
+  exists(ClassDeclaration cls |
+    node = cls.getName() and
+    scope = getEnclosingBlockScope(cls)
+  )
   or
-  exists(CatchClause catch | node = catch.getParameter() and scope = catch)
+  exists(CatchClause catch |
+    node = catch.getParameter() and
+    scope = catch
+  )
+  or
+  exists(Parameter parameter |
+    node = parameter and
+    scope = getCfgScope(parameter)
+  )
   or
   exists(AstNode parent | isInDeclarationContext(parent, scope) |
     node = parent.(ObjectPattern).getChild(_)

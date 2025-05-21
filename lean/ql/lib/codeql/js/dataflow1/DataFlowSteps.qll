@@ -134,6 +134,18 @@ predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
     node2 = getLValueNode(child.(Identifier)) // default import
   )
   or
+  exists(FunctionDeclaration stmt |
+    node1 = stmt and
+    step.value() and
+    node2 = getLValueNode(stmt.getName())
+  )
+  or
+  exists(ClassDeclaration cls |
+    node1 = cls and
+    step.value() and
+    node2 = getLValueNode(cls.getName())
+  )
+  or
   //
   //   Effects of L-values other than local variables
   //
