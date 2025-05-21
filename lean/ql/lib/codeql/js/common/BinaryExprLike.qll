@@ -19,7 +19,7 @@ abstract private class BinaryExpressionLikeImpl extends AstNode {
 class BinaryExpressionInAssignment extends SyntheticNode, BinaryExpressionLikeImpl {
   private AugmentedAssignmentExpression assignment;
 
-  BinaryExpressionInAssignment() { this = assignment.getSyntheticChildNode("binary-operator") }
+  BinaryExpressionInAssignment() { this = assignment.getBinaryOperatorNode() }
 
   AugmentedAssignmentExpression getAssignment() { result = assignment }
 
