@@ -100,10 +100,6 @@ module LanguageDataFlow<
   module Make1<LanguageDataFlowSig D> {
     private import D
 
-    private int getMaxArrayIndex(IndexedContainerKind kind) {
-      result = max(Constant key | kind.trackValuesAssociatedWithKey(key) | key.asArrayIndex())
-    }
-
     private newtype TContent =
       TCaptureContent(LocalVariable v) { v.isCaptured() } or
       TContainerSlot(IndexedContainerKind kind, Constant key) {
@@ -256,10 +252,14 @@ module LanguageDataFlow<
 
       /** Generates a module with accessors for content sets related to the given array-like container kind. */
       module ArrayContentAccessor<IndexedContainerKindSig Kind> {
-        Kind kind() { any() }
+        private Kind kind() { any() }
+
+        private Constant preciseKey() { kind().trackValuesAssociatedWithKey(result) }
+
+        private int preciseIndex() { result = preciseKey().asArrayIndex() }
 
         pragma[nomagic]
-        private int maxPreciseIndex() { result = getMaxArrayIndex(kind()) }
+        private int maxPreciseIndex() { result = max(preciseIndex()) }
 
         /** Read from a index or higher. Using this in a store will result in an unknown index. */
         pragma[nomagic]
@@ -369,15 +369,7 @@ module LanguageDataFlow<
         TReadStep(ContentSet contents) or
         TStoreStep(ContentSet contents) or
         TWithContentStep(ContentSet contents) or
-        TWithoutContentStep(ContentSet contents) or
-        TCallTargetStep() or
-        TParameterStep(ContentSet contents) or
-        TArgumentStep(ContentSet contents) or
-        TReturnStep(ContentSet contents) or
-        TOutStep(ContentSet contents) or
-        TShiftArrayContents(IndexedContainerKind kind, int shift) {
-          shift = [-getMaxArrayIndex(kind) .. getMaxArrayIndex(kind)]
-        }
+        TWithoutContentStep(ContentSet contents)
 
       /** Provides classes for constructing data flow steps. */
       module DataFlowBuilder {
@@ -398,26 +390,6 @@ module LanguageDataFlow<
 
           predicate withoutContent(ContentSet contents) { this = TWithoutContentStep(contents) }
 
-          predicate callTarget() { this = TCallTargetStep() }
-
-          /** Holds if this step goes from a value into a call, providing an argument for the specified position. */
-          predicate argument(ContentSet contents) { this = TArgumentStep(contents) }
-
-          /** Holds if this step goes from a callable to a parameter that should hold the value passed into the given parameter. */
-          predicate parameter(ContentSet contents) { this = TParameterStep(contents) }
-
-          /** Holds if this step goes from a value about to be returned from a callable, to the enclosing callable. */
-          predicate returnFromCallable(ContentSet contents) { this = TReturnStep(contents) }
-
-          /**
-           * Holds if this step goes from a call to a return value of that call.
-           */
-          predicate returnFromCall(ContentSet contents) { this = TOutStep(contents) }
-
-          predicate shiftArrayContents(IndexedContainerKind kind, int shift) {
-            this = TShiftArrayContents(kind, shift)
-          }
-
           string toString() {
             this.value() and result = "value"
             or
@@ -432,23 +404,6 @@ module LanguageDataFlow<
               or
               this.withoutContent(contents) and
               result = "withoutContent(" + contents.toString() + ")"
-              or
-              this.argument(contents) and result = "argument(" + contents.toString() + ")"
-              or
-              this.parameter(contents) and result = "parameter(" + contents.toString() + ")"
-              or
-              this.returnFromCallable(contents) and
-              result = "returnFromCallable(" + contents.toString() + ")"
-              or
-              this.returnFromCall(contents) and
-              result = "returnFromCall(" + contents.toString() + ")"
-            )
-            or
-            this.callTarget() and result = "callTarget"
-            or
-            exists(IndexedContainerKind kind, int shift |
-              this = TShiftArrayContents(kind, shift) and
-              result = "shiftArrayContents(" + kind.getValueToken() + ", " + shift + ")"
             )
           }
         }
