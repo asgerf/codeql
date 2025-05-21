@@ -1837,6 +1837,8 @@ class TypeRootFolder extends Folder {
  * `number` keyword, but there only exists one `number` type.
  */
 class Type extends @type {
+  Type() { none() }
+
   /**
    * Gets a string representation of this type.
    */

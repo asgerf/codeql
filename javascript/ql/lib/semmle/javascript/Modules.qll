@@ -155,12 +155,7 @@ abstract class Import extends AstNode {
   /**
    * DEPRECATED. Use `getImportedModule()` instead.
    */
-  deprecated Module resolveFromTypeScriptSymbol() {
-    exists(CanonicalName symbol |
-      ast_node_symbol(this, symbol) and
-      ast_node_symbol(result, symbol)
-    )
-  }
+  deprecated Module resolveFromTypeScriptSymbol() { none() }
 
   /**
    * Gets the module this import refers to.

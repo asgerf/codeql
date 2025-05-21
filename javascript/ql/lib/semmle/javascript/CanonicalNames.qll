@@ -19,6 +19,8 @@ import javascript
  * This class is only populated when full TypeScript extraction is enabled.
  */
 class CanonicalName extends @symbol {
+  CanonicalName() { none() }
+
   /**
    * Gets the parent of this canonical name, that is, the prefix of its qualified name.
    */

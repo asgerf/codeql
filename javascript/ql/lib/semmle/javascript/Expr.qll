@@ -1007,7 +1007,7 @@ class InvokeExpr extends @invokeexpr, Expr {
    *
    * This predicate is only populated for files extracted with full TypeScript extraction.
    */
-  CanonicalFunctionName getResolvedCalleeName() { ast_node_symbol(this, result) }
+  CanonicalFunctionName getResolvedCalleeName() { none() }
 
   /**
    * Gets the statically resolved target function, as determined by the TypeScript type system, if any.
