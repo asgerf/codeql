@@ -1,3 +1,5 @@
+private import All
+
 module JS {
   private import GeneratedAst::JS as G
   // This module re-exports the generated AST, shadowing the classes we have a facade for.
@@ -25,12 +27,10 @@ module JS {
     SyntheticNode getLoopHeader() { result = this.getSyntheticChildNode("loop-header") }
   }
 
-  final private class FinalForStatement = G::ForStatement;
-
   /**
    * A `for` statement.
    */
-  class ForStatement extends FinalForStatement {
+  class ForStatement extends G::ForStatement {
     /** Gets the loop condition or a synthetic `empty-condition` node if the condition was omitted. */
     AstNode getConditionOrEmptyNode() {
       result = super.getCondition(0)

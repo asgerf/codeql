@@ -70,6 +70,8 @@ predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
     not exists(getContentSetFromKey(prop.getPropertyNameNode())) and
     prop instanceof SubscriptExpression and
     step.read(ArrayContent::anyElement())
+    or
+    step.taint()
   )
   or
   exists(BinaryExpressionLike binary |
@@ -215,5 +217,58 @@ predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
     or
     node1 = assign.getRight() and
     node2 = getLValueNode(assign.getLeft())
+  )
+  or
+  // Arguments and return value of a call
+  exists(CallExpression call |
+    exists(int n |
+      node1 = call.getArgument(n) and
+      not node1 instanceof SpreadElement and
+      node2 = getArgumentObjectNode(call)
+    |
+      if n >= call.getFirstSpreadIndex()
+      then step.store(ArrayContent::anyElement())
+      else step.store(ArrayContent::elementAt(n))
+    )
+    or
+    exists(int n |
+      node1 = call.getArgument(n).(SpreadElement).getChild() and
+      node2 = getArgumentObjectNode(call)
+    |
+      if n = call.getFirstSpreadIndex()
+      then step.shiftArrayContentsBy(ArrayContent::kind(), n)
+      else step.resetArrayContents(ArrayContent::kind())
+    )
+    or
+    node1 = call.getFunction().(PropAccess).getObject() and
+    node2 = getArgumentObjectNode(call) and
+    step.store(Contents::receiverArgument())
+    or
+    node1 = getReturnValueNode(call) and
+    step.value() and
+    node2 = call
+  )
+  or
+  // Parameters and return value of a function
+  exists(Function func |
+    exists(int n |
+      node1 = getParameterObjectNode(func) and
+      node2 = func.getParameter(n) and
+      if node2 instanceof RestParameter
+      then step.shiftArrayContentsBy(ArrayContent::kind(), -n)
+      else step.read(ArrayContent::elementAt(n))
+    )
+    or
+    node1 = func.getAReturnedExpr() and
+    node2 = getReturnValueNode(func) and
+    if func.isAsync() then step.store(Contents::promiseValue()) else step.value()
+  )
+  or
+  exists(Parameter param |
+    node1 = param and
+    step.value() and
+    if param instanceof RestParameter
+    then node2 = getLValueNode(param.(RestParameter).getChild())
+    else node2 = getLValueNode(param)
   )
 }

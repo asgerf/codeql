@@ -100,6 +100,18 @@ module LanguageDataFlow<
   module Make1<LanguageDataFlowSig D> {
     private import D
 
+    private newtype TBuiltinReturnPosition =
+      TReturnValue() or
+      TReturnException()
+
+    class BuiltinReturnPosition extends TBuiltinReturnPosition {
+      string toString() {
+        this = TReturnValue() and result = "value"
+        or
+        this = TReturnException() and result = "exception"
+      }
+    }
+
     private newtype TContent =
       TCaptureContent(LocalVariable v) { v.isCaptured() } or
       TContainerSlot(IndexedContainerKind kind, Constant key) {
@@ -107,6 +119,7 @@ module LanguageDataFlow<
       } or
       TContainerUnknownSlot(IndexedContainerKind kind) or
       TContainerKey(IndexedContainerKind kind) { kind.trackFlowIntoKeys() } or
+      TReturnContent(TBuiltinReturnPosition position) or
       TLanguageContent(LanguageContent kind)
 
     class Content extends TContent {
@@ -252,7 +265,7 @@ module LanguageDataFlow<
 
       /** Generates a module with accessors for content sets related to the given array-like container kind. */
       module ArrayContentAccessor<IndexedContainerKindSig Kind> {
-        private Kind kind() { any() }
+        Kind kind() { any() }
 
         private Constant preciseKey() { kind().trackValuesAssociatedWithKey(result) }
 
@@ -389,6 +402,21 @@ module LanguageDataFlow<
           predicate withContent(ContentSet contents) { this = TWithContentStep(contents) }
 
           predicate withoutContent(ContentSet contents) { this = TWithoutContentStep(contents) }
+
+          /**
+           * Maps all known array indices to an array index shifted by the given amount (which may be positive, negative, or zero).
+           *
+           * Blocks flow of array indices for which the shifted index would become negative. Non-array contents are blocked as well.
+           *
+           * Also generates a taint step followed by a store into the unknown array index.
+           */
+          predicate shiftArrayContentsBy(IndexedContainerKind kind, int amount) { none() }
+
+          /** Maps all known array indices to the unknown array index. Also generates a taint step followed by a store into the unknown array index. Non-array contents are blocked. */
+          predicate resetArrayContents(IndexedContainerKind kind) { none() }
+
+          /** Generates a taint step followed by a store into `contents` */
+          predicate taintAndStore(ContentSet contents) { none() }
 
           string toString() {
             this.value() and result = "value"
@@ -802,9 +830,6 @@ module LanguageDataFlow<
         predicate expectsContent(DataFlowNode node, ContentSet contents) {
           node = TWithContentHelper(contents, _)
         }
-        // private module DataFlowInput implements DataFlow::InputSig<Location> {
-        //   class Node = DataFlowNode;
-        // }
       }
     }
   }

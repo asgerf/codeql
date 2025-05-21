@@ -10,7 +10,7 @@ private AstNode getParentOverride(AstNode node) {
   // The 'cfg-begin' node represents the beginning of the lambda expression within
   // the outer function scope. It is not part of the inner scope.
   exists(CfgScope scope |
-    node = scope.getSyntheticChildNode("cfg-begin") and
+    node = getCfgBegin(scope) and
     result = scope.getParent()
   )
   // TODO: instance field initializers go inside the class constructor

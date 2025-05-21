@@ -51,17 +51,36 @@ module LanguageDataFlowInput implements LanguageDataFlowSig {
   additional class MapContainerKind extends IndexedContainerKind, TMap { }
 
   private newtype TLanguageContent =
-    TPropertyName(string name) { name = any(PropertyIdentifier id).getValue() }
+    TPropertyName(string name) { name = any(PropertyIdentifier id).getValue() } or
+    TReceiver() or
+    TPromiseValue() or
+    TPromiseError()
 
   class LanguageContent extends TLanguageContent {
     string asPropertyName() { this = TPropertyName(result) }
 
+    predicate isPromiseValue() { this = TPromiseValue() }
+
+    predicate isPromiseError() { this = TPromiseError() }
+
     predicate hasMadToken(string head, string operand) {
       head = "Member" and
       operand = this.asPropertyName()
+      or
+      this = TPromiseValue() and head = "PromiseValue" and operand = ""
+      or
+      this = TPromiseError() and head = "PromiseError" and operand = ""
     }
 
-    string toString() { result = this.asPropertyName() }
+    string toString() {
+      result = this.asPropertyName()
+      or
+      this = TReceiver() and result = "Receiver"
+      or
+      this = TPromiseValue() and result = "Promise.value"
+      or
+      this = TPromiseError() and result = "Promise.error"
+    }
 
     Location getLocation() { none() }
   }
@@ -99,6 +118,12 @@ module LanguageDataFlowInput implements LanguageDataFlowSig {
     }
 
     ContentSet anyProperty() { result.asLanguageContentSet() = TAnyProperty() }
+
+    ContentSet receiverArgument() { result.asSingleton().asLanguageContent() = TReceiver() }
+
+    ContentSet promiseValue() { result.asSingleton().asLanguageContent() = TPromiseValue() }
+
+    ContentSet promiseError() { result.asSingleton().asLanguageContent() = TPromiseError() }
   }
 
   class ClosureExpr extends Function {

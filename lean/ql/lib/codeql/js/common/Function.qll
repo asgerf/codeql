@@ -38,6 +38,21 @@ abstract private class FunctionImpl extends AstNode {
     or
     not exists(this.getName()) and result = "anonymous function"
   }
+
+  predicate isAsync() {
+    exists(Token asyncToken |
+      asyncToken.getValue() = "async" and
+      asyncToken.getParent() = this
+    )
+  }
+
+  predicate isGenerator() {
+    this instanceof GeneratorFunction or this instanceof GeneratorFunctionDeclaration
+  }
+
+  predicate isAsyncGenerator() { this.isAsync() and this.isGenerator() }
+
+  predicate isAsyncOrGenerator() { this.isAsync() or this.isGenerator() }
 }
 
 private class ArrowFunctionAsImpl extends FunctionImpl instanceof ArrowFunction {

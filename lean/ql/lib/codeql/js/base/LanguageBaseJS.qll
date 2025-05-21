@@ -160,6 +160,11 @@ module LanguageBase implements LanguageBaseSig<Location> {
   predicate isConditionInLValue(AstNode node) {
     node instanceof AssignmentPattern // pattern with a default value
   }
+
+  /**
+   * Holds if `node` represents a call.
+   */
+  predicate isCall(AstNode node) { node instanceof CallExpression }
 }
 
 private module Base = MakeLanguageBase<Location, LanguageBase>;
