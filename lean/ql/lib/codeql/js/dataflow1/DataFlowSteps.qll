@@ -10,6 +10,9 @@ ContentSet getContentSetFromKey(AstNode key) {
   result = ArrayContent::elementAt(getIntValueFromNode(key))
 }
 
+bindingset[n]
+ContentSet positionalArgument(int n) { result = ArrayContent::elementAt(n) }
+
 predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
   //
   // Flow out of expressions
@@ -146,6 +149,12 @@ predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
     node2 = getLValueNode(cls.getName())
   )
   or
+  exists(Class cls |
+    node1 = cls and
+    step.value() and
+    node2 = getLValueNode(cls.getName())
+  )
+  or
   //
   //   Effects of L-values other than local variables
   //
@@ -215,5 +224,37 @@ predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
     or
     node1 = assign.getRight() and
     node2 = getLValueNode(assign.getLeft())
+  )
+  or
+  // Calls
+  exists(CallExpression call |
+    node1 = call.getFunction() and
+    step.callTarget() and
+    node2 = call
+    or
+    exists(int n |
+      node1 = call.getArgument(n) and
+      step.argument(positionalArgument(n)) and
+      node2 = call
+    )
+    or
+    node1 = call and
+    step.returnFromCall(positionalArgument(0)) and
+    node2 = call
+  )
+  or
+  exists(Function fun |
+    exists(int n |
+      node1 = fun and
+      node2 = fun.getParameter(n) and
+      not node2 instanceof RestParameter and
+      step.parameter(ArrayContent::elementAt(n))
+    )
+    or
+    exists(RestParameter param |
+      node1 = param.getFunction() and
+      node2 = param and
+      step.parameter(ArrayContent::anyElement())
+    )
   )
 }
