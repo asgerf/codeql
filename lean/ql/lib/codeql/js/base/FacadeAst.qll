@@ -90,4 +90,12 @@ module JS {
       result = this.getName()
     }
   }
+
+  class CallExpression extends G::CallExpression {
+    /** Gets the `n`th argument, where spread arguments are counted as a single element. */
+    AstNode getArgument(int n) { result = this.getArguments().(Arguments).getChild(n) }
+
+    /** Gets the index of the first spread argument in this call, if any. */
+    int getFirstSpreadIndex() { result = min(int i | this.getArgument(i) instanceof SpreadElement) }
+  }
 }

@@ -105,3 +105,5 @@ class Parameter extends AstNode {
 
   Expression getDefaultValue() { result = this.(AssignmentPattern).getRight() }
 }
+
+class RestParameter extends Parameter, RestPattern { }
