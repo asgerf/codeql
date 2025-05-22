@@ -46,4 +46,4 @@ abstract private class CfgScopeImpl extends AstNode { }
 
 private class ProgramAsCfgScope extends CfgScopeImpl instanceof Program { }
 
-private class FunctionAsCfgScope extends CfgScopeImpl instanceof Function { }
+private class FunctionAsCfgScope extends CfgScopeImpl instanceof Callable { }

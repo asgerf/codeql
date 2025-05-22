@@ -250,7 +250,7 @@ predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
   )
   or
   // Parameters and return value of a function
-  exists(Function func |
+  exists(Callable func |
     exists(int n |
       node1 = getParameterObjectNode(func) and
       node2 = func.getParameter(n) and

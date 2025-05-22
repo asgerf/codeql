@@ -126,7 +126,7 @@ module LanguageDataFlowInput implements LanguageDataFlowSig {
     ContentSet promiseError() { result.asSingleton().asLanguageContent() = TPromiseError() }
   }
 
-  class ClosureExpr extends Function {
+  class ClosureExpr extends Callable {
     predicate hasBody(CfgScope scope) { scope = this }
   }
 }

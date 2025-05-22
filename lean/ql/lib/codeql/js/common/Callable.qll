@@ -1,8 +1,8 @@
 private import All
 
-final class Function = FunctionImpl;
+final class Callable = CallableImpl;
 
-abstract private class FunctionImpl extends AstNode {
+abstract private class CallableImpl extends AstNode {
   /** Gets the `i`th parameter of this function. */
   final Parameter getParameter(int i) { result = this.getRawParameter(i) }
 
@@ -13,7 +13,7 @@ abstract private class FunctionImpl extends AstNode {
   abstract AstNode getBody();
 
   /**
-   * Gets the identifier declared as part of this function.
+   * Gets the identifier declared as part of this function, if any.
    */
   AstNode getNameNode() { none() }
 
@@ -55,7 +55,7 @@ abstract private class FunctionImpl extends AstNode {
   predicate isAsyncOrGenerator() { this.isAsync() or this.isGenerator() }
 }
 
-private class ArrowFunctionAsImpl extends FunctionImpl instanceof ArrowFunction {
+private class ArrowFunctionAsCallable extends CallableImpl instanceof ArrowFunction {
   override AstNode getRawParameter(int i) {
     // `(x) => { ... }`
     result = super.getParameters().getChild(i)
@@ -67,7 +67,7 @@ private class ArrowFunctionAsImpl extends FunctionImpl instanceof ArrowFunction 
   override AstNode getBody() { result = ArrowFunction.super.getBody() }
 }
 
-private class FunctionDeclarationAsImpl extends FunctionImpl instanceof FunctionDeclaration {
+private class FunctionDeclarationAsCallable extends CallableImpl instanceof FunctionDeclaration {
   override AstNode getRawParameter(int i) { result = super.getParameters().getChild(i) }
 
   override AstNode getNameNode() { result = FunctionDeclaration.super.getName() }
@@ -75,7 +75,7 @@ private class FunctionDeclarationAsImpl extends FunctionImpl instanceof Function
   override AstNode getBody() { result = FunctionDeclaration.super.getBody() }
 }
 
-private class FunctionExpressionAsImpl extends FunctionImpl instanceof FunctionExpression {
+private class FunctionExpressionAsCallable extends CallableImpl instanceof FunctionExpression {
   override AstNode getRawParameter(int i) { result = super.getParameters().getChild(i) }
 
   override AstNode getNameNode() { result = FunctionExpression.super.getName() }
@@ -83,7 +83,7 @@ private class FunctionExpressionAsImpl extends FunctionImpl instanceof FunctionE
   override AstNode getBody() { result = FunctionExpression.super.getBody() }
 }
 
-private class GeneratorFunctionAsImpl extends FunctionImpl instanceof GeneratorFunction {
+private class GeneratorFunctionAsCallable extends CallableImpl instanceof GeneratorFunction {
   override AstNode getRawParameter(int i) { result = super.getParameters().getChild(i) }
 
   override AstNode getNameNode() { result = GeneratorFunction.super.getName() }
@@ -91,7 +91,7 @@ private class GeneratorFunctionAsImpl extends FunctionImpl instanceof GeneratorF
   override AstNode getBody() { result = GeneratorFunction.super.getBody() }
 }
 
-private class GeneratorFunctionDeclarationAsImpl extends FunctionImpl instanceof GeneratorFunctionDeclaration
+private class GeneratorFunctionDeclarationAsCallable extends CallableImpl instanceof GeneratorFunctionDeclaration
 {
   override AstNode getRawParameter(int i) { result = super.getParameters().getChild(i) }
 
@@ -100,7 +100,7 @@ private class GeneratorFunctionDeclarationAsImpl extends FunctionImpl instanceof
   override AstNode getBody() { result = GeneratorFunctionDeclaration.super.getBody() }
 }
 
-private class MethodDefinitionAsImpl extends FunctionImpl instanceof MethodDefinition {
+private class MethodDefinitionAsCallable extends CallableImpl instanceof MethodDefinition {
   override AstNode getRawParameter(int i) { result = super.getParameters().getChild(i) }
 
   override AstNode getNameNode() { result = MethodDefinition.super.getName() }
@@ -108,17 +108,21 @@ private class MethodDefinitionAsImpl extends FunctionImpl instanceof MethodDefin
   override AstNode getBody() { result = MethodDefinition.super.getBody() }
 }
 
+private class ProgramAsCallable extends CallableImpl instanceof Program {
+  override AstNode getRawParameter(int i) { none() }
+
+  override AstNode getBody() { result = this }
+}
+
 class Parameter extends AstNode {
-  private Function function;
+  private Callable function;
   private int index;
 
   Parameter() { this = function.getRawParameter(index) }
 
-  Function getFunction() { result = function }
+  Callable getCallable() { result = function }
 
   int getIndex() { result = index }
-
-  Expression getDefaultValue() { result = this.(AssignmentPattern).getRight() }
 }
 
 class RestParameter extends Parameter, RestPattern { }
