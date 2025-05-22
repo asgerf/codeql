@@ -13,7 +13,7 @@ function strip_signature() {
 }
 
 function wrap_file() {
-    ModuleName=$(basename "$1" .ql)
+    ModuleName=$(basename "$1" .qll)
     echo "module $ModuleName {"
     cat "$1"
     echo "}"
