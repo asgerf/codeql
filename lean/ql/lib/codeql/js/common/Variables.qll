@@ -3,13 +3,9 @@ private import All
 /**
  * A `StatementBlock` or `Program`.
  */
-final class BlockScope = BlockScopeImpl;
-
-abstract private class BlockScopeImpl extends AstNode { }
-
-private class StatementBlockAsBlockScopeImpl extends BlockScopeImpl instanceof StatementBlock { }
-
-private class ProgramAsBlockScopeImpl extends BlockScopeImpl instanceof Program { }
+final class BlockScope extends AstNode {
+  BlockScope() { this instanceof StatementBlock or this instanceof Program }
+}
 
 private BlockScope getEnclosingBlockScope(AstNode node) {
   result = node
