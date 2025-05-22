@@ -127,7 +127,7 @@ module LanguageDataFlowInput implements LanguageDataFlowSig {
   }
 
   class ClosureExpr extends Callable {
-    predicate hasBody(CfgScope scope) { scope = this }
+    predicate hasBody(Callable callable) { callable = this }
   }
 }
 
