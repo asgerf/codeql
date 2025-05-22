@@ -11,8 +11,7 @@ private class StatementBlockAsBlockScopeImpl extends BlockScopeImpl instanceof S
 
 private class ProgramAsBlockScopeImpl extends BlockScopeImpl instanceof Program { }
 
-private AstNode getEnclosingBlockScope(AstNode node) {
-  node instanceof BlockScope and
+private BlockScope getEnclosingBlockScope(AstNode node) {
   result = node
   or
   not node instanceof BlockScope and
