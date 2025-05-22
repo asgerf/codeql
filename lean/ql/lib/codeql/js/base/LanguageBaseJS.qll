@@ -86,6 +86,11 @@ module LanguageBase implements LanguageBaseSig<Location> {
     node = any(RestPattern p).getChild()
     or
     node instanceof ShorthandPropertyIdentifierPattern
+    or
+    // Parameters are in lvalue position
+    node = any(FormalParameters f).getChild(_)
+    or
+    node = any(ArrowFunction f).getParameter()
     // TODO: parentheses
   }
 
