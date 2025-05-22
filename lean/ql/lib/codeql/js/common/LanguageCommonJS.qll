@@ -2,7 +2,6 @@ private import All
 private import codeql.shared.LanguageCommon
 
 module LanguageCommon implements LanguageCommonSig<Location, LanguageBase> {
-  import CfgScope
   import Callable
 
   class ValueFilter = ValueFilter::ValueFilter;
@@ -43,6 +42,15 @@ module LanguageCommon implements LanguageCommonSig<Location, LanguageBase> {
       node1 = max(int i | | expr.getChild(i) order by i) and
       node2 = expr
     )
+  }
+
+  AstNode overrideEnclosingCallable(AstNode node) {
+    exists(FunctionDeclaration decl |
+      // The name of a function declaration belongs to the outer scope
+      node = decl.getName() and
+      result = decl.getParent()
+    )
+    // TODO: instance field initializers go inside the class constructor
   }
 }
 

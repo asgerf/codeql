@@ -2,9 +2,21 @@ private import codeql.util.Location
 private import codeql.shared.LanguageBase
 
 signature module LanguageCommonSig<LocationSig Location, LanguageBaseSig<Location> L> {
+  /**
+   * A program element that can be called such as a function, method, constructor, or lambda.
+   *
+   * Should also include top-levels for languages that have executable top-levels.
+   */
   class Callable extends L::AstNode;
 
-  Callable getEnclosingCallable(L::AstNode node);
+  /**
+   * Gets the next node to follow when determining the enclosing callable of `node`, instead of the parent node.
+   *
+   * If not specified, the parent of `node` is used.
+   *
+   * If the result is a callable, then that is guaranteed to become the enclosing callable of `node`.
+   */
+  L::AstNode overrideEnclosingCallable(L::AstNode node);
 
   class ValueFilter {
     /**
@@ -43,10 +55,11 @@ signature module LanguageCommonSig<LocationSig Location, LanguageBaseSig<Locatio
 }
 
 module MakeLanguageCommon<
-  LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
+  LocationSig Location, LanguageBaseSig<Location> Base, LanguageCommonSig<Location, Base> Common>
 {
-  private import L
-  private import C
+  private import Base
+  private import Common
+  private import MakeLanguageBase<Location, Base>
 
   private ValueFilter getSpecialConditionFilterEx(AstNode node) {
     result = getSpecialConditionFilter(node)
@@ -82,6 +95,40 @@ module MakeLanguageCommon<
       or
       not exists(getSpecialConditionFilterEx(node)) and
       result = truthyCondition()
+    )
+  }
+
+  private AstNode getParentOverride(AstNode node) {
+    result = overrideEnclosingCallable(node)
+    or
+    // For lambda expressions, which are themselves callables while also being an expression within the outer callable,
+    // some of the synthetic nodes owned by the framework should belong to the outer callable.
+    exists(Callable scope |
+      node =
+        [
+          getCfgBegin(scope), getConditionalOutcomeNode(scope, _), getLValueNode(node),
+          getLValueEndNode(node)
+        ] and
+      result = scope.getParent()
+    )
+  }
+
+  private AstNode getParentForEnclosingCallable(AstNode node) {
+    result = getParentOverride(node)
+    or
+    not exists(getParentOverride(node)) and
+    result = node.getParent()
+  }
+
+  /**
+   * Gets the strictly enclosing callable of `node`.
+   */
+  Callable getEnclosingCallable(AstNode node) {
+    exists(AstNode parent | parent = getParentForEnclosingCallable(node) |
+      result = parent
+      or
+      not parent instanceof Callable and
+      result = getEnclosingCallable(parent)
     )
   }
 

@@ -28,7 +28,7 @@ private predicate isInDeclarationContext(AstNode node, AstNode scope) {
   )
   or
   exists(FunctionDeclaration decl |
-    // note: this refers to the outer scope (as it should) due to how getCfgScope is defined
+    // note: this refers to the outer scope (as it should) due to how getEnclosingCallable is defined
     node = decl.getName() and
     scope = getEnclosingCallable(node)
   )
