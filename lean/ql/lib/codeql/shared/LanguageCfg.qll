@@ -197,10 +197,10 @@ module LanguageCfgBuilder<
       )
     }
 
-    private Node getNthNode(CfgScope scope, int n) {
+    private Node getNthNode(Callable scope, int n) {
       result =
         rank[n](Node node, int line, int column, int tiebreak |
-          getCfgScope(node) = scope and
+          getEnclosingCallable(node) = scope and
           ordering(node, line, column, tiebreak)
         |
           node order by line, column, tiebreak
@@ -211,12 +211,12 @@ module LanguageCfgBuilder<
      * Holds if `node1` and `node2` are adjacent in left-to-right evaluation order.
      */
     private predicate adjacent(Node node1, Node node2) {
-      exists(CfgScope scope, int n |
+      exists(Callable scope, int n |
         node1 = getNthNode(scope, n) and
         node2 = getNthNode(scope, n + 1)
       )
       or
-      exists(CfgScope scope |
+      exists(Callable scope |
         node1 = getCfgEntryPoint(scope) and
         node2 = getNthNode(scope, 1)
         or
@@ -335,11 +335,11 @@ module LanguageCfgBuilder<
 
       predicate successorTypeIsCondition(SuccessorType t) { t instanceof TBoolean }
 
-      class CfgScope = C::CfgScope;
+      class CfgScope = C::Callable;
 
       class Node = AstNode;
 
-      predicate nodeGetCfgScope = getCfgScope/1;
+      predicate nodeGetCfgScope = getEnclosingCallable/1;
 
       Node nodeGetASuccessor(Node node, SuccessorType t) {
         unconditionalStep(node, result) and
@@ -428,12 +428,12 @@ module LanguageCfgBuilder<
 
       query predicate differentCfgScope(Node node1, Node node2) {
         (adjacent(node1, node2) or step(node1, node2)) and
-        not getCfgScope(node1) = getCfgScope(node2)
+        not getEnclosingCallable(node1) = getEnclosingCallable(node2)
       }
 
       query predicate noCfgScope(Node node) {
         needsCfg(node) and
-        not exists(getCfgScope(node))
+        not exists(getEnclosingCallable(node))
       }
 
       /**

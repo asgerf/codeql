@@ -2,9 +2,9 @@ private import codeql.util.Location
 private import codeql.shared.LanguageBase
 
 signature module LanguageCommonSig<LocationSig Location, LanguageBaseSig<Location> L> {
-  class CfgScope extends L::AstNode;
+  class Callable extends L::AstNode;
 
-  CfgScope getCfgScope(L::AstNode node);
+  Callable getEnclosingCallable(L::AstNode node);
 
   class ValueFilter {
     /**
@@ -209,17 +209,17 @@ module MakeLanguageCommon<
         result = this.getAnAccess() or result = this.getADeclarationSite()
       }
 
-      CfgScope getCfgScope() {
+      Callable getCfgScope() {
         result = scope
         or
-        not scope instanceof CfgScope and
-        result = getCfgScope(scope)
+        not scope instanceof Callable and
+        result = getEnclosingCallable(scope)
       }
 
       predicate isCaptured() { this.isCapturingAccess(_) }
 
       predicate isCapturingAccess(VariableAccess access) {
-        access = this.getAnAccess() and getCfgScope(access) != this.getCfgScope()
+        access = this.getAnAccess() and getEnclosingCallable(access) != this.getCfgScope()
       }
 
       Location getLocation() {

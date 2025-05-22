@@ -67,7 +67,9 @@ query predicate reachedBy(Sink sink, string value) {
   )
 }
 
-query predicate unreachable(Sink sink) { not Cfg::step+(getCfgEntryPoint(getCfgScope(sink)), sink) }
+query predicate unreachable(Sink sink) {
+  not Cfg::step+(getCfgEntryPoint(getEnclosingCallable(sink)), sink)
+}
 
 query predicate tagIsNotUnique(Source source, string tag) {
   tag = source.getTag() and

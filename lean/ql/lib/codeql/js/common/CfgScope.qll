@@ -9,7 +9,7 @@ private AstNode getParentOverride(AstNode node) {
   or
   // The 'cfg-begin' node represents the beginning of the lambda expression within
   // the outer function scope. It is not part of the inner scope.
-  exists(CfgScope scope |
+  exists(Callable scope |
     node = getCfgBegin(scope) and
     result = scope.getParent()
   )
@@ -29,21 +29,13 @@ private AstNode getParentForCfgScope(AstNode node) {
  * If `node` is itself a CFG scope, this gets the outer scope, not the `node` itself.
  */
 pragma[nomagic]
-CfgScope getCfgScope(AstNode node) {
+Callable getEnclosingCallable(AstNode node) {
   exists(AstNode parent | parent = getParentForCfgScope(node) |
     result = parent
     or
-    not parent instanceof CfgScope and
-    result = getCfgScope(parent)
+    not parent instanceof Callable and
+    result = getEnclosingCallable(parent)
   )
   or
   node instanceof Program and result = node
 }
-
-final class CfgScope = CfgScopeImpl;
-
-abstract private class CfgScopeImpl extends AstNode { }
-
-private class ProgramAsCfgScope extends CfgScopeImpl instanceof Program { }
-
-private class FunctionAsCfgScope extends CfgScopeImpl instanceof Callable { }

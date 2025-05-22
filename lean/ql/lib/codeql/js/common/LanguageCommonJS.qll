@@ -3,6 +3,7 @@ private import codeql.shared.LanguageCommon
 
 module LanguageCommon implements LanguageCommonSig<Location, LanguageBase> {
   import CfgScope
+  import Callable
 
   class ValueFilter = ValueFilter::ValueFilter;
 

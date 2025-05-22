@@ -27,7 +27,7 @@ module LanguageDataFlow<
 
       Location getLocation();
 
-      Common::CfgScope getCfgScope();
+      Common::Callable getCfgScope();
 
       predicate isCaptured();
     }
@@ -93,7 +93,7 @@ module LanguageDataFlow<
     }
 
     class ClosureExpr extends AstNode {
-      predicate hasBody(CfgScope scope);
+      predicate hasBody(Callable scope);
     }
   }
 
@@ -484,7 +484,7 @@ module LanguageDataFlow<
           }
 
           pragma[nomagic]
-          private BasicBlock getEntryBlock(CfgScope scope) {
+          private BasicBlock getEntryBlock(Callable scope) {
             result.getANode() = getCfgEntryPoint(scope)
           }
 
@@ -649,9 +649,9 @@ module LanguageDataFlow<
             predicate hasBody(Callable callable) { FinalClosureExprBase.super.hasBody(callable) }
           }
 
-          final private class FinalCfgScope = CfgScope;
+          final private class FinalCallable = Common::Callable;
 
-          class Callable extends FinalCfgScope {
+          class Callable extends FinalCallable {
             predicate isConstructor() {
               none() // TODO
             }

@@ -28,7 +28,7 @@ abstract private class CallableImpl extends AstNode {
     result = this.getBody() // arrow function with expression body
     or
     exists(ReturnStatement ret |
-      getCfgScope(ret) = this and
+      getEnclosingCallable(ret) = this and
       result = ret.getChild()
     )
   }

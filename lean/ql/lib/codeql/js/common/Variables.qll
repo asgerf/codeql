@@ -24,13 +24,13 @@ private predicate isInDeclarationContext(AstNode node, AstNode scope) {
     node = decl.getName() and
     if decl.getParent() instanceof LexicalDeclaration
     then scope = getEnclosingBlockScope(decl)
-    else scope = getCfgScope(decl)
+    else scope = getEnclosingCallable(decl)
   )
   or
   exists(FunctionDeclaration decl |
     // note: this refers to the outer scope (as it should) due to how getCfgScope is defined
     node = decl.getName() and
-    scope = getCfgScope(node)
+    scope = getEnclosingCallable(node)
   )
   or
   exists(FunctionExpression fun |
@@ -55,7 +55,7 @@ private predicate isInDeclarationContext(AstNode node, AstNode scope) {
   or
   exists(Parameter parameter |
     node = parameter and
-    scope = getCfgScope(parameter)
+    scope = getEnclosingCallable(parameter)
   )
   or
   exists(AstNode parent | isInDeclarationContext(parent, scope) |
@@ -105,7 +105,7 @@ private module ResolveVariableConfig implements ResolveVariablesSig {
   }
 
   predicate variableImplicitlyInScope(string name, AstNode scope) {
-    scope instanceof CfgScope and
+    scope instanceof Callable and
     not scope instanceof ArrowFunction and
     name = ["this", "arguments"]
   }
