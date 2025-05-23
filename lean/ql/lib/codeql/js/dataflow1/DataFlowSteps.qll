@@ -242,7 +242,11 @@ predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
     or
     node1 = call.getFunction().(PropAccess).getObject() and
     node2 = getArgumentObjectNode(call) and
-    step.store(Contents::receiverArgument())
+    step.store(Contents::thisArgument())
+    or
+    node1 = call.getFunction() and
+    node2 = getArgumentObjectNode(call) and
+    step.store(Contents::functionSelfReference())
     or
     node1 = getReturnValueNode(call) and
     step.value() and
@@ -250,18 +254,27 @@ predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
   )
   or
   // Parameters and return value of a function
-  exists(Callable func |
+  exists(Callable callable |
     exists(int n |
-      node1 = getParameterObjectNode(func) and
-      node2 = func.getParameter(n) and
+      node1 = getParameterObjectNode(callable) and
+      node2 = callable.getParameter(n) and
       if node2 instanceof RestParameter
       then step.shiftArrayContentsBy(ArrayContent::kind(), -n)
       else step.read(ArrayContent::elementAt(n))
     )
     or
-    node1 = func.getAReturnedExpr() and
-    node2 = getReturnValueNode(func) and
-    if func.isAsync() then step.store(Contents::promiseValue()) else step.value()
+    node1 = getParameterObjectNode(callable) and
+    step.read(Contents::thisArgument()) and
+    node2 = callable.getThisParameter()
+    or
+    not callable instanceof FunctionDeclaration and // for FunctionDeclarations, the variable belongs to the outer scope
+    node1 = getParameterObjectNode(callable) and
+    step.read(Contents::functionSelfReference()) and
+    node2 = getLValueNode(callable.getNameNode())
+    or
+    node1 = callable.getAReturnedExpr() and
+    node2 = getReturnValueNode(callable) and
+    if callable.isAsync() then step.store(Contents::promiseValue()) else step.value()
   )
   or
   exists(Parameter param |

@@ -52,7 +52,8 @@ module LanguageDataFlowInput implements LanguageDataFlowSig {
 
   private newtype TLanguageContent =
     TPropertyName(string name) { name = any(PropertyIdentifier id).getValue() } or
-    TReceiver() or
+    TThisArgument() or
+    TFunctionSelfReference() or
     TPromiseValue() or
     TPromiseError()
 
@@ -67,15 +68,21 @@ module LanguageDataFlowInput implements LanguageDataFlowSig {
       head = "Member" and
       operand = this.asPropertyName()
       or
-      this = TPromiseValue() and head = "PromiseValue" and operand = ""
+      this = TThisArgument() and head = "Argument" and operand = "this"
       or
-      this = TPromiseError() and head = "PromiseError" and operand = ""
+      this = TFunctionSelfReference() and head = "Argument" and operand = "function"
+      or
+      this = TPromiseValue() and head = "Awaited" and operand = "value"
+      or
+      this = TPromiseError() and head = "Awaited" and operand = "error"
     }
 
     string toString() {
       result = this.asPropertyName()
       or
-      this = TReceiver() and result = "Receiver"
+      this = TThisArgument() and result = "this"
+      or
+      this = TFunctionSelfReference() and result = "FunctionSelfReference"
       or
       this = TPromiseValue() and result = "Promise.value"
       or
@@ -119,7 +126,13 @@ module LanguageDataFlowInput implements LanguageDataFlowSig {
 
     ContentSet anyProperty() { result.asLanguageContentSet() = TAnyProperty() }
 
-    ContentSet receiverArgument() { result.asSingleton().asLanguageContent() = TReceiver() }
+    ContentSet thisArgument() { result.asSingleton().asLanguageContent() = TThisArgument() }
+
+    Content functionSelfReferenceContent() { result.asLanguageContent() = TFunctionSelfReference() }
+
+    ContentSet functionSelfReference() {
+      result.asSingleton().asLanguageContent() = TFunctionSelfReference()
+    }
 
     ContentSet promiseValue() { result.asSingleton().asLanguageContent() = TPromiseValue() }
 
@@ -137,7 +150,7 @@ private module Dataflow1 = Make1<LanguageDataFlowInput>;
 
 private import Dataflow1
 
-private module Dataflow2 = Make2<LanguageContentSet>;
+private module Dataflow2 = Make2<LanguageContentSet, Contents::functionSelfReferenceContent/0>;
 
 private import Dataflow2
 

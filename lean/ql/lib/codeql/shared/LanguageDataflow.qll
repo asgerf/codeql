@@ -175,7 +175,20 @@ module LanguageDataFlow<
       Location getLocation();
     }
 
-    module Make2<LanguageContentSetSig LanguageContentSet> {
+    /**
+     * Gets the content representing the parameter on which captured variables are stored.
+     *
+     * For class-based languages where lambdas are instance methods under the hood, this would
+     * be the receiver parameter (`this` or `self`). For languages like JavaScript where lambdas
+     * are first-class and methods are just lambdas under the hood, this would be a synthetic
+     * parameter representing the lambda's self-reference.
+     */
+    signature Content capturedVariableHostParameterSig();
+
+    module Make2<
+      LanguageContentSetSig LanguageContentSet,
+      capturedVariableHostParameterSig/0 capturedVariableHostParameter>
+    {
       private newtype TContentSet =
         TSingleton(TContent content) or
         TContainerKnownSlot(IndexedContainerKind kind, Constant key) {
@@ -660,6 +673,63 @@ module LanguageDataFlow<
 
         private module CaptureSsa = VariableCapture::Flow<Location, VariableCaptureConfig>;
 
+        predicate parameterReadStep(AstNode node1, ContentSet contents, SyntheticNode node2) {
+          dataflowStep(node1, TReadStep(contents), node2) and
+          node1 = getParameterObjectNode(_)
+        }
+
+        predicate argumentStoreStep(AstNode node1, ContentSet contents, SyntheticNode node2) {
+          dataflowStep(node1, TStoreStep(contents), node2) and
+          node2 = getArgumentObjectNode(_)
+        }
+
+        private newtype TParameterPosition =
+          MkParameterPosition(ContentSet contents) { parameterReadStep(_, contents, _) } or
+          MkStaticParameterObjectPosition() or
+          MkDynamicParameterObjectPosition()
+
+        class ParameterPosition extends TParameterPosition {
+          ContentSet asContentSet() { this = MkParameterPosition(result) }
+
+          string toString() {
+            result = this.asContentSet().toString()
+            or
+            this = MkStaticParameterObjectPosition() and result = "static parameter object"
+            or
+            this = MkDynamicParameterObjectPosition() and result = "dynamic parameter object"
+          }
+
+          Location getLocation() { result = this.asContentSet().getLocation() }
+        }
+
+        private newtype TArgumentPosition =
+          MkArgumentPosition(ContentSet contents) { argumentStoreStep(_, contents, _) } or
+          MkStaticArgumentObjectPosition() or
+          MkDynamicArgumentObjectPosition()
+
+        class ArgumentPosition extends TArgumentPosition {
+          ContentSet asContentSet() { this = MkArgumentPosition(result) }
+
+          string toString() {
+            result = this.asContentSet().toString()
+            or
+            this = MkStaticArgumentObjectPosition() and result = "static argument object"
+            or
+            this = MkDynamicArgumentObjectPosition() and result = "dynamic argument object"
+          }
+
+          Location getLocation() { result = this.asContentSet().getLocation() }
+        }
+
+        predicate argumentParameterMatch(ArgumentPosition arg, ParameterPosition param) {
+          arg.asContentSet().getAStoreContent() = param.asContentSet().getAReadContent()
+          or
+          // Pass static->dynamic and dynamic->static argument/parameter object
+          arg = MkStaticArgumentObjectPosition() and param = MkDynamicParameterObjectPosition()
+          or
+          arg = MkDynamicArgumentObjectPosition() and param = MkStaticParameterObjectPosition()
+        }
+
         newtype TDataFlowNode =
           TValueNode(AstNode node) or
           TWithContentHelper(ContentSet contents, AstNode target) {
@@ -670,6 +740,16 @@ module LanguageDataFlow<
           } or
           TLocalSsaNode(LocalSsaDataFlow::SsaNode node) or
           TCaptureSsaNode(CaptureSsa::SynthesizedCaptureNode node) or
+          /**
+           * A parameter object from which to access parameters that cannot be translated to
+           * a ParameterPosition (i.e. everything except direct reads from the parameter object).
+           */
+          TDynamicParameterObject(Callable callable) or
+          /**
+           * An argument object that only the holds arguments that cannot be translated to an
+           * ArgumentPosition (i.e. everything except direct stores to the argument object).
+           */
+          TDynamicArgumentObject(AstNode call) { isCall(call) } or
           TFlowSummaryNode() // TODO
 
         class DataFlowNode extends TDataFlowNode {
@@ -704,6 +784,16 @@ module LanguageDataFlow<
               result = "Capture " + node
             )
             or
+            exists(Callable callable |
+              this = TDynamicParameterObject(callable) and
+              result = "DynamicParameterObject " + callable
+            )
+            or
+            exists(AstNode call |
+              this = TDynamicArgumentObject(call) and
+              result = "DynamicArgumentObject " + call
+            )
+            or
             this = TFlowSummaryNode() and
             result = "FlowSummaryNode"
           }
@@ -730,11 +820,29 @@ module LanguageDataFlow<
               this = TCaptureSsaNode(node) and
               result = node.getLocation()
             )
+            or
+            exists(Callable callable |
+              this = TDynamicParameterObject(callable) and
+              result = callable.getLocation()
+            )
+            or
+            exists(AstNode call |
+              this = TDynamicArgumentObject(call) and
+              result = call.getLocation()
+            )
           }
         }
 
         private AstNode getPostUpdateNode(AstNode node) {
           none() // TODO
+        }
+
+        pragma[nomagic]
+        private DataFlowNode getCapturedVariableHostParameter(Callable callable) {
+          exists(ContentSet contents |
+            parameterReadStep(getParameterObjectNode(callable), contents, result.asAstNode()) and
+            contents.getAReadContent() = capturedVariableHostParameter()
+          )
         }
 
         bindingset[node]
@@ -763,10 +871,35 @@ module LanguageDataFlow<
           result.asAstNode() = node.(CaptureSsa::VariableWriteSourceNode).getVariableWrite() // Gets the LValue node
           or
           result.asAstNode() = getPostUpdateNode(node.(CaptureSsa::ExprPostUpdateNode).getExpr())
+          or
+          exists(Callable callable |
+            node.(CaptureSsa::ThisParameterNode).getCallable() = callable and
+            result = getCapturedVariableHostParameter(callable)
+          )
+        }
+
+        predicate dataflowStepEx(DataFlowNode node1, DataFlowBuilder::Step step, DataFlowNode node2) {
+          dataflowStep(node1.asAstNode(), step, node2.asAstNode())
+          or
+          // For non-store steps into the argument object, also flow to the dynamic argument object.
+          exists(AstNode n1, AstNode call |
+            dataflowStep(n1, step, getArgumentObjectNode(call)) and
+            not step instanceof TStoreStep and
+            node1.asAstNode() = n1 and
+            node2 = TDynamicArgumentObject(call)
+          )
+          or
+          // For non-read steps from the parameter object, also flow from the dynamic parameter object.
+          exists(Callable callable, AstNode n2 |
+            dataflowStep(getParameterObjectNode(callable), step, n2) and
+            not step instanceof TReadStep and
+            node1 = TDynamicParameterObject(callable) and
+            node2.asAstNode() = n2
+          )
         }
 
         predicate localFlowStep(DataFlowNode node1, DataFlowNode node2) {
-          dataflowStep(node1.asAstNode(), TValueStep(), node2.asAstNode())
+          dataflowStepEx(node1, TValueStep(), node2)
           or
           // With/WithoutContentHelpers are intermediate nodes with expects/clearsContent
           // and a value step to their intended target node.
@@ -804,7 +937,7 @@ module LanguageDataFlow<
         }
 
         predicate readStep(DataFlowNode node1, ContentSet contents, DataFlowNode node2) {
-          dataflowStep(node1.asAstNode(), TReadStep(contents), node2.asAstNode())
+          dataflowStepEx(node1, TReadStep(contents), node2)
           or
           exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
             CaptureSsa::readStep(n1, contents.asSingleton().asCapturedVariable(), n2) and
@@ -814,7 +947,7 @@ module LanguageDataFlow<
         }
 
         predicate storeStep(DataFlowNode node1, ContentSet contents, DataFlowNode node2) {
-          dataflowStep(node1.asAstNode(), TStoreStep(contents), node2.asAstNode())
+          dataflowStepEx(node1, TStoreStep(contents), node2)
           or
           exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
             CaptureSsa::storeStep(n1, contents.asSingleton().asCapturedVariable(), n2) and
@@ -829,6 +962,10 @@ module LanguageDataFlow<
 
         predicate expectsContent(DataFlowNode node, ContentSet contents) {
           node = TWithContentHelper(contents, _)
+        }
+
+        predicate taintStep(DataFlowNode node1, DataFlowNode node2) {
+          dataflowStepEx(node1, TTaintStep(), node2)
         }
       }
     }
