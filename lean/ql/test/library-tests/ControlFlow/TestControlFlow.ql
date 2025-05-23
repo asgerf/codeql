@@ -73,5 +73,9 @@ query predicate unreachable(Sink sink) {
 
 query predicate tagIsNotUnique(Source source, string tag) {
   tag = source.getTag() and
-  strictcount(getSource(tag)) > 1
+  strictcount(Source src |
+    src.getTag() = tag and src.getLocation().getFile() = source.getLocation().getFile()
+  |
+    src
+  ) > 1
 }
