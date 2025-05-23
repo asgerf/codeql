@@ -26,6 +26,14 @@ module LanguageBase implements LanguageBaseSig<Location> {
     or
     node instanceof ImportOrExportStatement and
     tag = "imported-module"
+    or
+    node instanceof CallableBase and
+    not node instanceof ArrowFunction and
+    tag = "this-parameter"
+    or
+    node instanceof CallableBase and
+    not node instanceof Program and
+    tag = "function-self-reference"
   }
 
   /**
@@ -74,9 +82,11 @@ module LanguageBase implements LanguageBaseSig<Location> {
     node instanceof ShorthandPropertyIdentifierPattern
     or
     // Parameters are in lvalue position
-    node = any(FormalParameters f).getChild(_)
-    or
-    node = any(ArrowFunction f).getParameter()
+    exists(CallableBase callable |
+      node = callable.getParameter(_)
+      or
+      node = callable.getThisParameter()
+    )
     // TODO: parentheses
   }
 

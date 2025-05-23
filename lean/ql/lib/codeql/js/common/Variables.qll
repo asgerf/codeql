@@ -92,6 +92,12 @@ private class ThisAsVarRef extends VariableReferenceImpl instanceof This {
   override string getName() { result = "this" }
 }
 
+private class ThisParameterAsVarRef extends VariableReferenceImpl {
+  ThisParameterAsVarRef() { this = any(Callable c).getThisParameter() }
+
+  override string getName() { result = "this" }
+}
+
 private module ResolveVariableConfig implements ResolveVariablesSig {
   final class VariableReference = VariableReferenceImpl;
 

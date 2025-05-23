@@ -15,6 +15,21 @@ abstract class CallableBase extends AstNode {
    * Gets the identifier declared as part of this function, if any.
    */
   AstNode getNameNode() { none() }
+
+  /**
+   * Gets a synthetic node representing the `this` parameter of a callable.
+   *
+   * Has no result for arrow functions.
+   */
+  SyntheticNode getThisParameter() { result = this.getSyntheticChildNode("this-parameter") }
+
+  /**
+   * Gets a synthetic node representing a parameter holding a reference to the function
+   * object being invoked.
+   */
+  SyntheticNode getFunctionSelfReferenceNode() {
+    result = this.getSyntheticChildNode("function-self-reference")
+  }
 }
 
 private class ArrowFunctionAsCallable extends CallableBase instanceof ArrowFunction {
