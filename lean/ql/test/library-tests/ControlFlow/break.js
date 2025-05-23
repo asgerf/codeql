@@ -3,6 +3,6 @@ function t1() {
     while (foo()) {
         source("t1.2");
         break;
-        sink(); // not reachable
+        sink(); // $ MISSING: unreachable SPURIOUS: dominatedBy=t1.1 dominatedBy=t1.2
     }
 }
