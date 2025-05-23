@@ -1213,6 +1213,14 @@ module LanguageDataFlow<
 
           class DataFlowSecondLevelScope = Void;
         }
+
+        private module DataFlowMake = DataFlow::DataFlowMake<Location, DataFlowInput>;
+
+        module DataFlowPublic {
+          import DataFlowMake
+
+          class Node = DataFlowNode;
+        }
       }
     }
   }

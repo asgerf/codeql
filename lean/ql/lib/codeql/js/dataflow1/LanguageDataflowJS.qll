@@ -163,3 +163,5 @@ class ContentSet = Dataflow2::ContentSet;
 module Contents = LanguageDataFlowInput::Contents;
 
 module DataFlowBuilder = Dataflow2::DataFlowBuilder;
+
+module DataFlow = Dataflow3::DataFlowPublic;
