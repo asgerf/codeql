@@ -161,6 +161,15 @@ module LanguageCfgBuilder<
   }
 
   signature module LanguageCfgSig {
+    /**
+     * Holds if the given `node` and its subtree should be evaluated in the initializer block of its enclosing callable.
+     *
+     * Within the initializer block, nodes are evaluated left-to-right according to their location.
+     *
+     * Typically this is used to place synthetic parameters at the initializer block.
+     */
+    predicate hoistToInitializerBlock(AstNode node);
+
     predicate explicitStep(CfgNode1 node1, CfgNode2 node2);
   }
 
@@ -177,8 +186,16 @@ module LanguageCfgBuilder<
 
     private predicate isSyntheticBeginNode(SyntheticNode node) { node.getTag() = "cfg-begin" }
 
+    private predicate isHoisted(Node node) {
+      hoistToInitializerBlock(node)
+      or
+      isHoisted(node.getParent())
+    }
+
+    int getHoistingRank(Node node) { if isHoisted(node) then result = -1 else result = 1 }
+
     private predicate ordering(Node node, int line, int column, int tiebreak) {
-      needsCfg(node) and
+      (needsCfg(node) or isHoisted(node)) and
       not isSyntheticBeginNode(node) and
       exists(Location loc | loc = node.getLocation() |
         line = loc.getEndLine() and
@@ -201,7 +218,7 @@ module LanguageCfgBuilder<
           getEnclosingCallable(node) = scope and
           ordering(node, line, column, tiebreak)
         |
-          node order by line, column, tiebreak
+          node order by getHoistingRank(node), line, column, tiebreak
         )
     }
 

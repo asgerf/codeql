@@ -3,6 +3,13 @@ private import codeql.shared.LanguageCfg::LanguageCfgBuilder<Location, LanguageB
 private import ValueFilter
 
 module LanguageCfg implements LanguageCfgSig {
+  predicate hoistToInitializerBlock(AstNode node) {
+    node = any(Callable c).getThisParameter()
+    or
+    // Function declarations are initialized at the beginning of the function body, not when they are reached
+    node instanceof FunctionDeclaration
+  }
+
   /**
    * An explicit step from `node1` to `node2`.
    *
