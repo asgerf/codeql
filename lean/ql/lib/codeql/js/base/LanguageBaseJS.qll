@@ -48,21 +48,7 @@ module LanguageBase implements LanguageBaseSig<Location> {
   /**
    * Holds if `node` is a CFG scope boundary.
    */
-  predicate isCfgScope(AstNode node) {
-    node instanceof Program
-    or
-    node instanceof FunctionExpression
-    or
-    node instanceof FunctionDeclaration
-    or
-    node instanceof MethodDefinition
-    or
-    node instanceof ArrowFunction
-    or
-    node instanceof GeneratorFunction
-    or
-    node instanceof GeneratorFunctionDeclaration
-  }
+  predicate isCfgScope(AstNode node) { node instanceof CallableBase }
 
   /**
    * Holds if `node` appears in a position where it is written to and not read from.
