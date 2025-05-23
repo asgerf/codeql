@@ -673,14 +673,12 @@ module LanguageDataFlow<
 
         private module CaptureSsa = VariableCapture::Flow<Location, VariableCaptureConfig>;
 
-        predicate parameterReadStep(AstNode node1, ContentSet contents, SyntheticNode node2) {
-          dataflowStep(node1, TReadStep(contents), node2) and
-          node1 = getParameterObjectNode(_)
+        predicate parameterReadStep(Callable callable, ContentSet contents, AstNode node2) {
+          dataflowStep(getParameterObjectNode(callable), TReadStep(contents), node2)
         }
 
-        predicate argumentStoreStep(AstNode node1, ContentSet contents, SyntheticNode node2) {
-          dataflowStep(node1, TStoreStep(contents), node2) and
-          node2 = getArgumentObjectNode(_)
+        predicate argumentStoreStep(AstNode node1, ContentSet contents, AstNode call) {
+          dataflowStep(node1, TStoreStep(contents), getArgumentObjectNode(call))
         }
 
         private newtype TParameterPosition =
@@ -840,7 +838,7 @@ module LanguageDataFlow<
         pragma[nomagic]
         private DataFlowNode getCapturedVariableHostParameter(Callable callable) {
           exists(ContentSet contents |
-            parameterReadStep(getParameterObjectNode(callable), contents, result.asAstNode()) and
+            parameterReadStep(callable, contents, result.asAstNode()) and
             contents.getAReadContent() = capturedVariableHostParameter()
           )
         }
