@@ -190,7 +190,11 @@ module LanguageCfgBuilder<
     private predicate isHoisted(Node node) {
       hoistToInitializerBlock(node)
       or
-      isHoisted(node.getParent())
+      exists(Node parent |
+        parent = node.getParent() and
+        isHoisted(parent) and
+        not isCallable(parent)
+      )
     }
 
     int getHoistingRank(Node node) { if isHoisted(node) then result = -1 else result = 1 }
