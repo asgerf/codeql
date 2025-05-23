@@ -9,6 +9,7 @@ private import codeql.util.Void
 private import codeql.ssa.Ssa as Ssa
 private import codeql.dataflow.VariableCapture as VariableCapture
 private import codeql.dataflow.DataFlow as DataFlow
+private import codeql.dataflow.TaintTracking as TaintTracking
 
 module LanguageDataFlow<
   LocationSig Location, LanguageBaseSig<Location> Base, LanguageCommonSig<Location, Base> Common>
@@ -1221,6 +1222,22 @@ module LanguageDataFlow<
 
           class Node = DataFlowNode;
         }
+
+        module TaintTrackingInput implements TaintTracking::InputSig<Location, DataFlowInput> {
+          predicate defaultTaintSanitizer(DataFlowNode node) { none() }
+
+          predicate defaultAdditionalTaintStep(DataFlowNode src, DataFlowNode sink, string model) {
+            none()
+          }
+
+          bindingset[node]
+          predicate defaultImplicitTaintRead(DataFlowNode node, ContentSet c) { none() }
+
+          predicate speculativeTaintStep(DataFlowNode src, DataFlowNode sink) { none() }
+        }
+
+        module TaintTrackingPublic =
+          TaintTracking::TaintFlowMake<Location, DataFlowInput, TaintTrackingInput>;
       }
     }
   }

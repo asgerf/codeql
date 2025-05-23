@@ -165,3 +165,9 @@ module Contents = LanguageDataFlowInput::Contents;
 module DataFlowBuilder = Dataflow2::DataFlowBuilder;
 
 module DataFlow = Dataflow3::DataFlowPublic;
+
+module DataFlowInput = Dataflow3::DataFlowInput;
+
+module TaintTracking = Dataflow3::TaintTrackingPublic;
+
+module TaintTrackingInput = Dataflow3::TaintTrackingInput;
