@@ -1009,7 +1009,7 @@ module LanguageDataFlow<
           private newtype TDataFlowCall = MkSourceCall(Call c)
 
           class DataFlowCall extends TDataFlowCall {
-            Callable asSourceCall() { this = MkSourceCall(result) }
+            Call asSourceCall() { this = MkSourceCall(result) }
 
             string toString() { result = this.asSourceCall().toString() }
 
