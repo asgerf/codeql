@@ -1,4 +1,4 @@
-private import codeql.js.base.GeneratedAst::JS
+private import All
 
 /**
  * An expression that may be part of an optional chain: member `e.f`, subscript `e[f]`, and calls `f()`.

@@ -1,43 +1,8 @@
 private import codeql.js.base.GeneratedAst
-private import codeql.js.base.LanguageBase
-private import JS
-
-private predicate shouldSynthesize(AstNode node, string tag) {
-  LanguageBase::synthesizeNode(node, tag)
-  or
-  (
-    LanguageBase::isInPureLValuePosition(node)
-    or
-    LanguageBase::isInImpureLValuePosition(node)
-  ) and
-  tag = ["lvalue", "lvalue-end"]
-  or
-  LanguageBase::isCondition(node) and tag = ["condition-true", "condition-false"]
-  or
-  LanguageBase::isConditionInLValue(node) and tag = ["lvalue-true", "lvalue-false"]
-  or
-  LanguageBase::needsCfg(node) and
-  not node instanceof Token and
-  tag = "cfg-begin"
-  or
-  LanguageBase::isCfgScope(node) and
-  tag = ["cfg-entry-point", "cfg-exit-point", "parameter-object"]
-  or
-  LanguageBase::isCall(node) and
-  tag = ["argument-object"]
-  or
-  (LanguageBase::isCfgScope(node) or LanguageBase::isCall(node)) and
-  tag = ["return-value", "return-exception"]
-}
-
-module L {
-  signature class LocationSig;
-
-  // This is needed as replacement for the import in GeneratedAst.qll
-  class Location extends @location_default {
-    string toString() { none() }
-  }
-}
+private import codeql.js.base.LanguageBaseImpl as LanguageBaseImpl
+private import codeql.Locations
+private import codeql.shared.LanguageBase
+private import MakePostProcessor<Location, LanguageBaseImpl::LanguageBase>
 
 newtype TFresh = MkFresh(AstNode node, string tag) { shouldSynthesize(node, tag) }
 
@@ -53,16 +18,18 @@ class OldOrNewNode extends TOldOrNewNode {
   string toString() { none() }
 }
 
-query predicate new_js_synthetic_node_def(FreshEntity id, AstNode parent, string tag) {
-  id = Fresh::map(MkFresh(parent, tag))
-}
+module QueryPredicates {
+  query predicate new_js_synthetic_node_def(FreshEntity id, AstNode parent, string tag) {
+    id = Fresh::map(MkFresh(parent, tag))
+  }
 
-query predicate new_js_ast_node_location(OldOrNewNode id, L::Location location) {
-  not id instanceof @js_synthetic_node and
-  js_ast_node_location(id, location)
-  or
-  exists(AstNode node |
-    new_js_synthetic_node_def(id, node, _) and
-    js_ast_node_location(node, location)
-  )
+  query predicate new_js_ast_node_location(OldOrNewNode id, L::Location location) {
+    not id instanceof @js_synthetic_node and
+    js_ast_node_location(id, location)
+    or
+    exists(AstNode node |
+      new_js_synthetic_node_def(id, node, _) and
+      js_ast_node_location(node, location)
+    )
+  }
 }

@@ -1,4 +1,4 @@
-import All
+private import All
 private import codeql.shared.LanguageBase
 
 module LanguageBase implements LanguageBaseSig<Location> {
@@ -56,7 +56,7 @@ module LanguageBase implements LanguageBaseSig<Location> {
   /**
    * Holds if `node` is a CFG scope boundary.
    */
-  predicate isCfgScope(AstNode node) { node instanceof CallableBase }
+  predicate isCallable(AstNode node) { node instanceof CallableBase }
 
   /**
    * Holds if `node` appears in a position where it is written to and not read from.

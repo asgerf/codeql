@@ -68,7 +68,7 @@ signature module LanguageBaseSig<LocationSig Location> {
   /**
    * Holds if `node` is a CFG scope boundary.
    */
-  predicate isCfgScope(AstNode node);
+  predicate isCallable(AstNode node);
 
   /**
    * Holds if a language-specific synthetic node with the given `tag` should be synthesized as a child of `node`.
@@ -83,12 +83,12 @@ signature module LanguageBaseSig<LocationSig Location> {
   predicate isCall(AstNode node);
 }
 
-module MakeLanguageBase<LocationSig Location, LanguageBaseSig<Location> L> {
-  private import L
+module MakeLanguageBase<LocationSig Location, LanguageBaseSig<Location> Base> {
+  private import Base
 
-  predicate isInPureLValuePosition = L::isInPureLValuePosition/1;
+  predicate isInPureLValuePosition = Base::isInPureLValuePosition/1;
 
-  predicate isCondition = L::isCondition/1;
+  predicate isCondition = Base::isCondition/1;
 
   /**
    * Holds if `node` appears in left-hand position relative to an assignment or in a parameter position.
@@ -129,17 +129,17 @@ module MakeLanguageBase<LocationSig Location, LanguageBaseSig<Location> L> {
   }
 
   SyntheticNode getCfgEntryPoint(AstNode node) {
-    isCfgScope(node) and result = node.getSyntheticChildNode("cfg-entry-point")
+    isCallable(node) and result = node.getSyntheticChildNode("cfg-entry-point")
   }
 
   SyntheticNode getCfgExitPoint(AstNode node) {
-    isCfgScope(node) and result = node.getSyntheticChildNode("cfg-exit-point")
+    isCallable(node) and result = node.getSyntheticChildNode("cfg-exit-point")
   }
 
   SyntheticNode getCfgBegin(AstNode node) { result = node.getSyntheticChildNode("cfg-begin") }
 
   SyntheticNode getParameterObjectNode(AstNode node) {
-    isCfgScope(node) and result = node.getSyntheticChildNode("parameter-object")
+    isCallable(node) and result = node.getSyntheticChildNode("parameter-object")
   }
 
   SyntheticNode getArgumentObjectNode(AstNode node) {
@@ -148,13 +148,50 @@ module MakeLanguageBase<LocationSig Location, LanguageBaseSig<Location> L> {
 
   /** Gets the node representing values returned from the given call or callable. */
   SyntheticNode getReturnValueNode(AstNode node) {
-    (isCfgScope(node) or isCall(node)) and
+    (isCallable(node) or isCall(node)) and
     result = node.getSyntheticChildNode("return-value")
   }
 
   /** Gets the node representing exceptions thrown by the given call or callable. */
   SyntheticNode getExceptionalReturnValueNode(AstNode node) {
-    (isCfgScope(node) or isCall(node)) and
+    (isCallable(node) or isCall(node)) and
     result = node.getSyntheticChildNode("return-exception")
   }
+}
+
+/**
+ * Provides code needed by the post-processing upgrade script to synthesize nodes.
+ */
+module MakePostProcessor<LocationSig Location, LanguageBaseSig<Location> Base> {
+  private import Base
+
+  predicate shouldSynthesize(AstNode node, string tag) {
+    Base::synthesizeNode(node, tag)
+    or
+    (
+      isInPureLValuePosition(node)
+      or
+      isInImpureLValuePosition(node)
+    ) and
+    tag = ["lvalue", "lvalue-end"]
+    or
+    isCondition(node) and tag = ["condition-true", "condition-false"]
+    or
+    isConditionInLValue(node) and tag = ["lvalue-true", "lvalue-false"]
+    or
+    needsCfg(node) and
+    not node instanceof Token and
+    tag = "cfg-begin"
+    or
+    isCallable(node) and
+    tag = ["cfg-entry-point", "cfg-exit-point", "parameter-object"]
+    or
+    isCall(node) and
+    tag = ["argument-object"]
+    or
+    (isCallable(node) or isCall(node)) and
+    tag = ["return-value", "return-exception"]
+  }
+
+  class AstNode = Base::AstNode;
 }

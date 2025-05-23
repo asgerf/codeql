@@ -1,7 +1,7 @@
 private import All
 
 module JS {
-  private import GeneratedAst::JS as G
+  private import codeql.js.base.GeneratedAst::JS as G
   // This module re-exports the generated AST, shadowing the classes we have a facade for.
   // The generated AST refers to this module when referencing a type name, so predicates
   // have a more useful return type.
