@@ -65,11 +65,9 @@ module LanguageCfgBuilder<
      */
     predicate isAfter(AstNode node) { this = node }
 
-    predicate isBeforeAssigningTo(AstNode lvalue) { this = lvalue.getSyntheticChildNode("lvalue") }
+    predicate isBeforeAssigningTo(AstNode lvalue) { this = getLValueNode(lvalue) }
 
-    predicate isAfterAssigningTo(AstNode lvalue) {
-      this = lvalue.getSyntheticChildNode("lvalue-end")
-    }
+    predicate isAfterAssigningTo(AstNode lvalue) { this = getLValueEndNode(lvalue) }
 
     string toString() { result = super.toString() }
 
