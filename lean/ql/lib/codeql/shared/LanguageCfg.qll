@@ -5,6 +5,7 @@ private import codeql.controlflow.BasicBlock as BB
 private import codeql.util.Boolean
 private import codeql.ssa.Ssa as Ssa
 private import codeql.dataflow.VariableCapture as VariableCapture
+private import codeql.util.FileSystem
 
 module LanguageCfgBuilder<
   LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
@@ -471,6 +472,167 @@ module LanguageCfgBuilder<
         numCfgNodes = count(Node node | needsCfg(node)) and
         numBBs = count(BasicBlock b) and
         averageBBLength = numCfgNodes.(float) / numBBs.(float)
+      }
+    }
+
+    /** A node to be included in the output of `TestOutput`. */
+    signature class RelevantNodeSig extends Node;
+
+    /**
+     * Import this module into a `.ql` file to output a CFG. The
+     * graph is restricted to nodes from `RelevantNode`.
+     */
+    module TestOutput<RelevantNodeSig RelevantNode> {
+      /** Holds if `pred -> succ` is an edge in the CFG. */
+      query predicate edges(RelevantNode pred, RelevantNode succ, string label) {
+        exists(ValueFilter filter |
+          conditionalStep(pred, filter, succ) and
+          label = filter.toString()
+        )
+        or
+        unconditionalStep(pred, succ) and label = ""
+      }
+
+      /**
+       * Provides logic for representing a CFG as a [Mermaid diagram](https://mermaid.js.org/).
+       */
+      module Mermaid {
+        private string nodeId(RelevantNode n) {
+          result =
+            any(int i |
+              n =
+                rank[i](RelevantNode p, string filePath, int startLine, int startColumn,
+                  int endLine, int endColumn |
+                  p.getLocation()
+                      .hasLocationInfo(filePath, startLine, startColumn, endLine, endColumn)
+                |
+                  p order by filePath, startLine, startColumn, endLine, endColumn, p.toString()
+                )
+            ).toString()
+        }
+
+        private string nodes() {
+          result =
+            concat(RelevantNode n, string id, string text |
+              id = nodeId(n) and
+              text = n.toString()
+            |
+              id + "[\"" + text + "\"]", "\n" order by id
+            )
+        }
+
+        private string edge(RelevantNode pred, RelevantNode succ) {
+          edges(pred, succ, _) and
+          exists(string label |
+            edges(pred, succ, label) and
+            if label = ""
+            then result = nodeId(pred) + " --> " + nodeId(succ)
+            else result = nodeId(pred) + " -- " + label + " --> " + nodeId(succ)
+          )
+        }
+
+        private string edges() {
+          result =
+            concat(RelevantNode pred, RelevantNode succ, string edge, string filePath,
+              int startLine, int startColumn, int endLine, int endColumn |
+              edge = edge(pred, succ) and
+              pred.getLocation()
+                  .hasLocationInfo(filePath, startLine, startColumn, endLine, endColumn)
+            |
+              edge, "\n"
+              order by
+                filePath, startLine, startColumn, endLine, endColumn, pred.toString()
+            )
+        }
+
+        /** Holds if the Mermaid representation is `s`. */
+        query predicate mermaid(string s) { s = "flowchart TD\n" + nodes() + "\n\n" + edges() }
+      }
+    }
+
+    /** Provides the input to `ViewCfgQuery`. */
+    signature module ViewCfgQueryInputSig<FileSig File> {
+      /** The source file selected in the IDE. Should be an `external` predicate. */
+      string selectedSourceFile();
+
+      /** The source line selected in the IDE. Should be an `external` predicate. */
+      int selectedSourceLine();
+
+      /** The source column selected in the IDE. Should be an `external` predicate. */
+      int selectedSourceColumn();
+
+      File getFileFromLocation(Location loc);
+    }
+
+    /**
+     * Provides an implementation for a `View CFG` query.
+     *
+     * Import this module into a `.ql` that looks like
+     *
+     * ```ql
+     * @name Print CFG
+     * @description Produces a representation of a file's Control Flow Graph.
+     *              This query is used by the VS Code extension.
+     * @id <lang>/print-cfg
+     * @kind graph
+     * @tags ide-contextual-queries/print-cfg
+     * ```
+     */
+    module ViewCfgQuery<FileSig File, ViewCfgQueryInputSig<File> ViewCfgQueryInput> {
+      private import ViewCfgQueryInput
+
+      predicate callableSpan(
+        Callable callable, File file, int startLine, int startColumn, int endLine, int endColumn
+      ) {
+        exists(Location loc |
+          loc = callable.getLocation() and
+          file = getFileFromLocation(callable.getLocation()) and
+          loc.hasLocationInfo(_, startLine, startColumn, endLine, endColumn)
+        )
+      }
+
+      bindingset[file, line, column]
+      private Callable smallestEnclosingScope(File file, int line, int column) {
+        result =
+          min(Callable scope, int startLine, int startColumn, int endLine, int endColumn |
+            callableSpan(scope, file, startLine, startColumn, endLine, endColumn) and
+            (
+              startLine < line
+              or
+              startLine = line and startColumn <= column
+            ) and
+            (
+              endLine > line
+              or
+              endLine = line and endColumn >= column
+            )
+          |
+            scope order by startLine desc, startColumn desc, endLine, endColumn
+          )
+      }
+
+      private import IdeContextual<File>
+
+      final private class FinalAstNode = AstNode;
+
+      private class RelevantNode extends FinalAstNode {
+        RelevantNode() {
+          getEnclosingCallable(this) =
+            smallestEnclosingScope(getFileBySourceArchiveName(selectedSourceFile()),
+              selectedSourceLine(), selectedSourceColumn())
+        }
+
+        string getOrderDisambiguation() { result = "" }
+      }
+
+      private module Output = TestOutput<RelevantNode>;
+
+      import Output::Mermaid
+
+      /** Holds if `pred` -> `succ` is an edge in the CFG. */
+      query predicate edges(RelevantNode pred, RelevantNode succ, string attr, string val) {
+        attr = "semmle.label" and
+        Output::edges(pred, succ, val)
       }
     }
   }

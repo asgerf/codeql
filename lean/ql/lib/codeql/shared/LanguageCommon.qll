@@ -30,6 +30,8 @@ signature module LanguageCommonSig<LocationSig Location, LanguageBaseSig<Locatio
      * Has no result if the set of values is empty.
      */
     ValueFilter intersect(ValueFilter other);
+
+    string toString();
   }
 
   /**
