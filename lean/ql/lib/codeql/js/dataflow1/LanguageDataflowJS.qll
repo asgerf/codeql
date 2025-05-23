@@ -163,5 +163,3 @@ class ContentSet = Dataflow2::ContentSet;
 module Contents = LanguageDataFlowInput::Contents;
 
 module DataFlowBuilder = Dataflow2::DataFlowBuilder;
-
-predicate localFlowStep = Dataflow3::localFlowStep/2;

@@ -5,6 +5,7 @@ private import LanguageCfg
 private import codeql.controlflow.BasicBlock as BB
 private import codeql.util.Boolean
 private import codeql.util.Unit
+private import codeql.util.Void
 private import codeql.ssa.Ssa as Ssa
 private import codeql.dataflow.VariableCapture as VariableCapture
 private import codeql.dataflow.DataFlow as DataFlow
@@ -719,15 +720,6 @@ module LanguageDataFlow<
           Location getLocation() { result = this.asContentSet().getLocation() }
         }
 
-        predicate argumentParameterMatch(ArgumentPosition arg, ParameterPosition param) {
-          arg.asContentSet().getAStoreContent() = param.asContentSet().getAReadContent()
-          or
-          // Pass static->dynamic and dynamic->static argument/parameter object
-          arg = MkStaticArgumentObjectPosition() and param = MkDynamicParameterObjectPosition()
-          or
-          arg = MkDynamicArgumentObjectPosition() and param = MkStaticParameterObjectPosition()
-        }
-
         newtype TDataFlowNode =
           TValueNode(AstNode node) or
           TWithContentHelper(ContentSet contents, AstNode target) {
@@ -896,74 +888,330 @@ module LanguageDataFlow<
           )
         }
 
-        predicate localFlowStep(DataFlowNode node1, DataFlowNode node2) {
-          dataflowStepEx(node1, TValueStep(), node2)
-          or
-          // With/WithoutContentHelpers are intermediate nodes with expects/clearsContent
-          // and a value step to their intended target node.
-          exists(AstNode source, ContentSet contents, AstNode target |
-            dataflowStep(source, TWithContentStep(contents), target)
-          |
-            node1.asAstNode() = source and
-            node2 = TWithContentHelper(contents, target)
-            or
-            node1 = TWithContentHelper(contents, target) and
-            node2.asAstNode() = target
-          )
-          or
-          exists(AstNode source, ContentSet contents, AstNode target |
-            dataflowStep(source, TWithoutContentStep(contents), target)
-          |
-            node1.asAstNode() = source and
-            node2 = TWithoutContentHelper(contents, target)
-            or
-            node1 = TWithoutContentHelper(contents, target) and
-            node2.asAstNode() = target
-          )
-          or
-          exists(LocalSsaDataFlow::Node n1, LocalSsaDataFlow::Node n2 |
-            LocalSsaDataFlow::localFlowStep(_, n1, n2, _) and
-            node1 = getNodeFromLocalSsa(n1) and
-            node2 = getNodeFromLocalSsa(n2)
-          )
-          or
-          exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
-            CaptureSsa::localFlowStep(n1, n2) and
-            node1 = getNodeFromCaptureSsa(n1) and
-            node2 = getNodeFromCaptureSsa(n2)
-          )
-        }
-
-        predicate readStep(DataFlowNode node1, ContentSet contents, DataFlowNode node2) {
-          dataflowStepEx(node1, TReadStep(contents), node2)
-          or
-          exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
-            CaptureSsa::readStep(n1, contents.asSingleton().asCapturedVariable(), n2) and
-            node1 = getNodeFromCaptureSsa(n1) and
-            node2 = getNodeFromCaptureSsa(n2)
-          )
-        }
-
-        predicate storeStep(DataFlowNode node1, ContentSet contents, DataFlowNode node2) {
-          dataflowStepEx(node1, TStoreStep(contents), node2)
-          or
-          exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
-            CaptureSsa::storeStep(n1, contents.asSingleton().asCapturedVariable(), n2) and
-            node1 = getNodeFromCaptureSsa(n1) and
-            node2 = getNodeFromCaptureSsa(n2)
-          )
-        }
-
-        predicate clearsContent(DataFlowNode node, ContentSet contents) {
-          node = TWithoutContentHelper(contents, _)
-        }
-
-        predicate expectsContent(DataFlowNode node, ContentSet contents) {
-          node = TWithContentHelper(contents, _)
-        }
-
         predicate taintStep(DataFlowNode node1, DataFlowNode node2) {
           dataflowStepEx(node1, TTaintStep(), node2)
+        }
+
+        predicate parameterNodeImpl(Callable callable, ParameterPosition pos, DataFlowNode node) {
+          parameterReadStep(callable, pos.asContentSet(), node.asAstNode())
+          or
+          pos = MkStaticParameterObjectPosition() and
+          node.asAstNode() = getParameterObjectNode(callable)
+          or
+          pos = MkDynamicParameterObjectPosition() and
+          node = TDynamicParameterObject(callable)
+        }
+
+        predicate argumentNodeImpl(AstNode call, ArgumentPosition pos, DataFlowNode node) {
+          argumentStoreStep(node.asAstNode(), pos.asContentSet(), call)
+          or
+          pos = MkStaticArgumentObjectPosition() and
+          node.asAstNode() = getArgumentObjectNode(call)
+          or
+          pos = MkDynamicArgumentObjectPosition() and
+          node = TDynamicArgumentObject(call)
+        }
+
+        class Call extends FinalAstNode {
+          Call() { isCall(this) }
+        }
+
+        final private class FinalContent = Content;
+
+        final private class FinalContentSet = ContentSet;
+
+        final private class FinalParameterPosition = ParameterPosition;
+
+        final private class FinalArgumentPosition = ArgumentPosition;
+
+        module DataFlowInput implements DataFlow::InputSig<Location> {
+          class Node = DataFlowNode;
+
+          class ArgumentPosition = FinalArgumentPosition;
+
+          class ParameterPosition = FinalParameterPosition;
+
+          class ParameterNode extends Node {
+            ParameterNode() { parameterNodeImpl(_, _, this) }
+          }
+
+          predicate isParameterNode(
+            ParameterNode node, DataFlowCallable callable, ParameterPosition pos
+          ) {
+            parameterNodeImpl(callable.asSourceCallable(), pos, node)
+          }
+
+          class ArgumentNode extends Node {
+            ArgumentNode() { argumentNodeImpl(_, _, this) }
+          }
+
+          predicate isArgumentNode(ArgumentNode node, DataFlowCall call, ArgumentPosition pos) {
+            argumentNodeImpl(call.asSourceCall(), pos, node)
+          }
+
+          private newtype TReturnKind =
+            TValueReturn() or
+            TExceptionalReturn()
+
+          class ReturnKind extends TReturnKind {
+            string toString() {
+              this = TValueReturn() and result = "value"
+              or
+              this = TExceptionalReturn() and result = "exception"
+            }
+          }
+
+          additional DataFlowNode getReturnNodeOfKind(Callable c, ReturnKind kind) {
+            result.asAstNode() = getReturnValueNode(c) and kind = TValueReturn()
+            or
+            result.asAstNode() = getExceptionalReturnValueNode(c) and kind = TExceptionalReturn()
+          }
+
+          additional DataFlowNode getOutNodeOfKind(Call c, ReturnKind kind) {
+            result.asAstNode() = getReturnValueNode(c) and kind = TValueReturn()
+            or
+            result.asAstNode() = getExceptionalReturnValueNode(c) and kind = TExceptionalReturn()
+          }
+
+          class ReturnNode extends Node {
+            ReturnNode() { this = getReturnNodeOfKind(_, _) }
+
+            ReturnKind getKind() { this = getReturnNodeOfKind(_, result) }
+          }
+
+          class OutNode extends Node {
+            OutNode() { this = getOutNodeOfKind(_, _) }
+
+            ReturnKind getKind() { this = getOutNodeOfKind(_, result) }
+          }
+
+          OutNode getAnOutNode(DataFlowCall call, ReturnKind kind) {
+            result = getOutNodeOfKind(call.asSourceCall(), kind)
+          }
+
+          class PostUpdateNode extends Node {
+            PostUpdateNode() { none() } // TODO
+
+            Node getPreUpdateNode() { none() } // TODO
+          }
+
+          private newtype TDataFlowCallable = MkSourceCallable(Callable c)
+
+          class DataFlowCallable extends TDataFlowCallable {
+            Callable asSourceCallable() { this = MkSourceCallable(result) }
+
+            string toString() { result = this.asSourceCallable().toString() }
+
+            Location getLocation() { result = this.asSourceCallable().getLocation() }
+          }
+
+          private newtype TDataFlowCall = MkSourceCall(Call c)
+
+          class DataFlowCall extends TDataFlowCall {
+            Callable asSourceCall() { this = MkSourceCall(result) }
+
+            string toString() { result = this.asSourceCall().toString() }
+
+            Location getLocation() { result = this.asSourceCall().getLocation() }
+
+            DataFlowCallable getEnclosingCallable() {
+              result.asSourceCallable() = getEnclosingCallable(this.asSourceCall())
+            }
+          }
+
+          DataFlowCallable nodeGetEnclosingCallable(Node node) {
+            exists(AstNode n | result.asSourceCallable() = getEnclosingCallable(n) |
+              node.asAstNode() = n
+              or
+              node = TWithContentHelper(_, n)
+              or
+              node = TWithoutContentHelper(_, n)
+              or
+              node = TDynamicArgumentObject(n)
+            )
+            or
+            node = TDynamicParameterObject(result.asSourceCallable())
+            or
+            exists(LocalSsaDataFlow::SsaNode n |
+              node = TLocalSsaNode(n) and
+              result.asSourceCallable() = n.getBasicBlock().getScope()
+            )
+            or
+            exists(CaptureSsa::SynthesizedCaptureNode n |
+              node = TCaptureSsaNode(n) and
+              result.asSourceCallable() = n.getEnclosingCallable()
+            )
+          }
+
+          class DataFlowType = Unit; // Nothing fancy at this point
+
+          DataFlowType getNodeType(Node node) { exists(node) and exists(result) }
+
+          predicate compatibleTypes(DataFlowType t1, DataFlowType t2) { t1 = t2 }
+
+          predicate typeStrongerThan(DataFlowType t1, DataFlowType t2) { none() }
+
+          class CastNode extends Node {
+            CastNode() { none() } // TODO
+          }
+
+          predicate nodeIsHidden(Node node) {
+            none() // TODO
+          }
+
+          class DataFlowExpr = AstNode;
+
+          Node exprNode(DataFlowExpr e) { result.asAstNode() = e }
+
+          DataFlowCallable viableCallable(DataFlowCall c) {
+            none() // TODO
+          }
+
+          class Content = FinalContent;
+
+          predicate forceHighPrecision(Content c) { none() }
+
+          class ContentSet = FinalContentSet;
+
+          class ContentApprox = Unit; // TODO: approx
+
+          ContentApprox getContentApprox(Content c) { exists(c) and exists(result) }
+
+          predicate parameterMatch(ParameterPosition param, ArgumentPosition arg) {
+            arg.asContentSet().getAStoreContent() = param.asContentSet().getAReadContent()
+            or
+            // Pass static->dynamic and dynamic->static argument/parameter object
+            arg = MkStaticArgumentObjectPosition() and param = MkDynamicParameterObjectPosition()
+            or
+            arg = MkDynamicArgumentObjectPosition() and param = MkStaticParameterObjectPosition()
+          }
+
+          additional predicate localFlowStep(DataFlowNode node1, DataFlowNode node2) {
+            dataflowStepEx(node1, TValueStep(), node2)
+            or
+            // With/WithoutContentHelpers are intermediate nodes with expects/clearsContent
+            // and a value step to their intended target node.
+            exists(AstNode source, ContentSet contents, AstNode target |
+              dataflowStep(source, TWithContentStep(contents), target)
+            |
+              node1.asAstNode() = source and
+              node2 = TWithContentHelper(contents, target)
+              or
+              node1 = TWithContentHelper(contents, target) and
+              node2.asAstNode() = target
+            )
+            or
+            exists(AstNode source, ContentSet contents, AstNode target |
+              dataflowStep(source, TWithoutContentStep(contents), target)
+            |
+              node1.asAstNode() = source and
+              node2 = TWithoutContentHelper(contents, target)
+              or
+              node1 = TWithoutContentHelper(contents, target) and
+              node2.asAstNode() = target
+            )
+            or
+            exists(LocalSsaDataFlow::Node n1, LocalSsaDataFlow::Node n2 |
+              LocalSsaDataFlow::localFlowStep(_, n1, n2, _) and
+              node1 = getNodeFromLocalSsa(n1) and
+              node2 = getNodeFromLocalSsa(n2)
+            )
+            or
+            exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
+              CaptureSsa::localFlowStep(n1, n2) and
+              node1 = getNodeFromCaptureSsa(n1) and
+              node2 = getNodeFromCaptureSsa(n2)
+            )
+          }
+
+          predicate simpleLocalFlowStep(Node node1, Node node2, string model) {
+            localFlowStep(node1, node2) and
+            sameContainer(node1, node2) and
+            model = ""
+          }
+
+          predicate readStep(DataFlowNode node1, ContentSet contents, DataFlowNode node2) {
+            dataflowStepEx(node1, TReadStep(contents), node2)
+            or
+            exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
+              CaptureSsa::readStep(n1, contents.asSingleton().asCapturedVariable(), n2) and
+              node1 = getNodeFromCaptureSsa(n1) and
+              node2 = getNodeFromCaptureSsa(n2)
+            )
+          }
+
+          predicate storeStep(DataFlowNode node1, ContentSet contents, DataFlowNode node2) {
+            dataflowStepEx(node1, TStoreStep(contents), node2)
+            or
+            exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
+              CaptureSsa::storeStep(n1, contents.asSingleton().asCapturedVariable(), n2) and
+              node1 = getNodeFromCaptureSsa(n1) and
+              node2 = getNodeFromCaptureSsa(n2)
+            )
+          }
+
+          predicate clearsContent(DataFlowNode node, ContentSet contents) {
+            node = TWithoutContentHelper(contents, _)
+          }
+
+          predicate expectsContent(DataFlowNode node, ContentSet contents) {
+            node = TWithContentHelper(contents, _)
+          }
+
+          bindingset[node1, node2]
+          pragma[inline_late]
+          additional predicate sameContainer(Node node1, Node node2) {
+            nodeGetEnclosingCallable(node1) = nodeGetEnclosingCallable(node2)
+          }
+
+          predicate jumpStep(Node node1, Node node2) {
+            localFlowStep(node1, node2) and
+            not sameContainer(node1, node2)
+          }
+
+          class NodeRegion extends Void {
+            predicate contains(Node n) { none() }
+          }
+
+          predicate isUnreachableInCall(NodeRegion nr, DataFlowCall call) { none() }
+
+          predicate allowParameterReturnInSelf(ParameterNode p) {
+            exists(Callable callable |
+              CaptureSsa::heuristicAllowInstanceParameterReturnInSelf(callable) and
+              p = getCapturedVariableHostParameter(callable)
+            )
+          }
+
+          predicate localMustFlowStep(Node node1, Node node2) {
+            none() // TODO
+          }
+
+          class LambdaCallKind = Void;
+
+          /** Holds if `creation` is an expression that creates a lambda of kind `kind` for `c`. */
+          predicate lambdaCreation(Node creation, LambdaCallKind kind, DataFlowCallable c) {
+            none() // TODO
+          }
+
+          /** Holds if `call` is a lambda call of kind `kind` where `receiver` is the lambda expression. */
+          predicate lambdaCall(DataFlowCall call, LambdaCallKind kind, Node receiver) {
+            none() // TODO
+          }
+
+          /** Extra data-flow steps needed for lambda flow analysis. */
+          predicate additionalLambdaFlowStep(Node nodeFrom, Node nodeTo, boolean preservesValue) {
+            none() // TODO
+          }
+
+          predicate knownSourceModel(Node source, string model) {
+            none() // TODO
+          }
+
+          predicate knownSinkModel(Node sink, string model) {
+            none() // TODO
+          }
+
+          class DataFlowSecondLevelScope = Void;
         }
       }
     }
