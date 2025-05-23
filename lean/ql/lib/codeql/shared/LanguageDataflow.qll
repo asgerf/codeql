@@ -766,7 +766,7 @@ module LanguageDataFlow<
             or
             exists(LocalSsaDataFlow::SsaNode node |
               this = TLocalSsaNode(node) and
-              result = "SSA " + node
+              result = node.toString()
             )
             or
             exists(CaptureSsa::SynthesizedCaptureNode node |
