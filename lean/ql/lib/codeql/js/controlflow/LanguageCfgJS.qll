@@ -253,6 +253,15 @@ module LanguageCfg implements LanguageCfgSig {
       node1.isAfterAssigningTo(max(int i | | pattern.getChild(i) order by i)) and
       node2.isAfterAssigningTo(pattern)
     )
+    or
+    // Parameters just flow into their lvalues
+    exists(Parameter param |
+      node1.isBefore(param) and
+      node2.isBeforeAssigningTo(param)
+      or
+      node2.isAfterAssigningTo(param) and
+      node1.isAfter(param)
+    )
   }
 }
 
