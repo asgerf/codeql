@@ -6,6 +6,6 @@ set -eu
     --prune="**/*.testproj" \
     --include-extension=.js \
     --size-limit=5m \
-    --language=ql \
+    --language=lean \
     --working-dir=.\
     "$CODEQL_EXTRACTOR_LEAN_WIP_DATABASE"
