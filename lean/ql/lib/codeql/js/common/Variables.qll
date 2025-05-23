@@ -22,6 +22,14 @@ private predicate isInDeclarationContext(AstNode node, AstNode scope) {
     else scope = getEnclosingCallable(decl)
   )
   or
+  exists(ForInStatement stmt | node = stmt.getLeft() |
+    stmt.getKind().(Token).getValue() = "var" and
+    scope = getEnclosingCallable(stmt)
+    or
+    stmt.getKind().(Token).getValue() = ["let", "const"] and
+    scope = stmt
+  )
+  or
   exists(FunctionDeclaration decl |
     // note: this refers to the outer scope (as it should) due to how getEnclosingCallable is defined
     node = decl.getName() and
