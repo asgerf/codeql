@@ -51,11 +51,10 @@ module LanguageCfgBuilder<
      * If `node` is a synthetic node, this is bound to that node.
      */
     predicate isBefore(AstNode node) {
-      this = node.getSyntheticChildNode("cfg-begin")
+      this = getCfgBegin(node)
       or
-      node instanceof Token and this = node
-      or
-      this = node.(SyntheticNode)
+      not exists(getCfgBegin(node)) and
+      this = node
     }
 
     /**
@@ -187,13 +186,20 @@ module LanguageCfgBuilder<
 
     private predicate isSyntheticBeginNode(SyntheticNode node) { node.getTag() = "cfg-begin" }
 
+    bindingset[node1, node2]
+    pragma[inline_late]
+    private predicate sameCallable(Node node1, Node node2) {
+      getEnclosingCallable(node1) = getEnclosingCallable(node2)
+    }
+
     private predicate isHoisted(Node node) {
       hoistToInitializerBlock(node)
       or
+      not node instanceof SyntheticNode and
       exists(Node parent |
         parent = node.getParent() and
         isHoisted(parent) and
-        not isCallable(parent)
+        sameCallable(node, parent)
       )
     }
 

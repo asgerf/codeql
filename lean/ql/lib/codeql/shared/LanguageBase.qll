@@ -180,7 +180,11 @@ module MakePostProcessor<LocationSig Location, LanguageBaseSig<Location> Base> {
     isConditionInLValue(node) and tag = ["lvalue-true", "lvalue-false"]
     or
     needsCfg(node) and
-    not node instanceof Token and
+    (
+      not node instanceof Token
+      or
+      (isInPureLValuePosition(node) or isInImpureLValuePosition(node)) // TODO: maybe just handle parameters specially
+    ) and
     tag = "cfg-begin"
     or
     isCallable(node) and
