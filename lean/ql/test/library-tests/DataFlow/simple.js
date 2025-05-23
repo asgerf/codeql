@@ -14,6 +14,7 @@ function t3() {
     const array = [source("t3.1"), source("t3.2")];
     sink(array[0]); // $ hasValueFlow=t3.1
     sink(array[1]); // $ hasValueFlow=t3.2
+    sink(array[2]);
     for (let item of array) {
         sink(item); // $ hasValueFlow=t3.1 hasValueFlow=t3.2
     }
