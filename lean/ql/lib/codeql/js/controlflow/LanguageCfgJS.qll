@@ -259,8 +259,8 @@ module LanguageCfg implements LanguageCfgSig {
       node1.isBefore(param) and
       node2.isBeforeAssigningTo(param)
       or
-      node2.isAfterAssigningTo(param) and
-      node1.isAfter(param)
+      node1.isAfterAssigningTo(param) and
+      node2.isAfter(param)
     )
   }
 }
