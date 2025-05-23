@@ -106,8 +106,8 @@ module MakeLanguageCommon<
     exists(Callable scope |
       node =
         [
-          getCfgBegin(scope), getConditionalOutcomeNode(scope, _), getLValueNode(node),
-          getLValueEndNode(node)
+          getCfgBegin(scope), getConditionalOutcomeNode(scope, _), getLValueNode(scope),
+          getLValueEndNode(scope)
         ] and
       result = scope.getParent()
     )
