@@ -98,4 +98,14 @@ module JS {
     /** Gets the index of the first spread argument in this call, if any. */
     int getFirstSpreadIndex() { result = min(int i | this.getArgument(i) instanceof SpreadElement) }
   }
+
+  class FieldDefinition extends G::FieldDefinition {
+    predicate isStatic() { any(Token tok | tok.getValue() = "static").getParent() = this }
+  }
+
+  class MethodDefinition extends G::MethodDefinition {
+    predicate isConstructor() { this.getName().(PropertyIdentifier).getValue() = "constructor" }
+
+    predicate isStatic() { any(Token tok | tok.getValue() = "static").getParent() = this }
+  }
 }
