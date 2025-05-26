@@ -142,10 +142,10 @@ predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
     node2 = getLValueNode(stmt.getName())
   )
   or
-  exists(ClassDeclaration cls |
+  exists(ClassLike cls |
     node1 = cls and
     step.value() and
-    node2 = getLValueNode(cls.getName())
+    node2 = getLValueNode(cls.getNameNode())
   )
   or
   //
