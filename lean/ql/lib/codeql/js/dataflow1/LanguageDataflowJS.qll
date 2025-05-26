@@ -1,11 +1,10 @@
 private import All
 private import codeql.util.Unit
 private import codeql.util.Void
-private import codeql.shared.LanguageDataflow::LanguageDataFlow<Location, LanguageBase, LanguageCommon> as LanguageDataFlow
-private import LanguageDataFlow
-private import DataFlowSteps
+private import codeql.shared.LanguageDataflow::LanguageDataFlow<Location, LanguageBase, LanguageCommon>
+private import DataFlowSteps as DataFlowSteps
 
-module LanguageDataFlowInput implements LanguageDataFlowSig {
+module DataFlowInputs implements DataFlowSig1, DataFlowSig2, DataFlowSig3 {
   import codeql.js.common.Variables
 
   private newtype TConstant = TInteger(int x) { x = [0 .. 20] }
@@ -94,7 +93,7 @@ module LanguageDataFlowInput implements LanguageDataFlowSig {
 
   private newtype TLanguageContentSet = TAnyProperty()
 
-  additional class LanguageContentSet extends TLanguageContentSet {
+  class LanguageContentSet extends TLanguageContentSet {
     Content getAReadContent() {
       this instanceof TAnyProperty and
       (
@@ -142,25 +141,29 @@ module LanguageDataFlowInput implements LanguageDataFlowSig {
   class ClosureExpr extends Callable {
     predicate hasBody(Callable callable) { callable = this }
   }
+
+  predicate capturedVariableHostParameter = Contents::functionSelfReferenceContent/0;
+
+  predicate dataflowStep = DataFlowSteps::dataflowStep/3;
 }
 
-private import LanguageDataFlowInput
+private import DataFlowInputs
 
-private module Dataflow1 = Make1<LanguageDataFlowInput>;
+private module Dataflow1 = Make1<DataFlowInputs>;
 
 private import Dataflow1
 
-private module Dataflow2 = Make2<LanguageContentSet, Contents::functionSelfReferenceContent/0>;
+private module Dataflow2 = Make2<DataFlowInputs>;
 
 private import Dataflow2
 
-private module Dataflow3 = Make3<dataflowStep/3, LanguageCfg>;
+private module Dataflow3 = Make3<DataFlowInputs, LanguageCfg>;
 
 class Content = Dataflow1::Content;
 
 class ContentSet = Dataflow2::ContentSet;
 
-module Contents = LanguageDataFlowInput::Contents;
+module Contents = DataFlowInputs::Contents;
 
 module DataFlowBuilder = Dataflow2::DataFlowBuilder;
 

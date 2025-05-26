@@ -21,7 +21,7 @@ module LanguageDataFlow<
 
   final private class FinalAstNode = AstNode;
 
-  signature module LanguageDataFlowSig {
+  signature module DataFlowSig1 {
     class LocalVariable {
       VariableReference getAReference();
 
@@ -99,7 +99,7 @@ module LanguageDataFlow<
     }
   }
 
-  module Make1<LanguageDataFlowSig D> {
+  module Make1<DataFlowSig1 D> {
     private import D
 
     private newtype TBuiltinReturnPosition =
@@ -187,10 +187,33 @@ module LanguageDataFlow<
      */
     signature Content capturedVariableHostParameterSig();
 
-    module Make2<
-      LanguageContentSetSig LanguageContentSet,
-      capturedVariableHostParameterSig/0 capturedVariableHostParameter>
-    {
+    signature module DataFlowSig2 {
+      class LanguageContentSet {
+        Content getAReadContent();
+
+        Content getAStoreContent();
+
+        predicate hasMadToken(string head, string operand);
+
+        string toString();
+
+        Location getLocation();
+      }
+
+      /**
+       * Gets the content representing the parameter on which captured variables are stored.
+       *
+       * For class-based languages where lambdas are instance methods under the hood, this would
+       * be the receiver parameter (`this` or `self`). For languages like JavaScript where lambdas
+       * are first-class and methods are just lambdas under the hood, this would be a synthetic
+       * parameter representing the lambda's self-reference.
+       */
+      Content capturedVariableHostParameter();
+    }
+
+    module Make2<DataFlowSig2 D2> {
+      private import D2
+
       private newtype TContentSet =
         TSingleton(TContent content) or
         TContainerKnownSlot(IndexedContainerKind kind, Constant key) {
@@ -475,7 +498,14 @@ module LanguageDataFlow<
 
       private import LanguageCfgBuilder<Location, Base, Common>
 
-      module Make3<DataFlowBuilder::dataflowStepSig/3 dataflowStep, LanguageCfgSig CfgSig> {
+      signature module DataFlowSig3 {
+        predicate dataflowStep(
+          DataFlowBuilder::Node1 node1, DataFlowBuilder::Step step, DataFlowBuilder::Node2 node
+        );
+      }
+
+      module Make3<DataFlowSig3 D3, LanguageCfgSig CfgSig> {
+        private import D3
         private import MakeLanguageCfg<CfgSig>
 
         final private class FinalLocalVariable = LocalVariable;
