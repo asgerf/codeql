@@ -1,8 +1,8 @@
 private import All
-private import codeql.shared.LanguageCfg::LanguageCfgBuilder<Location, LanguageBase, LanguageCommon>
+private import codeql.shared.LanguageCfg::MakeLanguageCfg<Location, LanguageBase, LanguageCommon>
 private import ValueFilter
 
-module LanguageCfg implements LanguageCfgSig {
+module CfgInputs implements CfgSig1 {
   predicate hoistToInitializerBlock(AstNode node) {
     node = any(Callable c).getThisParameter()
     or
@@ -265,4 +265,4 @@ module LanguageCfg implements LanguageCfgSig {
   }
 }
 
-import MakeLanguageCfg<LanguageCfg> as Cfg
+module Cfg = MakeCfg1<CfgInputs>;

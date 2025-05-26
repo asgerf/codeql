@@ -11,7 +11,7 @@ private import codeql.dataflow.VariableCapture as VariableCapture
 private import codeql.dataflow.DataFlow as DataFlow
 private import codeql.dataflow.TaintTracking as TaintTracking
 
-module LanguageDataFlow<
+module MakeLanguageDataFlow<
   LocationSig Location, LanguageBaseSig<Location> Base, LanguageCommonSig<Location, Base> Common>
 {
   private import Base
@@ -99,7 +99,7 @@ module LanguageDataFlow<
     }
   }
 
-  module Make1<DataFlowSig1 D> {
+  module MakeDataFlow1<DataFlowSig1 D> {
     private import D
 
     private newtype TBuiltinReturnPosition =
@@ -211,7 +211,7 @@ module LanguageDataFlow<
       Content capturedVariableHostParameter();
     }
 
-    module Make2<DataFlowSig2 D2> {
+    module MakeDataFlow2<DataFlowSig2 D2> {
       private import D2
 
       private newtype TContentSet =
@@ -496,7 +496,7 @@ module LanguageDataFlow<
         signature predicate dataflowStepSig(Node1 node1, Step step, Node2 node2);
       }
 
-      private import LanguageCfgBuilder<Location, Base, Common>
+      private import MakeLanguageCfg<Location, Base, Common>
 
       signature module DataFlowSig3 {
         predicate dataflowStep(
@@ -504,9 +504,9 @@ module LanguageDataFlow<
         );
       }
 
-      module Make3<DataFlowSig3 D3, LanguageCfgSig CfgSig> {
+      module MakeDataFlow3<DataFlowSig3 D3, CfgSig1 Cfg1> {
         private import D3
-        private import MakeLanguageCfg<CfgSig>
+        private import MakeCfg1<Cfg1>
 
         final private class FinalLocalVariable = LocalVariable;
 

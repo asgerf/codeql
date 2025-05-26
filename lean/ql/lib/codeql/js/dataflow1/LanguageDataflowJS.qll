@@ -1,7 +1,7 @@
 private import All
 private import codeql.util.Unit
 private import codeql.util.Void
-private import codeql.shared.LanguageDataflow::LanguageDataFlow<Location, LanguageBase, LanguageCommon>
+private import codeql.shared.LanguageDataflow::MakeLanguageDataFlow<Location, LanguageBase, LanguageCommon>
 private import DataFlowSteps as DataFlowSteps
 
 module DataFlowInputs implements DataFlowSig1, DataFlowSig2, DataFlowSig3 {
@@ -149,15 +149,15 @@ module DataFlowInputs implements DataFlowSig1, DataFlowSig2, DataFlowSig3 {
 
 private import DataFlowInputs
 
-private module Dataflow1 = Make1<DataFlowInputs>;
+private module Dataflow1 = MakeDataFlow1<DataFlowInputs>;
 
 private import Dataflow1
 
-private module Dataflow2 = Make2<DataFlowInputs>;
+private module Dataflow2 = MakeDataFlow2<DataFlowInputs>;
 
 private import Dataflow2
 
-private module Dataflow3 = Make3<DataFlowInputs, LanguageCfg>;
+private module Dataflow3 = MakeDataFlow3<DataFlowInputs, CfgInputs>;
 
 class Content = Dataflow1::Content;
 

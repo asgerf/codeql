@@ -7,7 +7,7 @@ private import codeql.ssa.Ssa as Ssa
 private import codeql.dataflow.VariableCapture as VariableCapture
 private import codeql.util.FileSystem
 
-module LanguageCfgBuilder<
+module MakeLanguageCfg<
   LocationSig Location, LanguageBaseSig<Location> L, LanguageCommonSig<Location, L> C>
 {
   private import L
@@ -160,7 +160,7 @@ module LanguageCfgBuilder<
     predicate isAfterFalse(AstNode node) { this.isAfter(node, falsyCondition()) }
   }
 
-  signature module LanguageCfgSig {
+  signature module CfgSig1 {
     /**
      * Holds if the given `node` and its subtree should be evaluated in the initializer block of its enclosing callable.
      *
@@ -173,7 +173,7 @@ module LanguageCfgBuilder<
     predicate explicitStep(CfgNode1 node1, CfgNode2 node2);
   }
 
-  module MakeLanguageCfg<LanguageCfgSig CfgConfig> {
+  module MakeCfg1<CfgSig1 CfgConfig> {
     private class Node = AstNode;
 
     private import CfgConfig
