@@ -99,8 +99,8 @@ module MakeLanguageDataFlow<
     }
   }
 
-  module MakeDataFlow1<DataFlowSig1 D> {
-    private import D
+  module MakeDataFlow1<DataFlowSig1 D1> {
+    private import D1
 
     private newtype TBuiltinReturnPosition =
       TReturnValue() or
@@ -686,7 +686,7 @@ module MakeLanguageDataFlow<
             CapturedVariable getVariable() { result = v }
           }
 
-          final private class FinalClosureExprBase = D::ClosureExpr;
+          final private class FinalClosureExprBase = D1::ClosureExpr;
 
           class ClosureExpr extends Expr, FinalClosureExprBase {
             predicate hasAliasedAccess(Expr f) { closureExprHasAliasExpr(this, f) }
@@ -1257,7 +1257,7 @@ module MakeLanguageDataFlow<
           predicate defaultTaintSanitizer(DataFlowNode node) { none() }
 
           predicate defaultAdditionalTaintStep(DataFlowNode src, DataFlowNode sink, string model) {
-            none()
+            dataflowStepEx(src, TTaintStep(), sink) and model = ""
           }
 
           bindingset[node]
