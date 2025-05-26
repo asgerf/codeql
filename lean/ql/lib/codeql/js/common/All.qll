@@ -6,6 +6,7 @@
 import codeql.js.base.All
 import codeql.js.common.BinaryExprLike
 import codeql.js.common.Callable
+import codeql.js.common.ClassLike
 import codeql.js.common.LanguageCommonImpl
 import codeql.js.common.LogicalNot
 import codeql.js.common.PairLike
