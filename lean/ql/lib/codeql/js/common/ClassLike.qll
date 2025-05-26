@@ -24,6 +24,24 @@ abstract private class ClassLikeImpl extends AstNode {
     not exists(this.getNameNode()) and
     result = inferNameFromContext(this)
   }
+
+  /**
+   * Gets a synthetic node representing the prototype object created for this class.
+   */
+  final SyntheticNode getPrototypeObject() {
+    result = this.getSyntheticChildNode("prototype-object")
+  }
+
+  /**
+   * Gets the constructor of this class, if any.
+   */
+  final Callable getConstructor() {
+    exists(MethodDefinition def |
+      def = this.getBody().getMember(_) and
+      def.getName().(PropertyIdentifier).getValue() = "constructor" and
+      result = def
+    )
+  }
 }
 
 private class ClassExpressionAsImpl extends ClassLikeImpl instanceof Class {

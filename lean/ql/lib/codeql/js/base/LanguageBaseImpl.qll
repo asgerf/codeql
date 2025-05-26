@@ -34,6 +34,9 @@ module LanguageBase implements LanguageBaseSig<Location> {
     node instanceof CallableBase and
     not node instanceof Program and
     tag = "function-self-reference"
+    or
+    (node instanceof Class or node instanceof ClassDeclaration) and
+    tag = "prototype-object"
   }
 
   /**

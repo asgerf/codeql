@@ -146,6 +146,34 @@ predicate dataflowStep(Node1 node1, Step step, Node2 node2) {
     node1 = cls and
     step.value() and
     node2 = getLValueNode(cls.getNameNode())
+    or
+    node1 = cls and
+    step.store(Contents::property("constructor")) and
+    node2 = cls.getPrototypeObject()
+    or
+    node1 = cls.getPrototypeObject() and
+    step.store(Contents::property("prototype")) and
+    node2 = cls
+    or
+    exists(AstNode member | member = cls.getBody().getMember(_) |
+      exists(FieldDefinition field | member = field |
+        node1 = field.getValue() and
+        step.store(getContentSetFromKey(field.getProperty())) and
+        if field.isStatic() then node2 = cls else node2 = cls.getConstructor().getThisParameter()
+      )
+      or
+      exists(MethodDefinition method | member = method |
+        not method.isConstructor() and
+        node1 = method and
+        step.store(getContentSetFromKey(method.getName())) and
+        if method.isStatic() then node2 = cls else node2 = cls.getPrototypeObject()
+        or
+        method.isConstructor() and
+        node1 = method and
+        step.value() and
+        node2 = cls
+      )
+    )
   )
   or
   //

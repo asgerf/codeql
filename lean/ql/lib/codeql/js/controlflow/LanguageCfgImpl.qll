@@ -262,6 +262,20 @@ module CfgInputs implements CfgSig1 {
       node1.isAfterAssigningTo(param) and
       node2.isAfter(param)
     )
+    or
+    exists(ClassLike cls |
+      // For classes, assign to the name node after evaluating the heritage clause, but before the body
+      (
+        node1.isAfter(cls.getHeritage())
+        or
+        not exists(cls.getHeritage()) and
+        node1.isAfter(cls.getNameNode())
+      ) and
+      node2.isBeforeAssigningTo(cls.getNameNode())
+      or
+      node1.isAfterAssigningTo(cls.getNameNode()) and
+      node2.isBefore(cls.getBody())
+    )
   }
 }
 
