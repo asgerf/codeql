@@ -90,17 +90,3 @@ private class ProgramAsCallable extends CallableBase instanceof Program {
 
   override AstNode getBody() { result = this }
 }
-
-predicate isConstructor(MethodDefinition def) {
-  def.getName().(PropertyIdentifier).getValue() = "constructor"
-}
-
-predicate noConstructor(ClassBody body) { not isConstructor(body.getMember(_)) }
-
-private class ImplicitConstructor extends CallableBase instanceof ClassBody {
-  ImplicitConstructor() { noConstructor(this) }
-
-  override AstNode getParameter(int i) { none() }
-
-  override AstNode getBody() { none() }
-}
