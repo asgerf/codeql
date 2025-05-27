@@ -201,6 +201,15 @@ module MakeLanguageDataFlow<
       }
 
       /**
+       * A type of inheritance between two values.
+       */
+      class InheritanceKind {
+        predicate inheritsContent(Content content);
+
+        string toString();
+      }
+
+      /**
        * Gets the content representing the parameter on which captured variables are stored.
        *
        * For class-based languages where lambdas are instance methods under the hood, this would
@@ -420,7 +429,8 @@ module MakeLanguageDataFlow<
         TReadStep(ContentSet contents) or
         TStoreStep(ContentSet contents) or
         TWithContentStep(ContentSet contents) or
-        TWithoutContentStep(ContentSet contents)
+        TWithoutContentStep(ContentSet contents) or
+        TInheritance(InheritanceKind kind)
 
       /** Provides classes for constructing data flow steps. */
       module DataFlowBuilder {
@@ -440,6 +450,11 @@ module MakeLanguageDataFlow<
           predicate withContent(ContentSet contents) { this = TWithContentStep(contents) }
 
           predicate withoutContent(ContentSet contents) { this = TWithoutContentStep(contents) }
+
+          /**
+           * Holds if this step indicates that the contents of `node1` is inherited by `node2`.
+           */
+          predicate inheritedBy(InheritanceKind kind) { this = TInheritance(kind) }
 
           /**
            * Maps all known array indices to an array index shifted by the given amount (which may be positive, negative, or zero).
@@ -470,6 +485,10 @@ module MakeLanguageDataFlow<
               or
               this.withoutContent(contents) and
               result = "withoutContent(" + contents.toString() + ")"
+            )
+            or
+            exists(InheritanceKind kind |
+              this.inheritedBy(kind) and result = "inheritedBy(" + kind.toString() + ")"
             )
           }
         }
