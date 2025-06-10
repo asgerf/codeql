@@ -228,10 +228,7 @@ module DataFlow {
     cached
     predicate hasUnderlyingType(string globalName) {
       Stages::TypeTracking::ref() and
-      exists(NameResolution::Node type |
-        TypeResolution::valueHasType(this.getNameResolutionNode(), type) and
-        UnderlyingTypes::nodeHasUnderlyingType(type, globalName)
-      )
+      TypeResolution::valueHasUnderlyingType(this.getNameResolutionNode(), "global", globalName)
     }
 
     /**
@@ -242,10 +239,7 @@ module DataFlow {
     predicate hasUnderlyingType(string moduleName, string typeName) {
       Stages::TypeTracking::ref() and
       moduleName != "global" and
-      exists(NameResolution::Node type |
-        TypeResolution::valueHasType(this.getNameResolutionNode(), type) and
-        UnderlyingTypes::nodeHasUnderlyingType(type, moduleName, typeName)
-      )
+      TypeResolution::valueHasUnderlyingType(this.getNameResolutionNode(), moduleName, typeName)
     }
 
     /**

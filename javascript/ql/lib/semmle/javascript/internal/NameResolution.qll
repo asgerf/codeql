@@ -133,6 +133,9 @@ module NameResolution {
     or
     exists(TypeAliasDeclaration alias |
       node1 = alias.getDefinition() and
+      node2 = alias
+      or
+      node1 = alias and
       node2 = alias.getIdentifier()
     )
     or
@@ -557,5 +560,10 @@ module NameResolution {
     trackClassValue(cls.getAstNode()) = node
     or
     trackFunctionValue(cls.getAstNode()) = node
+  }
+
+  pragma[nomagic]
+  Node getATypeParameterAccess(TypeParameter typeParam) {
+    result = typeParam.getLocalTypeName().getAnAccess()
   }
 }

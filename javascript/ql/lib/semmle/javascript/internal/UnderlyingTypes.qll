@@ -119,4 +119,26 @@ module UnderlyingTypes {
       // The caller is responsible for handling the class hierarchy.
     )
   }
+
+  /**
+   * Holds if `node` is a type with the given type parameter as an underlying type.
+   *
+   * For example:
+   * ```ts
+   * interface Foo<T> {
+   *   f: T | null;
+   * }
+   * ```
+   * The type `T | null` above has the type parameter `T` as an underlying type.
+   */
+  pragma[nomagic]
+  predicate nodeHasUnderlyingTypeParameterType(Node node, TypeParameter typeParam) {
+    node = getATypeParameterAccess(typeParam)
+    or
+    exists(Node mid | nodeHasUnderlyingTypeParameterType(mid, typeParam) |
+      TypeFlow::step(mid, node)
+      or
+      underlyingTypeStep(mid, node)
+    )
+  }
 }

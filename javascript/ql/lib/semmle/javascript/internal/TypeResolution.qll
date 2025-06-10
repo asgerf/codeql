@@ -99,6 +99,32 @@ module TypeResolution {
     )
   }
 
+  /** Gets a declared base type from a type declaration. */
+  private Node getABaseType(Node typeDecl) {
+    result = typeDecl.(ClassDefinition).getSuperClass()
+    or
+    result = typeDecl.(ClassOrInterface).getASuperInterface()
+  }
+
+  /**
+   * Gets the declaration of the type referred to or instantiated by `typeRef`.
+   */
+  private Node getHeadTypeDecl(Node typeRef) {
+    trackType(result) = typeRef
+    or
+    trackClassValue(result) = typeRef and
+    typeRef = any(ClassDefinition cls).getSuperClass()
+    or
+    exists(TypeInstantiation instantiation | typeRef = trackTypeInstantiation(instantiation) |
+      trackType(result) = instantiation.getHead()
+      or
+      trackClassValue(result) = instantiation.(ExpressionWithTypeArguments).getExpression()
+    )
+  }
+
+  /** Gets a declared base type froma reference to a type */
+  private Node getABaseTypeFromTypeRef(Node type) { result = getABaseType(getHeadTypeDecl(type)) }
+
   /**
    * Holds `use` refers to `host`, and `host` has type members.
    *
@@ -113,6 +139,14 @@ module TypeResolution {
       TypeFlow::step(mid, use)
       or
       UnderlyingTypes::underlyingTypeStep(mid, use)
+    )
+    or
+    // The super-class of a class is a value, not a type, so we need to track classes here through the value graph.
+    use = trackClassValue(host) and
+    (
+      use = any(ClassDefinition cls).getSuperClass()
+      or
+      use = any(ExpressionWithTypeArguments e).getExpression()
     )
   }
 
@@ -234,6 +268,20 @@ module TypeResolution {
       typeMember(host, any(DataFlow::Content c | c.isUnknownArrayElement()), type) and
       value = array.getAnElement()
     )
+    or
+    // If the contextual type is 'T' and a concrete type argument for 'T' is known, use that type argument as the type.
+    exists(TypeParameter typeParam |
+      valueHasContextualTypeEqualToTypeParameter(value, typeParam) and
+      valueHasContextualTypeWithArgument(value, typeParam, type)
+    )
+    or
+    // When the contextual type is needed for deriving another type, collapse the type to all the known base types.
+    // This ensures that type arguments corresponding to base types can be found after deriving the new type.
+    needsDerivedContextualTypeInfo(value) and
+    exists(Node midType |
+      contextualType(value, midType) and
+      type = getABaseTypeFromTypeRef(midType)
+    )
   }
 
   /**
@@ -298,6 +346,265 @@ module TypeResolution {
       valueHasType(mid, midType) and
       typeMemberHostReaches(host, midType) and
       typeMember(host, contents.getAReadContent(), type)
+    )
+    or
+    // If the type is 'T' and a concrete type argument for 'T' is known, use that type argument as the type.
+    exists(TypeParameter typeParam |
+      valueHasTypeEqualToTypeParameter(value, typeParam) and
+      valueHasTypeWithArgument(value, typeParam, type)
+    )
+    or
+    // When the type of 'value' is needed for deriving another type, associate 'value' with all the base types as well.
+    // This ensures that type arguments corresponding to base types can be found after deriving the new type.
+    needsDerivedTypeInfo(value) and
+    exists(Node midType |
+      valueHasType(value, midType) and
+      type = getABaseTypeFromTypeRef(midType)
+    )
+  }
+
+  /**
+   * Holds if `type` contains a use of `typeParam` but does not contain its declaration.
+   */
+  private predicate typeHasFreeTypeParameter(AstNode type, TypeParameter typeParam) {
+    type = typeParam.getLocalTypeName().getAnAccess()
+    or
+    typeHasFreeTypeParameter(type.getAChild(), typeParam) and
+    not type.(TypeParameterized).getATypeParameter() = typeParam
+  }
+
+  /**
+   * Holds if `value` has a type that is a direct reference to `typeParam`.
+   */
+  pragma[nomagic]
+  private predicate valueHasTypeEqualToTypeParameter(Node value, TypeParameter typeParam) {
+    valueHasType(value, getATypeParameterAccess(typeParam))
+  }
+
+  /**
+   * Holds if `value` has a contextual type that is a direct reference to `typeParam`.
+   */
+  pragma[nomagic]
+  private predicate valueHasContextualTypeEqualToTypeParameter(Node value, TypeParameter typeParam) {
+    contextualType(value, getATypeParameterAccess(typeParam))
+  }
+
+  /** Holds if the type of `value` is was derived from `otherValue`. */
+  private predicate typeDerivedFromType(Node value, Node otherValue) {
+    valueReadStep(otherValue, _, value)
+    or
+    exists(InvokeExpr invoke |
+      value = invoke and
+      otherValue = invoke.getCallee()
+    )
+  }
+
+  /** Holds if the type of `value` is derived from the contextual type of `otherValue`. */
+  private predicate typeDerivedFromContextualType(Node value, Node otherValue) {
+    exists(Function lambda |
+      value = lambda.getAParameter() and
+      otherValue = lambda
+    )
+  }
+
+  /** Holds if the contextual type of `value` is derived from the type of `otherValue`. */
+  private predicate contextualTypeDerivedFromType(Node value, Node otherValue) {
+    exists(InvokeExpr invoke |
+      value = invoke.getAnArgument() and
+      otherValue = invoke.getCallee()
+    )
+  }
+
+  /** Holds if the contextual type of `value` is derived from the contextual type of `otherValue`. */
+  private predicate contextualTypeDerivedFromContextualType(Node value, Node otherValue) {
+    exists(Function lambda |
+      not exists(lambda.getReturnTypeAnnotation()) and
+      value = lambda.getAReturnedExpr() and
+      otherValue = lambda
+    )
+    or
+    exists(ObjectExpr object |
+      value = object.getAProperty().getInit() and
+      otherValue = object
+    )
+    or
+    exists(ArrayExpr array |
+      value = array.getAnElement() and
+      otherValue = array
+    )
+  }
+
+  /**
+   * Holds if `value` has a type containing an free reference to `typeParam`.
+   */
+  private predicate valueHasTypeWithFreeTypeParameter(Node value, TypeParameter typeParam) {
+    exists(Node type |
+      (valueHasType(value, type) or valueHasTypeWithArgument(value, _, type)) and
+      typeHasFreeTypeParameter(type, typeParam)
+    )
+  }
+
+  /**
+   * Holds if `value` has a contextual type containing a free reference to `typeParam`.
+   */
+  private predicate valueHasContextualTypeWithFreeTypeParameter(Node value, TypeParameter typeParam) {
+    exists(Node type |
+      (contextualType(value, type) or valueHasContextualTypeWithArgument(value, _, type)) and
+      typeHasFreeTypeParameter(type, typeParam)
+    )
+  }
+
+  /** Holds if the type of `value` is used to derive the type of another value. */
+  private predicate needsDerivedTypeInfo(Node value) {
+    (typeDerivedFromType(_, value) or contextualTypeDerivedFromType(_, value))
+  }
+
+  /**
+   * Holds if `value` has a type where `typeParam` is instantiated with `type`.
+   *
+   * Concretely this should hold when `valueHasType` gives a type containing a free type parameter.
+   * This predicate then provides the values of the type parameters.
+   */
+  pragma[nomagic]
+  private predicate valueHasTypeWithArgument(Node value, TypeParameter typeParam, Node type) {
+    exists(TypeInstantiation instantiation |
+      // Restrict this to cases where another type is derived from 'value' and therefore might need its type arguments
+      needsDerivedTypeInfo(value) and
+      valueHasType(value, trackTypeInstantiation(instantiation)) and
+      type = getTypeArgumentForParameter(instantiation, typeParam)
+    )
+    or
+    // Preserve type arguments after deriving a type from another type.
+    // For example:
+    //   The type of `x.f` was derived from `x`, and `x` has type `{f: T}`.
+    //   Then `x.f` gets the type `T`. We thus want to propagate knowledge of `T` from the type of `x`.
+    exists(Node mid |
+      typeDerivedFromType(value, mid) and
+      valueHasTypeWithArgument(mid, typeParam, type) and
+      valueHasTypeWithFreeTypeParameter(value, typeParam) // restrict to relevant type parameters
+    )
+    or
+    // Preserve type arguments after deriving a type from a contextual type.
+    // For example:
+    //   For a lambda expression `x => {}`, the type of `x` is derived from the contextual type
+    //   of the lambda. Suppose the contextual type is `(p: T) => void`, then `x` has type `T`
+    //   and we thus want to propagate knowledge of `T` from the contextual type of the lambda.
+    exists(Node mid |
+      typeDerivedFromContextualType(value, mid) and
+      valueHasContextualTypeWithArgument(mid, typeParam, type) and
+      valueHasTypeWithFreeTypeParameter(value, typeParam)
+    )
+    or
+    exists(Node mid | valueHasTypeWithArgument(mid, typeParam, type) | ValueFlow::step(mid, value))
+  }
+
+  private predicate needsDerivedContextualTypeInfo(Node value) {
+    (typeDerivedFromContextualType(_, value) or contextualTypeDerivedFromContextualType(_, value))
+  }
+
+  /**
+   * Holds if `value` has a contextual type where `typeParam` is instantiated with `type`.
+   */
+  pragma[nomagic]
+  private predicate valueHasContextualTypeWithArgument(
+    Node value, TypeParameter typeParam, Node type
+  ) {
+    exists(TypeInstantiation instantiation |
+      // Restrict this to cases where another type is derived from the contextual type of 'value' and therefore might need its type arguments
+      needsDerivedContextualTypeInfo(value) and
+      contextualType(value, trackTypeInstantiation(instantiation)) and
+      type = getTypeArgumentForParameter(instantiation, typeParam)
+    )
+    or
+    // Preserve type arguments after deriving a contextual type from a (non-contextual) type.
+    // For example:
+    //   For a call `f(e)`, the contextual type of `e` is derived from the type of `f`.
+    exists(Node mid |
+      contextualTypeDerivedFromType(value, mid) and
+      valueHasTypeWithArgument(mid, typeParam, type) and
+      valueHasContextualTypeWithFreeTypeParameter(value, typeParam)
+    )
+    or
+    // Preserve type arguments after deriving a contextual type from a contextual type.
+    // For example:
+    //   For an array literal `[e]` the contextual type of `e` is derived from the contextual
+    //   type of the array literal.
+    exists(Node mid |
+      contextualTypeDerivedFromContextualType(value, mid) and
+      valueHasContextualTypeWithArgument(mid, typeParam, type) and
+      valueHasContextualTypeWithFreeTypeParameter(value, typeParam)
+    )
+    or
+    exists(Node mid | valueHasTypeWithArgument(mid, typeParam, type) | ValueFlow::step(mid, value))
+  }
+
+  private Node trackTypeParameterHost1(TypeParameterized host) {
+    result = host and
+    host.hasTypeParameters()
+    or
+    TypeFlow::step(trackTypeParameterHost1(host), result)
+  }
+
+  private Node trackTypeParameterHost(TypeParameterized host) {
+    result = trackTypeParameterHost1(host)
+    or
+    result = trackClassValue(host)
+  }
+
+  private Node trackTypeInstantiation(TypeInstantiation instantiation) {
+    result = instantiation
+    or
+    TypeFlow::step(trackTypeInstantiation(instantiation), result)
+  }
+
+  private Node getTypeArgumentForParameter(TypeInstantiation instantiation, TypeParameter param) {
+    exists(TypeParameterized host, int i |
+      trackTypeParameterHost(host) = instantiation.getHead() and
+      param = host.getTypeParameter(i) and
+      result = instantiation.getTypeArgument(i)
+    )
+  }
+
+  abstract private class TypeInstantiationImpl extends Node {
+    abstract Node getHead();
+
+    abstract Node getTypeArgument(int n);
+  }
+
+  final private class TypeInstantiation = TypeInstantiationImpl;
+
+  private class GenericTypeExprAsInstantiation extends TypeInstantiationImpl instanceof GenericTypeExpr
+  {
+    override Node getHead() { result = GenericTypeExpr.super.getTypeAccess() }
+
+    override Node getTypeArgument(int n) { result = GenericTypeExpr.super.getTypeArgument(n) }
+  }
+
+  private class ExpressionWithTypeArgumentsAsInstantiation extends TypeInstantiationImpl instanceof ExpressionWithTypeArguments
+  {
+    override Node getHead() { result = ExpressionWithTypeArguments.super.getExpression() }
+
+    override Node getTypeArgument(int n) {
+      result = ExpressionWithTypeArguments.super.getTypeArgument(n)
+    }
+  }
+
+  private class JSDocAppliedTypeAsInstantiation extends TypeInstantiationImpl instanceof JSDocAppliedTypeExpr
+  {
+    override Node getHead() { result = JSDocAppliedTypeExpr.super.getHead() }
+
+    override Node getTypeArgument(int n) { result = JSDocAppliedTypeExpr.super.getArgument(n) }
+  }
+
+  predicate valueHasUnderlyingType(Node value, string mod, string name) {
+    exists(Node type | valueHasType(value, type) |
+      UnderlyingTypes::nodeHasUnderlyingType(type, mod, name)
+      or
+      exists(TypeParameter typeParam, Node underlyingType |
+        UnderlyingTypes::nodeHasUnderlyingTypeParameterType(type, typeParam) and
+        valueHasTypeWithArgument(value, typeParam, underlyingType) and
+        UnderlyingTypes::nodeHasUnderlyingType(underlyingType, mod, name)
+      )
     )
   }
 
