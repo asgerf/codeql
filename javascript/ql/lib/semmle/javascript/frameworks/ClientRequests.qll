@@ -6,6 +6,7 @@
  */
 
 import javascript
+private import semmle.javascript.BrowserSpecificCode
 
 /**
  * A call that performs a request to a URL.
@@ -947,7 +948,11 @@ module ClientRequest {
   private class ClientRequestThreatModel extends ThreatModelSource::Range {
     ClientRequestThreatModel() { this = any(ClientRequest r).getAResponseDataNode() }
 
-    override string getThreatModel() { result = "response" }
+    override string getThreatModel() {
+      if isInBrowserContext(this.getContainer())
+      then result = "browser-response"
+      else result = "response"
+    }
 
     override string getSourceType() { result = "HTTP response data" }
   }

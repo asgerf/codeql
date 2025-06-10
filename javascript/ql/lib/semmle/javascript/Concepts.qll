@@ -57,7 +57,9 @@ module ThreatModelSource {
     /**
      * Holds if this is a source of data that is specific to the web browser environment.
      */
-    predicate isClientSideSource() { this.getThreatModel() = "view-component-input" }
+    predicate isClientSideSource() {
+      this.getThreatModel() = ["view-component-input", "browser-response"]
+    }
   }
 }
 

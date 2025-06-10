@@ -18,6 +18,7 @@ extensions:
       - ["stdin", "local"]
       - ["file", "local"]
       - ["windows-registry", "local"]
+      - ["browser-response", "local"]
 
       # Android threat models
       - ["android-external-storage-dir", "android"]
