@@ -40,9 +40,12 @@ interface Box5<T> {
     value: T & { blah: string };
     other: string;
 };
-function t5(b: Box5<express.Request>) {
+interface Box5Sub<T> extends Box5<T> { }
+function t5(b: Box5<express.Request>, sub: Box5Sub<express.Request>) {
     b.value; // $ hasUnderlyingType='express'.Request
     b.other;
+
+    sub.value; // $ MISSING: hasUnderlyingType='express'.Request
 }
 
 type Box6<T> = (p: T) => void;
