@@ -596,14 +596,32 @@ module TypeResolution {
     override Node getTypeArgument(int n) { result = JSDocAppliedTypeExpr.super.getArgument(n) }
   }
 
+  /**
+   * Holds if the type of `value` has the external type `<mod>.<name>` as an underlying type.
+   */
   predicate valueHasUnderlyingType(Node value, string mod, string name) {
-    exists(Node type | valueHasType(value, type) |
+    exists(Node type |
+      valueHasType(value, type) and
       UnderlyingTypes::nodeHasUnderlyingType(type, mod, name)
+    )
+    or
+    exists(TypeParameter typeParam, Node underlyingType |
+      valueHasUnderlyingTypeParameterType(value, typeParam) and
+      valueHasTypeWithArgument(value, typeParam, underlyingType) and
+      UnderlyingTypes::nodeHasUnderlyingType(underlyingType, mod, name)
+    )
+  }
+
+  /**
+   * Holds if the type of `value` has `typeParam` as an underlying type.
+   */
+  private predicate valueHasUnderlyingTypeParameterType(Node value, TypeParameter typeParam) {
+    exists(Node type | UnderlyingTypes::nodeHasUnderlyingTypeParameterType(type, typeParam) |
+      valueHasType(value, type)
       or
-      exists(TypeParameter typeParam, Node underlyingType |
-        UnderlyingTypes::nodeHasUnderlyingTypeParameterType(type, typeParam) and
-        valueHasTypeWithArgument(value, typeParam, underlyingType) and
-        UnderlyingTypes::nodeHasUnderlyingType(underlyingType, mod, name)
+      exists(TypeParameter midParam |
+        valueHasUnderlyingTypeParameterType(value, midParam) and
+        valueHasTypeWithArgument(value, midParam, type)
       )
     )
   }

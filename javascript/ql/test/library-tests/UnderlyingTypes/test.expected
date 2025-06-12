@@ -32,6 +32,7 @@
 | generics.ts:26:5:26:11 | b.value | 'express'.Request |
 | generics.ts:35:5:35:16 | b.getValue() | 'express'.Request |
 | generics.ts:45:5:45:11 | b.value | 'express'.Request |
+| generics.ts:48:5:48:13 | sub.value | 'express'.Request |
 | generics.ts:53:22:53:22 | p | 'express'.Request |
 | generics.ts:66:5:66:14 | b.p1.p2.p3 | 'express'.Request |
 | generics.ts:78:5:78:14 | b.p1.p2.p3 | 'express'.Request |

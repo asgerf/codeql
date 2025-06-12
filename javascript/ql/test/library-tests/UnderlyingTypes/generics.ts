@@ -45,7 +45,7 @@ function t5(b: Box5<express.Request>, sub: Box5Sub<express.Request>) {
     b.value; // $ hasUnderlyingType='express'.Request
     b.other;
 
-    sub.value; // $ MISSING: hasUnderlyingType='express'.Request
+    sub.value; // $ hasUnderlyingType='express'.Request
 }
 
 type Box6<T> = (p: T) => void;
