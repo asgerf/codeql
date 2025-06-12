@@ -613,6 +613,22 @@ module TypeResolution {
   }
 
   /**
+   * Holds if the type of `value` has the the given class as an underlying type.
+   */
+  predicate valueHasUnderlyingClassType(Node value, DataFlow::ClassNode cls) {
+    exists(Node type |
+      valueHasType(value, type) and
+      UnderlyingTypes::nodeHasUnderlyingClassType(type, cls)
+    )
+    or
+    exists(TypeParameter typeParam, Node underlyingType |
+      valueHasUnderlyingTypeParameterType(value, typeParam) and
+      valueHasTypeWithArgument(value, typeParam, underlyingType) and
+      UnderlyingTypes::nodeHasUnderlyingClassType(underlyingType, cls)
+    )
+  }
+
+  /**
    * Holds if the type of `value` has `typeParam` as an underlying type.
    */
   private predicate valueHasUnderlyingTypeParameterType(Node value, TypeParameter typeParam) {
