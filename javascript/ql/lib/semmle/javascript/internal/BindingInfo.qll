@@ -140,6 +140,145 @@ class TypeNameBindingNode extends NameResolution::Node {
 }
 
 /**
+ * Interface for accessing information about the type of an expression.
+ */
+class ExprTypeBindingNode extends NameResolution::Node {
+  private TypeNameBindingNode getType() { TypeResolution::valueHasType(this, result) }
+
+  /**
+   * Holds if some type information is known for this node.
+   */
+  predicate hasTypeInfo() { exists(this.getType()) }
+
+  /**
+   * Holds if type refers to, or is an alias for, the given type name relative to the global scope.
+   *
+   * For example:
+   * ```ts
+   * var x: Document; // hasQualifiedName("Document")
+   * var x: Electron; // hasQualifiedName("Electron")
+   * var x: Electron.BrowserWindow; // hasQualifiedName("Electron.BrowserWindow")
+   * ```
+   */
+  predicate hasQualifiedName(string qualifiedName) {
+    this.getType().hasQualifiedName(qualifiedName)
+  }
+
+  /**
+   * Holds if this refers a value exported by the given module, with the given
+   * qualified name. If the `qualifiedName` is empty, this refers to the module itself.
+   *
+   * For example, the type annotations below have the following name bindings:
+   * ```ts
+   * import { Request } from "express";
+   *
+   * var x: Request; // hasUnderlyingType("express", "Request")
+   * var x: Request | null; // no result (see hasUnderlyingType)
+   * var x: Request & { prop: string }; // no result (see hasUnderlyingType)
+   *
+   * interface CustomSubtype extends Request {}
+   *
+   * var x: CustomSubtype; // no result (see hasUnderlyingType)
+   *
+   * var x: typeof import("express"); // hasUnderlyingType("express", "")
+   * ```
+   */
+  predicate hasQualifiedName(string moduleName, string qualifiedName) {
+    this.getType().hasQualifiedName(moduleName, qualifiedName)
+  }
+
+  /**
+   * Holds if this type refers to the given type exported from the given module, after
+   * unfolding unions and intersections, and following subtype relations.
+   *
+   * For example:
+   * ```ts
+   * import { Request } from "express";
+   *
+   * var x: Request; // hasUnderlyingType("express", "Request")
+   * var x: Request | null; // hasUnderlyingType("express", "Request")
+   * var x: Request & { prop: string }; // hasUnderlyingType("express", "Request")
+   *
+   * interface CustomSubtype extends Request {}
+   *
+   * var x: CustomSubtype; // hasUnderlyingType("express", "Request")
+   * ```
+   */
+  predicate hasUnderlyingType(string moduleName, string qualifiedName) {
+    TypeResolution::valueHasUnderlyingType(this, moduleName, qualifiedName)
+  }
+
+  /**
+   * Holds if this type refers to the given type from the global scope, after
+   * unfolding unions and intersections, and following subtype relations.
+   *
+   * For example:
+   * ```ts
+   * var x: Document; // hasUnderlyingType("Document")
+   * var x: Document | null; // hasUnderlyingType("Document")
+   * var x: Document & { prop: string }; // hasUnderlyingType("Document")
+   *
+   * interface CustomSubtype extends Document {}
+   *
+   * var x: CustomSubtype; // hasUnderlyingType("Document")
+   * ```
+   */
+  predicate hasUnderlyingType(string qualifiedName) {
+    TypeResolution::valueHasUnderlyingType(this, "global", qualifiedName)
+  }
+
+  /**
+   * Gets the declaration of the type being referenced by this name.
+   *
+   * For example:
+   * ```ts
+   * class Foo {}
+   *
+   * type T = Foo;
+   * var x: T; // getTypeDefinition() maps T to the class Foo above
+   * ```
+   *
+   * Note that this has no result for function-style classes referenced from
+   * a JSDoc comment.
+   */
+  TypeDefinition getTypeDefinition() { result = this.getType().getTypeDefinition() }
+
+  /**
+   * Gets a class that this type refers to, after unfolding unions and intersections (but not subtyping).
+   *
+   * For example, the type of `x` maps to the class `C` in each example below:
+   * ```ts
+   * class C {}
+   *
+   * var x: C;
+   * var x: C | null;
+   * var x: C & { prop: string };
+   * ```
+   */
+  DataFlow::ClassNode getAnUnderlyingClass() {
+    TypeResolution::valueHasUnderlyingClassType(this, result)
+  }
+
+  /**
+   * Holds if this type contains `string` or `any`, possibly wrapped in a promise.
+   */
+  predicate hasUnderlyingStringOrAnyType() { this.getType().hasUnderlyingStringOrAnyType() }
+
+  /**
+   * Holds if this refers to a type that is considered untaintable (if actually enforced at runtime).
+   *
+   * Specifically, the types `number`, `boolean`, `null`, `undefined`, `void`, `never`, as well as literal types (`"foo"`)
+   * and enums and enum members have this property.
+   */
+  predicate isSanitizingPrimitiveType() { this.getType().isSanitizingPrimitiveType() }
+
+  /**
+   * Holds if the given type is a Promise object. Does not hold for unions unless all parts of the union are promises.
+   */
+  predicate isPromiseType() { this.getType().isPromiseType() }
+}
+
+/**
  * Interface for accessing name-resolution info about expressions.
  */
 class ExprNameBindingNode extends NameResolution::Node {

@@ -338,7 +338,7 @@ module NestJS {
       (
         this.asExpr().getTypeBinding().hasUnderlyingStringOrAnyType()
         or
-        not exists(this.asExpr().getTypeBinding())
+        not this.asExpr().getTypeBinding().hasTypeInfo()
       )
     }
 

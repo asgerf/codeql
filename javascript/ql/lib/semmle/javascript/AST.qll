@@ -490,6 +490,6 @@ module AST {
      * (according to the type system), or to associate it with a named type coming
      * from a dependency.
      */
-    TypeNameBindingNode getTypeBinding() { TypeResolution::valueHasType(this, result) }
+    ExprTypeBindingNode getTypeBinding() { result = this }
   }
 }
