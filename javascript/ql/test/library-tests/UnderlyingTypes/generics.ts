@@ -126,3 +126,44 @@ class Box12<T> extends Box12Base<T> {
 function t12(b: Box12<express.Request>) {
     b.p1; // $ hasUnderlyingType='express'.Request
 }
+
+declare function identity<T>(x: T): T;
+
+function t13(req: express.Request, res: express.Response) { // $ hasUnderlyingType='express'.Request hasUnderlyingType='express'.Response
+    identity(req); // $ hasUnderlyingType='express'.Request
+    identity(res); // $ hasUnderlyingType='express'.Response
+}
+
+declare function box14<T>(x: T): { p1: T };
+
+function t14(req: express.Request) { // $ hasUnderlyingType='express'.Request
+    const result = box14(req);
+    result.p1 // $ hasUnderlyingType='express'.Request
+}
+
+declare function box15<T>(x: T[]): { p1: T };
+
+function t15(req: express.Request) { // $ hasUnderlyingType='express'.Request
+    const result = box15([req]);
+    result.p1 // $ hasUnderlyingType='express'.Request
+}
+
+declare function box16<T>(x: T | T[]): { p1: T };
+
+function t16(req: express.Request) { // $ hasUnderlyingType='express'.Request
+    const result = box16([req]);
+    result.p1 // $ hasUnderlyingType='express'.Request
+
+    const result2 = box16(req);
+    result2.p1 // $ hasUnderlyingType='express'.Request
+}
+
+interface Box17<T> {
+    field: T;
+}
+declare function box17<T>(x: Box17<T>): { p1: T };
+
+function t17(req: express.Request) { // $ hasUnderlyingType='express'.Request
+    const result = box17({ field: req });
+    result.p1 // $ hasUnderlyingType='express'.Request
+}
