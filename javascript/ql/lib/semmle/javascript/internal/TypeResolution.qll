@@ -495,6 +495,12 @@ module TypeResolution {
       valueHasTypeWithFreeTypeParameter(value, typeParam)
     )
     or
+    exists(InvokeExpr call |
+      valueTypeMayDependOnTypeArgument(call, value) and
+      typeArgumentAtCall(call, typeParam, type) and
+      valueHasTypeWithFreeTypeParameter(value, typeParam)
+    )
+    or
     exists(Node mid | valueHasTypeWithArgument(mid, typeParam, type) | ValueFlow::step(mid, value))
   }
 
@@ -536,6 +542,92 @@ module TypeResolution {
     )
     or
     exists(Node mid | valueHasTypeWithArgument(mid, typeParam, type) | ValueFlow::step(mid, value))
+  }
+
+  /** Holds if the type arguments of `call` might (partially) be inferred from the type of `value`. */
+  private predicate valueTypeIsUsableForArgumentInference(InvokeExpr call, Node value) {
+    value = call.getAnArgument()
+    or
+    exists(Node mid |
+      contextualTypeDerivedFromContextualType(value, mid) and
+      valueTypeIsUsableForArgumentInference(call, mid)
+    )
+  }
+
+  /** Holds if the type arguments of `call` might (partially) be inferred from the type of `value`. */
+  private predicate valueTypeMayDependOnTypeArgument(InvokeExpr call, Node value) {
+    value = call
+    or
+    exists(Node mid |
+      typeDerivedFromContextualType(value, mid) and
+      valueTypeIsUsableForArgumentInference(call, mid)
+      or
+      typeDerivedFromType(value, mid) and
+      valueTypeMayDependOnTypeArgument(call, mid)
+    )
+  }
+
+  private predicate callTargetWithUnboundTypeParameter(
+    InvokeExpr call, Function target, TypeParameter targetParam
+  ) {
+    exists(int i |
+      callTarget(call, target) and
+      targetParam = target.getTypeParameter(i) and
+      not exists(call.getTypeArgument(i))
+    )
+  }
+
+  private predicate typeArgumentAtCall(InvokeExpr call, TypeParameter typeParam, Node typeArg) {
+    // Explicit type arguments
+    exists(int i, Function target |
+      callTarget(call, target) and
+      typeParam = target.getTypeParameter(i) and
+      typeArg = call.getTypeArgument(i)
+    )
+    or
+    // When an argument/parameter pair has been reduced to an argument type matched against a direct
+    // reference to the type parameter, or (as an approximation) one that has it as an underlying type,
+    // use the argument type as the type argument.
+    exists(Node paramType |
+      typeArgumentInferenceInput(call, typeParam, typeArg, paramType) and
+      UnderlyingTypes::nodeHasUnderlyingTypeParameterType(paramType, typeParam)
+    )
+  }
+
+  private predicate typeArgumentInferenceInput(
+    InvokeExpr call, TypeParameter typeParam, Node argType, Node paramType
+  ) {
+    exists(Node value, Function target |
+      callTargetWithUnboundTypeParameter(call, target, typeParam) and
+      valueTypeIsUsableForArgumentInference(call, value) and
+      valueHasType(value, argType) and
+      contextualType(value, paramType) and
+      typeHasFreeTypeParameter(paramType, typeParam)
+    )
+    or
+    exists(TypeInstantiation argInst, TypeInstantiation paramInst |
+      typeArgumentInferenceInput(call, typeParam, trackTypeInstantiation(argInst),
+        trackTypeInstantiation(paramInst)) and
+      headMatches(argInst.getHead(), paramInst.getHead()) and
+      exists(int i |
+        argType = argInst.getTypeArgument(i) and
+        paramType = paramInst.getTypeArgument(i)
+      )
+    )
+  }
+
+  bindingset[head1, head2]
+  pragma[inline_late]
+  private predicate headMatches(Node head1, Node head2) {
+    exists(string mod, string qualifiedName |
+      nodeRefersToTypeName(head1, mod, qualifiedName) and
+      nodeRefersToTypeName(head2, mod, qualifiedName)
+    )
+    or
+    exists(Node typeDecl |
+      trackType(typeDecl) = head1 and
+      trackType(typeDecl) = head2
+    )
   }
 
   private Node trackTypeParameterHost1(TypeParameterized host) {
