@@ -72,22 +72,7 @@ module UnderlyingTypes {
   }
 
   predicate nodeHasUnderlyingType(Node node, string mod, string name) {
-    nodeRefersToModule(node, mod, name)
-    or
-    exists(JSDocLocalTypeAccess type |
-      node = type and
-      not exists(type.getALexicalName()) and
-      not type = any(JSDocQualifiedTypeAccess t).getBase() and
-      name = type.getName() and
-      mod = "global"
-    )
-    or
-    exists(LocalTypeAccess type |
-      node = type and
-      not exists(type.getLocalTypeName()) and
-      name = type.getName() and
-      mod = "global"
-    )
+    nodeRefersToTypeName(node, mod, name)
     or
     exists(Node mid | nodeHasUnderlyingType(mid, mod, name) |
       TypeFlow::step(mid, node)

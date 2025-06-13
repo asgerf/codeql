@@ -541,6 +541,30 @@ module NameResolution {
     )
   }
 
+  predicate nodeRefersToTypeName(Node node, string mod, string qualifiedName) {
+    nodeRefersToModule(node, mod, qualifiedName)
+    or
+    exists(JSDocLocalTypeAccess type |
+      node = type and
+      not exists(type.getALexicalName()) and
+      not type = any(JSDocQualifiedTypeAccess t).getBase() and
+      qualifiedName = type.getName() and
+      mod = "global"
+    )
+    or
+    exists(LocalTypeAccess type |
+      node = type and
+      not exists(type.getLocalTypeName()) and
+      qualifiedName = type.getName() and
+      mod = "global"
+    )
+    or
+    exists(Node mid |
+      nodeRefersToTypeName(mid, mod, qualifiedName) and
+      TypeFlow::step(mid, node)
+    )
+  }
+
   pragma[nomagic]
   predicate classHasGlobalName(DataFlow::ClassNode cls, string name) {
     cls.flowsTo(AccessPath::getAnAssignmentTo(name)) and
