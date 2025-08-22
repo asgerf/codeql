@@ -2,6 +2,8 @@
  * Provides classes for working with
  * [Asynchronous Module Definitions](https://github.com/amdjs/amdjs-api/wiki/AMD).
  */
+overlay[local]
+module;
 
 import javascript
 private import semmle.javascript.internal.CachedStages
@@ -281,6 +283,7 @@ private class AmdDependencyImport extends Import {
    * Specifically, we look for files whose absolute path ends with the imported path, possibly
    * adding well-known JavaScript file extensions like `.js`.
    */
+  overlay[global]
   private File guessTarget() {
     exists(FilePath imported, string abspath, string dirname, string basename |
       this.targetCandidate(result, abspath, imported, dirname, basename)
@@ -303,6 +306,7 @@ private class AmdDependencyImport extends Import {
    * Additionally, `abspath` is bound to the absolute path of `f`, `imported` to the imported path, and
    * `dirname` and `basename` to the dirname and basename (respectively) of `imported`.
    */
+  overlay[global]
   private predicate targetCandidate(
     File f, string abspath, FilePath imported, string dirname, string basename
   ) {
@@ -316,10 +320,12 @@ private class AmdDependencyImport extends Import {
   /**
    * Gets the module whose absolute path matches this import, if there is only a single such module.
    */
+  overlay[global]
   private Module resolveByAbsolutePath() {
     result.getFile() = unique(File file | file = this.guessTarget())
   }
 
+  overlay[global]
   override Module getImportedModule() {
     result = super.getImportedModule()
     or

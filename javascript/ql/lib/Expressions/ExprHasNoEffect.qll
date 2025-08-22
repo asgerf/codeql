@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates for the 'js/useless-expression' query.
  */
+overlay[local]
+module;
 
 import javascript
 import DOMProperties

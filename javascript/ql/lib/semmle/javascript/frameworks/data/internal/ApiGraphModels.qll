@@ -82,6 +82,7 @@ module ModelInput {
    *
    * Extend this class to add additional source definitions.
    */
+  overlay[local]
   deprecated class SourceModelCsv extends Unit {
     /**
      * Holds if `row` specifies a source definition.
@@ -105,6 +106,7 @@ module ModelInput {
    *
    * DEPRECATED: Use the extensible predicate `sinkModel` instead.
    */
+  overlay[local]
   deprecated class SinkModelCsv extends Unit {
     /**
      * Holds if `row` specifies a sink definition.
@@ -126,6 +128,7 @@ module ModelInput {
    *
    * DEPRECATED: Use the extensible predicate `summaryModel` instead.
    */
+  overlay[local]
   deprecated class SummaryModelCsv extends Unit {
     /**
      * Holds if `row` specifies a summary definition.
@@ -151,6 +154,7 @@ module ModelInput {
    * DEPRECATED: Use the extensible predicate `typeModel` or the class
    * `TypeModel` instead.
    */
+  overlay[local]
   deprecated class TypeModelCsv extends Unit {
     /**
      * Holds if `row` specifies a type definition.
@@ -167,6 +171,7 @@ module ModelInput {
   /**
    * A unit class for adding additional type model rows from CodeQL models.
    */
+  overlay[local]
   class TypeModel extends Unit {
     /**
      * Holds if any of the other predicates in this class might have a result
@@ -205,6 +210,7 @@ module ModelInput {
      *
      * Unlike `getASource` and `getASink`, this may depend on API graphs.
      */
+    overlay[global]
     API::Node getAnApiNode(string type) { none() }
   }
 
@@ -213,6 +219,7 @@ module ModelInput {
    *
    * DEPRECATED: Use the extensible predicate `typeVariableModel` instead.
    */
+  overlay[local]
   deprecated class TypeVariableModelCsv extends Unit {
     /**
      * Holds if `row` specifies a path through a type variable.
@@ -235,6 +242,7 @@ private import ModelInput
  * If this is non-empty, all models are parsed even if the type name is not
  * considered relevant for the current database.
  */
+overlay[local]
 abstract class TestAllModels extends Unit { }
 
 /**
@@ -242,22 +250,29 @@ abstract class TestAllModels extends Unit { }
  * does not preserve empty trailing substrings.
  */
 bindingset[result]
+overlay[local]
 deprecated private string inversePad(string s) { s = result + ";dummy" }
 
+overlay[local]
 deprecated private predicate sourceModel(string row) { any(SourceModelCsv s).row(inversePad(row)) }
 
+overlay[local]
 deprecated private predicate sinkModel(string row) { any(SinkModelCsv s).row(inversePad(row)) }
 
+overlay[local]
 deprecated private predicate summaryModel(string row) {
   any(SummaryModelCsv s).row(inversePad(row))
 }
 
+overlay[local]
 deprecated private predicate typeModel(string row) { any(TypeModelCsv s).row(inversePad(row)) }
 
+overlay[local]
 deprecated private predicate typeVariableModel(string row) {
   any(TypeVariableModelCsv s).row(inversePad(row))
 }
 
+overlay[local]
 private class DeprecationAdapter extends Unit {
   abstract predicate sourceModel(string type, string path, string kind);
 
@@ -270,6 +285,7 @@ private class DeprecationAdapter extends Unit {
   abstract predicate typeVariableModel(string name, string path);
 }
 
+overlay[local]
 private class DeprecationAdapterImpl extends DeprecationAdapter {
   deprecated override predicate sourceModel(string type, string path, string kind) {
     exists(string row |
@@ -321,6 +337,7 @@ private class DeprecationAdapterImpl extends DeprecationAdapter {
 }
 
 /** Holds if a source model exists for the given parameters. */
+overlay[local]
 predicate sourceModel(string type, string path, string kind, string model) {
   any(DeprecationAdapter a).sourceModel(type, path, kind) and
   model = "SourceModelCsv"
@@ -332,6 +349,7 @@ predicate sourceModel(string type, string path, string kind, string model) {
 }
 
 /** Holds if a sink model exists for the given parameters. */
+overlay[local]
 private predicate sinkModel(string type, string path, string kind, string model) {
   any(DeprecationAdapter a).sinkModel(type, path, kind) and
   model = "SinkModelCsv"
@@ -343,6 +361,7 @@ private predicate sinkModel(string type, string path, string kind, string model)
 }
 
 /** Holds if a summary model `row` exists for the given parameters. */
+overlay[local]
 private predicate summaryModel(
   string type, string path, string input, string output, string kind, string model
 ) {
@@ -356,6 +375,7 @@ private predicate summaryModel(
 }
 
 /** Holds if a type model exists for the given parameters. */
+overlay[local]
 predicate typeModel(string type1, string type2, string path) {
   any(DeprecationAdapter a).typeModel(type1, type2, path)
   or
@@ -363,6 +383,7 @@ predicate typeModel(string type1, string type2, string path) {
 }
 
 /** Holds if a type variable model exists for the given parameters. */
+overlay[local]
 private predicate typeVariableModel(string name, string path) {
   any(DeprecationAdapter a).typeVariableModel(name, path)
   or
@@ -394,6 +415,7 @@ predicate interpretModelForTest(QlBuiltins::ExtensionId madId, string model) {
 /**
  * Holds if rows involving `type` might be relevant for the analysis of this database.
  */
+overlay[local]
 predicate isRelevantType(string type) {
   (
     sourceModel(type, _, _, _) or
@@ -419,6 +441,7 @@ predicate isRelevantType(string type) {
 /**
  * Holds if `type,path` is used in some row.
  */
+overlay[local]
 pragma[nomagic]
 predicate isRelevantFullPath(string type, string path) {
   isRelevantType(type) and
@@ -431,6 +454,7 @@ predicate isRelevantFullPath(string type, string path) {
 }
 
 /** A string from a row that should be parsed as an access path. */
+overlay[local]
 private predicate accessPathRange(string s) {
   isRelevantFullPath(_, s)
   or

@@ -1,4 +1,6 @@
 /** Provides classes for working with locations and program elements that have locations. */
+overlay[local]
+module;
 
 import javascript
 
@@ -8,6 +10,7 @@ import javascript
 // to be tuple numbered.
 newtype TLocation =
   TDbLocation(@location loc) or
+  // FIXME[factor out]: move SsaDefinition into a field
   TSynthLocation(string filepath, int startline, int startcolumn, int endline, int endcolumn) {
     any(SsaDefinition def).hasLocationInfo(filepath, startline, startcolumn, endline, endcolumn) and
     // avoid overlap with existing DB locations

@@ -1,4 +1,6 @@
 /** Provides classes for working with JSDoc comments. */
+overlay[local]
+module;
 
 import javascript
 private import semmle.javascript.internal.CachedStages

@@ -4,6 +4,8 @@
  * Class declarations and class expressions are modeled by (QL) classes `ClassDeclaration`
  * and `ClassExpression`, respectively, which are both subclasses of `ClassDefinition`.
  */
+overlay[local]
+module;
 
 import javascript
 

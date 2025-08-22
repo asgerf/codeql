@@ -1,4 +1,6 @@
 /** Provides classes for working with Node.js modules. */
+overlay[local]
+module;
 
 import javascript
 private import NodeModuleResolutionImpl
@@ -58,6 +60,7 @@ class NodeModule extends Module {
   }
 
   /** Gets a symbol exported by this module. */
+  overlay[global]
   override string getAnExportedSymbol() {
     result = super.getAnExportedSymbol()
     or
@@ -70,6 +73,7 @@ class NodeModule extends Module {
     )
   }
 
+  overlay[global]
   override DataFlow::Node getAnExportedValue(string name) {
     // a property write whose base is `exports` or `module.exports`
     exists(DataFlow::PropWrite pwn | result = pwn.getRhs() |
@@ -124,6 +128,7 @@ class NodeModule extends Module {
   }
 
   /** Gets a symbol that the module object inherits from its prototypes. */
+  overlay[global]
   private string getAnImplicitlyExportedSymbol() {
     exists(ExternalConstructor ec | ec = this.getPrototypeOfExportedExpr() |
       result = ec.getAMember().getName()
@@ -136,6 +141,7 @@ class NodeModule extends Module {
   }
 
   /** Gets an externs declaration of the prototype object of a value exported by this module. */
+  overlay[global]
   private ExternalConstructor getPrototypeOfExportedExpr() {
     exists(AbstractValue exported | exported = this.getAModuleExportsValue() |
       result instanceof ObjectExternal
@@ -213,6 +219,7 @@ private DataFlow::Node getAModuleExportsCandidate() {
  * <tr><td><code>/node_modules</code></td><td>3</td></tr>
  * </table>
  */
+overlay[global]
 predicate findNodeModulesFolder(Folder f, Folder nodeModules, int distance) {
   nodeModules = f.getFolder("node_modules") and
   not f.getBaseName() = "node_modules" and

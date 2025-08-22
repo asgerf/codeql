@@ -4,6 +4,8 @@
  * Regular expression literals are represented as an abstract syntax tree of regular expression
  * terms.
  */
+overlay[local]
+module;
 
 import javascript
 private import semmle.javascript.dataflow.InferredTypes
@@ -982,6 +984,7 @@ private predicate isMatchObjectProperty(string name) {
 }
 
 /** Holds if `call` is a call to `match` whose result is used in a way that is incompatible with Match objects. */
+overlay[global]
 private predicate isUsedAsNonMatchObject(DataFlow::MethodCallNode call) {
   call.getMethodName() = ["match", "matchAll"] and
   call.getNumArgument() = 1 and
@@ -1006,6 +1009,7 @@ private predicate isUsedAsNonMatchObject(DataFlow::MethodCallNode call) {
 /**
  * Holds if `value` is used in a way that suggests it returns a number.
  */
+overlay[global]
 pragma[inline]
 private predicate isUsedAsNumber(DataFlow::LocalSourceNode value) {
   any(Comparison compare)
@@ -1027,6 +1031,7 @@ private predicate isUsedAsNumber(DataFlow::LocalSourceNode value) {
 /**
  * Holds if `source` may be interpreted as a regular expression.
  */
+overlay[global]
 cached
 predicate isInterpretedAsRegExp(DataFlow::Node source) {
   Stages::Taint::ref() and
@@ -1073,6 +1078,7 @@ predicate isInterpretedAsRegExp(DataFlow::Node source) {
  * Gets a node whose value may flow (inter-procedurally) to `re`, where it is interpreted
  * as a part of a regular expression.
  */
+overlay[global]
 private DataFlow::Node regExpSource(DataFlow::Node re, DataFlow::TypeBackTracker t) {
   t.start() and
   re = result and
@@ -1090,6 +1096,7 @@ private DataFlow::Node regExpSource(DataFlow::Node re, DataFlow::TypeBackTracker
  * Gets a node whose value may flow (inter-procedurally) to `re`, where it is interpreted
  * as a part of a regular expression.
  */
+overlay[global]
 private DataFlow::Node regExpSource(DataFlow::Node re) {
   result = regExpSource(re, DataFlow::TypeBackTracker::end())
 }
@@ -1098,6 +1105,7 @@ private DataFlow::Node regExpSource(DataFlow::Node re) {
  * A node whose value may flow to a position where it is interpreted
  * as a part of a regular expression.
  */
+overlay[global]
 abstract class RegExpPatternSource extends DataFlow::Node {
   /**
    * Gets a node where the pattern of this node is parsed as a part of
@@ -1126,6 +1134,7 @@ abstract class RegExpPatternSource extends DataFlow::Node {
 /**
  * A regular expression literal, viewed as the pattern source for itself.
  */
+overlay[global]
 private class RegExpLiteralPatternSource extends RegExpPatternSource, DataFlow::ValueNode {
   override RegExpLiteral astNode;
 
@@ -1145,6 +1154,7 @@ private class RegExpLiteralPatternSource extends RegExpPatternSource, DataFlow::
  * A node whose string value may flow to a position where it is interpreted
  * as a part of a regular expression.
  */
+overlay[global]
 private class StringRegExpPatternSource extends RegExpPatternSource {
   DataFlow::Node parse;
 
@@ -1169,6 +1179,7 @@ private class StringRegExpPatternSource extends RegExpPatternSource {
  * A node whose string value may flow to a position where it is interpreted
  * as a part of a regular expression.
  */
+overlay[global]
 private class StringConcatRegExpPatternSource extends RegExpPatternSource {
   DataFlow::Node parse;
 
@@ -1331,6 +1342,7 @@ module RegExp {
   /**
    * Gets the AST of a regular expression object that can flow to `node`.
    */
+  overlay[global]
   RegExpTerm getRegExpObjectFromNode(DataFlow::Node node) {
     exists(DataFlow::RegExpCreationNode regexp |
       regexp.getAReference().flowsTo(node) and
@@ -1342,6 +1354,7 @@ module RegExp {
    * Gets the AST of a regular expression that can flow to `node`,
    * including `RegExp` objects as well as strings interpreted as regular expressions.
    */
+  overlay[global]
   RegExpTerm getRegExpFromNode(DataFlow::Node node) {
     result = getRegExpObjectFromNode(node)
     or

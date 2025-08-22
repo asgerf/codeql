@@ -3,6 +3,8 @@
  * ECMAScript 2015-style modules, and the older CommonJS and AMD-style
  * modules.
  */
+overlay[local]
+module;
 
 import javascript
 private import semmle.javascript.internal.CachedStages
@@ -39,6 +41,8 @@ abstract class Module extends TopLevel {
    * Symbols defined in another module that are re-exported by
    * this module are only sometimes considered.
    */
+  // Note: this has overlay[global] since it follows re-exports
+  overlay[global]
   cached
   abstract DataFlow::Node getAnExportedValue(string name);
 
@@ -69,6 +73,7 @@ abstract class Module extends TopLevel {
    * This predicate is not part of the public API, it is only exposed to allow
    * overriding by subclasses.
    */
+  overlay[global]
   deprecated predicate searchRoot(PathExpr path, Folder searchRoot, int priority) {
     path.getEnclosingModule() = this and
     priority = 0 and
@@ -90,6 +95,7 @@ abstract class Module extends TopLevel {
    * resolves to a folder containing a main module (such as `index.js`), then
    * that file is the result.
    */
+  overlay[global]
   deprecated File resolve(PathExpr path) {
     path.getEnclosingModule() = this and
     (
@@ -124,6 +130,7 @@ abstract class Import extends AstNode {
   abstract Module getEnclosingModule();
 
   /** DEPRECATED. Use `getImportedPathExpr` instead. */
+  overlay[global]
   deprecated PathExpr getImportedPath() { result = this.getImportedPathExpr() }
 
   /** Gets the (unresolved) path that this import refers to. */
@@ -138,6 +145,7 @@ abstract class Import extends AstNode {
    * Any externs module whose name exactly matches the imported
    * path is assumed to be a possible target of the import.
    */
+  overlay[global]
   Module resolveExternsImport() {
     result.isExterns() and result.getName() = this.getImportedPathString()
   }
@@ -145,16 +153,19 @@ abstract class Import extends AstNode {
   /**
    * Gets the module the path of this import resolves to.
    */
+  overlay[global]
   Module resolveImportedPath() { result.getFile() = this.getImportedFile() }
 
   /**
    * Gets the module the path of this import resolves to.
    */
+  overlay[global]
   File getImportedFile() { result = ImportPathResolver::resolveExpr(this.getImportedPathExpr()) }
 
   /**
    * DEPRECATED. Use `getImportedModule()` instead.
    */
+  overlay[global]
   deprecated Module resolveFromTypeScriptSymbol() {
     exists(CanonicalName symbol |
       ast_node_symbol(this, symbol) and
@@ -170,6 +181,7 @@ abstract class Import extends AstNode {
    * behavior of Node.js imports, which prefer core modules such as `fs` over any
    * source module of the same name.
    */
+  overlay[global]
   cached
   Module getImportedModule() {
     Stages::Imports::ref() and

@@ -40,6 +40,7 @@ module Stages {
   /**
    * The `ast` stage.
    */
+  overlay[local]
   cached
   module Ast {
     /**
@@ -84,6 +85,7 @@ module Stages {
   /**
    * The `basicblocks` stage.
    */
+  overlay[local]
   cached
   module BasicBlocks {
     /**
@@ -110,6 +112,7 @@ module Stages {
   /**
    * The part of data flow computed before flow summary nodes.
    */
+  overlay[local]
   cached
   module EarlyDataFlowStage {
     /**
@@ -134,6 +137,7 @@ module Stages {
   /**
    * The `dataflow` stage.
    */
+  overlay[local]
   cached
   module DataFlowStage {
     /**

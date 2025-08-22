@@ -1,4 +1,6 @@
 /** Provides classes for working with ECMAScript 2015-style template expressions. */
+overlay[local]
+module;
 
 import javascript
 

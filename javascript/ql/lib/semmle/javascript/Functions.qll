@@ -1,4 +1,6 @@
 /** Provides classes for working with functions. */
+overlay[local]
+module;
 
 import javascript
 

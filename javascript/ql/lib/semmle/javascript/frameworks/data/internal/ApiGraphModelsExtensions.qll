@@ -8,6 +8,7 @@
  *
  * The kind `remote` represents a general remote flow source.
  */
+overlay[local]
 extensible predicate sourceModel(
   string type, string path, string kind, QlBuiltins::ExtensionId madId
 );
@@ -16,6 +17,7 @@ extensible predicate sourceModel(
  * Holds if the value at `(type, path)` should be seen as a sink
  * of the given `kind`.
  */
+overlay[local]
 extensible predicate sinkModel(string type, string path, string kind, QlBuiltins::ExtensionId madId);
 
 /**
@@ -25,6 +27,7 @@ extensible predicate sinkModel(string type, string path, string kind, QlBuiltins
  * `kind` should be either `value` or `taint`, for value-preserving or taint-preserving steps,
  * respectively.
  */
+overlay[local]
 extensible predicate summaryModel(
   string type, string path, string input, string output, string kind, QlBuiltins::ExtensionId madId
 );
@@ -34,16 +37,19 @@ extensible predicate summaryModel(
  * If `kind` is `summary`, the call does not propagate data flow. If `kind` is `source`, the call is not a source.
  * If `kind` is `sink`, the call is not a sink.
  */
+overlay[local]
 extensible predicate neutralModel(string type, string path, string kind);
 
 /**
  * Holds if `(type2, path)` should be seen as an instance of `type1`.
  */
+overlay[local]
 extensible predicate typeModel(string type1, string type2, string path);
 
 /**
  * Holds if `path` can be substituted for a token `TypeVar[name]`.
  */
+overlay[local]
 extensible predicate typeVariableModel(string name, string path);
 
 /**

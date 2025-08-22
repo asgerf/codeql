@@ -13,6 +13,7 @@ import javascript
  * File types that compile to `js` are preferred over the `js` file type itself.
  * This is to ensure we find the original source file in case the compiled output is also present.
  */
+overlay[local]
 int getFileExtensionPriority(string ext) {
   ext = "tsx" and result = 0
   or
@@ -37,8 +38,10 @@ int getFileExtensionPriority(string ext) {
   ext = "d.ts" and result = 10
 }
 
+overlay[local]
 int prioritiesPerCandidate() { result = 3 * (numberOfExtensions() + 1) }
 
+overlay[local]
 int numberOfExtensions() { result = count(getFileExtensionPriority(_)) }
 
 /**

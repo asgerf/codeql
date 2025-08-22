@@ -17,6 +17,8 @@
  * Flow through global variables, object properties or function calls is not
  * modeled (except for immediately invoked functions as explained above).
  */
+overlay[local]
+module;
 
 import javascript
 private import internal.CallGraphs
@@ -124,11 +126,13 @@ module DataFlow {
     int getIntValue() { result = this.asExpr().getIntValue() }
 
     /** Gets a function value that may reach this node. */
+    overlay[global]
     final FunctionNode getAFunctionValue() {
       CallGraph::getAFunctionReference(result, 0).flowsTo(this)
     }
 
     /** Gets a function value that may reach this node with the given `imprecision` level. */
+    overlay[global]
     final FunctionNode getAFunctionValue(int imprecision) {
       CallGraph::getAFunctionReference(result, imprecision).flowsTo(this)
     }
@@ -137,6 +141,7 @@ module DataFlow {
      * Gets a function value that may reach this node,
      * possibly derived from a partial function invocation.
      */
+    overlay[global]
     final FunctionNode getABoundFunctionValue(int boundArgs) {
       result = this.getAFunctionValue() and boundArgs = 0
       or
@@ -225,6 +230,7 @@ module DataFlow {
      * Holds if this node is annotated with the given named type,
      * or is declared as a subtype thereof, or is a union or intersection containing such a type.
      */
+    overlay[global]
     cached
     predicate hasUnderlyingType(string globalName) {
       Stages::TypeTracking::ref() and
@@ -238,6 +244,7 @@ module DataFlow {
      * Holds if this node is annotated with the given named type,
      * or is declared as a subtype thereof, or is a union or intersection containing such a type.
      */
+    overlay[global]
     cached
     predicate hasUnderlyingType(string moduleName, string typeName) {
       Stages::TypeTracking::ref() and

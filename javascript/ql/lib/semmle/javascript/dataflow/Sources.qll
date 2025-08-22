@@ -5,6 +5,8 @@
  * Note that unlike `TypeTracking.qll`, this library only performs
  * local tracking within a function.
  */
+overlay[local]
+module;
 
 private import javascript
 private import semmle.javascript.dataflow.TypeTracking

@@ -1,6 +1,8 @@
 /**
  * Provides classes for reasoning about type annotations independently of dialect.
  */
+overlay[local]
+module;
 
 import javascript
 private import internal.StmtContainers
@@ -107,6 +109,7 @@ class TypeAnnotation extends @type_annotation, NodeInStmtContainer {
    * Holds if this is a reference to the type with qualified name `globalName` relative to the global scope,
    * or is declared as a subtype thereof, or is a union or intersection containing such a type.
    */
+  overlay[global]
   final predicate hasUnderlyingType(string globalName) {
     UnderlyingTypes::nodeHasUnderlyingType(this, globalName)
   }
@@ -115,6 +118,7 @@ class TypeAnnotation extends @type_annotation, NodeInStmtContainer {
    * Holds if this is a reference to the type exported from `moduleName` under the name `exportedName`,
    * or is declared as a subtype thereof, or is a union or intersection containing such a type.
    */
+  overlay[global]
   final predicate hasUnderlyingType(string moduleName, string exportedName) {
     UnderlyingTypes::nodeHasUnderlyingType(this, moduleName, exportedName)
   }
@@ -142,5 +146,6 @@ class TypeAnnotation extends @type_annotation, NodeInStmtContainer {
    *
    * This unfolds nullability modifiers and generic type applications.
    */
+  overlay[global]
   final DataFlow::ClassNode getClass() { UnderlyingTypes::nodeHasUnderlyingClassType(this, result) }
 }

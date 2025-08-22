@@ -1,4 +1,6 @@
 /** Provides classes for working with ECMAScript 2015 modules. */
+overlay[local]
+module;
 
 import javascript
 private import semmle.javascript.internal.CachedStages
