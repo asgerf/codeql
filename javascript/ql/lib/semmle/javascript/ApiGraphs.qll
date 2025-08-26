@@ -4,8 +4,6 @@
  *
  * See `API::Node` for more in-depth documentation.
  */
-overlay[local?]
-module;
 
 import javascript
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps

@@ -1,8 +1,6 @@
 /**
  * Internal predicates for computing the call graph.
  */
-overlay[local?]
-module;
 
 private import javascript
 private import semmle.javascript.dataflow.internal.StepSummary

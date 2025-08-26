@@ -57,12 +57,13 @@ predicate parseTypeString(string rawType, string package, string qualifiedName) 
 /**
  * Holds if models describing `package` may be relevant for the analysis of this database.
  */
+overlay[local]
 predicate isPackageUsed(string package) {
   package = "global"
   or
-  package = any(JS::Import imp).getImportedPathString()
+  package = any(JS::Expr imp).getStringValue()
   or
-  any(JS::TypeAnnotation t).hasUnderlyingType(package, _)
+  package = any(JS::StringLiteralTypeExpr t).getValue()
   or
   exists(JS::PackageJson json | json.getPackageName() = package)
 }

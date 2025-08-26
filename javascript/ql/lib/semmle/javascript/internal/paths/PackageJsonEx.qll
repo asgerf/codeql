@@ -31,6 +31,7 @@ class PackageJsonEx extends PackageJson {
     this.hasPathMapping(pattern + "*", newPath + "*")
   }
 
+  overlay[global]
   predicate hasExactPathMappingTo(string pattern, Container target) {
     exists(string newPath |
       this.hasExactPathMapping(pattern, newPath) and
@@ -38,6 +39,7 @@ class PackageJsonEx extends PackageJson {
     )
   }
 
+  overlay[global]
   predicate hasPrefixPathMappingTo(string pattern, Container target) {
     exists(string newPath |
       this.hasPrefixPathMapping(pattern, newPath) and
@@ -47,6 +49,7 @@ class PackageJsonEx extends PackageJson {
 
   string getMainPath() { result = this.getPropStringValue(["main", "module"]) }
 
+  overlay[global]
   File getMainFile() {
     exists(Container main | main = Resolver::resolve(this.getFolder(), this.getMainPath()) |
       result = main
@@ -55,6 +58,7 @@ class PackageJsonEx extends PackageJson {
     )
   }
 
+  overlay[global]
   File getMainFileOrBestGuess() {
     result = this.getMainFile()
     or
@@ -67,10 +71,12 @@ class PackageJsonEx extends PackageJson {
     result = this.getPropValue("files").(JsonArray).getElementStringValue(_)
   }
 
+  overlay[global]
   Container getAFileInFilesArray() {
     result = Resolver::resolve(this.getFolder(), this.getAPathInFilesArray())
   }
 
+  overlay[global]
   override File getTypingsFile() {
     result = Resolver::resolve(this.getFolder(), this.getTypings())
     or
@@ -127,6 +133,7 @@ private string stripPackageScope(string name) { result = name.regexpReplaceAll("
 
 private predicate isImplementationFile(File f) { not f.getBaseName().matches("%.d.ts") }
 
+overlay[global]
 File guessPackageJsonMain1(PackageJsonEx pkg) {
   not isImplementationFile(pkg.getMainFile()) and
   exists(Folder folder, Folder subfolder |
@@ -147,6 +154,7 @@ File guessPackageJsonMain1(PackageJsonEx pkg) {
   )
 }
 
+overlay[global]
 File guessPackageJsonMain2(PackageJsonEx pkg) {
   not isImplementationFile(pkg.getMainFile()) and
   not isImplementationFile(guessPackageJsonMain1(pkg)) and

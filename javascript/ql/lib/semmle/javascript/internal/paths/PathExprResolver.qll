@@ -28,8 +28,10 @@ private Variable filenameVar() { result.getName() = "__filename" }
 
 private signature predicate exprSig(Expr e);
 
+overlay[global]
 module ResolveExpr<exprSig/1 shouldResolveExpr> {
   /** Holds if we need the constant string-value of `node`. */
+  overlay[local]
   private predicate needsConstantFolding(EarlyStageNode node) {
     exists(Expr e |
       shouldResolveExpr(e) and
@@ -48,6 +50,7 @@ module ResolveExpr<exprSig/1 shouldResolveExpr> {
 
   /** Gets the constant-value of `node` */
   language[monotonicAggregates]
+  overlay[local]
   private string getValue(EarlyStageNode node) {
     needsConstantFolding(node) and
     (
@@ -81,6 +84,7 @@ module ResolveExpr<exprSig/1 shouldResolveExpr> {
 
   final private class FinalExpr = Expr;
 
+  overlay[local]
   private class RelevantExpr extends FinalExpr {
     RelevantExpr() { shouldResolveExpr(this) }
 
@@ -88,6 +92,7 @@ module ResolveExpr<exprSig/1 shouldResolveExpr> {
     string getValue() { result = getValue(TValueNode(this)) }
 
     /** Gets a path mapping affecting this path. */
+    overlay[global]
     pragma[nomagic]
     PathMapping getAPathMapping() { result.getAnAffectedFile() = this.getFile() }
 
@@ -139,6 +144,7 @@ module ResolveExpr<exprSig/1 shouldResolveExpr> {
     )
   }
 
+  overlay[local]
   pragma[noopt]
   private predicate relativePathExpr(RelevantExpr expr, Container base, FilePath path) {
     expr instanceof RelevantExpr and
@@ -150,6 +156,7 @@ module ResolveExpr<exprSig/1 shouldResolveExpr> {
     )
   }
 
+  overlay[local]
   pragma[nomagic]
   private Container getJSDocProvidedModule(string moduleName) {
     exists(JSDocTag tag |
@@ -243,6 +250,7 @@ module ResolveExpr<exprSig/1 shouldResolveExpr> {
   }
 }
 
+overlay[local]
 private predicate isImportPathExpr(Expr e) {
   e = any(Import imprt).getImportedPathExpr()
   or

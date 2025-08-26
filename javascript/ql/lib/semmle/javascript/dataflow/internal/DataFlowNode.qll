@@ -3,7 +3,7 @@
  *
  * Contains the raw data type underlying `DataFlow::Node`.
  */
-overlay[local?]
+overlay[local]
 module;
 
 private import javascript
@@ -154,8 +154,10 @@ private class TEarlyStageNode =
  */
 class EarlyStageNode extends TEarlyStageNode {
   /** Gets a string representation of this data flow node. */
+  overlay[local?]
   string toString() { result = this.(DataFlow::Node).toString() }
 
   /** Gets the location of this data flow node. */
+  overlay[local?]
   Location getLocation() { result = this.(DataFlow::Node).getLocation() }
 }
