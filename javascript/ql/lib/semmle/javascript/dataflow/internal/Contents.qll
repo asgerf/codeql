@@ -1,3 +1,6 @@
+overlay[local?]
+module;
+
 private import javascript
 private import semmle.javascript.frameworks.data.internal.ApiGraphModels as ApiGraphModels
 private import semmle.javascript.dataflow.internal.FlowSummaryPrivate as FlowSummaryPrivate
@@ -194,6 +197,7 @@ module Public {
    */
   class ContentSet extends TContentSet {
     /** Gets a content that may be stored into when storing into this set. */
+    overlay[caller?]
     pragma[inline]
     Content getAStoreContent() {
       result = this.asSingleton()
@@ -333,12 +337,14 @@ module Public {
     /**
      * A content set containing only the given content.
      */
+    overlay[caller?]
     pragma[inline]
     ContentSet singleton(Content content) { result.asSingleton() = content }
 
     /**
      * A content set corresponding to the given property name.
      */
+    overlay[caller?]
     pragma[inline]
     ContentSet property(PropertyName name) { result.asSingleton().asPropertyName() = name }
 

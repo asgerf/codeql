@@ -1,3 +1,6 @@
+overlay[local?]
+module;
+
 private import javascript
 private import semmle.javascript.dataflow.internal.DataFlowNode
 private import semmle.javascript.dataflow.internal.DataFlowPrivate

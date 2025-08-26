@@ -3,6 +3,8 @@
  * ECMAScript 2015-style modules, and the older CommonJS and AMD-style
  * modules.
  */
+overlay[local?]
+module;
 
 import javascript
 private import semmle.javascript.internal.CachedStages

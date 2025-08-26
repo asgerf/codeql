@@ -8,6 +8,8 @@
  * Data flow is modeled both from clients to servers, and from servers to clients.
  * The model models that clients can send messages to all servers, and servers can send messages to all clients.
  */
+overlay[local?]
+module;
 
 import javascript
 

@@ -4,6 +4,8 @@
  * Subclass `PropertyProjection` to refine the behavior of the analysis on existing property projections.
  * Subclass `CustomPropertyProjection` to introduce new kinds of property projections.
  */
+overlay[local?]
+module;
 
 import javascript
 

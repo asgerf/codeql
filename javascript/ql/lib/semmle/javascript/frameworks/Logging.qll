@@ -1,6 +1,8 @@
 /**
  * Provides classes for working with logging libraries.
  */
+overlay[local?]
+module;
 
 import javascript
 

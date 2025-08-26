@@ -1,6 +1,8 @@
 /**
  * Provides classes for reasoning about type annotations independently of dialect.
  */
+overlay[local?]
+module;
 
 import javascript
 private import internal.StmtContainers

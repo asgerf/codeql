@@ -1,6 +1,8 @@
 /**
  * Models the `Request` and `Response` objects from the Web standards.
  */
+overlay[local?]
+module;
 
 private import javascript
 

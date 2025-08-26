@@ -1,6 +1,8 @@
 /**
  * Contains flow summaries and steps modelling flow through string methods.
  */
+overlay[local?]
+module;
 
 private import javascript
 private import semmle.javascript.dataflow.FlowSummary

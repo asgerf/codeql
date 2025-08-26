@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates for reasoning about data flow through the redux package.
  */
+overlay[local?]
+module;
 
 import javascript
 private import semmle.javascript.dataflow.internal.PreCallGraphStep
@@ -45,6 +47,7 @@ module Redux {
     }
 
     /** Holds if the two files are considered to be part of the same Redux app. */
+    overlay[caller?]
     pragma[inline]
     predicate areFilesInSameReduxApp(File a, File b) {
       not exists(PackageJson pkg)

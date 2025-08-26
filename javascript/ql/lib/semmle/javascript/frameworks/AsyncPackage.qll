@@ -1,6 +1,8 @@
 /**
  * Provides classes for working with [async](https://www.npmjs.com/package/async).
  */
+overlay[local?]
+module;
 
 import javascript
 

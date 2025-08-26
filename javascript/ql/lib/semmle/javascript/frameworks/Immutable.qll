@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates for reasoning about [immutable](https://www.npmjs.com/package/immutable).
  */
+overlay[local?]
+module;
 
 import javascript
 

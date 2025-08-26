@@ -1,6 +1,8 @@
 /**
  * Provides classes for working with the Closure-Library module system.
  */
+overlay[local?]
+module;
 
 import javascript
 

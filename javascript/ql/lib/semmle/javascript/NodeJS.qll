@@ -1,4 +1,6 @@
 /** Provides classes for working with Node.js modules. */
+overlay[local?]
+module;
 
 import javascript
 private import NodeModuleResolutionImpl

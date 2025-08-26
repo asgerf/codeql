@@ -4,6 +4,8 @@
  *
  * See `API::Node` for more in-depth documentation.
  */
+overlay[local?]
+module;
 
 import javascript
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
@@ -129,6 +131,7 @@ module API {
      * This is similar to `asSource()` but additionally includes nodes that are transitively reachable by data flow.
      * See `asSource()` for examples.
      */
+    overlay[caller?]
     pragma[inline]
     DataFlow::Node getAValueReachableFromSource() {
       Impl::trackUseNode(this.asSource()).flowsTo(result)
@@ -248,6 +251,7 @@ module API {
      *
      * When possible, it is preferrable to use one of the specialized variants of this predicate, such as `getMember`.
      */
+    overlay[caller?]
     pragma[inline]
     Node getContent(DataFlow::Content content) {
       result = this.getContentRaw(content)
@@ -535,6 +539,7 @@ module API {
      * In other words, the value of a use of `that` may flow into the right-hand side of a
      * definition of this node.
      */
+    overlay[caller?]
     pragma[inline]
     predicate refersTo(Node that) { this.asSink() = that.getAValueReachableFromSource() }
 

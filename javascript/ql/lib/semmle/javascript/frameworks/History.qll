@@ -1,4 +1,6 @@
 /** Provides classes and predicates modeling aspects of the [`history`](https://npmjs.org/package/history) library. */
+overlay[local?]
+module;
 
 import javascript
 

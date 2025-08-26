@@ -1,4 +1,6 @@
 /** Provides classes for working with locations and program elements that have locations. */
+overlay[local?]
+module;
 
 import javascript
 private import internal.Locations
@@ -31,6 +33,7 @@ class DbLocation extends TDbLocation {
   int getNumLines() { result = this.getEndLine() - this.getStartLine() + 1 }
 
   /** Holds if this location starts before location `that`. */
+  overlay[caller?]
   pragma[inline]
   predicate startsBefore(DbLocation that) {
     exists(File f, int sl1, int sc1, int sl2, int sc2 |
@@ -44,6 +47,7 @@ class DbLocation extends TDbLocation {
   }
 
   /** Holds if this location ends after location `that`. */
+  overlay[caller?]
   pragma[inline]
   predicate endsAfter(DbLocation that) {
     exists(File f, int el1, int ec1, int el2, int ec2 |

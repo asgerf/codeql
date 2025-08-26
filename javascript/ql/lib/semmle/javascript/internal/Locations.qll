@@ -1,4 +1,6 @@
 /** Provides classes for working with locations and program elements that have locations. */
+overlay[local?]
+module;
 
 import javascript
 
@@ -43,6 +45,7 @@ abstract class LocationImpl extends TLocation {
   int getNumLines() { result = this.getEndLine() - this.getStartLine() + 1 }
 
   /** Holds if this location starts before location `that`. */
+  overlay[caller?]
   pragma[inline]
   predicate startsBefore(Location that) {
     exists(string f, int sl1, int sc1, int sl2, int sc2 |
@@ -56,6 +59,7 @@ abstract class LocationImpl extends TLocation {
   }
 
   /** Holds if this location ends after location `that`. */
+  overlay[caller?]
   pragma[inline]
   predicate endsAfter(Location that) {
     exists(string f, int el1, int ec1, int el2, int ec2 |

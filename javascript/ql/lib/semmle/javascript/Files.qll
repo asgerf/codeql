@@ -1,4 +1,6 @@
 /** Provides classes for working with files and folders. */
+overlay[local?]
+module;
 
 import javascript
 private import NodeModuleResolutionImpl

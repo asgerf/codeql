@@ -3,6 +3,8 @@
  * as nodes corresponding to function definitions or nodes corresponding to
  * parameters.
  */
+overlay[local?]
+module;
 
 private import javascript
 private import semmle.javascript.dependencies.Dependencies

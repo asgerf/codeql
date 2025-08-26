@@ -19,6 +19,8 @@
  * Care should therefore be taken not to combine two stages, if it is likely that a query only depend
  * on some but not all the cached predicates in the combined stage.
  */
+overlay[local?]
+module;
 
 import javascript
 private import StmtContainers

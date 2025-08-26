@@ -1,6 +1,8 @@
 /**
  * Provides classes for working with expressions.
  */
+overlay[local?]
+module;
 
 import javascript
 private import semmle.javascript.internal.CachedStages
@@ -250,6 +252,7 @@ class Expr extends @expr, ExprOrStmt, ExprOrType, AST::ValueNode {
    * Gets the data-flow node where exceptions thrown by this expression will
    * propagate if this expression causes an exception to be thrown.
    */
+  overlay[caller?]
   pragma[inline]
   DataFlow::Node getExceptionTarget() {
     result = getCatchParameterFromStmt(this.getRawEnclosingStmt(this))

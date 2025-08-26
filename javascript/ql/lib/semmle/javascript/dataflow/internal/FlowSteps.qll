@@ -3,6 +3,8 @@
  *
  * Provides auxiliary predicates for defining inter-procedural data flow configurations.
  */
+overlay[local?]
+module;
 
 import javascript
 deprecated import semmle.javascript.dataflow.Configuration
@@ -48,6 +50,7 @@ private predicate legacyPostUpdateStep(DataFlow::Node pred, DataFlow::Node succ)
  * Holds if data can flow in one step from `pred` to `succ`,  taking
  * additional steps from the configuration into account.
  */
+overlay[caller?]
 pragma[inline]
 deprecated predicate localFlowStep(
   DataFlow::Node pred, DataFlow::Node succ, DataFlow::Configuration configuration,

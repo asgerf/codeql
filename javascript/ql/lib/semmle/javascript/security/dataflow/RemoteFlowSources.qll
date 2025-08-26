@@ -1,6 +1,8 @@
 /**
  * Provides a class for modeling sources of remote user input.
  */
+overlay[local?]
+module;
 
 import javascript
 import semmle.javascript.frameworks.HTTP

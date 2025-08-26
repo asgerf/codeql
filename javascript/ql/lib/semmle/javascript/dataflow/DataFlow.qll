@@ -17,6 +17,8 @@
  * Flow through global variables, object properties or function calls is not
  * modeled (except for immediately invoked functions as explained above).
  */
+overlay[local?]
+module;
 
 import javascript
 private import internal.CallGraphs
@@ -1444,6 +1446,7 @@ module DataFlow {
   /**
    * Gets the data flow node corresponding to `e`.
    */
+  overlay[caller?]
   pragma[inline]
   ExprNode exprNode(Expr e) { result = valueNode(e) }
 

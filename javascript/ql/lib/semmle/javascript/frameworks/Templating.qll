@@ -1,6 +1,8 @@
 /**
  * Provides predicates for working with templating libraries.
  */
+overlay[local?]
+module;
 
 import javascript
 

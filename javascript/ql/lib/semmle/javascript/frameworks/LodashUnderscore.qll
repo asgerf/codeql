@@ -1,6 +1,8 @@
 /**
  * Provides classes for working with [lodash](https://lodash.com/) and [underscore](http://underscorejs.org/).
  */
+overlay[local?]
+module;
 
 import javascript
 

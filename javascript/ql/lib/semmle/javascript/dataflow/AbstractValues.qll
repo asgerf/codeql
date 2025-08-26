@@ -37,6 +37,8 @@
  * they represent; additionally, indefinite abstract values record
  * the source of imprecision that caused them to arise.
  */
+overlay[local?]
+module;
 
 private import javascript
 private import semmle.javascript.dataflow.internal.AbstractValuesImpl

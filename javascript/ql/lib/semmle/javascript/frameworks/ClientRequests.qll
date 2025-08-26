@@ -4,6 +4,8 @@
  * Subclass `ClientRequest` to refine the behavior of the analysis on existing client requests.
  * Subclass `ClientRequest::Range` to introduce new kinds of client requests.
  */
+overlay[local?]
+module;
 
 import javascript
 

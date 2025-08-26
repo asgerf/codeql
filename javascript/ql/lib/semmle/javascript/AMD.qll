@@ -2,6 +2,8 @@
  * Provides classes for working with
  * [Asynchronous Module Definitions](https://github.com/amdjs/amdjs-api/wiki/AMD).
  */
+overlay[local?]
+module;
 
 import javascript
 private import semmle.javascript.internal.CachedStages

@@ -1,6 +1,8 @@
 /**
  * Module for working with uses of the [Trusted Types API](https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API)
  */
+overlay[local?]
+module;
 
 private import javascript
 private import semmle.javascript.security.dataflow.DomBasedXssCustomizations

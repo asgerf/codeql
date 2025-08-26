@@ -63,6 +63,7 @@
  * Finally, we build `PathNode`s for all nodes that appear on a path
  * computed by `onPath`.
  */
+overlay[local?]
 deprecated module;
 
 private import javascript
@@ -680,6 +681,7 @@ module PseudoProperties {
    * Gets a pseudo-property for the location of a map value where the key is `key`.
    * The string value of the `key` is encoded in the result, and there is only a result if the string value of `key` is known.
    */
+  overlay[caller?]
   pragma[inline]
   string mapValueKnownKey(DataFlow::Node key) {
     result = mapValueKey(any(string s | key.mayHaveStringValue(s)))
@@ -700,6 +702,7 @@ module PseudoProperties {
   /**
    * Gets a pseudo-property for the location of a map value where the key is `key`.
    */
+  overlay[caller?]
   pragma[inline]
   string mapValue(DataFlow::Node key) {
     result = mapValueKnownKey(key)

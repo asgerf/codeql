@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates for reasoning about [Nest](https://nestjs.com/).
  */
+overlay[local?]
+module;
 
 import javascript
 private import semmle.javascript.security.dataflow.ServerSideUrlRedirectCustomizations

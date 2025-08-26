@@ -1,4 +1,6 @@
 /** Provides classes for modeling program variables. */
+overlay[local?]
+module;
 
 import javascript
 

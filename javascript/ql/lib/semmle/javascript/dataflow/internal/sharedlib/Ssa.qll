@@ -3,6 +3,8 @@
  *
  * JavaScript's old SSA library is still responsible for the ordinary SSA flow.
  */
+overlay[local?]
+module;
 
 private import javascript as js
 private import codeql.ssa.Ssa
@@ -43,6 +45,7 @@ module SsaConfig implements InputSig<js::DbLocation> {
 
   predicate getImmediateBasicBlockDominator = BasicBlockInternal::immediateDominator/1;
 
+  overlay[caller?]
   pragma[inline]
   BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
 }
@@ -101,6 +104,7 @@ module SsaDataflowInput implements DataFlowIntegrationInputSig {
     }
   }
 
+  overlay[caller?]
   pragma[inline]
   predicate guardDirectlyControlsBlock(Guard guard, js::BasicBlock bb, GuardValue branch) {
     exists(js::ConditionGuardNode g |

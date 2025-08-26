@@ -17,6 +17,8 @@
  * predicate isExtraValidTokenArgumentInIdentifyingAccessPath(string name, string argument)
  * ```
  */
+overlay[local?]
+module;
 
 private import javascript as JS
 private import ApiGraphModels
@@ -228,6 +230,7 @@ private predicate blockFuzzyCall(DataFlow::CallNode call) {
   isCommonBuiltinMethodName(call.getCalleeName())
 }
 
+overlay[caller?]
 pragma[inline]
 API::Node getAFuzzySuccessor(API::Node node) {
   result = node.getAMember() and

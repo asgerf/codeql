@@ -4,6 +4,8 @@
  * Regular expression literals are represented as an abstract syntax tree of regular expression
  * terms.
  */
+overlay[local?]
+module;
 
 import javascript
 private import semmle.javascript.dataflow.InferredTypes

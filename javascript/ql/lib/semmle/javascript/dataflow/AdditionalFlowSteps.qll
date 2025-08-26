@@ -18,6 +18,8 @@
  * This design is intended to simplify consumption of steps, and to ensure existing consumers of `SharedFlowStep`
  * outside this codebase will continue to work with as few surprises as possible.
  */
+overlay[local?]
+module;
 
 private import javascript
 private import semmle.javascript.internal.CachedStages
@@ -322,6 +324,7 @@ module SharedFlowStep {
   /**
    * Holds if `pred` &rarr; `succ` should be considered a data flow edge.
    */
+  overlay[caller?]
   pragma[inline]
   predicate step(DataFlow::Node pred, DataFlow::Node succ) {
     any(SharedFlowStep s).step(pred, succ)
@@ -335,6 +338,7 @@ module SharedFlowStep {
    * Holds if `pred` should be stored in the object `succ` under the property `prop`.
    * The object `succ` must be a `DataFlow::SourceNode` for the object wherein the value is stored.
    */
+  overlay[caller?]
   pragma[inline]
   predicate storeStep(DataFlow::Node pred, DataFlow::SourceNode succ, string prop) {
     any(SharedFlowStep s).storeStep(pred, succ, prop)
@@ -348,6 +352,7 @@ module SharedFlowStep {
   /**
    * Holds if the property `prop` of the object `pred` should be loaded into `succ`.
    */
+  overlay[caller?]
   pragma[inline]
   predicate loadStep(DataFlow::Node pred, DataFlow::Node succ, string prop) {
     any(SharedFlowStep s).loadStep(pred, succ, prop)

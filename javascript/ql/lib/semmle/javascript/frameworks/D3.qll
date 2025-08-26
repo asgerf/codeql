@@ -1,4 +1,6 @@
 /** Provides classes and predicates modeling aspects of the `d3` library. */
+overlay[local?]
+module;
 
 private import javascript
 private import semmle.javascript.security.dataflow.DomBasedXssCustomizations

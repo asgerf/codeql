@@ -1,6 +1,8 @@
 /**
  * Provides classes for modeling URI libraries.
  */
+overlay[local?]
+module;
 
 import javascript
 

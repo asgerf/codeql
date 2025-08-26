@@ -1,6 +1,8 @@
 /**
  * Provides classes for modeling the Node.js standard library.
  */
+overlay[local?]
+module;
 
 import javascript
 import semmle.javascript.frameworks.HTTP

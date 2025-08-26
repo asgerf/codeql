@@ -15,6 +15,8 @@
  * export function handler(req: express.Request) { ... }
  * ```
  */
+overlay[local?]
+module;
 
 private import javascript
 private import internal.ApiGraphModels as Shared

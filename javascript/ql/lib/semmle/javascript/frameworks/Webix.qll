@@ -1,6 +1,8 @@
 /**
  * Provides classes and predicates for working with the `webix` library.
  */
+overlay[local?]
+module;
 
 private import javascript
 
