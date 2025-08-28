@@ -23,6 +23,8 @@ private predicate possiblyAttribute(Expr e, string name) {
   )
 }
 
+final private class FinalExpr = Expr;
+
 /**
  * A bracketed list of expressions.
  *
@@ -34,7 +36,7 @@ private predicate possiblyAttribute(Expr e, string name) {
  *
  * We also allow singleton lists, as in `[a][b]`.
  */
-abstract private class BracketedListOfExpressions extends Expr {
+abstract private class BracketedListOfExpressions extends FinalExpr {
   /** Gets the `i`th element expression of this list. */
   abstract Expr getElement(int i);
 }
@@ -42,7 +44,8 @@ abstract private class BracketedListOfExpressions extends Expr {
 /**
  * An array expression viewed as a bracketed list of expressions.
  */
-private class ArrayExprIsABracketedListOfExpressions extends ArrayExpr, BracketedListOfExpressions {
+private class ArrayExprIsABracketedListOfExpressions extends BracketedListOfExpressions instanceof ArrayExpr
+{
   /** Gets the `i`th element of this array literal. */
   override Expr getElement(int i) { result = ArrayExpr.super.getElement(i) }
 }
@@ -52,7 +55,7 @@ private class ArrayExprIsABracketedListOfExpressions extends ArrayExpr, Brackete
  * and is hence parsed as an index expression.
  *
  * Note that the index expression itself does not include the opening and
- * closing brackets, for which we compensate by overriding `getFirstToken()`
+ * closing brackets, for which we compensate by shadowing `getFirstToken()`
  * and `getLastToken()`.
  */
 private class IndexExprIndexIsBracketedListOfExpressions extends BracketedListOfExpressions {
@@ -71,12 +74,12 @@ private class IndexExprIndexIsBracketedListOfExpressions extends BracketedListOf
     not this instanceof SeqExpr and i = 0 and result = this
   }
 
-  override Token getFirstToken() {
+  Token getFirstToken() {
     // include opening bracket
     result = BracketedListOfExpressions.super.getFirstToken().getPreviousToken()
   }
 
-  override Token getLastToken() {
+  Token getLastToken() {
     // include closing bracket
     result = BracketedListOfExpressions.super.getLastToken().getNextToken()
   }
