@@ -40,6 +40,7 @@ module Stages {
   /**
    * The `ast` stage.
    */
+  overlay[local]
   cached
   module Ast {
     /**
@@ -84,6 +85,7 @@ module Stages {
   /**
    * The `basicblocks` stage.
    */
+  overlay[local]
   cached
   module BasicBlocks {
     /**

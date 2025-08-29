@@ -1,8 +1,28 @@
 /** Provides classes for working with ECMAScript 2015 modules. */
+overlay[local]
+module;
 
 import javascript
 private import semmle.javascript.internal.CachedStages
 private import semmle.javascript.internal.paths.PathExprResolver
+
+/**
+ * Local base class for `ES2015Module`. Needed since overriding AST methods need
+ * to be local, while subclassing `Import` currently needs to be global.
+ */
+private class ES2015ModuleBase extends TopLevel {
+  ES2015ModuleBase() { is_es2015_module(this) }
+
+  /** Gets an export declaration in this module. */
+  ExportDeclaration getAnExport() { result.getTopLevel() = this }
+
+  override predicate isStrict() {
+    // modules are implicitly strict
+    any()
+  }
+
+  override ModuleScope getScope() { result.getScopeElement() = this }
+}
 
 /**
  * An ECMAScript 2015 module.
@@ -15,10 +35,9 @@ private import semmle.javascript.internal.paths.PathExprResolver
  * console.log("Hello, world!");
  * ```
  */
-class ES2015Module extends Module {
+overlay[global]
+class ES2015Module extends ES2015ModuleBase, Module {
   ES2015Module() { is_es2015_module(this) }
-
-  override ModuleScope getScope() { result.getScopeElement() = this }
 
   /** Gets the full path of the file containing this module. */
   override string getPath() { result = this.getFile().getAbsolutePath() }
@@ -26,20 +45,12 @@ class ES2015Module extends Module {
   /** Gets the short name of this module without file extension. */
   override string getName() { result = this.getFile().getStem() }
 
-  /** Gets an export declaration in this module. */
-  ExportDeclaration getAnExport() { result.getTopLevel() = this }
-
   override DataFlow::Node getAnExportedValue(string name) {
     exists(ExportDeclaration ed | ed = this.getAnExport() and result = ed.getSourceNode(name))
   }
 
   /** Holds if this module exports variable `v` under the name `name`. */
   predicate exportsAs(LexicalName v, string name) { this.getAnExport().exportsAs(v, name) }
-
-  override predicate isStrict() {
-    // modules are implicitly strict
-    any()
-  }
 
   /**
    * Holds if this module contains both named and `default` exports.
@@ -59,6 +70,7 @@ class ES2015Module extends Module {
 /**
  * Holds if `mod` contains one or more named export declarations other than `default`.
  */
+overlay[global]
 private predicate hasNamedExports(ES2015Module mod) {
   mod.getAnExport().(ExportNamedDeclaration).getASpecifier().getExportedName() != "default"
   or
@@ -71,6 +83,7 @@ private predicate hasNamedExports(ES2015Module mod) {
 /**
  * Holds if this module contains a default export.
  */
+overlay[global]
 private predicate hasDefaultExport(ES2015Module mod) {
   // export default foo;
   mod.getAnExport() instanceof ExportDefaultDeclaration
@@ -80,24 +93,14 @@ private predicate hasDefaultExport(ES2015Module mod) {
 }
 
 /**
- * An import declaration.
- *
- * Examples:
- *
- * ```
- * import console, { log, error as fatal } from 'console';
- * import * as console from 'console';
- * ```
+ * Local base class for `ImportDeclaration`. Needed since overriding AST methods need
+ * to be local, while subclassing `Import` currently needs to be global.
  */
-class ImportDeclaration extends Stmt, Import, @import_declaration {
-  override ES2015Module getEnclosingModule() { result = this.getTopLevel() }
-
+private class ImportDeclarationBase extends Stmt, @import_declaration {
   /**
    * INTERNAL USE ONLY. DO NOT USE.
    */
   string getRawImportPath() { result = this.getChildExpr(-1).getStringValue() }
-
-  override Expr getImportedPathExpr() { result = this.getChildExpr(-1) }
 
   /**
    * Gets the object literal passed as part of the `with` (or `assert`) clause in this import declaration.
@@ -128,6 +131,28 @@ class ImportDeclaration extends Stmt, Import, @import_declaration {
   /** Gets an import specifier of this import declaration. */
   ImportSpecifier getASpecifier() { result = this.getSpecifier(_) }
 
+  /** Holds if this is declared with the `type` keyword, so it only imports types. */
+  predicate isTypeOnly() { has_type_keyword(this) }
+
+  override string getAPrimaryQlClass() { result = "ImportDeclaration" }
+}
+
+/**
+ * An import declaration.
+ *
+ * Examples:
+ *
+ * ```
+ * import console, { log, error as fatal } from 'console';
+ * import * as console from 'console';
+ * ```
+ */
+overlay[global]
+class ImportDeclaration extends ImportDeclarationBase, Import {
+  override ES2015Module getEnclosingModule() { result = this.getTopLevel() }
+
+  override Expr getImportedPathExpr() { result = this.getChildExpr(-1) }
+
   override DataFlow::Node getImportedModuleNode() {
     // `import * as http from 'http'` or `import http from `http`'
     exists(ImportSpecifier is |
@@ -147,14 +172,10 @@ class ImportDeclaration extends Stmt, Import, @import_declaration {
     // `import { createServer } from 'http'`
     result = DataFlow::destructuredModuleImportNode(this)
   }
-
-  /** Holds if this is declared with the `type` keyword, so it only imports types. */
-  predicate isTypeOnly() { has_type_keyword(this) }
-
-  override string getAPrimaryQlClass() { result = "ImportDeclaration" }
 }
 
 /** A literal path expression appearing in an `import` declaration. */
+overlay[global]
 deprecated private class LiteralImportPath extends PathExpr, ConstantString {
   LiteralImportPath() { exists(ImportDeclaration req | this = req.getChildExpr(-1)) }
 
@@ -181,6 +202,7 @@ deprecated private class LiteralImportPath extends PathExpr, ConstantString {
  */
 class ImportSpecifier extends Expr, @import_specifier {
   /** Gets the import declaration in which this specifier appears. */
+  overlay[global]
   ImportDeclaration getImportDeclaration() { result.getASpecifier() = this }
 
   /** Gets the imported symbol; undefined for default and namespace import specifiers. */
@@ -264,6 +286,7 @@ class ImportNamespaceSpecifier extends ImportSpecifier, @import_namespace_specif
  * import * as console from 'console';
  * ```
  */
+overlay[global]
 class BulkImportDeclaration extends ImportDeclaration {
   BulkImportDeclaration() { this.getASpecifier() instanceof ImportNamespaceSpecifier }
 
@@ -280,6 +303,7 @@ class BulkImportDeclaration extends ImportDeclaration {
  * import console, { log } from 'console';
  * ```
  */
+overlay[global]
 class SelectiveImportDeclaration extends ImportDeclaration {
   SelectiveImportDeclaration() { not this instanceof BulkImportDeclaration }
 
@@ -313,9 +337,11 @@ class SelectiveImportDeclaration extends ImportDeclaration {
  */
 abstract class ExportDeclaration extends Stmt, @export_declaration {
   /** Gets the module to which this export declaration belongs. */
+  overlay[global]
   ES2015Module getEnclosingModule() { this = result.getAnExport() }
 
   /** Holds if this export declaration exports variable `v` under the name `name`. */
+  overlay[global]
   abstract predicate exportsAs(LexicalName v, string name);
 
   /**
@@ -339,6 +365,7 @@ abstract class ExportDeclaration extends Stmt, @export_declaration {
    * exports under the same name. In particular, its source node belongs
    * to module `a` or possibly to some other module from which `a` re-exports.
    */
+  overlay[global]
   abstract DataFlow::Node getSourceNode(string name);
 
   /** Holds if is declared with the `type` keyword, so only types are exported. */
@@ -390,11 +417,13 @@ class BulkReExportDeclaration extends ReExportDeclaration, @export_all_declarati
   /** Gets the name of the module from which this declaration re-exports. */
   override ConstantString getImportedPath() { result = this.getChildExpr(0) }
 
+  overlay[global]
   override predicate exportsAs(LexicalName v, string name) {
     this.getReExportedES2015Module().exportsAs(v, name) and
     not isShadowedFromBulkExport(this, name)
   }
 
+  overlay[global]
   override DataFlow::Node getSourceNode(string name) {
     result = this.getReExportedES2015Module().getAnExport().getSourceNode(name)
   }
@@ -413,6 +442,7 @@ class BulkReExportDeclaration extends ReExportDeclaration, @export_all_declarati
  * At runtime, the interface `X` will have been removed, so `X` is actually re-exported anyway,
  * but we ignore this subtlety.
  */
+overlay[global]
 private predicate isShadowedFromBulkExport(BulkReExportDeclaration reExport, string name) {
   exists(ExportNamedDeclaration other | other.getTopLevel() = reExport.getEnclosingModule() |
     other.getAnExportedDecl().getName() = name
@@ -435,6 +465,7 @@ class ExportDefaultDeclaration extends ExportDeclaration, @export_default_declar
   /** Gets the operand statement or expression that is exported by this declaration. */
   ExprOrStmt getOperand() { result = this.getChild(0) }
 
+  overlay[global]
   override predicate exportsAs(LexicalName v, string name) {
     name = "default" and v = this.getADecl().getVariable()
   }
@@ -447,6 +478,7 @@ class ExportDefaultDeclaration extends ExportDeclaration, @export_default_declar
     )
   }
 
+  overlay[global]
   override DataFlow::Node getSourceNode(string name) {
     name = "default" and result = DataFlow::valueNode(this.getOperand())
   }
@@ -489,6 +521,7 @@ class ExportNamedDeclaration extends ExportDeclaration, @export_named_declaratio
   /** Gets the variable declaration, if any, exported by this named export. */
   VarDecl getADecl() { result = this.getAnExportedDecl() }
 
+  overlay[global]
   override predicate exportsAs(LexicalName v, string name) {
     exists(LexicalDecl vd | vd = this.getAnExportedDecl() |
       name = vd.getName() and v = vd.getALexicalName()
@@ -501,6 +534,7 @@ class ExportNamedDeclaration extends ExportDeclaration, @export_named_declaratio
     )
   }
 
+  overlay[global]
   override DataFlow::Node getSourceNode(string name) {
     exists(VarDef d | d.getTarget() = this.getADecl() |
       name = d.getTarget().(VarDecl).getName() and
@@ -538,6 +572,7 @@ class ExportNamedDeclaration extends ExportDeclaration, @export_named_declaratio
 
 private import semmle.javascript.dataflow.internal.PreCallGraphStep
 
+overlay[global]
 private class ExportNamespaceStep extends PreCallGraphStep {
   override predicate storeStep(DataFlow::Node pred, DataFlow::SourceNode succ, string prop) {
     exists(ExportNamedDeclaration exprt, ExportNamespaceSpecifier spec |
@@ -555,6 +590,7 @@ private class ExportNamespaceStep extends PreCallGraphStep {
 private class TypeOnlyExportDeclaration extends ExportNamedDeclaration {
   TypeOnlyExportDeclaration() { this.isTypeOnly() }
 
+  overlay[global]
   override predicate exportsAs(LexicalName v, string name) {
     super.exportsAs(v, name) and
     not v instanceof Variable
@@ -728,9 +764,11 @@ abstract class ReExportDeclaration extends ExportDeclaration {
   abstract ConstantString getImportedPath();
 
   /** Gets the module from which this declaration re-exports, if it is an ES2015 module. */
+  overlay[global]
   ES2015Module getReExportedES2015Module() { result = this.getReExportedModule() }
 
   /** Gets the module from which this declaration re-exports. */
+  overlay[global]
   cached
   Module getReExportedModule() {
     Stages::Imports::ref() and
@@ -739,6 +777,7 @@ abstract class ReExportDeclaration extends ExportDeclaration {
 }
 
 /** A literal path expression appearing in a re-export declaration. */
+overlay[global]
 deprecated private class LiteralReExportPath extends PathExpr, ConstantString {
   LiteralReExportPath() { exists(ReExportDeclaration bred | this = bred.getImportedPath()) }
 
@@ -778,11 +817,13 @@ class SelectiveReExportDeclaration extends ReExportDeclaration, ExportNamedDecla
 class OriginalExportDeclaration extends ExportDeclaration {
   OriginalExportDeclaration() { not this instanceof ReExportDeclaration }
 
+  overlay[global]
   override predicate exportsAs(LexicalName v, string name) {
     this.(ExportDefaultDeclaration).exportsAs(v, name) or
     this.(ExportNamedDeclaration).exportsAs(v, name)
   }
 
+  overlay[global]
   override DataFlow::Node getSourceNode(string name) {
     result = this.(ExportDefaultDeclaration).getSourceNode(name) or
     result = this.(ExportNamedDeclaration).getSourceNode(name)

@@ -7,6 +7,21 @@ private import semmle.javascript.internal.CachedStages
 private import semmle.javascript.dataflow.internal.DataFlowNode
 
 /**
+ * Local base class for `NodeModule`. Needed since overriding AST methods need
+ * to be local, while subclassing `Module` currently needs to be global.
+ */
+overlay[local]
+private class NodeModuleBase extends TopLevel {
+  NodeModuleBase() {
+    is_module(this) and
+    is_nodejs(this)
+  }
+
+  /** Gets the scope induced by this module. */
+  override ModuleScope getScope() { result.getScopeElement() = this }
+}
+
+/**
  * A Node.js module.
  *
  * Example:
@@ -17,20 +32,12 @@ private import semmle.javascript.dataflow.internal.DataFlowNode
  *   process.stdout.write(fs.readFileSync(process.argv[i], 'utf8'));
  * ```
  */
-class NodeModule extends Module {
-  NodeModule() {
-    is_module(this) and
-    is_nodejs(this)
-  }
-
+class NodeModule extends NodeModuleBase, Module {
   /** Gets the `module` variable of this module. */
   Variable getModuleVariable() { result = this.getScope().getVariable("module") }
 
   /** Gets the `exports` variable of this module. */
   Variable getExportsVariable() { result = this.getScope().getVariable("exports") }
-
-  /** Gets the scope induced by this module. */
-  override ModuleScope getScope() { result.getScopeElement() = this }
 
   /**
    * Gets an abstract value representing one or more values that may flow
