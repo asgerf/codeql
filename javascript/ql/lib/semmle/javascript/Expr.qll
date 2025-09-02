@@ -264,6 +264,7 @@ class Expr extends @expr, ExprOrStmt, ExprOrType, AST::ValueNode {
   }
 }
 
+overlay[caller]
 pragma[inline]
 private Stmt getRawEnclosingStmt(Expr e) {
   // For performance reasons, we need the enclosing statement without overrides
