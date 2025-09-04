@@ -200,21 +200,6 @@ class ImportEqualsDeclaration extends Stmt, @import_equals_declaration {
 }
 
 /**
- * Local base class for `ExternalModuleReference`. Needed since overriding AST methods need
- * to be local, while subclassing `Import` currently needs to be global.
- */
-private class ExternalModuleReferenceBase extends Expr, @external_module_reference {
-  /** Gets the expression specifying the module. */
-  Expr getExpression() { result = this.getChildExpr(0) }
-
-  override ControlFlowNode getFirstControlFlowNode() {
-    result = this.getExpression().getFirstControlFlowNode()
-  }
-
-  override string getAPrimaryQlClass() { result = "ExternalModuleReference" }
-}
-
-/**
  * A `require()` call in a TypeScript import-equals declaration, such as `require("foo")` in:
  * ```
  * import foo = require("foo");
@@ -224,12 +209,21 @@ private class ExternalModuleReferenceBase extends Expr, @external_module_referen
  * and the compiled output depends on the `--module` flag passed to the
  * TypeScript compiler.
  */
-overlay[global]
-class ExternalModuleReference extends ExternalModuleReferenceBase, Import {
+class ExternalModuleReference extends Expr, @external_module_reference, Import {
+  /** Gets the expression specifying the module. */
+  Expr getExpression() { result = this.getChildExpr(0) }
+
+  override ControlFlowNode getFirstControlFlowNode() {
+    result = this.getExpression().getFirstControlFlowNode()
+  }
+
+  override string getAPrimaryQlClass() { result = "ExternalModuleReference" }
+
   override Expr getImportedPathExpr() { result = this.getExpression() }
 
   override Module getEnclosingModule() { result = this.getTopLevel() }
 
+  overlay[global]
   override DataFlow::Node getImportedModuleNode() { result = DataFlow::valueNode(this) }
 }
 

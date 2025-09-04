@@ -478,7 +478,6 @@ module AST {
 
     /** Gets the data flow node associated with this program element. */
     // TODO: relax when data flow node is local
-    overlay[global]
     DataFlow::ValueNode flow() { result = DataFlow::valueNode(this) }
 
     /**

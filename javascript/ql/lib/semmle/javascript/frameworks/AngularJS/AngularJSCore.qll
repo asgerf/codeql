@@ -24,24 +24,6 @@ DataFlow::SourceNode angular() {
 }
 
 /**
- * Holds if `tl` appears to be a top-level using the AngularJS library.
- *
- * Should not depend on the `SourceNode` class.
- */
-pragma[nomagic]
-private predicate isAngularTopLevel(TopLevel tl) {
-  exists(Import imprt |
-    imprt.getTopLevel() = tl and
-    imprt.getImportedPathString() = "angular"
-  )
-  or
-  exists(GlobalVarAccess global |
-    global.getName() = "angular" and
-    global.getTopLevel() = tl
-  )
-}
-
-/**
  * Holds if `m` is of the form `angular.module("name", ...)`.
  */
 private DataFlow::CallNode angularModuleCall(string name) {

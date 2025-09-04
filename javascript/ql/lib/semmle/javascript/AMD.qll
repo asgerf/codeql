@@ -2,6 +2,8 @@
  * Provides classes for working with
  * [Asynchronous Module Definitions](https://github.com/amdjs/amdjs-api/wiki/AMD).
  */
+overlay[local]
+module;
 
 import javascript
 private import semmle.javascript.internal.CachedStages
@@ -62,9 +64,11 @@ class AmdModuleDefinition extends CallExpr instanceof AmdModuleDefinition::Range
   }
 
   /** DEPRECATED. Use `getDependencyExpr` instead. */
+  overlay[global]
   deprecated PathExpr getDependency(int i) { result = this.getDependencyExpr(i) }
 
   /** DEPRECATED. Use `getADependencyExpr` instead. */
+  overlay[global]
   deprecated PathExpr getADependency() { result = this.getADependencyExpr() }
 
   /** Gets the `i`th dependency of this module definition. */

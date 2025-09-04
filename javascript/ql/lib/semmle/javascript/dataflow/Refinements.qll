@@ -27,6 +27,8 @@
  * so the refinement can evaluate to both `true` and `false` for the same
  * candidate value.
  */
+overlay[local]
+module;
 
 import javascript
 private import AbstractValues

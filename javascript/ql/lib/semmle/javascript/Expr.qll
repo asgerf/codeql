@@ -2845,10 +2845,16 @@ class FunctionBindExpr extends @bind_expr, Expr {
 }
 
 /**
- * Local base class for `DynamicImportExpr`. Needed since overriding AST methods need
- * to be local, while subclassing `Import` currently needs to be global.
+ * A dynamic import expression.
+ *
+ * Example:
+ *
+ * ```
+ * import("fs")
+ * import("foo", { with: { type: "json" }})
+ * ```
  */
-private class DynamicImportExprBase extends @dynamic_import, Expr {
+class DynamicImportExpr extends @dynamic_import, Expr, Import {
   /** Gets the expression specifying the path of the imported module. */
   Expr getSource() { result = this.getChildExpr(0) }
 
@@ -2878,24 +2884,12 @@ private class DynamicImportExprBase extends @dynamic_import, Expr {
   deprecated Expr getImportAttributes() { result = this.getImportOptions() }
 
   override string getAPrimaryQlClass() { result = "DynamicImportExpr" }
-}
 
-/**
- * A dynamic import expression.
- *
- * Example:
- *
- * ```
- * import("fs")
- * import("foo", { with: { type: "json" }})
- * ```
- */
-overlay[global]
-class DynamicImportExpr extends DynamicImportExprBase, Import {
   override Expr getImportedPathExpr() { result = this.getSource() }
 
   override Module getEnclosingModule() { result = this.getTopLevel() }
 
+  overlay[global]
   override DataFlow::Node getImportedModuleNode() { result = DataFlow::valueNode(this) }
 }
 

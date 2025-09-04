@@ -1,6 +1,8 @@
 /**
  * Provides JS specific classes and predicates for defining flow summaries.
  */
+overlay[local]
+module;
 
 private import javascript
 private import semmle.javascript.dataflow.internal.DataFlowPrivate

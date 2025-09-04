@@ -7,24 +7,6 @@ private import semmle.javascript.internal.CachedStages
 private import semmle.javascript.internal.paths.PathExprResolver
 
 /**
- * Local base class for `ES2015Module`. Needed since overriding AST methods need
- * to be local, while subclassing `Import` currently needs to be global.
- */
-private class ES2015ModuleBase extends TopLevel {
-  ES2015ModuleBase() { is_es2015_module(this) }
-
-  /** Gets an export declaration in this module. */
-  ExportDeclaration getAnExport() { result.getTopLevel() = this }
-
-  override predicate isStrict() {
-    // modules are implicitly strict
-    any()
-  }
-
-  override ModuleScope getScope() { result.getScopeElement() = this }
-}
-
-/**
  * An ECMAScript 2015 module.
  *
  * Example:
@@ -35,9 +17,18 @@ private class ES2015ModuleBase extends TopLevel {
  * console.log("Hello, world!");
  * ```
  */
-overlay[global]
-class ES2015Module extends ES2015ModuleBase, Module {
+class ES2015Module extends Module {
   ES2015Module() { is_es2015_module(this) }
+
+  /** Gets an export declaration in this module. */
+  ExportDeclaration getAnExport() { result.getTopLevel() = this }
+
+  override predicate isStrict() {
+    // modules are implicitly strict
+    any()
+  }
+
+  override ModuleScope getScope() { result.getScopeElement() = this }
 
   /** Gets the full path of the file containing this module. */
   override string getPath() { result = this.getFile().getAbsolutePath() }
@@ -45,11 +36,13 @@ class ES2015Module extends ES2015ModuleBase, Module {
   /** Gets the short name of this module without file extension. */
   override string getName() { result = this.getFile().getStem() }
 
+  overlay[global]
   override DataFlow::Node getAnExportedValue(string name) {
     exists(ExportDeclaration ed | ed = this.getAnExport() and result = ed.getSourceNode(name))
   }
 
   /** Holds if this module exports variable `v` under the name `name`. */
+  overlay[global]
   predicate exportsAs(LexicalName v, string name) { this.getAnExport().exportsAs(v, name) }
 
   /**
@@ -61,6 +54,7 @@ class ES2015Module extends ES2015ModuleBase, Module {
    * When a module has both named and `default` exports, the non-standard interpretation can lead to
    * ambiguities, so we only allow the standard interpretation in that case.
    */
+  overlay[global]
   predicate hasBothNamedAndDefaultExports() {
     hasNamedExports(this) and
     hasDefaultExport(this)
@@ -93,10 +87,16 @@ private predicate hasDefaultExport(ES2015Module mod) {
 }
 
 /**
- * Local base class for `ImportDeclaration`. Needed since overriding AST methods need
- * to be local, while subclassing `Import` currently needs to be global.
+ * An import declaration.
+ *
+ * Examples:
+ *
+ * ```
+ * import console, { log, error as fatal } from 'console';
+ * import * as console from 'console';
+ * ```
  */
-private class ImportDeclarationBase extends Stmt, @import_declaration {
+class ImportDeclaration extends Stmt, @import_declaration, Import {
   /**
    * INTERNAL USE ONLY. DO NOT USE.
    */
@@ -135,24 +135,12 @@ private class ImportDeclarationBase extends Stmt, @import_declaration {
   predicate isTypeOnly() { has_type_keyword(this) }
 
   override string getAPrimaryQlClass() { result = "ImportDeclaration" }
-}
 
-/**
- * An import declaration.
- *
- * Examples:
- *
- * ```
- * import console, { log, error as fatal } from 'console';
- * import * as console from 'console';
- * ```
- */
-overlay[global]
-class ImportDeclaration extends ImportDeclarationBase, Import {
   override ES2015Module getEnclosingModule() { result = this.getTopLevel() }
 
   override Expr getImportedPathExpr() { result = this.getChildExpr(-1) }
 
+  overlay[global]
   override DataFlow::Node getImportedModuleNode() {
     // `import * as http from 'http'` or `import http from `http`'
     exists(ImportSpecifier is |

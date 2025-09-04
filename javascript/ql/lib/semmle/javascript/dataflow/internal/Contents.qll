@@ -1,3 +1,6 @@
+overlay[local]
+module;
+
 private import javascript
 private import semmle.javascript.frameworks.data.internal.ApiGraphModels as ApiGraphModels
 private import semmle.javascript.dataflow.internal.FlowSummaryPrivate as FlowSummaryPrivate

@@ -1,6 +1,8 @@
 /**
  * Contains flow summaries and steps modelling flow through `Promise` objects.
  */
+overlay[local?]
+module;
 
 private import javascript
 private import semmle.javascript.dataflow.FlowSummary

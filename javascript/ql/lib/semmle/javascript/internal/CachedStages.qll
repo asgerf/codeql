@@ -112,6 +112,7 @@ module Stages {
   /**
    * The part of data flow computed before flow summary nodes.
    */
+  overlay[local]
   cached
   module EarlyDataFlowStage {
     /**
@@ -136,6 +137,7 @@ module Stages {
   /**
    * The `dataflow` stage.
    */
+  overlay[local]
   cached
   module DataFlowStage {
     /**
