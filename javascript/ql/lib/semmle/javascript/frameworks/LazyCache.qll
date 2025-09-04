@@ -42,7 +42,6 @@ module LazyCache {
 
     private LazyCacheVariable getVariable() { result = cache }
 
-    overlay[global]
     pragma[noopt]
     override DataFlow::Node getImportedModuleNode() {
       this instanceof LazyCacheImport and

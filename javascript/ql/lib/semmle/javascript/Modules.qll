@@ -215,7 +215,6 @@ abstract class Import extends AstNode {
    * interpretations of default imports, this node is usually treated as also referring to the whole module.
    * If this behaviour is not wanted, use `isDefaultImport()` to handle that case differently.
    */
-  overlay[global]
   abstract DataFlow::Node getImportedModuleNode();
 
   /**
@@ -241,6 +240,7 @@ abstract class Import extends AstNode {
    *
    * This is to avoid ambiguity between named export bindings and the properties of the default-exported object.
    */
+  overlay[global]
   pragma[nomagic]
   final DataFlow::Node getImportedModuleNodeIfUnambiguous() {
     if

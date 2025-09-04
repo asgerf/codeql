@@ -1113,11 +1113,13 @@ private predicate sameContainerAsEnclosingContainer(Node node, Function fun) {
   node.getContainer() = fun.getEnclosingContainer()
 }
 
+overlay[global]
 abstract private class BarrierGuardAdapter extends DataFlow::Node {
   // Note: avoid depending on DataFlow::FlowLabel here as it will cause these barriers to be re-evaluated
   predicate blocksExpr(boolean outcome, Expr e) { none() }
 }
 
+overlay[global]
 deprecated private class BarrierGuardAdapterSubclass extends BarrierGuardAdapter instanceof DataFlow::AdditionalBarrierGuardNode
 {
   override predicate blocksExpr(boolean outcome, Expr e) { super.blocks(outcome, e) }
@@ -1129,6 +1131,7 @@ deprecated private class BarrierGuardAdapterSubclass extends BarrierGuardAdapter
  *
  * The standard library contains no subclasses of that class; this is for backwards compatibility only.
  */
+overlay[global]
 pragma[nomagic]
 private predicate legacyBarrier(DataFlow::Node node) {
   node = MakeBarrierGuard<BarrierGuardAdapter>::getABarrierNode()
@@ -1137,6 +1140,7 @@ private predicate legacyBarrier(DataFlow::Node node) {
 /**
  * Holds if `node` should be removed from the local data flow graph, for compatibility with legacy code.
  */
+overlay[global]
 pragma[nomagic]
 private predicate isBlockedLegacyNode(Node node) {
   // Ignore captured variable nodes for those variables that are handled by the captured-variable library.

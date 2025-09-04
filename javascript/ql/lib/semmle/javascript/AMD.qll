@@ -340,7 +340,6 @@ private class AmdDependencyImport extends Import {
     result = this.resolveByAbsolutePath()
   }
 
-  overlay[global]
   override DataFlow::Node getImportedModuleNode() {
     exists(Parameter param |
       any(AmdModuleDefinition def).dependencyParameter(this, param) and

@@ -223,7 +223,6 @@ class ExternalModuleReference extends Expr, @external_module_reference, Import {
 
   override Module getEnclosingModule() { result = this.getTopLevel() }
 
-  overlay[global]
   override DataFlow::Node getImportedModuleNode() { result = DataFlow::valueNode(this) }
 }
 
@@ -1672,7 +1671,6 @@ class ExternalModuleScope extends @external_module_scope, Scope {
  * var s = net.createServer(); // this reference to net is an import
  * ```
  */
-overlay[global]
 class TSGlobalDeclImport extends DataFlow::ModuleImportNode::Range {
   string path;
 

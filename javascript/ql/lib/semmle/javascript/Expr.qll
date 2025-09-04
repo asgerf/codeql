@@ -2888,7 +2888,6 @@ class DynamicImportExpr extends @dynamic_import, Expr, Import {
 
   override Module getEnclosingModule() { result = this.getTopLevel() }
 
-  overlay[global]
   override DataFlow::Node getImportedModuleNode() { result = DataFlow::valueNode(this) }
 }
 

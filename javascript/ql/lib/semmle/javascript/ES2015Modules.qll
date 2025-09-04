@@ -140,7 +140,6 @@ class ImportDeclaration extends Stmt, @import_declaration, Import {
 
   override Expr getImportedPathExpr() { result = this.getChildExpr(-1) }
 
-  overlay[global]
   override DataFlow::Node getImportedModuleNode() {
     // `import * as http from 'http'` or `import http from `http`'
     not exists(DataFlow::destructuredModuleImportNode(this)) and
@@ -280,7 +279,6 @@ class ImportNamespaceSpecifier extends ImportSpecifier, @import_namespace_specif
  * import * as console from 'console';
  * ```
  */
-overlay[global]
 class BulkImportDeclaration extends ImportDeclaration {
   BulkImportDeclaration() { this.getASpecifier() instanceof ImportNamespaceSpecifier }
 

@@ -382,7 +382,6 @@ class GlobalVarRefNode extends DataFlow::ValueNode, DataFlow::SourceNode {
  * require('global/window')
  * ```
  */
-overlay[global]
 DataFlow::SourceNode globalObjectRef() {
   // top-level `this`
   exists(StmtContainer sc |
@@ -418,7 +417,6 @@ DataFlow::SourceNode globalObjectRef() {
  * require('global/foo')
  * ```
  */
-overlay[global]
 private DataFlow::SourceNode globalVariable(string name) {
   result.(GlobalVarRefNode).getName() = name
   or
@@ -440,7 +438,6 @@ private DataFlow::SourceNode globalVariable(string name) {
  * require('global/document')
  * ```
  */
-overlay[global]
 pragma[nomagic]
 DataFlow::SourceNode globalVarRef(string name) {
   result = globalVariable(name)
@@ -731,13 +728,11 @@ class ArrayCreationNode extends DataFlow::ValueNode, DataFlow::SourceNode {
  * define(["fs"], function(fs) { ... }); // AMD module
  * ```
  */
-overlay[global]
 class ModuleImportNode extends DataFlow::SourceNode instanceof ModuleImportNode::Range {
   /** Gets the path of the imported module. */
   string getPath() { result = super.getPath() }
 }
 
-overlay[global]
 module ModuleImportNode {
   /**
    * A data flow node that refers to an imported module.
@@ -775,11 +770,10 @@ module ModuleImportNode {
  *
  * This predicate can be extended by subclassing `ModuleImportNode::Range`.
  */
-overlay[global]
 cached
 ModuleImportNode moduleImport(string path) {
   // NB. internal modules may be imported with a "node:" prefix
-  Stages::Imports::ref() and result.getPath() = ["node:" + path, path]
+  result.getPath() = ["node:" + path, path]
 }
 
 /**
@@ -1348,6 +1342,7 @@ class ClassNode extends DataFlow::ValueNode, DataFlow::SourceNode {
 /**
  * Helper predicate to get a prototype reference in a file.
  */
+overlay[global]
 private DataFlow::PropRef getAPrototypeReferenceInFile(string name, File f) {
   result.getBase() = AccessPath::getAReferenceOrAssignmentTo(name) and
   result.getPropertyName() = "prototype" and
@@ -1357,6 +1352,7 @@ private DataFlow::PropRef getAPrototypeReferenceInFile(string name, File f) {
 /**
  * Helper predicate to get an instantiation in a file.
  */
+overlay[global]
 private DataFlow::NewNode getAnInstantiationInFile(string name, File f) {
   result = AccessPath::getAReferenceTo(name).(DataFlow::LocalSourceNode).getAnInstantiation() and
   result.getFile() = f
@@ -1365,6 +1361,7 @@ private DataFlow::NewNode getAnInstantiationInFile(string name, File f) {
 /**
  * Gets a reference to the function `func`, where there exists a read/write of the "prototype" property on that reference.
  */
+overlay[global]
 pragma[noinline]
 private DataFlow::SourceNode getAFunctionValueWithPrototype(AbstractValue func) {
   exists(result.getAPropertyReference("prototype")) and
@@ -1372,6 +1369,7 @@ private DataFlow::SourceNode getAFunctionValueWithPrototype(AbstractValue func) 
   func instanceof AbstractCallable // the join-order goes bad if `func` has type `AbstractFunction`.
 }
 
+overlay[global]
 module ClassNode {
   /**
    * A dataflow node that should be considered a class node.
