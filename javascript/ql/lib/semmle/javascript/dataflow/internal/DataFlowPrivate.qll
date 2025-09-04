@@ -1708,14 +1708,12 @@ class ParameterNode extends DataFlow::Node {
 
 cached
 private module OptionalSteps {
-  overlay[global]
   cached
   predicate optionalStep(Node node1, string name, Node node2) {
     FlowSummaryPrivate::Steps::summaryReadStep(node1.(FlowSummaryNode).getSummaryNode(),
       MkOptionalStep(name), node2.(FlowSummaryNode).getSummaryNode())
   }
 
-  overlay[global]
   cached
   predicate optionalBarrier(Node node, string name) {
     FlowSummaryPrivate::Steps::summaryReadStep(_, MkOptionalBarrier(name),

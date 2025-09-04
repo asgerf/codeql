@@ -259,7 +259,7 @@ class Expr extends @expr, ExprOrStmt, ExprOrType, AST::ValueNode {
    * Gets the data-flow node where exceptions thrown by this expression will
    * propagate if this expression causes an exception to be thrown.
    */
-  overlay[global]
+  overlay[caller]
   pragma[inline]
   DataFlow::Node getExceptionTarget() {
     result = getCatchParameterFromStmt(this.getRawEnclosingStmt(this))
@@ -270,7 +270,6 @@ class Expr extends @expr, ExprOrStmt, ExprOrType, AST::ValueNode {
   }
 }
 
-overlay[global]
 cached
 private DataFlow::Node getCatchParameterFromStmt(Stmt stmt) {
   Stages::DataFlowStage::ref() and

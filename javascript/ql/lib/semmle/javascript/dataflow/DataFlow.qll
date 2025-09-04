@@ -66,6 +66,7 @@ module DataFlow {
      * `p.getALocalSource()` does _not_ return the corresponding argument, and
      * `p.isIncomplete("call")` holds.
      */
+    overlay[global]
     predicate isIncomplete(Incompleteness cause) { isIncomplete(this, cause) }
 
     /** Gets type inference results for this data flow node. */
@@ -101,6 +102,7 @@ module DataFlow {
      * Holds if this data flow node accesses the global variable `g`, either directly
      * or through the `window` object.
      */
+    overlay[global]
     predicate accessesGlobal(string g) { globalVarRef(g).flowsTo(this) }
 
     /** Holds if this node may evaluate to the string `s`, possibly through local data flow. */
@@ -198,6 +200,7 @@ module DataFlow {
       FlowSteps::identityFunctionStep(result, this)
     }
 
+    overlay[global]
     private NameResolution::Node getNameResolutionNode() {
       this = valueNode(result)
       or
@@ -1831,6 +1834,7 @@ module DataFlow {
    * `p.getALocalSource()` does _not_ return the corresponding argument, and
    * `p.isIncomplete("call")` holds.
    */
+  overlay[global]
   predicate isIncomplete(Node nd, Incompleteness cause) {
     exists(SsaVariable ssa | nd = TSsaDefNode(ssa.getDefinition()) |
       defIsIncomplete(ssa.(SsaExplicitDefinition).getDef(), cause)

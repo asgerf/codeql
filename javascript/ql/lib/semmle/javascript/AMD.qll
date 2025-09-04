@@ -198,16 +198,19 @@ class AmdModuleDefinition extends CallExpr instanceof AmdModuleDefinition::Range
    * Gets an abstract value representing one or more values that may flow
    * into this module's `module.exports` property.
    */
+  overlay[global]
   DefiniteAbstractValue getAModuleExportsValue() {
     result = [this.getAnImplicitExportsValue(), this.getAnExplicitExportsValue()]
   }
 
+  overlay[global]
   pragma[noinline, nomagic]
   private AbstractValue getAnImplicitExportsValue() {
     // implicit exports: anything that is returned from the factory function
     result = this.getModuleExpr().analyze().getAValue()
   }
 
+  overlay[global]
   pragma[noinline]
   private AbstractValue getAnExplicitExportsValue() {
     // explicit exports: anything assigned to `module.exports`
@@ -231,6 +234,7 @@ class AmdModuleDefinition extends CallExpr instanceof AmdModuleDefinition::Range
 private predicate isPseudoDependency(string s) { s = ["exports", "require", "module"] }
 
 /** An AMD dependency, considered as a path expression. */
+overlay[global]
 private class AmdDependencyPath extends PathExprCandidate {
   AmdDependencyPath() {
     exists(AmdModuleDefinition amd |
@@ -243,6 +247,7 @@ private class AmdDependencyPath extends PathExprCandidate {
 }
 
 /** A constant path element appearing in an AMD dependency expression. */
+overlay[global]
 deprecated private class ConstantAmdDependencyPathElement extends PathExpr, ConstantString {
   ConstantAmdDependencyPathElement() { this = any(AmdDependencyPath amd).getAPart() }
 
@@ -285,6 +290,7 @@ private class AmdDependencyImport extends Import {
    * Specifically, we look for files whose absolute path ends with the imported path, possibly
    * adding well-known JavaScript file extensions like `.js`.
    */
+  overlay[global]
   private File guessTarget() {
     exists(FilePath imported, string abspath, string dirname, string basename |
       this.targetCandidate(result, abspath, imported, dirname, basename)
@@ -307,6 +313,7 @@ private class AmdDependencyImport extends Import {
    * Additionally, `abspath` is bound to the absolute path of `f`, `imported` to the imported path, and
    * `dirname` and `basename` to the dirname and basename (respectively) of `imported`.
    */
+  overlay[global]
   private predicate targetCandidate(
     File f, string abspath, FilePath imported, string dirname, string basename
   ) {
@@ -320,10 +327,12 @@ private class AmdDependencyImport extends Import {
   /**
    * Gets the module whose absolute path matches this import, if there is only a single such module.
    */
+  overlay[global]
   private Module resolveByAbsolutePath() {
     result.getFile() = unique(File file | file = this.guessTarget())
   }
 
+  overlay[global]
   override Module getImportedModule() {
     result = super.getImportedModule()
     or
@@ -331,6 +340,7 @@ private class AmdDependencyImport extends Import {
     result = this.resolveByAbsolutePath()
   }
 
+  overlay[global]
   override DataFlow::Node getImportedModuleNode() {
     exists(Parameter param |
       any(AmdModuleDefinition def).dependencyParameter(this, param) and
@@ -357,6 +367,7 @@ class AmdModule extends Module {
   /** Gets the definition of this module. */
   AmdModuleDefinition getDefine() { amdModuleTopLevel(result, this) }
 
+  overlay[global]
   override DataFlow::Node getAnExportedValue(string name) {
     exists(DataFlow::PropWrite pwn | result = pwn.getRhs() |
       pwn.getBase().analyze().getAValue() = this.getDefine().getAModuleExportsValue() and
@@ -364,6 +375,7 @@ class AmdModule extends Module {
     )
   }
 
+  overlay[global]
   override DataFlow::Node getABulkExportedNode() {
     // Assigned to `module.exports` via the factory's `module` parameter
     exists(AbstractModuleObject m, DataFlow::PropWrite write |

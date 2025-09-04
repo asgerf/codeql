@@ -47,6 +47,7 @@ abstract class RefinementCandidate extends Expr {
   /**
    * Gets a refinement value inferred for this expression in context `ctxt`.
    */
+  overlay[global]
   pragma[nomagic]
   abstract RefinementValue eval(RefinementContext ctxt);
 }
@@ -66,6 +67,7 @@ class Refinement extends Expr instanceof RefinementCandidate {
   /**
    * Gets a refinement value inferred for this expression in context `ctxt`.
    */
+  overlay[global]
   RefinementValue eval(RefinementContext ctxt) { result = super.eval(ctxt) }
 }
 
@@ -73,6 +75,7 @@ class Refinement extends Expr instanceof RefinementCandidate {
 abstract private class LiteralRefinement extends RefinementCandidate, Literal {
   override SsaSourceVariable getARefinedVar() { none() }
 
+  overlay[global]
   override RefinementValue eval(RefinementContext ctxt) {
     ctxt.appliesTo(this) and result = this.eval()
   }
@@ -80,16 +83,19 @@ abstract private class LiteralRefinement extends RefinementCandidate, Literal {
   /**
    * Gets the refinement value that represents this literal.
    */
+  overlay[global]
   RefinementValue eval() { result = TAny() }
 }
 
 /** A `null` literal, viewed as a refinement expression. */
 private class NullLiteralRefinement extends LiteralRefinement, NullLiteral {
+  overlay[global]
   override RefinementValue eval() { result = TValueWithType(TTNull()) }
 }
 
 /** A Boolean literal, viewed as a refinement expression. */
 private class BoolRefinement extends LiteralRefinement, BooleanLiteral {
+  overlay[global]
   override RefinementValue eval() {
     exists(boolean b | b.toString() = this.getValue() | result = TBoolConstant(b))
   }
@@ -97,11 +103,13 @@ private class BoolRefinement extends LiteralRefinement, BooleanLiteral {
 
 /** A constant string, viewed as a refinement expression. */
 private class StringRefinement extends LiteralRefinement, ConstantString {
+  overlay[global]
   override RefinementValue eval() { result = TStringConstant(this.getStringValue()) }
 }
 
 /** A numeric literal, viewed as a refinement expression. */
 abstract private class NumberRefinement extends LiteralRefinement, NumberLiteral {
+  overlay[global]
   override RefinementValue eval() { result = TValueWithType(TTNumber()) }
 }
 
@@ -114,6 +122,7 @@ abstract private class NumberRefinement extends LiteralRefinement, NumberLiteral
 private class IntRefinement extends NumberRefinement, NumberLiteral {
   IntRefinement() { this.getValue().toInt() = 0 }
 
+  overlay[global]
   override RefinementValue eval() { result = TIntConstant(this.getValue().toInt()) }
 }
 
@@ -125,6 +134,7 @@ private class UndefinedInRefinement extends RefinementCandidate,
 {
   override SsaSourceVariable getARefinedVar() { none() }
 
+  overlay[global]
   override RefinementValue eval(RefinementContext ctxt) {
     ctxt.appliesTo(this) and
     result = TValueWithType(TTUndefined())
@@ -137,6 +147,7 @@ private class VariableRefinement extends RefinementCandidate, VarUse {
 
   override SsaSourceVariable getARefinedVar() { result = this.getVariable() }
 
+  overlay[global]
   override RefinementValue eval(RefinementContext ctxt) {
     ctxt.appliesTo(this) and
     result = ctxt.(VarRefinementContext).getAValue()
@@ -151,6 +162,7 @@ private class ParRefinement extends RefinementCandidate, ParExpr {
     result = this.getExpression().(RefinementCandidate).getARefinedVar()
   }
 
+  overlay[global]
   override RefinementValue eval(RefinementContext ctxt) {
     result = this.getExpression().(RefinementCandidate).eval(ctxt)
   }
@@ -164,6 +176,7 @@ private class TypeofRefinement extends RefinementCandidate, TypeofExpr {
     result = this.getOperand().(RefinementCandidate).getARefinedVar()
   }
 
+  overlay[global]
   override RefinementValue eval(RefinementContext ctxt) {
     exists(RefinementValue opVal |
       opVal = this.getOperand().(RefinementCandidate).eval(ctxt) and
@@ -184,6 +197,7 @@ private class EqRefinement extends RefinementCandidate, EqualityTest {
     result = this.getRightOperand().(RefinementCandidate).getARefinedVar()
   }
 
+  overlay[global]
   override RefinementValue eval(RefinementContext ctxt) {
     exists(RefinementCandidate l, RefinementValue lv, RefinementCandidate r, RefinementValue rv |
       l = this.getLeftOperand() and
@@ -222,6 +236,7 @@ private class IndexRefinement extends RefinementCandidate, IndexExpr {
     result = this.getIndex().(RefinementCandidate).getARefinedVar()
   }
 
+  overlay[global]
   override RefinementValue eval(RefinementContext ctxt) {
     exists(
       RefinementCandidate base, RefinementValue baseVal, RefinementCandidate index,
@@ -244,6 +259,7 @@ private class IndexRefinement extends RefinementCandidate, IndexExpr {
  * if any.
  */
 bindingset[s, i]
+overlay[global]
 private RefinementValue evalIndex(StringConstant s, IntConstant i) {
   result = TStringConstant(s.getValue().charAt(i.getValue()))
 }
@@ -251,6 +267,7 @@ private RefinementValue evalIndex(StringConstant s, IntConstant i) {
 /**
  * A context in which a refinement expression is analyzed.
  */
+overlay[global]
 newtype TRefinementContext =
   /**
    * A refinement context associated with refinement `ref`, specifying that variable `var`
@@ -268,6 +285,7 @@ newtype TRefinementContext =
 /**
  * A context in which a refinement expression is analyzed.
  */
+overlay[global]
 class RefinementContext extends TRefinementContext {
   /**
    * Holds if refinement expression `cand` might be analyzed in this context.
@@ -282,6 +300,7 @@ class RefinementContext extends TRefinementContext {
  * A refinement context specifying that some variable is assumed to have one particular
  * abstract value.
  */
+overlay[global]
 class VarRefinementContext extends RefinementContext, TVarRefinementContext {
   override predicate appliesTo(RefinementCandidate cand) {
     exists(AnalyzedRefinement ref, SsaSourceVariable var |

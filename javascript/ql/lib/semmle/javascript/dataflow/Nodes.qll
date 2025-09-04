@@ -220,6 +220,7 @@ class InvokeNode extends DataFlow::SourceNode instanceof DataFlow::Impl::InvokeN
    * Holds if the approximation of possible callees for this call site is
    * affected by the given analysis incompleteness `cause`.
    */
+  overlay[global]
   predicate isIndefinite(DataFlow::Incompleteness cause) {
     this.getACalleeValue().isIndefinite(cause)
   }
@@ -235,6 +236,7 @@ class InvokeNode extends DataFlow::SourceNode instanceof DataFlow::Impl::InvokeN
    * independent contexts, so tracking flow through it leads to
    * imprecision.
    */
+  overlay[global]
   predicate isImprecise() {
     this.isIndefinite("global") and
     exists(DefiniteAbstractValue v | v = this.getACalleeValue() | not v instanceof AbstractCallable)
@@ -244,6 +246,7 @@ class InvokeNode extends DataFlow::SourceNode instanceof DataFlow::Impl::InvokeN
    * Holds if our approximation of possible callees for this call site is
    * likely to be incomplete.
    */
+  overlay[global]
   predicate isIncomplete() {
     // the flow analysis identifies a source of incompleteness other than
     // global flow (which usually leads to imprecision rather than incompleteness)
@@ -254,6 +257,7 @@ class InvokeNode extends DataFlow::SourceNode instanceof DataFlow::Impl::InvokeN
    * Holds if our approximation of possible callees for this call site is
    * likely to be imprecise or incomplete.
    */
+  overlay[global]
   predicate isUncertain() { this.isImprecise() or this.isIncomplete() }
 
   /**
