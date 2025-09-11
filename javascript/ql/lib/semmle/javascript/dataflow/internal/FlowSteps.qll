@@ -9,16 +9,7 @@ deprecated import semmle.javascript.dataflow.Configuration
 import semmle.javascript.dataflow.internal.CallGraphs
 private import semmle.javascript.internal.CachedStages
 private import semmle.javascript.internal.ModuleResolution as ModuleResolution
-
-/**
- * Holds if flow should be tracked through properties of `obj`.
- *
- * Flow is tracked through `module` and `module.exports` objects.
- */
-predicate shouldTrackProperties(AbstractValue obj) {
-  obj instanceof AbstractExportsObject or
-  obj instanceof AbstractModuleObject
-}
+private import semmle.javascript.internal.NameResolution
 
 /**
  * Holds if `source` corresponds to an expression returned by `f`, and
