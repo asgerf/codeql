@@ -348,6 +348,25 @@ private module CachedSteps {
   }
 
   /**
+   * Holds if there is a flow step from `pred` to `succ` through an object property.
+   */
+  private predicate test_propertyFlowStep(DataFlow::Node pred, DataFlow::Node succ) {
+    propertyFlowStep(pred, succ) and
+    succ.asExpr().(ImportSpecifier).getLocal().(Identifier).getName() = "Color" and
+    succ instanceof DataFlow::SourceNode
+  }
+
+  private DataFlow::ClassNode colorClass() {
+    result.getName() = "Color" and result.getFile().getBaseName() = "color.ts"
+  }
+
+  private DataFlow::Node colorClassTest() {
+    result = colorClass().getAnInstanceReference() and
+    // result.getFile().getBaseName() = "diffEditorWidget.ts"
+    result.getLocation().getStartLine() = 343
+  }
+
+  /**
    * Gets a node whose value is assigned to `gv` in `f`.
    */
   pragma[noinline]

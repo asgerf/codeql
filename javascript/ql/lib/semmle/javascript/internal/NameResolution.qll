@@ -509,6 +509,15 @@ module NameResolution {
       )
     }
 
+    predicate resolvedReadStep_test(Node node1, Node node2) {
+      exists(Node base, string name, ModuleLike mod |
+        readStep(base, name, node2) and
+        base = trackModule(mod) and
+        node1 = getModuleExport(mod, name) and
+        node1 instanceof Variable
+      )
+    }
+
     /**
      * Holds if data should propagate from `node1` to `node2`.
      */
