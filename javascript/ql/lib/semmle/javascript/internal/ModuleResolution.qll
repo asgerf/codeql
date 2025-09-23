@@ -222,7 +222,7 @@ private module Debug {
     or
     exists(Module mod |
       current1(TExportNode(mod.getFile()), node2) and
-      node1 = exportsRhs(mod).getALocalSource()
+      node1 = exportsRef(mod)
     )
   }
 
