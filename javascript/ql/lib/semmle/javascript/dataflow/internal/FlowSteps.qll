@@ -8,6 +8,7 @@ import javascript
 deprecated import semmle.javascript.dataflow.Configuration
 import semmle.javascript.dataflow.internal.CallGraphs
 private import semmle.javascript.internal.CachedStages
+private import semmle.javascript.internal.ModuleResolution as ModuleResolution
 
 /**
  * Holds if flow should be tracked through properties of `obj`.
@@ -338,28 +339,11 @@ private module CachedSteps {
   }
 
   /**
-   * Holds if there is an assignment to property `prop` of an object represented by `obj`
-   * with right hand side `rhs` somewhere, and properties of `obj` should be tracked.
-   */
-  pragma[noinline]
-  private predicate trackedPropertyWrite(AbstractValue obj, string prop, DataFlow::Node rhs) {
-    exists(AnalyzedPropertyWrite pw |
-      pw.writes(obj, prop, rhs) and
-      shouldTrackProperties(obj) and
-      // avoid introducing spurious global flow
-      not pw.baseIsIncomplete("global")
-    )
-  }
-
-  /**
    * Holds if there is a flow step from `pred` to `succ` through an object property.
    */
   cached
   predicate propertyFlowStep(DataFlow::Node pred, DataFlow::Node succ) {
-    exists(AbstractValue obj, string prop |
-      trackedPropertyWrite(obj, prop, pred) and
-      succ.(AnalyzedPropertyRead).reads(obj, prop)
-    )
+    ModuleResolution::moduleResolutionStep(pred, succ)
   }
 
   /**
@@ -436,7 +420,7 @@ private module CachedSteps {
    */
   cached
   predicate basicStoreStep(DataFlow::Node pred, DataFlow::Node succ, string prop) {
-    succ.(DataFlow::SourceNode).hasPropertyWrite(prop, pred)
+    ModuleResolution::storeStep(pred, prop, succ)
     or
     exists(GlobalVariable gv, File f |
       globalPropertyWrite(gv, f, prop, pred) and

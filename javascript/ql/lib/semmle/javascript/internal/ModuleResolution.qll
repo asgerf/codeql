@@ -159,6 +159,23 @@ predicate storeReadStep(DataFlow::Node node1, DataFlow::SourceNode node2) {
   )
 }
 
+predicate moduleResolutionStep(DataFlow::Node node1, DataFlow::Node node2) {
+  storeReadStep(node1, node2)
+  or
+  exists(Import imprt |
+    node1 = TExportNode(imprt.getImportedFile()) and
+    node2 = imprt.getImportedModuleNodeStrict()
+  )
+  or
+  exists(Module mod |
+    node1 = exportsRhs(mod).getALocalSource() and
+    node2 = TExportNode(mod.getFile())
+    or
+    node1 = TExportNode(mod.getFile()) and
+    node2 = exportsRef(mod)
+  )
+}
+
 private module Debug {
   private predicate baseline(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
     FlowSteps::propertyFlowStep(node1.getALocalUse(), node2)
