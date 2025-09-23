@@ -193,17 +193,40 @@ class Variable extends @variable, LexicalName {
   VarDef getADefinition() { result.getAVariable() = this }
 
   /** Gets an expression that is directly stored in this variable. */
-  Expr getAnAssignedExpr() {
+  Expr getAnAssignedExpr() { result = this.getAnAssignedValue() }
+
+  /** Gets an expression or declaration that is directly stored in this variable. */
+  AST::ValueNode getAnAssignedValue() {
     // result is an expression that this variable is initialized to
     exists(VariableDeclarator vd | vd.getBindingPattern().(VarDecl).getVariable() = this |
       result = vd.getInit()
     )
     or
-    // if this variable represents a function binding, return the function
-    exists(FunctionExpr fn | fn.getVariable() = this | result = fn)
+    // a destructuring pattern stores into this variable
+    result = this.getAReference() and
+    result = any(DestructuringPattern p).getABindingVarRef()
+    or
+    // if this variable represents a value declaration, return the function
+    result.(Function).getVariable() = this
+    or
+    result.(ClassDefinition).getVariable() = this
+    or
+    result.(EnumDeclaration).getVariable() = this
+    or
+    result.(NamespaceDeclaration).getIdentifier() = this.getAReference()
     or
     // there is an assignment to this variable
     exists(Assignment assgn | assgn.getLhs() = this.getAnAccess() and assgn.getRhs() = result)
+    or
+    exists(ImportEqualsDeclaration imprt |
+      this.getAReference() = imprt.getIdentifier() and
+      result = imprt.getImportedEntity()
+    )
+    or
+    exists(ImportSpecifier spec |
+      this.getAReference() = spec.getLocal() and
+      result = spec
+    )
   }
 
   /**
