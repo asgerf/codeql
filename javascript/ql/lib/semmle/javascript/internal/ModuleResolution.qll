@@ -208,7 +208,7 @@ predicate moduleResolutionStep(DataFlow::Node node1, DataFlow::Node node2) {
   )
 }
 
-private module Debug {
+module Debug {
   private predicate baseline(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
     FlowSteps::propertyFlowStep(node1.getALocalUse(), node2)
   }
@@ -230,12 +230,11 @@ private module Debug {
   }
 
   pragma[nomagic]
-  query predicate lostStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2, string cls) {
+  query predicate lostStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
     baseline(node1, node2) and
     not current(node1, node2) and
     not node1.getTopLevel().isExterns() and
-    not node2.getTopLevel().isExterns() and
-    cls = node2.asExpr().getPrimaryQlClasses()
+    not node2.getTopLevel().isExterns()
   }
 
   pragma[nomagic]
