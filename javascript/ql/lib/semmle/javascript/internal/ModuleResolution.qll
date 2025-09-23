@@ -108,15 +108,6 @@ predicate readStep(DataFlow::SourceNode node1, string prop, DataFlow::SourceNode
   node2 = node1.getAPropertyRead(prop)
 }
 
-predicate readStept(
-  DataFlow::Node val, DataFlow::SourceNode node1, DataFlow::SourceNode node2,
-  DataFlow::SourceNode node3
-) {
-  storeStep(val, "default", node1) and
-  valueBigStep(node1, node2) and
-  readStep(node2, "default", node3)
-}
-
 private predicate isStoreTarget(DataFlow::SourceNode node) {
   storeStep(track(_), _, node) and
   not node instanceof DataFlow::GlobalVarRefNode
