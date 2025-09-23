@@ -108,14 +108,18 @@ predicate readStep(DataFlow::SourceNode node1, string prop, DataFlow::SourceNode
   node2 = node1.getAPropertyRead(prop)
 }
 
-private predicate isStoreTarget(DataFlow::SourceNode node) {
-  storeStep(track(_), _, node) and
-  not node instanceof DataFlow::GlobalVarRefNode
-  or
-  exists(DataFlow::SourceNode next |
-    isStoreTarget(next) and
-    valueBigStep(node, next) and
-    not node instanceof DataFlow::GlobalVarRefNode
+private predicate shouldFindRootValue(DataFlow::SourceNode node) {
+  not node instanceof DataFlow::GlobalVarRefNode and
+  (
+    storeStep(track(_).getALocalUse(), _, node)
+    or
+    storeStep(any(DataFlow::InvokeNode n).getALocalUse(), _, node)
+    or
+    exists(DataFlow::SourceNode next | shouldFindRootValue(next) |
+      valueBigStep(node, next) or
+      readStep(node, _, next) or
+      storeReadStep(node.getALocalUse(), next)
+    )
   )
 }
 
@@ -127,12 +131,12 @@ private predicate shouldTrack(DataFlow::SourceNode node) {
   or
   node instanceof DataFlow::ExportNode
   or
-  isStoreTarget(node) and
+  shouldFindRootValue(node) and
   not valueBigStep(_, node)
 }
 
 pragma[nomagic]
-private DataFlow::SourceNode track(DataFlow::SourceNode node) {
+DataFlow::SourceNode track(DataFlow::SourceNode node) {
   shouldTrack(node) and
   result = node
   or

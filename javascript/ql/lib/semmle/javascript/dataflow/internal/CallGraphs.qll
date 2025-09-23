@@ -5,13 +5,18 @@
 private import javascript
 private import semmle.javascript.dataflow.internal.StepSummary
 private import semmle.javascript.dataflow.internal.PreCallGraphStep
+private import semmle.javascript.internal.ModuleResolution as ModuleResolution
 
 cached
 module CallGraph {
   /** Gets the function referenced by `node`, as determined by the type inference. */
   cached
-  Function getAFunctionValue(AnalyzedNode node) {
-    result = node.getAValue().(AbstractCallable).getFunction()
+  Function getAFunctionValueFromSourceNode(DataFlow::SourceNode node) {
+    exists(DataFlow::SourceNode value | ModuleResolution::track(value) = node |
+      result = value.(DataFlow::FunctionNode).getFunction()
+      or
+      result = value.(DataFlow::ClassNode).getConstructor().getFunction()
+    )
   }
 
   /** Holds if the type inferred for `node` is indefinite due to global flow. */
@@ -33,7 +38,7 @@ module CallGraph {
     t.start() and
     exists(Function fun |
       fun = function.getFunction() and
-      fun = getAFunctionValue(result)
+      fun = getAFunctionValueFromSourceNode(result)
     |
       if isIndefiniteGlobal(result)
       then
