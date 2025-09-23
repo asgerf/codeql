@@ -57,8 +57,16 @@ private predicate storeToExports(DataFlow::Node value, Module mod, string name) 
   or
   exists(ExportDeclaration decl, Variable v |
     decl.exportsAs(v, name) and
-    decl.getContainer() = mod and
+    decl.getContainer() = mod
+  |
     value = v.getAnAssignedValue().flow()
+    or
+    // Workaround for destructuring patterns where there the VarRef node is
+    // currently disconnected from the data flow graph. Use the TPropNode instead.
+    exists(PropertyPattern p |
+      p.getValuePattern() = v.getAReference() and
+      value = TPropNode(p)
+    )
   )
   or
   exists(ExportDefaultDeclaration decl |
