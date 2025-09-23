@@ -195,33 +195,12 @@ class AmdModuleDefinition extends CallExpr instanceof AmdModuleDefinition::Range
   }
 
   /**
+   * DEPRECATED. Abstract values are no longer used to track module exports.
+   *
    * Gets an abstract value representing one or more values that may flow
    * into this module's `module.exports` property.
    */
-  overlay[global]
-  DefiniteAbstractValue getAModuleExportsValue() {
-    result = [this.getAnImplicitExportsValue(), this.getAnExplicitExportsValue()]
-  }
-
-  overlay[global]
-  pragma[noinline, nomagic]
-  private AbstractValue getAnImplicitExportsValue() {
-    // implicit exports: anything that is returned from the factory function
-    result = this.getModuleExpr().analyze().getAValue()
-  }
-
-  overlay[global]
-  pragma[noinline]
-  private AbstractValue getAnExplicitExportsValue() {
-    // explicit exports: anything assigned to `module.exports`
-    exists(AbstractProperty moduleExports, AmdModule m |
-      this = m.getDefine() and
-      moduleExports.getBase().(AbstractModuleObject).getModule() = m and
-      moduleExports.getPropertyName() = "exports"
-    |
-      result = moduleExports.getAValue()
-    )
-  }
+  deprecated DefiniteAbstractValue getAModuleExportsValue() { none() }
 
   /**
    * Gets a call to `require` inside this module.
@@ -328,15 +307,13 @@ private class AmdDependencyImport extends Import {
    * Gets the module whose absolute path matches this import, if there is only a single such module.
    */
   overlay[global]
-  private Module resolveByAbsolutePath() {
-    result.getFile() = unique(File file | file = this.guessTarget())
-  }
+  private File resolveByAbsolutePath() { result = unique(File file | file = this.guessTarget()) }
 
   overlay[global]
-  override Module getImportedModule() {
-    result = super.getImportedModule()
+  override File getImportedFile() {
+    result = super.getImportedFile()
     or
-    not exists(super.getImportedModule()) and
+    not exists(super.getImportedFile()) and
     result = this.resolveByAbsolutePath()
   }
 
@@ -344,6 +321,12 @@ private class AmdDependencyImport extends Import {
     exists(Parameter param |
       any(AmdModuleDefinition def).dependencyParameter(this, param) and
       result = DataFlow::parameterNode(param)
+    )
+    or
+    exists(CallExpr require |
+      any(AmdModuleDefinition def).getARequireCall() = require and
+      this = require.getAnArgument() and
+      result = require.flow()
     )
   }
 }
@@ -368,22 +351,20 @@ class AmdModule extends Module {
 
   overlay[global]
   override DataFlow::Node getAnExportedValue(string name) {
-    exists(DataFlow::PropWrite pwn | result = pwn.getRhs() |
-      pwn.getBase().analyze().getAValue() = this.getDefine().getAModuleExportsValue() and
-      name = pwn.getPropertyName()
-    )
+    none() // TODO: AMD getAnExportedValue
   }
 
   overlay[global]
   override DataFlow::Node getABulkExportedNode() {
+    // TODO: AMD getABulkExportedNode
     // Assigned to `module.exports` via the factory's `module` parameter
-    exists(AbstractModuleObject m, DataFlow::PropWrite write |
-      m.getModule() = this and
-      write.getPropertyName() = "exports" and
-      write.getBase().analyze().getAValue() = m and
-      result = write.getRhs()
-    )
-    or
+    // exists(AbstractModuleObject m, DataFlow::PropWrite write |
+    //   m.getModule() = this and
+    //   write.getPropertyName() = "exports" and
+    //   write.getBase().analyze().getAValue() = m and
+    //   result = write.getRhs()
+    // )
+    // or
     // Returned from factory function
     result = this.getDefine().getModuleExpr().flow()
   }

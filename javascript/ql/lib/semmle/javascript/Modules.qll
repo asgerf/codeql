@@ -28,9 +28,9 @@ abstract class Module extends TopLevel {
   overlay[global]
   Module getAnImportedModule() { result = this.getAnImport().getImportedModule() }
 
-  /** Gets a symbol exported by this module. */
+  /** DEPRECATED. Use `exists(getAnExportedValue(name))` instead. */
   overlay[global]
-  string getAnExportedSymbol() { exists(this.getAnExportedValue(result)) }
+  deprecated string getAnExportedSymbol() { exists(this.getAnExportedValue(result)) }
 
   /**
    * Get a value that is explicitly exported from this module with under `name`.

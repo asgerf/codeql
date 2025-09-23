@@ -393,7 +393,7 @@ class AbstractGlobalObject extends DefiniteAbstractValue, TAbstractGlobalObject 
 /**
  * An abstract value representing a CommonJS `module` object.
  */
-class AbstractModuleObject extends DefiniteAbstractValue, TAbstractModuleObject {
+deprecated class AbstractModuleObject extends DefiniteAbstractValue, TAbstractModuleObject {
   /** Gets the module whose `module` object this abstract value represents. */
   Module getModule() { this = TAbstractModuleObject(result) }
 
@@ -417,7 +417,7 @@ class AbstractModuleObject extends DefiniteAbstractValue, TAbstractModuleObject 
 /**
  * An abstract value representing a CommonJS `exports` object.
  */
-class AbstractExportsObject extends DefiniteAbstractValue, TAbstractExportsObject {
+deprecated class AbstractExportsObject extends DefiniteAbstractValue, TAbstractExportsObject {
   /** Gets the module whose `exports` object this abstract value represents. */
   Module getModule() { this = TAbstractExportsObject(result) }
 

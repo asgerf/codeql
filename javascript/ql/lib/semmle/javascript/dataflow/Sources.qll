@@ -340,7 +340,9 @@ module SourceNode {
         astNode instanceof StringLiteral or
         astNode instanceof TemplateLiteral or
         astNode instanceof TypeAssertion or
-        astNode instanceof SatisfiesExpr
+        astNode instanceof SatisfiesExpr or
+        astNode instanceof NamespaceDeclaration or
+        astNode instanceof NamedExportSpecifier
       )
       or
       exists(VariableDeclarator decl |
@@ -362,6 +364,8 @@ module SourceNode {
       DataFlow::functionReturnNode(this, _)
       or
       this instanceof DataFlow::ReflectiveParametersNode
+      or
+      this instanceof DataFlow::ExportNode
     }
   }
 }
