@@ -75,6 +75,13 @@ private predicate storeToExports(DataFlow::Node value, Module mod, string name) 
     name = "default" and
     value = DataFlow::valueNode(decl.getOperand())
   )
+  or
+  exists(ExportSpecifier spec |
+    value = DataFlow::valueNode(spec) and
+    name = spec.getExportedName() and
+    mod = spec.getContainer() and
+    spec.getExportDeclaration() instanceof ReExportDeclaration
+  )
 }
 
 predicate storeStep(DataFlow::Node node1, string prop, DataFlow::SourceNode node2) {
@@ -91,18 +98,6 @@ predicate storeStep(DataFlow::Node node1, string prop, DataFlow::SourceNode node
     exprt.getContainer() = namespace and
     node1 = v.getAnAssignedValue().flow() and
     node2 = DataFlow::valueNode(namespace)
-  )
-  or
-  exists(ExportNamespaceSpecifier spec |
-    node1 = DataFlow::valueNode(spec) and
-    prop = spec.getExportedName() and
-    node2 = TExportNode(spec.getContainer().(Module).getFile())
-  )
-  or
-  exists(NamedExportSpecifier spec |
-    node1 = DataFlow::valueNode(spec) and
-    prop = spec.getExportedName() and
-    node2 = TExportNode(spec.getContainer().(Module).getFile())
   )
 }
 
