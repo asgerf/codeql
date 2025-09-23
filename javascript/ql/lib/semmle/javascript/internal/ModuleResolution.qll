@@ -90,6 +90,12 @@ predicate storeStep(DataFlow::Node node1, string prop, DataFlow::SourceNode node
     prop = spec.getExportedName() and
     node2 = TExportNode(spec.getContainer().(Module).getFile())
   )
+  or
+  exists(NamedExportSpecifier spec |
+    node1 = DataFlow::valueNode(spec) and
+    prop = spec.getExportedName() and
+    node2 = TExportNode(spec.getContainer().(Module).getFile())
+  )
 }
 
 predicate valueBigStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
@@ -118,6 +124,13 @@ predicate valueBigStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
 
 predicate readStep(DataFlow::SourceNode node1, string prop, DataFlow::SourceNode node2) {
   node2 = node1.getAPropertyRead(prop)
+  or
+  exists(NamedExportSpecifier spec |
+    node1 =
+      TExportNode(spec.getExportDeclaration().(ReExportDeclaration).getReExportedModule().getFile()) and
+    prop = spec.getLocalName() and
+    node2 = DataFlow::valueNode(spec)
+  )
 }
 
 private predicate shouldFindRootValue(DataFlow::SourceNode node) {

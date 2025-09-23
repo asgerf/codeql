@@ -337,7 +337,8 @@ module SourceNode {
         astNode instanceof TemplateLiteral or
         astNode instanceof TypeAssertion or
         astNode instanceof SatisfiesExpr or
-        astNode instanceof NamespaceDeclaration
+        astNode instanceof NamespaceDeclaration or
+        astNode instanceof NamedExportSpecifier
       )
       or
       exists(VariableDeclarator decl |
