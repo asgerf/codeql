@@ -191,12 +191,30 @@ class AmdModuleDefinition extends CallExpr instanceof AmdModuleDefinition::Range
   }
 
   /**
-   * DEPRECATED. Abstract values are no longer used to track module exports.
-   *
    * Gets an abstract value representing one or more values that may flow
    * into this module's `module.exports` property.
    */
-  deprecated DefiniteAbstractValue getAModuleExportsValue() { none() }
+  DefiniteAbstractValue getAModuleExportsValue() {
+    result = [this.getAnImplicitExportsValue(), this.getAnExplicitExportsValue()]
+  }
+
+  pragma[noinline, nomagic]
+  private AbstractValue getAnImplicitExportsValue() {
+    // implicit exports: anything that is returned from the factory function
+    result = this.getModuleExpr().analyze().getAValue()
+  }
+
+  pragma[noinline]
+  private AbstractValue getAnExplicitExportsValue() {
+    // explicit exports: anything assigned to `module.exports`
+    exists(AbstractProperty moduleExports, AmdModule m |
+      this = m.getDefine() and
+      moduleExports.getBase().(AbstractModuleObject).getModule() = m and
+      moduleExports.getPropertyName() = "exports"
+    |
+      result = moduleExports.getAValue()
+    )
+  }
 
   /**
    * Gets a call to `require` inside this module.
@@ -339,19 +357,21 @@ class AmdModule extends Module {
   AmdModuleDefinition getDefine() { amdModuleTopLevel(result, this) }
 
   override DataFlow::Node getAnExportedValue(string name) {
-    none() // TODO: AMD getAnExportedValue
+    exists(DataFlow::PropWrite pwn | result = pwn.getRhs() |
+      pwn.getBase().analyze().getAValue() = this.getDefine().getAModuleExportsValue() and
+      name = pwn.getPropertyName()
+    )
   }
 
   override DataFlow::Node getABulkExportedNode() {
-    // TODO: AMD getABulkExportedNode
     // Assigned to `module.exports` via the factory's `module` parameter
-    // exists(AbstractModuleObject m, DataFlow::PropWrite write |
-    //   m.getModule() = this and
-    //   write.getPropertyName() = "exports" and
-    //   write.getBase().analyze().getAValue() = m and
-    //   result = write.getRhs()
-    // )
-    // or
+    exists(AbstractModuleObject m, DataFlow::PropWrite write |
+      m.getModule() = this and
+      write.getPropertyName() = "exports" and
+      write.getBase().analyze().getAValue() = m and
+      result = write.getRhs()
+    )
+    or
     // Returned from factory function
     result = this.getDefine().getModuleExpr().flow()
   }

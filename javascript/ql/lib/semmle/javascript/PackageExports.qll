@@ -237,7 +237,8 @@ private DataFlow::Node getAnExportFromModule(Module mod) {
   // exports saved to the global object
   result = DataFlow::globalObjectRef().getAPropertyWrite().getRhs() and
   result.getTopLevel() = mod
-  // TODO: perhaps rely on name resolution here?
+  or
+  result.analyze().getAValue() = TAbstractModuleObject(mod)
 }
 
 /**

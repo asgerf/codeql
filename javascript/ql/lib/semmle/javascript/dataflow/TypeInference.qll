@@ -30,6 +30,7 @@ import AbstractValues
 private import InferredTypes
 private import Refinements
 import internal.BasicExprTypeInference
+import internal.InterModuleTypeInference
 import internal.InterProceduralTypeInference
 import internal.PropertyTypeInference
 import internal.VariableTypeInference
@@ -169,8 +170,6 @@ class AnalyzedNode extends DataFlow::Node {
 class AnalyzedValueNode extends AnalyzedNode, DataFlow::ValueNode { }
 
 /**
- * DEPRECATED. Type inference is no longer used for reasoning about module exports.
- *
  * A module for which analysis results are available.
  *
  * The type inference supports AMD, CommonJS and ES2015 modules. All three
@@ -179,7 +178,7 @@ class AnalyzedValueNode extends AnalyzedNode, DataFlow::ValueNode { }
  * exports are modeled as property writes on `module.exports`, and imports
  * as property reads on any potential value of `module.exports`.
  */
-deprecated class AnalyzedModule extends TopLevel instanceof Module {
+class AnalyzedModule extends TopLevel instanceof Module {
   /** Gets the name of this module. */
   string getName() { result = super.getName() }
 
