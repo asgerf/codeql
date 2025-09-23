@@ -30,6 +30,8 @@ private module Cached {
   cached
   newtype TNode =
     TValueNode(AST::ValueNode nd) or
+    /** A node representing the object exported from the given file. */
+    TExportNode(File file) or
     /** An SSA node from the legacy SSA library */
     TSsaDefNode(SsaDefinition d) or
     /** Use of a variable or 'this', with flow from a post-update node (from an earlier use) */

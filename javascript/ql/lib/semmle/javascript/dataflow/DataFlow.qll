@@ -266,6 +266,16 @@ module DataFlow {
     override string toString() { Stages::DataFlowStage::ref() and result = astNode.toString() }
   }
 
+  class ExportNode extends Node, TExportNode {
+    private File file;
+
+    ExportNode() { this = TExportNode(file) }
+
+    override Location getLocation() { result = file.getLocation() }
+
+    override string toString() { result = "Exports from " + file }
+  }
+
   /**
    * A node in the data flow graph which corresponds to an SSA variable definition.
    */
@@ -1731,6 +1741,14 @@ module DataFlow {
     exists(SsaImplicitDefinition ssa | succ = TSsaDefNode(ssa) |
       // from the inputs of phi and pi nodes into the node itself
       pred = TSsaDefNode(ssa.(SsaPseudoDefinition).getAnInput().getDefinition())
+    )
+    or
+    // A `namespace X {}` declaration where `X` already had a truthy value.
+    // Add flow from the previous value of `X` to the namespace declaration to preserve aliasing information.
+    exists(NamespaceDeclaration decl, SsaDefinition def |
+      def = decl.getIdentifier().(VarUse).getSsaVariable().getDefinition() and
+      pred = TSsaDefNode(def) and
+      succ = TValueNode(decl)
     )
     or
     exists(Expr predExpr, Expr succExpr |
