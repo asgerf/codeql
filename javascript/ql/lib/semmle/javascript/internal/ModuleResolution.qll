@@ -123,6 +123,11 @@ predicate valueBigStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
       TExportNode(spec.getExportDeclaration().(ReExportDeclaration).getReExportedModule().getFile()) and
     node2 = DataFlow::valueNode(spec)
   )
+  or
+  exists(DataFlow::SourceNode obj |
+    node1 = obj and
+    node2 = obj.getAPropertySource().(DataFlow::FunctionNode).getReceiver()
+  )
 }
 
 predicate readStep(DataFlow::SourceNode node1, string prop, DataFlow::SourceNode node2) {
