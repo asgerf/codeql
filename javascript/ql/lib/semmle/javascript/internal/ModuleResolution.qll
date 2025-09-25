@@ -189,10 +189,33 @@ private predicate deepRead(DataFlow::SourceNode object, string prop, DataFlow::S
 }
 
 pragma[nomagic]
+private predicate globalStore(File file, GlobalVariable globalVar, DataFlow::Node value) {
+  exists(AST::ValueNode rhs |
+    rhs = globalVar.getAnAssignedValue() and
+    file = rhs.getFile() and
+    value = rhs.flow()
+  )
+}
+
+pragma[nomagic]
+private predicate globalRead(File file, GlobalVariable globalVar, DataFlow::SourceNode value) {
+  exists(VarAccess access |
+    access = globalVar.getAnAccess() and
+    file = access.getFile() and
+    value = access.flow()
+  )
+}
+
+pragma[nomagic]
 predicate storeReadStep(DataFlow::Node node1, DataFlow::SourceNode node2) {
   exists(DataFlow::SourceNode object, string prop |
     deepStore(object, prop, node1) and
     deepRead(object, prop, node2)
+  )
+  or
+  exists(File file, GlobalVariable v |
+    globalStore(file, v, node1) and
+    globalRead(file, v, node2)
   )
 }
 
