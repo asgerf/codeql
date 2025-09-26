@@ -312,6 +312,12 @@ private class AmdDependencyImport extends Import {
       any(AmdModuleDefinition def).dependencyParameter(this, param) and
       result = DataFlow::parameterNode(param)
     )
+    or
+    exists(CallExpr require |
+      any(AmdModuleDefinition def).getARequireCall() = require and
+      this = require.getAnArgument() and
+      result = require.flow()
+    )
   }
 }
 
