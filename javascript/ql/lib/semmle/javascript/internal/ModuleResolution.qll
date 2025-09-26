@@ -208,6 +208,11 @@ private predicate deepRead(DataFlow::SourceNode object, string prop, DataFlow::S
 }
 
 pragma[nomagic]
+private predicate deepInstanceRead(DataFlow::ClassNode cls, string prop, DataFlow::SourceNode value) {
+  readStep(trackInstance(cls), prop, value)
+}
+
+pragma[nomagic]
 private predicate globalStore(File file, GlobalVariable globalVar, DataFlow::Node value) {
   exists(AST::ValueNode rhs |
     rhs = globalVar.getAnAssignedValue() and
@@ -232,10 +237,34 @@ predicate storeReadStep(DataFlow::Node node1, DataFlow::SourceNode node2) {
     deepRead(object, prop, node2)
   )
   or
+  exists(DataFlow::ClassNode cls, string prop |
+    storeOnReceiver(cls, prop, node1) and
+    deepInstanceRead(cls, prop, node2)
+  )
+  or
   exists(File file, GlobalVariable v |
     globalStore(file, v, node1) and
     globalRead(file, v, node2)
   )
+}
+
+pragma[nomagic]
+predicate storeOnReceiver(DataFlow::ClassNode cls, string prop, DataFlow::Node value) {
+  value = cls.getConstructor().getReceiver().getAPropertyWrite(prop).getRhs()
+}
+
+pragma[nomagic]
+DataFlow::SourceNode trackInstance(DataFlow::ClassNode cls) {
+  storeOnReceiver(cls, _, _) and
+  (
+    result = cls.getAReceiverNode()
+    or
+    result = track(cls).getAnInstantiation()
+  )
+  or
+  valueBigStep(trackInstance(cls), result)
+  or
+  storeReadStep(trackInstance(cls).getALocalUse(), result)
 }
 
 predicate moduleResolutionStep(DataFlow::Node node1, DataFlow::Node node2) {
