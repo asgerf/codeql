@@ -130,6 +130,23 @@ predicate valueBigStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
     node1 = obj and
     node2 = obj.getAPropertySource().(DataFlow::FunctionNode).getReceiver()
   )
+  or
+  // We don't step into calls in this stage, except for immediately-invoked function expressions (handled by `flowsTo`).
+  // Similarly, also handle function expressions that are immediately used in a partial invocation. This is often needed
+  // for code of form `function() { ... }.bind(this)` from before arrow functions existed in JS.
+  exists(
+    DataFlow::PartialInvokeNode partial, DataFlow::FunctionNode callback, DataFlow::Node argument
+  |
+    node1 = argument.getALocalSource()
+  |
+    exists(int index |
+      partial.isPartialArgument(callback, argument, index) and
+      node2 = callback.getParameter(index)
+    )
+    or
+    argument = partial.getBoundReceiver(callback) and
+    node2 = callback.getReceiver()
+  )
 }
 
 predicate readStep(DataFlow::SourceNode node1, string prop, DataFlow::SourceNode node2) {
