@@ -12,6 +12,8 @@ private GlobalVarAccess globalAccess(Module mod, string name) {
 private DataFlow::SourceNode moduleObjectRef(Module mod) {
   result = DataFlow::ssaDefinitionNode(Ssa::implicitInit(mod.getScope().getVariable("module")))
   or
+  result = mod.(AmdModule).getDefine().getModuleParameter().flow()
+  or
   result = globalAccess(mod, "module").flow()
 }
 
