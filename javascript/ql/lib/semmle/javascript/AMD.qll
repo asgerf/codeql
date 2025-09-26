@@ -298,14 +298,12 @@ private class AmdDependencyImport extends Import {
   /**
    * Gets the module whose absolute path matches this import, if there is only a single such module.
    */
-  private Module resolveByAbsolutePath() {
-    result.getFile() = unique(File file | file = this.guessTarget())
-  }
+  private File resolveByAbsolutePath() { result = unique(File file | file = this.guessTarget()) }
 
-  override Module getImportedModule() {
-    result = super.getImportedModule()
+  override File getImportedFile() {
+    result = super.getImportedFile()
     or
-    not exists(super.getImportedModule()) and
+    not exists(super.getImportedFile()) and
     result = this.resolveByAbsolutePath()
   }
 
