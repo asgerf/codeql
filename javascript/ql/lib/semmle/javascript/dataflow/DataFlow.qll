@@ -273,6 +273,8 @@ module DataFlow {
 
     override Location getLocation() { result = file.getLocation() }
 
+    override File getFile() { result = file }
+
     override string toString() { result = "Exports from " + file }
   }
 
