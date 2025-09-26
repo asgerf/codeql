@@ -74,7 +74,12 @@ module CallGraph {
     exists(DataFlow::ClassNode cls |
       exists(string name |
         function = cls.getInstanceMethod(name) and
-        cls.getAnInstanceMemberAccess(name, t.continue()) = result
+        (
+          cls.getAnInstanceMemberAccess(name, t.continue()) = result
+          or
+          cls.getAClassReference(t.continue()).getAPropertyRead("prototype").getAPropertyRead(name) =
+            result
+        )
         or
         function = cls.getStaticMethod(name) and
         cls.getAClassReference(t.continue()).getAPropertyRead(name) = result
