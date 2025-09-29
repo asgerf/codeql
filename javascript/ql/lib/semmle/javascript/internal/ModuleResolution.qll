@@ -101,6 +101,11 @@ predicate storeStep(DataFlow::Node node1, string prop, DataFlow::SourceNode node
     node1 = v.getAnAssignedValue().flow() and
     node2 = DataFlow::valueNode(namespace)
   )
+  or
+  exists(DataFlow::ClassNode cls |
+    node1 = cls.getInstanceMethod(prop) and
+    node2 = getCanonicalInstanceNode(cls)
+  )
 }
 
 predicate valueBigStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
@@ -175,16 +180,32 @@ private predicate shouldFindRootValue(DataFlow::SourceNode node) {
   )
 }
 
+private DataFlow::SourceNode getCanonicalInstanceNode(DataFlow::ClassNode cls) {
+  result = cls.getConstructor().getReceiver()
+}
+
 pragma[nomagic]
 private predicate shouldTrack(DataFlow::SourceNode node) {
   node instanceof DataFlow::FunctionNode
   or
   node instanceof DataFlow::ClassNode
   or
+  node = getCanonicalInstanceNode(_)
+  or
   node instanceof DataFlow::ExportNode
   or
   shouldFindRootValue(node) and
   not valueBigStep(_, node)
+  or
+  exists(node)
+}
+
+// private predicate shouldNotTrack(DataFlow::SourceNode node) { not shouldTrack(node) }
+pragma[inline]
+private predicate bigStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
+  valueBigStep(node1, node2)
+  or
+  storeReadStep(node1.getALocalUse(), node2)
 }
 
 pragma[nomagic]
@@ -192,24 +213,110 @@ DataFlow::SourceNode track(DataFlow::SourceNode node) {
   shouldTrack(node) and
   result = node
   or
-  valueBigStep(track(node), result)
+  bigStep(track(node), result)
+}
+
+pragma[nomagic]
+DataFlow::SourceNode trackOut(DataFlow::SourceNode node) {
+  returnStep(track(node), result)
   or
-  storeReadStep(track(node).getALocalUse(), result)
+  returnStep(trackOut(node), result)
+  or
+  exists(DataFlow::ClassNode cls |
+    instanceCreationStep(cls, result) and
+    node = getCanonicalInstanceNode(cls)
+  )
+  or
+  bigStep(trackOut(node), result)
 }
 
 pragma[nomagic]
-private predicate deepStore(DataFlow::SourceNode object, string prop, DataFlow::Node value) {
+DataFlow::SourceNode trackOutThenIn(DataFlow::SourceNode node) {
+  argumentPassingStep(trackOut(node), result)
+  or
+  argumentPassingStep(trackOutThenIn(node), result)
+  or
+  bigStep(trackOutThenIn(node), result)
+}
+
+pragma[nomagic]
+DataFlow::SourceNode trackIn(DataFlow::SourceNode node) {
+  argumentPassingStep(track(node), result)
+  or
+  argumentPassingStep(trackIn(node), result)
+  or
+  bigStep(trackIn(node), result)
+}
+
+pragma[inline]
+DataFlow::SourceNode trackAny(DataFlow::SourceNode node) {
+  result = [track(node), trackOut(node), trackOutThenIn(node), trackIn(node)]
+}
+
+private predicate viableCallable(DataFlow::InvokeNode call, DataFlow::FunctionNode target) {
+  call = [track(target), trackOut(target)].getAnInvocation()
+  or
+  exists(DataFlow::ClassNode cls |
+    call = [track(cls), trackOut(cls)].getAnInvocation() and
+    target = cls.getConstructor()
+  )
+}
+
+private predicate returnStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
+  exists(DataFlow::InvokeNode call, DataFlow::FunctionNode target |
+    viableCallable(call, target) and
+    node1 = target.getReturnNode().getALocalSource() and
+    node2 = call
+  )
+}
+
+private predicate instanceCreationStep(
+  DataFlow::ClassNode cls, DataFlow::SourceNode instantiationSite
+) {
+  exists(DataFlow::NewNode call, DataFlow::FunctionNode target |
+    viableCallable(call, target) and
+    cls.getConstructor() = target and
+    instantiationSite = call
+  )
+}
+
+private predicate argumentPassingStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
+  exists(DataFlow::InvokeNode call, DataFlow::FunctionNode target, int i |
+    viableCallable(call, target) and
+    node1 = call.getArgument(i).getALocalSource() and
+    node2 = target.getParameter(i)
+  )
+}
+
+pragma[nomagic]
+private predicate deepStoreNoReturn(DataFlow::SourceNode object, string prop, DataFlow::Node value) {
   storeStep(value, prop, track(object))
+  or
+  storeStep(value, prop, trackIn(object))
 }
 
+// pragma[nomagic]
+// private predicate deepStoreReturn(DataFlow::SourceNode object, string prop, DataFlow::Node value) {
+//   storeStep(value, prop, trackOut(object))
+//   or
+//   storeStep(value, prop, trackOutThenIn(object))
+// }
 pragma[nomagic]
-private predicate deepRead(DataFlow::SourceNode object, string prop, DataFlow::SourceNode value) {
+private predicate deepReadNoReturn(
+  DataFlow::SourceNode object, string prop, DataFlow::SourceNode value
+) {
   readStep(track(object), prop, value)
+  or
+  readStep(trackIn(object), prop, value)
 }
 
 pragma[nomagic]
-private predicate deepInstanceRead(DataFlow::ClassNode cls, string prop, DataFlow::SourceNode value) {
-  readStep(trackInstance(cls), prop, value)
+private predicate deepReadReturn(
+  DataFlow::SourceNode object, string prop, DataFlow::SourceNode value
+) {
+  readStep(trackOut(object), prop, value)
+  or
+  readStep(trackOutThenIn(object), prop, value)
 }
 
 pragma[nomagic]
@@ -233,38 +340,33 @@ private predicate globalRead(File file, GlobalVariable globalVar, DataFlow::Sour
 pragma[nomagic]
 predicate storeReadStep(DataFlow::Node node1, DataFlow::SourceNode node2) {
   exists(DataFlow::SourceNode object, string prop |
-    deepStore(object, prop, node1) and
-    deepRead(object, prop, node2)
-  )
-  or
-  exists(DataFlow::ClassNode cls, string prop |
-    storeOnReceiver(cls, prop, node1) and
-    deepInstanceRead(cls, prop, node2)
+    deepStoreNoReturn(object, prop, node1) and
+    deepReadNoReturn(object, prop, node2)
+    or
+    deepStoreNoReturn(object, prop, node1) and
+    deepReadReturn(object, prop, node2)
+    // or
+    // Note: this step is a little dubious?
+    // deepStoreReturn(object, prop, node1) and
+    // deepReadNoReturn(object, prop, node2)
   )
   or
   exists(File file, GlobalVariable v |
     globalStore(file, v, node1) and
     globalRead(file, v, node2)
   )
-}
-
-pragma[nomagic]
-predicate storeOnReceiver(DataFlow::ClassNode cls, string prop, DataFlow::Node value) {
-  value = cls.getConstructor().getReceiver().getAPropertyWrite(prop).getRhs()
-}
-
-pragma[nomagic]
-DataFlow::SourceNode trackInstance(DataFlow::ClassNode cls) {
-  storeOnReceiver(cls, _, _) and
-  (
-    result = cls.getAReceiverNode()
+  or
+  exists(DataFlow::ClassNode cls |
+    node1 = getCanonicalInstanceNode(cls) and
+    (
+      deepReadNoReturn(cls, "prototype", node2)
+      or
+      deepReadReturn(cls, "prototype", node2)
+    )
     or
-    result = track(cls).getAnInstantiation()
+    deepStoreNoReturn(cls, "prototype", node1) and
+    node2 = getCanonicalInstanceNode(cls)
   )
-  or
-  valueBigStep(trackInstance(cls), result)
-  or
-  storeReadStep(trackInstance(cls).getALocalUse(), result)
 }
 
 predicate moduleResolutionStep(DataFlow::Node node1, DataFlow::Node node2) {
