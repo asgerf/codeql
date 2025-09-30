@@ -415,6 +415,10 @@ public class AutoBuild {
     patterns.add("-**/node_modules");
     patterns.add("-**/bower_components");
 
+    // exclude build output
+    patterns.add("-**/build");
+    patterns.add("-**/dist");
+
     String base = LGTM_SRC.toString().replace('\\', '/');
     // process `$LGTM_INDEX_FILTERS`
     for (String pattern : Main.NEWLINE.split(getEnvVar("LGTM_INDEX_FILTERS", ""))) {
