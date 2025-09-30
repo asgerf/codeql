@@ -1,6 +1,7 @@
 private import javascript
 private import semmle.javascript.dataflow.internal.DataFlowNode
 private import semmle.javascript.dataflow.internal.FlowSteps as FlowSteps
+private import semmle.javascript.GlobalAccessPaths
 
 pragma[nomagic]
 private GlobalVarAccess globalAccess(Module mod, string name) {
@@ -206,6 +207,8 @@ private predicate bigStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2
   valueBigStep(node1, node2)
   or
   storeReadStep(node1.getALocalUse(), node2)
+  or
+  AccessPath::step(node1.getALocalUse(), node2)
 }
 
 pragma[nomagic]
