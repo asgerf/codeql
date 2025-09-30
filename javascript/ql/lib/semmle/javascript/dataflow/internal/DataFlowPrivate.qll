@@ -1151,6 +1151,29 @@ private predicate imprecisePostUpdateStep(DataFlow::PostUpdateNode postUpdate, D
   )
 }
 
+pragma[nomagic]
+private predicate isTopLevelLike(StmtContainer container) {
+  container instanceof TopLevel
+  or
+  container = any(AmdModuleDefinition d).getFactoryFunction()
+}
+
+bindingset[node]
+pragma[inline_late]
+private StmtContainer getEnclosingCallableNotTopLevel(Node node) {
+  result = node.getContainer() and
+  not isTopLevelLike(result)
+}
+
+/**
+ * Holds if `node1` and `node2` are in the same container or one of them is in a toplevel-like container.
+ */
+bindingset[node1, node2]
+pragma[inline_late]
+private predicate sameContainerOrTopLevels(Node node1, Node node2) {
+  not getEnclosingCallableNotTopLevel(node1) != getEnclosingCallableNotTopLevel(node2)
+}
+
 /**
  * Holds if there is a value-preserving steps `node1` -> `node2` that might
  * be cross function boundaries.
@@ -1163,7 +1186,8 @@ private predicate valuePreservingStep(Node node1, Node node2) {
   or
   imprecisePostUpdateStep(node1, node2)
   or
-  FlowSteps::propertyFlowStep(node1, node2)
+  FlowSteps::propertyFlowStep(node1, node2) and
+  sameContainerOrTopLevels(node1, node2)
   or
   FlowSteps::globalFlowStep(node1, node2)
   or
@@ -1221,6 +1245,23 @@ private predicate useUseFlow(Node node1, Node node2) {
     node1 = TSsaUseNode(use) and
     node2 = TImplicitThisUse(use, false)
   )
+}
+
+private Function absoluteUriFn() {
+  result.getName() = "absolute" and
+  result.getLocation().getStartLine() = 242
+}
+
+private DataFlow::FunctionNode absoluteUriFnd() { result.getFunction() = absoluteUriFn() }
+
+predicate strangeStep(Node node1, Node node2) {
+  node1 = absoluteUriFnd().getReturnNode() and
+  node2 = absoluteUriFnd().getParameter(0)
+}
+
+private predicate strangeStepT(Node node1, Node node2) {
+  strangeStep(node1, node2) and
+  storeStep(node1, _, node2)
 }
 
 predicate simpleLocalFlowStep(Node node1, Node node2, string model) {
