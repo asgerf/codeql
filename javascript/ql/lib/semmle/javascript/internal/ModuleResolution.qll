@@ -134,7 +134,9 @@ predicate valueBigStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
   or
   exists(DataFlow::SourceNode obj |
     node1 = obj and
-    node2 = obj.getAPropertySource().(DataFlow::FunctionNode).getReceiver()
+    node2 = obj.getAPropertySource().(DataFlow::FunctionNode).getReceiver() and
+    // Do not propagate namespaces into 'this' in a constructor
+    not node2 = any(DataFlow::ClassNode cls).getConstructor().getReceiver()
   )
   or
   // We don't step into calls in this stage, except for immediately-invoked function expressions (handled by `flowsTo`).
@@ -203,12 +205,17 @@ private predicate shouldTrack(DataFlow::SourceNode node) {
 
 // private predicate shouldNotTrack(DataFlow::SourceNode node) { not shouldTrack(node) }
 pragma[inline]
-private predicate bigStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
+private predicate bigStep(
+  DataFlow::SourceNode trackedValue, DataFlow::SourceNode node1, DataFlow::SourceNode node2
+) {
   valueBigStep(node1, node2)
   or
   storeReadStep(node1.getALocalUse(), node2)
   or
   AccessPath::step(node1.getALocalUse(), node2)
+  or
+  constructorCloneStep(node1, node2) and
+  allowConstructorCloneStep(trackedValue)
 }
 
 pragma[nomagic]
@@ -216,7 +223,7 @@ DataFlow::SourceNode track(DataFlow::SourceNode node) {
   shouldTrack(node) and
   result = node
   or
-  bigStep(track(node), result)
+  bigStep(node, track(node), result)
 }
 
 pragma[nomagic]
@@ -225,12 +232,7 @@ DataFlow::SourceNode trackOut(DataFlow::SourceNode node) {
   or
   returnStep(trackOut(node), result)
   or
-  exists(DataFlow::ClassNode cls |
-    instanceCreationStep(cls, result) and
-    node = getCanonicalInstanceNode(cls)
-  )
-  or
-  bigStep(trackOut(node), result)
+  bigStep(node, trackOut(node), result)
 }
 
 pragma[nomagic]
@@ -239,7 +241,7 @@ DataFlow::SourceNode trackOutThenIn(DataFlow::SourceNode node) {
   or
   argumentPassingStep(trackOutThenIn(node), result)
   or
-  bigStep(trackOutThenIn(node), result)
+  bigStep(node, trackOutThenIn(node), result)
 }
 
 pragma[nomagic]
@@ -248,7 +250,7 @@ DataFlow::SourceNode trackIn(DataFlow::SourceNode node) {
   or
   argumentPassingStep(trackIn(node), result)
   or
-  bigStep(trackIn(node), result)
+  bigStep(node, trackIn(node), result)
 }
 
 pragma[inline]
@@ -266,36 +268,54 @@ private predicate viableCallable(DataFlow::InvokeNode call, DataFlow::FunctionNo
 }
 
 private predicate returnStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
-  exists(DataFlow::InvokeNode call, DataFlow::FunctionNode target |
-    viableCallable(call, target) and
+  exists(DataFlow::InvokeNode call, DataFlow::FunctionNode target | viableCallable(call, target) |
     node1 = target.getReturnNode().getALocalSource() and
     node2 = call
   )
 }
 
-private predicate instanceCreationStep(
-  DataFlow::ClassNode cls, DataFlow::SourceNode instantiationSite
-) {
-  exists(DataFlow::NewNode call, DataFlow::FunctionNode target |
-    viableCallable(call, target) and
-    cls.getConstructor() = target and
-    instantiationSite = call
-  )
+private DataFlow::SourceNode getReceiverToPropagate(DataFlow::InvokeNode call) {
+  call.asExpr() instanceof SuperCall and
+  result = DataFlow::thisNode(call.getEnclosingFunction().getThisBinder())
+  or
+  call instanceof DataFlow::NewNode and
+  result = call
+  or
+  // Do not propagate the receiver of method calls, as it is too tightly coupled to method dispatch,
+  // leading to rampant spurious flow of 'this'.
+  // It is however safe for call where the callee does not immediately depend on `this`, such as `f.call(this)`.
+  result = call.(DataFlow::CallNode).getReceiver().getALocalSource() and
+  not call.getCalleeNode() = result.getAPropertyRead()
 }
 
 private predicate argumentPassingStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
-  exists(DataFlow::InvokeNode call, DataFlow::FunctionNode target, int i |
-    viableCallable(call, target) and
-    node1 = call.getArgument(i).getALocalSource() and
-    node2 = target.getParameter(i)
+  exists(DataFlow::InvokeNode call, DataFlow::FunctionNode target | viableCallable(call, target) |
+    exists(int i |
+      node1 = call.getArgument(i).getALocalSource() and
+      node2 = target.getParameter(i)
+    )
+    or
+    node1 = getReceiverToPropagate(call) and
+    node2 = target.getReceiver()
   )
+}
+
+private predicate constructorCloneStep(DataFlow::SourceNode node1, DataFlow::SourceNode node2) {
+  node2 = node1.getAPropertyRead("constructor").getAnInstantiation()
+}
+
+private predicate allowConstructorCloneStep(DataFlow::SourceNode node) {
+  node = any(DataFlow::ClassNode cls).getConstructor().getReceiver()
 }
 
 pragma[nomagic]
 private predicate deepStoreNoReturn(DataFlow::SourceNode object, string prop, DataFlow::Node value) {
-  storeStep(value, prop, track(object))
-  or
-  storeStep(value, prop, trackIn(object))
+  (
+    storeStep(value, prop, track(object))
+    or
+    storeStep(value, prop, trackIn(object))
+  ) and
+  not prop = "constructor" // avoid complications with 'constructor' assignments for now
 }
 
 // pragma[nomagic]
