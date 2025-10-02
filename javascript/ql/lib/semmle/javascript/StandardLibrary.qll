@@ -38,6 +38,7 @@ class CallToObjectDefineProperty extends DataFlow::MethodCallNode {
 /**
  * A direct call to `eval`.
  */
+overlay[local]
 class DirectEval extends CallExpr {
   DirectEval() { this.getCallee().(GlobalVarAccess).getName() = "eval" }
 

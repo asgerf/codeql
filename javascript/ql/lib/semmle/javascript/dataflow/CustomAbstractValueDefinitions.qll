@@ -34,7 +34,6 @@ class CustomAbstractValueFromDefinition extends AbstractValue, TCustomAbstractVa
 
   override predicate isIndefinite(DataFlow::Incompleteness cause) { def.isIndefinite(cause) }
 
-  overlay[global]
   override DefiniteAbstractValue getAPrototype() { result = def.getAPrototype() }
 
   override predicate hasLocationInfo(
@@ -101,7 +100,6 @@ abstract class CustomAbstractValueDefinition extends Locatable {
    * Gets an abstract value that represents a prototype object of the
    * induced abstract value.
    */
-  overlay[global]
   AbstractValue getAPrototype() {
     exists(AbstractProtoProperty proto |
       proto.getBase() = this.getAbstractValue() and
@@ -123,7 +121,6 @@ abstract class CustomAbstractValueDefinition extends Locatable {
 /**
  * Flow analysis for custom abstract values.
  */
-overlay[global]
 class CustomAbstractValueFromDefinitionNode extends DataFlow::AnalyzedNode, DataFlow::ValueNode {
   CustomAbstractValueFromDefinition val;
 

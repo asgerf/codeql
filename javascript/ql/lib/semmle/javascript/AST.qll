@@ -472,7 +472,6 @@ module AST {
    */
   class ValueNode extends AstNode, @dataflownode {
     /** Gets type inference results for this element. */
-    overlay[global]
     DataFlow::AnalyzedNode analyze() { result = DataFlow::valueNode(this).analyze() }
 
     /** Gets the data flow node associated with this program element. */

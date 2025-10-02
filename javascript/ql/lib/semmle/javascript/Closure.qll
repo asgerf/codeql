@@ -249,7 +249,6 @@ module Closure {
   /**
    * Holds if `name` is a closure namespace, including proper namespace prefixes.
    */
-  overlay[global]
   pragma[noinline]
   predicate isClosureNamespace(string name) {
     exists(string namespace |
@@ -271,7 +270,6 @@ module Closure {
    * Holds if a prefix of `name` is a closure namespace.
    */
   bindingset[name]
-  overlay[global]
   private predicate hasClosureNamespacePrefix(string name) {
     isClosureNamespace(name.substring(0, name.indexOf(".")))
     or

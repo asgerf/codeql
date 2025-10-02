@@ -66,11 +66,9 @@ module DataFlow {
      * `p.getALocalSource()` does _not_ return the corresponding argument, and
      * `p.isIncomplete("call")` holds.
      */
-    overlay[global]
     predicate isIncomplete(Incompleteness cause) { isIncomplete(this, cause) }
 
     /** Gets type inference results for this data flow node. */
-    overlay[global]
     AnalyzedNode analyze() { result = this }
 
     /** Gets the expression corresponding to this data flow node, if any. */
@@ -1854,7 +1852,6 @@ module DataFlow {
    * `p.getALocalSource()` does _not_ return the corresponding argument, and
    * `p.isIncomplete("call")` holds.
    */
-  overlay[global]
   predicate isIncomplete(Node nd, Incompleteness cause) {
     exists(SsaVariable ssa | nd = TSsaDefNode(ssa.getDefinition()) |
       defIsIncomplete(ssa.(SsaExplicitDefinition).getDef(), cause)
