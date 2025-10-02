@@ -284,23 +284,20 @@ private class TypeInferredMethodWithAnalyzedReturnFlow extends CallWithNonLocalA
 
   override AnalyzedFunction getACallee() { result = fun }
 }
-
-/**
- * Propagates receivers into locally defined callbacks of partial invocations.
- */
-private class AnalyzedThisInPartialInvokeCallback extends AnalyzedNode, DataFlow::ThisNode {
-  DataFlow::Node receiver;
-
-  AnalyzedThisInPartialInvokeCallback() {
-    exists(DataFlow::Node callbackArg |
-      receiver = any(DataFlow::PartialInvokeNode call).getBoundReceiver(callbackArg) and
-      this.getBinder().flowsTo(callbackArg)
-    )
-  }
-
-  override AbstractValue getALocalValue() {
-    result = receiver.analyze().getALocalValue()
-    or
-    result = AnalyzedNode.super.getALocalValue()
-  }
-}
+// /**
+//  * Propagates receivers into locally defined callbacks of partial invocations.
+//  */
+// private class AnalyzedThisInPartialInvokeCallback extends AnalyzedNode, DataFlow::ThisNode {
+//   DataFlow::Node receiver;
+//   AnalyzedThisInPartialInvokeCallback() {
+//     exists(DataFlow::Node callbackArg |
+//       receiver = any(DataFlow::PartialInvokeNode call).getBoundReceiver(callbackArg) and
+//       this.getBinder().flowsTo(callbackArg)
+//     )
+//   }
+//   override AbstractValue getALocalValue() {
+//     result = receiver.analyze().getALocalValue()
+//     or
+//     result = AnalyzedNode.super.getALocalValue()
+//   }
+// }
