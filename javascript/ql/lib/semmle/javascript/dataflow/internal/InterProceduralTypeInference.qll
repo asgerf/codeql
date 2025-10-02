@@ -193,10 +193,10 @@ class LocalFunction extends Function {
     exists(LocalVariable v |
       getOnlyAccess(this, v) = invk.getCalleeNode().asExpr() and
       not exists(v.getAnAssignedExpr()) and
-      not exists(ExportDeclaration export | export.exportsAs(v, _))
+      not exists(ExportDeclaration export | export.exportsDirectlyAs(v, _))
       or
       getOnlyAccessToFunctionExpr(this, v) = invk.getCalleeNode().asExpr() and
-      not exists(ExportDeclaration export | export.exportsAs(v, _))
+      not exists(ExportDeclaration export | export.exportsDirectlyAs(v, _))
     ) and
     // if the function is non-strict and its `arguments` object is accessed, we
     // also assume that there may be other calls (through `arguments.callee`)
