@@ -954,26 +954,20 @@ private class RouteInstantiatedController extends Controller instanceof RouteSet
   }
 }
 
-/**
- * Dataflow for the arguments of AngularJS dependency-injected functions.
- */
-private class DependencyInjectedArgumentInitializer extends DataFlow::AnalyzedNode instanceof DataFlow::ParameterNode
-{
-  DataFlow::AnalyzedNode service;
-
-  DependencyInjectedArgumentInitializer() {
-    exists(AngularJS::InjectableFunction f, AngularJS::CustomServiceDefinition def |
-      def.getServiceReference() = f.getAResolvedDependency(this) and
-      service = def.getAService()
-    )
-  }
-
-  override AbstractValue getAValue() {
-    result = DataFlow::AnalyzedNode.super.getAValue() or
-    result = service.getALocalValue()
-  }
-}
-
+// private class DependencyInjectedArgumentInitializer extends DataFlow::AnalyzedNode instanceof DataFlow::ParameterNode
+// {
+//   DataFlow::AnalyzedNode service;
+//   DependencyInjectedArgumentInitializer() {
+//     exists(AngularJS::InjectableFunction f, AngularJS::CustomServiceDefinition def |
+//       def.getServiceReference() = f.getAResolvedDependency(this) and
+//       service = def.getAService()
+//     )
+//   }
+//   override AbstractValue getAValue() {
+//     result = DataFlow::AnalyzedNode.super.getAValue() or
+//     result = service.getALocalValue()
+//   }
+// }
 /**
  * A call to `angular.bind`, as a partial function invocation.
  */
