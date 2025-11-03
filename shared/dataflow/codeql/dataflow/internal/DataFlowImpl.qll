@@ -348,15 +348,13 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
           string toString();
         }
 
-        bindingset[this]
         class Ap {
-          bindingset[this]
           string toString();
         }
 
         class ApNil extends Ap;
 
-        bindingset[ap]
+        bindingset[result, ap]
         ApApprox getApprox(Ap ap);
 
         Typ getTyp(Type t);
@@ -371,19 +369,26 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
          */
         class ApHeadContent;
 
-        bindingset[ap]
         ApHeadContent getHeadContent(Ap ap);
 
         ApHeadContent projectToHeadContent(Content c);
 
-        bindingset[this]
         class ApOption;
 
         ApOption apNone();
 
-        bindingset[ap]
-        bindingset[result]
         ApOption apSome(Ap ap);
+
+        bindingset[this]
+        class ApHash {
+          bindingset[this, c]
+          ApHash push(Content c);
+
+          bindingset[this, c]
+          ApHash pop(Content c);
+        }
+
+        ApHash emptyApHash();
 
         class Cc {
           string toString();
@@ -2629,18 +2634,58 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
     private signature int numBitsSig();
 
-    bindingset[value, shiftAmount, numBits]
-    private int rotateLeft(int value, int shiftAmount, int numBits) {
-      result =
-        value
-            .bitShiftLeft(shiftAmount)
-            .bitAnd(1.bitShiftLeft(numBits - 1) - 1)
-            .bitOr(value.bitShiftRight(numBits - shiftAmount))
+    class UnitHashAp extends Unit {
+      bindingset[c]
+      UnitHashAp push(Content c) { exists(c) and result = this }
+
+      bindingset[c]
+      UnitHashAp pop(Content c) { exists(c) and result = this }
     }
 
-    bindingset[value, shiftAmount, numBits]
-    private int rotateRight(int value, int shiftAmount, int numBits) {
-      result = rotateLeft(value, numBits - shiftAmount, numBits)
+    private signature module HashApInput {
+      int numBits();
+
+      int shiftAmount();
+    }
+
+    private module MakeHashAp<HashApInput I> {
+      bindingset[value, shiftAmount, numBits]
+      private int rotateLeft(int value, int shiftAmount, int numBits) {
+        result =
+          value
+              .bitShiftLeft(shiftAmount)
+              .bitAnd(1.bitShiftLeft(numBits - 1) - 1)
+              .bitOr(value.bitShiftRight(numBits - shiftAmount))
+      }
+
+      bindingset[value, shiftAmount, numBits]
+      private int rotateRight(int value, int shiftAmount, int numBits) {
+        result = rotateLeft(value, numBits - shiftAmount, numBits)
+      }
+
+      bindingset[v]
+      pragma[inline_late]
+      private int rotateLeft(int v) { result = rotateLeft(v, I::shiftAmount(), I::numBits()) }
+
+      bindingset[v]
+      pragma[inline_late]
+      private int rotateRight(int v) { result = rotateRight(v, I::shiftAmount(), I::numBits()) }
+
+      bindingset[v]
+      pragma[inline_late]
+      private int truncate(int v) { result = v.bitAnd(1.bitShiftLeft(I::numBits() - 1) - 1) }
+
+      pragma[inline]
+      private int getTruncatedHash(Content c) { result = truncate(getContentHashCode(c)) }
+
+      bindingset[this]
+      class HashAp extends int {
+        bindingset[this]
+        HashAp push(Content c) { result = rotateLeft(this).bitXor(getTruncatedHash(c)) }
+
+        bindingset[this]
+        HashAp pop(Content c) { result = rotateRight(this.bitXor(getTruncatedHash(c))) }
+      }
     }
 
     private module StageXParam<numBitsSig/0 numBits> implements MkStage<S1>::StageParam {
