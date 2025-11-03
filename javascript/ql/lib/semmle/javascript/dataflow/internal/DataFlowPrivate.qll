@@ -1681,3 +1681,5 @@ private predicate shouldHashString(string s) { s = any(Content c).toString() }
 private module StringHashes = MakeStringHash<shouldHashString/1>;
 
 int getContentHashCode(Content c) { result = StringHashes::getHash(c.toString()) }
+
+private predicate missingHash(Content c) { not exists(getContentHashCode(c)) }
