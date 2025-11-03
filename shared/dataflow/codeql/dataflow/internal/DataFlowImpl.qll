@@ -303,6 +303,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
     }
 
     private signature module StageSig {
+      bindingset[this]
       class Ap;
 
       class ApNil extends Ap;
@@ -347,13 +348,15 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
           string toString();
         }
 
+        bindingset[this]
         class Ap {
+          bindingset[this]
           string toString();
         }
 
         class ApNil extends Ap;
 
-        bindingset[result, ap]
+        bindingset[ap]
         ApApprox getApprox(Ap ap);
 
         Typ getTyp(Type t);
@@ -368,14 +371,18 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
          */
         class ApHeadContent;
 
+        bindingset[ap]
         ApHeadContent getHeadContent(Ap ap);
 
         ApHeadContent projectToHeadContent(Content c);
 
+        bindingset[this]
         class ApOption;
 
         ApOption apNone();
 
+        bindingset[ap]
+        bindingset[result]
         ApOption apSome(Ap ap);
 
         class Cc {
@@ -2620,6 +2627,111 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       import Stage1
     }
 
+    private signature int numBitsSig();
+
+    bindingset[value, shiftAmount, numBits]
+    private int rotateLeft(int value, int shiftAmount, int numBits) {
+      result =
+        value
+            .bitShiftLeft(shiftAmount)
+            .bitAnd(1.bitShiftLeft(numBits - 1) - 1)
+            .bitOr(value.bitShiftRight(numBits - shiftAmount))
+    }
+
+    bindingset[value, shiftAmount, numBits]
+    private int rotateRight(int value, int shiftAmount, int numBits) {
+      result = rotateLeft(value, numBits - shiftAmount, numBits)
+    }
+
+    private module StageXParam<numBitsSig/0 numBits> implements MkStage<S1>::StageParam {
+      private module PrevStage = Stage1;
+
+      class Typ = Unit;
+
+      class Ap = int;
+
+      class ApNil extends Ap {
+        ApNil() { this = 0 }
+      }
+
+      bindingset[ap]
+      PrevStage::Ap getApprox(Ap ap) { any() }
+
+      Typ getTyp(Type t) { any() }
+
+      bindingset[value]
+      pragma[inline_late]
+      private int rotateLeft(int value) { result = rotateLeft(value, 2, 4) }
+
+      bindingset[value]
+      pragma[inline_late]
+      private int rotateRight(int value) { result = rotateRight(value, 2, 4) }
+
+      bindingset[c, tail]
+      Ap apCons(Content c, Ap tail) {
+        result = rotateLeft(tail).bitXor(getContentHashCode(c))
+        // result = true and
+        // exists(c) and
+        // if tail = true then Config::accessPathLimit() > 1 else any()
+      }
+
+      class ApHeadContent = Unit;
+
+      bindingset[ap]
+      overlay[caller?]
+      ApHeadContent getHeadContent(Ap ap) { exists(ap) and exists(result) }
+
+      ApHeadContent projectToHeadContent(Content c) { any() }
+
+      class ApOption = int;
+
+      ApOption apNone() { result = -1 }
+
+      bindingset[ap]
+      bindingset[result]
+      ApOption apSome(Ap ap) { result = ap and result != -1 }
+
+      import CachedCallContextSensitivity
+      import NoLocalCallContext
+
+      predicate localStep(
+        Nd node1, Nd node2, boolean preservesValue, Typ t, LocalCc lcc, string label
+      ) {
+        localStep1(node1, node2, preservesValue, _, _, label) and
+        exists(t) and
+        exists(lcc)
+      }
+
+      pragma[nomagic]
+      private predicate expectsContentCand(Nd node) {
+        exists(Content c |
+          PrevStage::revFlow(node) and
+          PrevStage::revFlowIsReadAndStored(c) and
+          Stage1::expectsContentEx(node, c)
+        )
+      }
+
+      bindingset[node, t0, ap]
+      predicate filter(Nd node, Typ t0, Ap ap, Typ t) {
+        t0 = t and
+        exists(ap) and
+        (
+          Stage1::notExpectsContent(node)
+          or
+          ap != 0 and
+          expectsContentCand(node)
+        )
+      }
+
+      bindingset[node, ap, isStoreStep]
+      predicate stepFilter(Nd node, Ap ap, boolean isStoreStep) { any() }
+
+      bindingset[t1, t2]
+      predicate typecheck(Typ t1, Typ t2) { any() }
+
+      predicate enableTypeFlow() { none() }
+    }
+
     private module Stage2Param implements MkStage<S1>::StageParam {
       private module PrevStage = Stage1;
 
@@ -2631,7 +2743,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
         ApNil() { this = false }
       }
 
-      bindingset[result, ap]
+      bindingset[ap]
       PrevStage::Ap getApprox(Ap ap) { any() }
 
       Typ getTyp(Type t) { any() }

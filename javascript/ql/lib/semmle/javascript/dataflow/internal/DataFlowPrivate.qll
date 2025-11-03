@@ -1674,3 +1674,10 @@ private module OptionalSteps {
 }
 
 import OptionalSteps
+private import StringHash
+
+private predicate shouldHashString(string s) { s = any(Content c).toString() }
+
+private module StringHashes = MakeStringHash<shouldHashString/1>;
+
+int getContentHashCode(Content c) { result = StringHashes::getHash(c.toString()) }

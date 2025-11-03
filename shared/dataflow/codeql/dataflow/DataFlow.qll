@@ -10,6 +10,8 @@ private import codeql.util.Location
 
 /** Provides language-specific data flow parameters. */
 signature module InputSig<LocationSig Location> {
+  int getContentHashCode(Content c);
+
   /**
    * A node in the data flow graph.
    */
