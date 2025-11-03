@@ -2738,18 +2738,23 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
     }
 
     private module MakeApHash<ApHashInputSig I> {
+      private int mask() { result = 1.bitShiftLeft(I::numBits()) - 1 }
+
       bindingset[value, shiftAmount, numBits]
       private int rotateLeft(int value, int shiftAmount, int numBits) {
         result =
           value
               .bitShiftLeft(shiftAmount)
-              .bitAnd(1.bitShiftLeft(numBits - 1) - 1)
+              .bitAnd(mask())
               .bitOr(value.bitShiftRight(numBits - shiftAmount))
       }
 
       bindingset[value, shiftAmount, numBits]
       private int rotateRight(int value, int shiftAmount, int numBits) {
-        result = rotateLeft(value, numBits - shiftAmount, numBits)
+        result =
+          value
+              .bitShiftRight(shiftAmount)
+              .bitOr(value.bitShiftLeft(numBits - shiftAmount).bitAnd(mask()))
       }
 
       bindingset[v]
@@ -2762,7 +2767,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       bindingset[v]
       pragma[inline_late]
-      private int truncate(int v) { result = v.bitAnd(1.bitShiftLeft(I::numBits() - 1) - 1) }
+      private int truncate(int v) { result = v.bitAnd(mask()) }
 
       pragma[inline]
       private int getTruncatedHash(Content c) { result = truncate(getContentHashCode(c)) }
@@ -2777,6 +2782,16 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       }
 
       ApHash emptyApHash() { result = 0 }
+
+      module Debug2 {
+        query int testValues() { result = [0, 10, 20, 30, 54, 56, 49, 1110112123] }
+
+        query predicate leftRight(int n, int left, int right) {
+          n = testValues() and left = rotateLeft(n) and right = rotateRight(left)
+        }
+
+        query predicate rightLeft(int n) { n = testValues() and n != rotateLeft(rotateRight(n)) }
+      }
     }
 
     private module Stage2Param implements MkStage<S1>::StageParam {
