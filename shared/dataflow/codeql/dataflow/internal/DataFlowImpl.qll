@@ -303,7 +303,6 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
     }
 
     private signature module StageSig {
-      bindingset[this]
       class Ap;
 
       class ApNil extends Ap;
@@ -2632,23 +2631,27 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       import Stage1
     }
 
-    private signature int numBitsSig();
+    private module UnitApHash {
+      class ApHash extends Unit {
+        bindingset[c]
+        ApHash push(Content c) { exists(c) and result = this }
 
-    class UnitHashAp extends Unit {
-      bindingset[c]
-      UnitHashAp push(Content c) { exists(c) and result = this }
+        bindingset[c]
+        ApHash pop(Content c) { exists(c) and result = this }
+      }
 
-      bindingset[c]
-      UnitHashAp pop(Content c) { exists(c) and result = this }
+      ApHash emptyApHash() { any() }
     }
 
-    private signature module HashApInput {
+    private signature int numBitsSig();
+
+    private signature module ApHashInputSig {
       int numBits();
 
       int shiftAmount();
     }
 
-    private module MakeHashAp<HashApInput I> {
+    private module MakeApHash<ApHashInputSig I> {
       bindingset[value, shiftAmount, numBits]
       private int rotateLeft(int value, int shiftAmount, int numBits) {
         result =
@@ -2679,102 +2682,15 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       private int getTruncatedHash(Content c) { result = truncate(getContentHashCode(c)) }
 
       bindingset[this]
-      class HashAp extends int {
+      class ApHash extends int {
         bindingset[this]
-        HashAp push(Content c) { result = rotateLeft(this).bitXor(getTruncatedHash(c)) }
+        ApHash push(Content c) { result = rotateLeft(this).bitXor(getTruncatedHash(c)) }
 
         bindingset[this]
-        HashAp pop(Content c) { result = rotateRight(this.bitXor(getTruncatedHash(c))) }
-      }
-    }
-
-    private module StageXParam<numBitsSig/0 numBits> implements MkStage<S1>::StageParam {
-      private module PrevStage = Stage1;
-
-      class Typ = Unit;
-
-      class Ap = int;
-
-      class ApNil extends Ap {
-        ApNil() { this = 0 }
+        ApHash pop(Content c) { result = rotateRight(this.bitXor(getTruncatedHash(c))) }
       }
 
-      bindingset[ap]
-      PrevStage::Ap getApprox(Ap ap) { any() }
-
-      Typ getTyp(Type t) { any() }
-
-      bindingset[value]
-      pragma[inline_late]
-      private int rotateLeft(int value) { result = rotateLeft(value, 2, 4) }
-
-      bindingset[value]
-      pragma[inline_late]
-      private int rotateRight(int value) { result = rotateRight(value, 2, 4) }
-
-      bindingset[c, tail]
-      Ap apCons(Content c, Ap tail) {
-        result = rotateLeft(tail).bitXor(getContentHashCode(c))
-        // result = true and
-        // exists(c) and
-        // if tail = true then Config::accessPathLimit() > 1 else any()
-      }
-
-      class ApHeadContent = Unit;
-
-      bindingset[ap]
-      overlay[caller?]
-      ApHeadContent getHeadContent(Ap ap) { exists(ap) and exists(result) }
-
-      ApHeadContent projectToHeadContent(Content c) { any() }
-
-      class ApOption = int;
-
-      ApOption apNone() { result = -1 }
-
-      bindingset[ap]
-      bindingset[result]
-      ApOption apSome(Ap ap) { result = ap and result != -1 }
-
-      import CachedCallContextSensitivity
-      import NoLocalCallContext
-
-      predicate localStep(
-        Nd node1, Nd node2, boolean preservesValue, Typ t, LocalCc lcc, string label
-      ) {
-        localStep1(node1, node2, preservesValue, _, _, label) and
-        exists(t) and
-        exists(lcc)
-      }
-
-      pragma[nomagic]
-      private predicate expectsContentCand(Nd node) {
-        exists(Content c |
-          PrevStage::revFlow(node) and
-          PrevStage::revFlowIsReadAndStored(c) and
-          Stage1::expectsContentEx(node, c)
-        )
-      }
-
-      bindingset[node, t0, ap]
-      predicate filter(Nd node, Typ t0, Ap ap, Typ t) {
-        t0 = t and
-        exists(ap) and
-        (
-          Stage1::notExpectsContent(node)
-          or
-          ap != 0 and
-          expectsContentCand(node)
-        )
-      }
-
-      bindingset[node, ap, isStoreStep]
-      predicate stepFilter(Nd node, Ap ap, boolean isStoreStep) { any() }
-
-      bindingset[t1, t2]
-      predicate typecheck(Typ t1, Typ t2) { any() }
-
-      predicate enableTypeFlow() { none() }
+      ApHash emptyApHash() { result = 0 }
     }
 
     private module Stage2Param implements MkStage<S1>::StageParam {
@@ -2814,6 +2730,7 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       ApOption apSome(Ap ap) { result = TBooleanSome(ap) }
 
+      import UnitApHash
       import CachedCallContextSensitivity
       import NoLocalCallContext
 
@@ -2885,6 +2802,8 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       ApOption apNone() { result = TApproxAccessPathFrontNone() }
 
       ApOption apSome(Ap ap) { result = TApproxAccessPathFrontSome(ap) }
+
+      import UnitApHash
 
       private module CallContextSensitivityInput implements CallContextSensitivityInputSig {
         predicate relevantCallEdgeIn = PrevStage::relevantCallEdgeIn/2;
@@ -2988,6 +2907,13 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       ApOption apSome(Ap ap) { result = TAccessPathFrontSome(ap) }
 
+      private module ApHashInput implements ApHashInputSig {
+        int numBits() { result = 8 }
+
+        int shiftAmount() { result = 3 }
+      }
+
+      import MakeApHash<ApHashInput>
       import BooleanCallContext
 
       pragma[nomagic]
@@ -3259,6 +3185,14 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
 
       ApOption apSome(Ap ap) { result = TAccessPathApproxSome(ap) }
 
+      private module ApHashInput implements ApHashInputSig {
+        int numBits() { result = 16 }
+
+        int shiftAmount() { result = 6 }
+      }
+
+      import MakeApHash<ApHashInput>
+
       private module CallContextSensitivityInput implements CallContextSensitivityInputSig {
         predicate relevantCallEdgeIn = PrevStage::relevantCallEdgeIn/2;
 
@@ -3451,6 +3385,8 @@ module MakeImpl<LocationSig Location, InputSig<Location> Lang> {
       ApOption apNone() { result.isNone() }
 
       ApOption apSome(Ap ap) { result = ApOption::some(ap) }
+
+      import UnitApHash
 
       private module CallContextSensitivityInput implements CallContextSensitivityInputSig {
         predicate relevantCallEdgeIn = PrevStage::relevantCallEdgeIn/2;
