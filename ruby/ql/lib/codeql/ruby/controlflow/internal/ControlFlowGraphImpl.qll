@@ -59,21 +59,17 @@ private module CfgInput implements CfgShared::InputSig<Location> {
   int idOfCfgScope(CfgScope node) { result = idOfAstNode(node) }
 }
 
-private module CfgSplittingInput implements CfgShared::SplittingInputSig<Location, CfgInput> {
-  private import Splitting as S
-
-  class SplitKindBase = S::TSplitKind;
-
-  class Split = S::Split;
-}
-
-private module ConditionalCompletionSplittingInput implements
-  CfgShared::ConditionalCompletionSplittingInputSig<Location, CfgInput, CfgSplittingInput>
-{
-  import Splitting::ConditionalCompletionSplitting::ConditionalCompletionSplittingInput
-}
-
-import CfgShared::MakeWithSplitting<Location, CfgInput, CfgSplittingInput, ConditionalCompletionSplittingInput>
+// private module CfgSplittingInput implements CfgShared::SplittingInputSig<Location, CfgInput> {
+//   private import Splitting as S
+//   class SplitKindBase = S::TSplitKind;
+//   class Split = S::Split;
+// }
+// private module ConditionalCompletionSplittingInput implements
+//   CfgShared::ConditionalCompletionSplittingInputSig<Location, CfgInput, CfgShared::NoSplittingInput<Location, CfgInput>>
+// {
+//   import Splitting::ConditionalCompletionSplitting::ConditionalCompletionSplittingInput
+// }
+import CfgShared::Make<Location, CfgInput>
 
 abstract class CfgScopeImpl extends AstNode {
   abstract predicate entry(AstNode first);

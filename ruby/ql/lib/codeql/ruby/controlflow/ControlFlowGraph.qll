@@ -6,7 +6,7 @@ import codeql.controlflow.SuccessorType
 private import codeql.ruby.AST
 private import codeql.ruby.controlflow.BasicBlocks
 private import internal.ControlFlowGraphImpl as CfgImpl
-private import internal.Splitting as Splitting
+//private import internal.Splitting as Splitting
 private import internal.Completion
 
 /**
@@ -58,10 +58,8 @@ class CfgNode extends CfgImpl::Node {
   /** Gets the basic block that this control flow node belongs to. */
   BasicBlock getBasicBlock() { result.getANode() = this }
 }
-
-class Split = Splitting::Split;
-
-/** Provides different kinds of control flow graph splittings. */
-module Split {
-  class ConditionalCompletionSplit = Splitting::ConditionalCompletionSplit;
-}
+// class Split = Splitting::Split;
+// /** Provides different kinds of control flow graph splittings. */
+// module Split {
+//   class ConditionalCompletionSplit = Splitting::ConditionalCompletionSplit;
+// }
