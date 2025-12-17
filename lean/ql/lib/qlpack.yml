@@ -1,0 +1,16 @@
+name: codeql/lean
+version: 1.0.0-dev
+groups:
+  - ql
+  - queries
+dbscheme: lean.dbscheme
+extractor: lean
+upgrades: upgrades
+dependencies:
+  codeql/typos: ${workspace}
+  codeql/util: ${workspace}
+  codeql/yaml: ${workspace}
+  codeql/ssa: ${workspace}
+  codeql/controlflow: ${workspace}
+  codeql/dataflow: ${workspace}
+warnOnImplicitThis: true

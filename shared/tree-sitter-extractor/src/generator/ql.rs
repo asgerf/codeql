@@ -21,14 +21,30 @@ impl fmt::Display for TopLevel<'_> {
 }
 
 #[derive(Clone, Eq, PartialEq, Hash)]
+pub enum Privacy {
+    Public,
+    Private,
+}
+
+impl fmt::Display for Privacy {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Privacy::Public => Result::Ok(()),
+            Privacy::Private => write!(f, "private"),
+        }
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Import<'a> {
+    pub privacy: Privacy,
     pub module: &'a str,
     pub alias: Option<&'a str>,
 }
 
 impl fmt::Display for Import<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "import {}", &self.module)?;
+        write!(f, "{} import {}", &self.privacy, &self.module)?;
         if let Some(name) = &self.alias {
             write!(f, " as {name}")?;
         }
@@ -133,6 +149,9 @@ pub enum Type<'a> {
 
     /// A user-defined type.
     Normal(&'a str),
+
+    /// A normal type with an `F::` prefix.
+    Facade(&'a str),
 }
 
 impl fmt::Display for Type<'_> {
@@ -142,6 +161,7 @@ impl fmt::Display for Type<'_> {
             Type::String => write!(f, "string"),
             Type::Normal(name) => write!(f, "{name}"),
             Type::At(name) => write!(f, "@{name}"),
+            Type::Facade(name) => write!(f, "F::{name}"),
         }
     }
 }
@@ -156,6 +176,7 @@ pub enum Expression<'a> {
     Or(Vec<Expression<'a>>),
     Equals(Box<Expression<'a>>, Box<Expression<'a>>),
     Dot(Box<Expression<'a>>, &'a str, Vec<Expression<'a>>),
+    Binary(Box<Expression<'a>>, &'a str, Box<Expression<'a>>),
     Aggregate {
         name: &'a str,
         vars: Vec<FormalParameter<'a>>,
@@ -218,6 +239,10 @@ impl fmt::Display for Expression<'_> {
                     write!(f, "{arg}")?;
                 }
                 write!(f, ")")
+            }
+            Expression::Binary(left, operator, right) => {
+                // Note: for now we always insert parentheses to ensure correct precedence.
+                write!(f, "({} {} {})", left, operator, right)
             }
             Expression::Aggregate {
                 name,

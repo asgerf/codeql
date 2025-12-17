@@ -1,0 +1,1292 @@
+private import codeql.util.Location
+private import LanguageBase
+private import LanguageCommon
+private import LanguageCfg
+private import codeql.controlflow.BasicBlock as BB
+private import codeql.util.Boolean
+private import codeql.util.Unit
+private import codeql.util.Void
+private import codeql.ssa.Ssa as Ssa
+private import codeql.dataflow.VariableCapture as VariableCapture
+private import codeql.dataflow.DataFlow as DataFlow
+private import codeql.dataflow.TaintTracking as TaintTracking
+
+module MakeLanguageDataFlow<
+  LocationSig Location, LanguageBaseSig<Location> Base, LanguageCommonSig<Location, Base> Common>
+{
+  private import Base
+  private import Common
+  private import MakeLanguageBase<Location, Base>
+  private import MakeLanguageCommon<Location, Base, Common>
+
+  final private class FinalAstNode = AstNode;
+
+  signature module DataFlowSig1 {
+    class LocalVariable {
+      VariableReference getAReference();
+
+      string toString();
+
+      Location getLocation();
+
+      Common::Callable getCfgScope();
+
+      predicate isCaptured();
+    }
+
+    class VariableReference extends Base::AstNode;
+
+    default predicate assignmentIsUncertain(Base::SyntheticNode lvalueNode) { none() }
+
+    default predicate readIsUncertain(VariableReference ref) { none() }
+
+    default predicate definitelyInitialized(LocalVariable v) { none() }
+
+    class Constant {
+      int asArrayIndex();
+
+      /** Gets the operand used when referencing this constant from a MaD token. */
+      string getAsOperand();
+
+      /** Gets a string-representation of the constant. Should generally equal `getAsOperand()` when that exists. */
+      string toString();
+    }
+
+    /**
+     * A type of container that associates values with a key or index, such as arrays, lists, tuples, maps, dictionaries, etc.
+     *
+     * In some languages, lists and maps may be difficult to distinguish at their use sites as they are interacted with using the same syntax or method names.
+     * In such cases it can make sense to unify the relevant container kinds.
+     *
+     * Non-indexable containers such as sets, iterators, and streams should either be represented by a `LanguageContent`, or be treated interchangeably
+     * with the contents of another container kind. For example: iterator contents could be represented by array contents, so the conversion between
+     * arrays and iterators becomes a no-op. In other languages it may be better for it to have its own `LanguageContent`. The choice depends on how
+     * difficult it is to recognise conversions between the container kinds, versus the value of pruning false flow based on more fine-grained contents.
+     */
+    class IndexedContainerKind {
+      /** Holds if data flowing into the keys themselves should be tracked. For array-like containers this should be `none()`. */
+      predicate trackFlowIntoKeys();
+
+      /** Gets the MaD token to associate with keys in this map-like container. Should have no result for array-like containers. */
+      string getKeyToken();
+
+      /** Gets the MaD token to associate with values in this container (i.e. map values or array elements). */
+      string getValueToken();
+
+      /**
+       * Holds if values that are associated with `key` should be tracked precisely.
+       *
+       * For array-like containers, this should hold for non-negative integers up to a certain size.
+       *
+       * For map-like containers, this should hold for all keys that are likely worth tracking.
+       */
+      predicate trackValuesAssociatedWithKey(Constant key);
+    }
+
+    /**
+     * A language-specific content that is not handled by `IndexedContainerKind`.
+     */
+    class LanguageContent {
+      predicate hasMadToken(string head, string operand);
+
+      string toString();
+
+      Location getLocation();
+    }
+
+    class ClosureExpr extends AstNode {
+      predicate hasBody(Callable scope);
+    }
+  }
+
+  module MakeDataFlow1<DataFlowSig1 D1> {
+    private import D1
+
+    private newtype TBuiltinReturnPosition =
+      TReturnValue() or
+      TReturnException()
+
+    class BuiltinReturnPosition extends TBuiltinReturnPosition {
+      string toString() {
+        this = TReturnValue() and result = "value"
+        or
+        this = TReturnException() and result = "exception"
+      }
+    }
+
+    private newtype TContent =
+      TCaptureContent(LocalVariable v) { v.isCaptured() } or
+      TContainerSlot(IndexedContainerKind kind, Constant key) {
+        kind.trackValuesAssociatedWithKey(key)
+      } or
+      TContainerUnknownSlot(IndexedContainerKind kind) or
+      TContainerKey(IndexedContainerKind kind) { kind.trackFlowIntoKeys() } or
+      TReturnContent(TBuiltinReturnPosition position) or
+      TLanguageContent(LanguageContent kind)
+
+    class Content extends TContent {
+      LocalVariable asCapturedVariable() { this = TCaptureContent(result) }
+
+      Constant asContainerSlot(IndexedContainerKind kind) { this = TContainerSlot(kind, result) }
+
+      int asArrayIndex(IndexedContainerKind kind) {
+        result = this.asContainerSlot(kind).asArrayIndex()
+      }
+
+      predicate isUnknownContainerSlot(IndexedContainerKind kind) {
+        this = TContainerUnknownSlot(kind)
+      }
+
+      predicate isContainerKey(IndexedContainerKind kind) { this = TContainerKey(kind) }
+
+      LanguageContent asLanguageContent() { this = TLanguageContent(result) }
+
+      string toString() {
+        // Note: these strings are visible to end-users in the generated data flow paths.
+        result = this.asCapturedVariable().toString()
+        or
+        exists(IndexedContainerKind kind |
+          result = kind.getValueToken() + "[" + this.asContainerSlot(kind).toString() + "]"
+          or
+          this.isUnknownContainerSlot(kind) and
+          result = kind.getValueToken()
+          or
+          this.isContainerKey(kind) and
+          result = kind.getKeyToken()
+        )
+        or
+        result = this.asLanguageContent().toString()
+      }
+
+      Location getLocation() {
+        result = this.asCapturedVariable().getLocation()
+        or
+        result = this.asLanguageContent().getLocation()
+      }
+    }
+
+    signature class LanguageContentSetSig {
+      Content getAReadContent();
+
+      Content getAStoreContent();
+
+      predicate hasMadToken(string head, string operand);
+
+      string toString();
+
+      Location getLocation();
+    }
+
+    /**
+     * Gets the content representing the parameter on which captured variables are stored.
+     *
+     * For class-based languages where lambdas are instance methods under the hood, this would
+     * be the receiver parameter (`this` or `self`). For languages like JavaScript where lambdas
+     * are first-class and methods are just lambdas under the hood, this would be a synthetic
+     * parameter representing the lambda's self-reference.
+     */
+    signature Content capturedVariableHostParameterSig();
+
+    signature module DataFlowSig2 {
+      class LanguageContentSet {
+        Content getAReadContent();
+
+        Content getAStoreContent();
+
+        predicate hasMadToken(string head, string operand);
+
+        string toString();
+
+        Location getLocation();
+      }
+
+      /**
+       * Gets the content representing the parameter on which captured variables are stored.
+       *
+       * For class-based languages where lambdas are instance methods under the hood, this would
+       * be the receiver parameter (`this` or `self`). For languages like JavaScript where lambdas
+       * are first-class and methods are just lambdas under the hood, this would be a synthetic
+       * parameter representing the lambda's self-reference.
+       */
+      Content capturedVariableHostParameter();
+    }
+
+    module MakeDataFlow2<DataFlowSig2 D2> {
+      private import D2
+
+      private newtype TContentSet =
+        TSingleton(TContent content) or
+        TContainerKnownSlot(IndexedContainerKind kind, Constant key) {
+          kind.trackValuesAssociatedWithKey(key)
+        } or
+        TArrayElementLowerBound(IndexedContainerKind kind, int bound) {
+          exists(Constant key |
+            kind.trackValuesAssociatedWithKey(key) and
+            bound = key.asArrayIndex()
+          )
+        } or
+        TContainerAnySlot(IndexedContainerKind kind) or
+        TLanguageContentSet(LanguageContentSet contents)
+
+      class ContentSet extends TContentSet {
+        Content asSingleton() { this = TSingleton(result) }
+
+        Constant asContainerSlot(IndexedContainerKind kind) {
+          this = TContainerKnownSlot(kind, result)
+        }
+
+        predicate isAnyContainerSlot(IndexedContainerKind kind) { this = TContainerAnySlot(kind) }
+
+        int asArrayElementLowerBound(IndexedContainerKind kind) {
+          this = TArrayElementLowerBound(kind, result)
+        }
+
+        LanguageContentSet asLanguageContentSet() { this = TLanguageContentSet(result) }
+
+        string toString() {
+          result = this.asSingleton().toString()
+          or
+          exists(IndexedContainerKind kind |
+            result = kind.getValueToken() + "[" + this.asArrayElementLowerBound(kind) + "..]"
+            or
+            result = kind.getValueToken() + "[" + this.asContainerSlot(kind) + "]"
+            or
+            this.isAnyContainerSlot(kind) and
+            result = kind.getValueToken()
+          )
+          or
+          result = this.asLanguageContentSet().toString()
+        }
+
+        Location getLocation() { result = this.asLanguageContentSet().getLocation() }
+
+        Content getAReadContent() {
+          result = this.asSingleton()
+          or
+          exists(IndexedContainerKind kind |
+            this.asArrayElementLowerBound(kind) <= result.asArrayIndex(kind)
+            or
+            this.asContainerSlot(kind) = result.asContainerSlot(kind)
+            or
+            this.isAnyContainerSlot(kind) and
+            exists(result.asContainerSlot(kind))
+            or
+            (
+              exists(this.asArrayElementLowerBound(kind)) or
+              exists(this.asContainerSlot(kind)) or
+              this.isAnyContainerSlot(kind)
+            ) and
+            result.isUnknownContainerSlot(kind)
+          )
+          or
+          result = this.asLanguageContentSet().getAReadContent()
+        }
+
+        Content getAStoreContent() {
+          result = this.asSingleton()
+          or
+          exists(IndexedContainerKind kind |
+            result.asContainerSlot(kind) = this.asContainerSlot(kind)
+            or
+            exists(this.asArrayElementLowerBound(kind)) and
+            result.isUnknownContainerSlot(kind) // nothing better can be done at the moment, but this is usually not used for stores anyway
+            or
+            this.isAnyContainerSlot(kind) and
+            result.isUnknownContainerSlot(kind)
+          )
+          or
+          result = this.asLanguageContentSet().getAStoreContent()
+        }
+      }
+
+      signature class IndexedContainerKindSig extends IndexedContainerKind;
+
+      /** Generates a module with accessors for content sets related to the given array-like container kind. */
+      module ArrayContentAccessor<IndexedContainerKindSig Kind> {
+        Kind kind() { any() }
+
+        private Constant preciseKey() { kind().trackValuesAssociatedWithKey(result) }
+
+        private int preciseIndex() { result = preciseKey().asArrayIndex() }
+
+        pragma[nomagic]
+        private int maxPreciseIndex() { result = max(preciseIndex()) }
+
+        /** Read from a index or higher. Using this in a store will result in an unknown index. */
+        pragma[nomagic]
+        ContentSet lowerBound(int index) { result.asArrayElementLowerBound(kind()) = index }
+
+        /** Any element of the array. */
+        pragma[nomagic]
+        ContentSet anyElement() { result = lowerBound(0) }
+
+        pragma[nomagic]
+        private ContentSet maxLowerBound() { result = lowerBound(maxPreciseIndex()) }
+
+        pragma[nomagic]
+        private ContentSet knownIndex(int index) {
+          result.asContainerSlot(kind()).asArrayIndex() = index
+        }
+
+        /**
+         * Read or store to a specific index.
+         *
+         * Reading from this content set will also observe values that were originally stored at an unknown index.
+         *
+         * Has no result for negative indices. Always has a result for non-negative indices,
+         * but indices above a certain threshold will be associated with a less precise content set.
+         */
+        bindingset[index]
+        ContentSet elementAt(int index) {
+          result = knownIndex(index)
+          or
+          // If the index is larger than we can track, use the greatest lower bound instead.
+          index > maxPreciseIndex() and
+          result = maxLowerBound()
+        }
+
+        final private class FinalContentSet = ContentSet;
+
+        /**
+         * A singleton content for array elements at a known index, or unknown index.
+         *
+         * This can be used to generate a set of read and store edges that copy parts
+         * of an array to another value. For such purposes, it is best to only rely on
+         * singleton (exact) content sets to avoid precision loss.
+         *
+         * ```codeql
+         * exists(Array::ExactContent content |
+         *   node1 = ... and
+         *   step.read() = content and
+         *   node2 = ...
+         *   or
+         *   node1 = ... and
+         *   step.store() = content.shiftUpBy(1) and
+         *   node2 = ...
+         * )
+         * ```
+         */
+        class ExactContent extends FinalContentSet {
+          ExactContent() {
+            exists(this.asSingleton().asArrayIndex(kind())) or
+            this.asSingleton().isUnknownContainerSlot(kind())
+          }
+
+          /** Increase the index by the given value, if it is a known index. */
+          bindingset[index]
+          ContentSet shiftUpBy(int index) {
+            result = elementAt(this.asSingleton().asArrayIndex(kind()) + index)
+            or
+            this.asSingleton().isUnknownContainerSlot(kind()) and result = this
+          }
+        }
+      }
+
+      /** Generates a module with accessors for the content sets related to the given map-like kind. */
+      module MapContentAccessor<IndexedContainerKindSig Kind> {
+        private Kind kind() { any() }
+
+        /** One of the keys in a key-value pair stored in a map. */
+        pragma[nomagic]
+        ContentSet key() { result.asSingleton().isContainerKey(kind()) }
+
+        /** One of the values from a key-value pair stored in a map. */
+        pragma[nomagic]
+        ContentSet value() { result.isAnyContainerSlot(kind()) }
+
+        pragma[nomagic]
+        private ContentSet valueAtExact(Constant key) {
+          result.asSingleton().asContainerSlot(kind()) = key
+        }
+
+        /**
+         * The value associated with `key` in map.
+         *
+         * If `key` is not one of the keys that are tracked precisely, this will return
+         * the same as `value()`.
+         */
+        bindingset[key]
+        ContentSet valueAt(Constant key) {
+          result = valueAtExact(key)
+          or
+          not exists(valueAtExact(key)) and
+          result = value()
+        }
+      }
+
+      private newtype TStep =
+        TValueStep() or
+        TTaintStep() or
+        TReadStep(ContentSet contents) or
+        TStoreStep(ContentSet contents) or
+        TWithContentStep(ContentSet contents) or
+        TWithoutContentStep(ContentSet contents)
+
+      /** Provides classes for constructing data flow steps. */
+      module DataFlowBuilder {
+        /** A type of data flow type. */
+        class Step extends TStep {
+          bindingset[this]
+          Step() { any() } // Help catch some bugs in pracitce
+
+          predicate value() { this = TValueStep() }
+
+          predicate taint() { this = TTaintStep() }
+
+          predicate read(ContentSet contents) { this = TReadStep(contents) }
+
+          predicate store(ContentSet contents) { this = TStoreStep(contents) }
+
+          predicate withContent(ContentSet contents) { this = TWithContentStep(contents) }
+
+          predicate withoutContent(ContentSet contents) { this = TWithoutContentStep(contents) }
+
+          /**
+           * Maps all known array indices to an array index shifted by the given amount (which may be positive, negative, or zero).
+           *
+           * Blocks flow of array indices for which the shifted index would become negative. Non-array contents are blocked as well.
+           *
+           * Also generates a taint step followed by a store into the unknown array index.
+           */
+          predicate shiftArrayContentsBy(IndexedContainerKind kind, int amount) { none() }
+
+          /** Maps all known array indices to the unknown array index. Also generates a taint step followed by a store into the unknown array index. Non-array contents are blocked. */
+          predicate resetArrayContents(IndexedContainerKind kind) { none() }
+
+          /** Generates a taint step followed by a store into `contents` */
+          predicate taintAndStore(ContentSet contents) { none() }
+
+          string toString() {
+            this.value() and result = "value"
+            or
+            this.taint() and result = "taint"
+            or
+            exists(ContentSet contents |
+              this.read(contents) and result = "read(" + contents.toString() + ")"
+              or
+              this.store(contents) and result = "store(" + contents.toString() + ")"
+              or
+              this.withContent(contents) and result = "withContent(" + contents.toString() + ")"
+              or
+              this.withoutContent(contents) and
+              result = "withoutContent(" + contents.toString() + ")"
+            )
+          }
+        }
+
+        private class Node instanceof AstNode {
+          bindingset[this]
+          Node() { any() }
+
+          string toString() { result = super.toString() }
+
+          Location getLocation() { result = super.getLocation() }
+
+          predicate isBeingAssignedTo(AstNode node) { this = getLValueNode(node) }
+
+          predicate isValueOf(AstNode node) { this = node }
+        }
+
+        /** A node that can be used as the source of a data flow step. */
+        class Node1 = Node;
+
+        /** A node that can be used as the destination of a data flow step. */
+        class Node2 = Node;
+
+        signature predicate dataflowStepSig(Node1 node1, Step step, Node2 node2);
+      }
+
+      private import MakeLanguageCfg<Location, Base, Common>
+
+      signature module DataFlowSig3 {
+        predicate dataflowStep(
+          DataFlowBuilder::Node1 node1, DataFlowBuilder::Step step, DataFlowBuilder::Node2 node
+        );
+
+        predicate functionCall(AstNode call, DataFlowBuilder::Node1 calledValue);
+      }
+
+      module MakeDataFlow3<DataFlowSig3 D3, CfgSig1 Cfg1> {
+        private import D3
+        private import MakeCfg1<Cfg1>
+
+        final private class FinalLocalVariable = LocalVariable;
+
+        /**
+         * Instantiation of SSA for non-captured variables.
+         */
+        private module LocalSsaConfig implements Ssa::InputSig<Location> {
+          class BasicBlock = BasicBlocks::BasicBlock;
+
+          class ControlFlowNode = AstNode;
+
+          BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) {
+            result.immediatelyDominates(bb)
+          }
+
+          BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
+
+          class SourceVariable extends FinalLocalVariable {
+            SourceVariable() { not this.isCaptured() }
+          }
+
+          pragma[nomagic]
+          private BasicBlock getEntryBlock(Callable scope) {
+            result.getANode() = getCfgEntryPoint(scope)
+          }
+
+          predicate variableWrite(BasicBlock bb, int i, SourceVariable v, boolean certain) {
+            exists(AstNode lvalueNode |
+              lvalueNode = getLValueNode(v.getAReference()) and
+              bb.getNode(i) = lvalueNode and
+              if assignmentIsUncertain(lvalueNode) then certain = false else certain = true
+            )
+            or
+            // For variables that are not definitely initialized, put a synthetic initializer in the entry block
+            not definitelyInitialized(v) and
+            bb = getEntryBlock(v.getCfgScope()) and
+            i = -1 and
+            certain = true
+          }
+
+          predicate variableRead(BasicBlock bb, int i, SourceVariable v, boolean certain) {
+            exists(AstNode ref |
+              ref = v.getAReference() and
+              not isInPureLValuePosition(ref) and // not a read if pure lvalue
+              bb.getNode(i) = ref and
+              if readIsUncertain(ref) then certain = false else certain = true
+            )
+          }
+        }
+
+        private module LocalSsa = Ssa::Make<Location, LocalSsaConfig>;
+
+        private module LocalSsaDataFlowConfig implements LocalSsa::DataFlowIntegrationInputSig {
+          class Expr extends FinalAstNode {
+            predicate hasCfgNode(BasicBlock bb, int i) { this = bb.getNode(i) }
+          }
+
+          class Guard extends FinalAstNode {
+            Guard() { isCondition(this) }
+
+            BasicBlock getOutcomeBlock(boolean branch) {
+              result.getANode() = getConditionalOutcomeNode(this, branch)
+            }
+
+            predicate controlsBranchEdge(BasicBlock bb1, BasicBlock bb2, boolean branch) {
+              bb1.getNode(_) = this and
+              bb2 = this.getOutcomeBlock(branch)
+            }
+          }
+
+          predicate guardDirectlyControlsBlock(Guard guard, BasicBlock bb, boolean branch) {
+            guard.getOutcomeBlock(branch).dominates(bb)
+          }
+
+          predicate includeWriteDefsInFlowStep() { none() } // not needed as we have lvalue nodes already
+        }
+
+        private module LocalSsaDataFlow = LocalSsa::DataFlowIntegration<LocalSsaDataFlowConfig>;
+
+        predicate valueStep(AstNode node1, AstNode node) { dataflowStep(node1, TValueStep(), node) }
+
+        pragma[nomagic]
+        private LocalVariable getCapturedVariableFromLValue(SyntheticNode lvalue) {
+          result.isCaptured() and
+          lvalue = getLValueNode(result.getAReference())
+        }
+
+        /** Holds if `node1 -> node2` steps from a write of a captured variable to any of its reads. */
+        bindingset[node1]
+        pragma[inline_late]
+        predicate captureStepApprox(SyntheticNode node1, VariableReference node2) {
+          exists(LocalVariable v |
+            v = getCapturedVariableFromLValue(node1) and
+            node2 = v.getAReference() and
+            not isInPureLValuePosition(node2)
+          )
+        }
+
+        predicate closureExprHasAliasExpr(ClosureExpr expr, AstNode alias) {
+          alias = expr
+          or
+          exists(AstNode pred | closureExprHasAliasExpr(expr, pred) |
+            valueStep(pred, alias)
+            or
+            captureStepApprox(pred, alias)
+          )
+          or
+          exists(LocalSsa::Definition def, LocalVariable v, BasicBlock bb, int i |
+            closureExprHasAliasSsa(expr, def) and
+            LocalSsa::ssaDefReachesRead(v, def, bb, i) and
+            bb.getNode(i) = alias and
+            v.getAReference() = alias
+          )
+        }
+
+        predicate closureExprHasAliasSsa(ClosureExpr expr, LocalSsa::Definition alias) {
+          exists(BasicBlock bb, int i |
+            closureExprHasAliasExpr(expr, bb.getNode(i)) and
+            alias.(LocalSsa::WriteDefinition).definesAt(_, bb, i)
+          )
+          or
+          exists(LocalSsa::Definition prev, LocalVariable v, BasicBlock bb, int i |
+            closureExprHasAliasSsa(expr, prev) and
+            LocalSsa::ssaDefReachesRead(v, prev, bb, i) and
+            alias.definesAt(v, bb, i)
+          )
+        }
+
+        module VariableCaptureConfig implements VariableCapture::InputSig<Location> {
+          class BasicBlock extends BasicBlocks::BasicBlock {
+            Callable getEnclosingCallable() { result = this.getScope() }
+          }
+
+          class ControlFlowNode = AstNode;
+
+          BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) {
+            result.immediatelyDominates(bb)
+          }
+
+          BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
+
+          class CapturedVariable extends FinalLocalVariable {
+            CapturedVariable() { this.isCaptured() }
+
+            /** Gets the callable that defines this variable. */
+            Callable getCallable() { result = this.getCfgScope() }
+          }
+
+          class CapturedParameter extends CapturedVariable {
+            CapturedParameter() { none() } // Not needed here, as parameters and local variable writes (lvalues) are separate nodes
+          }
+
+          class Expr extends FinalAstNode {
+            /** Holds if the `i`th node of basic block `bb` evaluates this expression. */
+            predicate hasCfgNode(BasicBlock bb, int i) { bb.getNode(i) = this }
+          }
+
+          class VariableWrite extends Expr {
+            private CapturedVariable v;
+            private VariableReference ref;
+
+            VariableWrite() {
+              this = getLValueNode(ref) and
+              v.getAReference() = ref
+            }
+
+            CapturedVariable getVariable() { result = v }
+          }
+
+          final private class FinalVariableReference = VariableReference;
+
+          class VariableRead extends Expr, FinalVariableReference {
+            private CapturedVariable v;
+
+            VariableRead() { this = v.getAReference() and not isInPureLValuePosition(this) }
+
+            CapturedVariable getVariable() { result = v }
+          }
+
+          final private class FinalClosureExprBase = D1::ClosureExpr;
+
+          class ClosureExpr extends Expr, FinalClosureExprBase {
+            predicate hasAliasedAccess(Expr f) { closureExprHasAliasExpr(this, f) }
+
+            predicate hasBody(Callable callable) { FinalClosureExprBase.super.hasBody(callable) }
+          }
+
+          final private class FinalCallable = Common::Callable;
+
+          class Callable extends FinalCallable {
+            predicate isConstructor() {
+              none() // TODO
+            }
+          }
+        }
+
+        private module CaptureSsa = VariableCapture::Flow<Location, VariableCaptureConfig>;
+
+        predicate parameterReadStep(Callable callable, ContentSet contents, AstNode node2) {
+          dataflowStep(getParameterObjectNode(callable), TReadStep(contents), node2)
+        }
+
+        predicate argumentStoreStep(AstNode node1, ContentSet contents, AstNode call) {
+          dataflowStep(node1, TStoreStep(contents), getArgumentObjectNode(call))
+        }
+
+        private newtype TParameterPosition =
+          MkParameterPosition(ContentSet contents) { parameterReadStep(_, contents, _) } or
+          MkStaticParameterObjectPosition() or
+          MkDynamicParameterObjectPosition()
+
+        class ParameterPosition extends TParameterPosition {
+          ContentSet asContentSet() { this = MkParameterPosition(result) }
+
+          string toString() {
+            result = this.asContentSet().toString()
+            or
+            this = MkStaticParameterObjectPosition() and result = "static parameter object"
+            or
+            this = MkDynamicParameterObjectPosition() and result = "dynamic parameter object"
+          }
+
+          Location getLocation() { result = this.asContentSet().getLocation() }
+        }
+
+        private newtype TArgumentPosition =
+          MkArgumentPosition(ContentSet contents) { argumentStoreStep(_, contents, _) } or
+          MkStaticArgumentObjectPosition() or
+          MkDynamicArgumentObjectPosition()
+
+        class ArgumentPosition extends TArgumentPosition {
+          ContentSet asContentSet() { this = MkArgumentPosition(result) }
+
+          string toString() {
+            result = this.asContentSet().toString()
+            or
+            this = MkStaticArgumentObjectPosition() and result = "static argument object"
+            or
+            this = MkDynamicArgumentObjectPosition() and result = "dynamic argument object"
+          }
+
+          Location getLocation() { result = this.asContentSet().getLocation() }
+        }
+
+        newtype TDataFlowNode =
+          TValueNode(AstNode node) or
+          TWithContentHelper(ContentSet contents, AstNode target) {
+            dataflowStep(_, TWithContentStep(contents), target)
+          } or
+          TWithoutContentHelper(ContentSet contents, AstNode target) {
+            dataflowStep(_, TWithoutContentStep(contents), target)
+          } or
+          TLocalSsaNode(LocalSsaDataFlow::SsaNode node) or
+          TCaptureSsaNode(CaptureSsa::SynthesizedCaptureNode node) or
+          /**
+           * A parameter object from which to access parameters that cannot be translated to
+           * a ParameterPosition (i.e. everything except direct reads from the parameter object).
+           */
+          TDynamicParameterObject(Callable callable) or
+          /**
+           * An argument object that only the holds arguments that cannot be translated to an
+           * ArgumentPosition (i.e. everything except direct stores to the argument object).
+           */
+          TDynamicArgumentObject(AstNode call) { isCall(call) } or
+          TFlowSummaryNode() // TODO
+
+        class DataFlowNode extends TDataFlowNode {
+          pragma[nomagic]
+          AstNode asAstNode() { this = TValueNode(result) }
+
+          /** Holds if this represents the value abut to be assigned to the given `lvalue`. */
+          predicate isValueBeingAssignedTo(AstNode lvalue) {
+            this.asAstNode() = getLValueNode(lvalue)
+          }
+
+          string toString() {
+            result = this.asAstNode().toString()
+            or
+            exists(ContentSet contents, AstNode target |
+              this = TWithContentHelper(contents, target) and
+              result = "withContent " + contents + " " + target
+            )
+            or
+            exists(ContentSet contents, AstNode target |
+              this = TWithoutContentHelper(contents, target) and
+              result = "withoutContent " + contents + " " + target
+            )
+            or
+            exists(LocalSsaDataFlow::SsaNode node |
+              this = TLocalSsaNode(node) and
+              result = node.toString()
+            )
+            or
+            exists(CaptureSsa::SynthesizedCaptureNode node |
+              this = TCaptureSsaNode(node) and
+              result = "Capture " + node
+            )
+            or
+            exists(Callable callable |
+              this = TDynamicParameterObject(callable) and
+              result = "DynamicParameterObject " + callable
+            )
+            or
+            exists(AstNode call |
+              this = TDynamicArgumentObject(call) and
+              result = "DynamicArgumentObject " + call
+            )
+            or
+            this = TFlowSummaryNode() and
+            result = "FlowSummaryNode"
+          }
+
+          Location getLocation() {
+            result = this.asAstNode().getLocation()
+            or
+            exists(ContentSet contents, AstNode target |
+              this = TWithContentHelper(contents, target) and
+              result = target.getLocation()
+            )
+            or
+            exists(ContentSet contents, AstNode target |
+              this = TWithoutContentHelper(contents, target) and
+              result = target.getLocation()
+            )
+            or
+            exists(LocalSsaDataFlow::SsaNode node |
+              this = TLocalSsaNode(node) and
+              result = node.getLocation()
+            )
+            or
+            exists(CaptureSsa::SynthesizedCaptureNode node |
+              this = TCaptureSsaNode(node) and
+              result = node.getLocation()
+            )
+            or
+            exists(Callable callable |
+              this = TDynamicParameterObject(callable) and
+              result = callable.getLocation()
+            )
+            or
+            exists(AstNode call |
+              this = TDynamicArgumentObject(call) and
+              result = call.getLocation()
+            )
+          }
+        }
+
+        private AstNode getPostUpdateNode(AstNode node) {
+          none() // TODO
+        }
+
+        pragma[nomagic]
+        private DataFlowNode getCapturedVariableHostParameter(Callable callable) {
+          exists(ContentSet contents |
+            parameterReadStep(callable, contents, result.asAstNode()) and
+            contents.getAReadContent() = capturedVariableHostParameter()
+          )
+        }
+
+        bindingset[node]
+        pragma[inline_late]
+        private DataFlowNode getNodeFromLocalSsa(LocalSsaDataFlow::Node node) {
+          result = TLocalSsaNode(node) // Note: only holds for SsaNode subclass
+          or
+          result.asAstNode() = node.(LocalSsaDataFlow::ExprNode).getExpr()
+          or
+          exists(BasicBlock bb, int i |
+            node.(LocalSsaDataFlow::WriteDefSourceNode).getDefinition().definesAt(_, bb, i) and
+            result.asAstNode() = bb.getNode(i) // Gets the LValue node
+          )
+          or
+          result.asAstNode() =
+            getPostUpdateNode(node.(LocalSsaDataFlow::ExprPostUpdateNode).getExpr())
+        }
+
+        bindingset[node]
+        pragma[inline_late]
+        private DataFlowNode getNodeFromCaptureSsa(CaptureSsa::ClosureNode node) {
+          result = TCaptureSsaNode(node) // Note: only holds for SynthesizedCaptureNode subclass
+          or
+          result.asAstNode() = node.(CaptureSsa::ExprNode).getExpr()
+          or
+          result.asAstNode() = node.(CaptureSsa::VariableWriteSourceNode).getVariableWrite() // Gets the LValue node
+          or
+          result.asAstNode() = getPostUpdateNode(node.(CaptureSsa::ExprPostUpdateNode).getExpr())
+          or
+          exists(Callable callable |
+            node.(CaptureSsa::ThisParameterNode).getCallable() = callable and
+            result = getCapturedVariableHostParameter(callable)
+          )
+        }
+
+        predicate dataflowStepEx(DataFlowNode node1, DataFlowBuilder::Step step, DataFlowNode node2) {
+          dataflowStep(node1.asAstNode(), step, node2.asAstNode())
+          or
+          // For non-store steps into the argument object, also flow to the dynamic argument object.
+          exists(AstNode n1, AstNode call |
+            dataflowStep(n1, step, getArgumentObjectNode(call)) and
+            not step instanceof TStoreStep and
+            node1.asAstNode() = n1 and
+            node2 = TDynamicArgumentObject(call)
+          )
+          or
+          // For non-read steps from the parameter object, also flow from the dynamic parameter object.
+          exists(Callable callable, AstNode n2 |
+            dataflowStep(getParameterObjectNode(callable), step, n2) and
+            not step instanceof TReadStep and
+            node1 = TDynamicParameterObject(callable) and
+            node2.asAstNode() = n2
+          )
+        }
+
+        predicate taintStep(DataFlowNode node1, DataFlowNode node2) {
+          dataflowStepEx(node1, TTaintStep(), node2)
+        }
+
+        predicate parameterNodeImpl(Callable callable, ParameterPosition pos, DataFlowNode node) {
+          parameterReadStep(callable, pos.asContentSet(), node.asAstNode())
+          or
+          pos = MkStaticParameterObjectPosition() and
+          node.asAstNode() = getParameterObjectNode(callable)
+          or
+          pos = MkDynamicParameterObjectPosition() and
+          node = TDynamicParameterObject(callable)
+        }
+
+        predicate argumentNodeImpl(AstNode call, ArgumentPosition pos, DataFlowNode node) {
+          argumentStoreStep(node.asAstNode(), pos.asContentSet(), call)
+          or
+          pos = MkStaticArgumentObjectPosition() and
+          node.asAstNode() = getArgumentObjectNode(call)
+          or
+          pos = MkDynamicArgumentObjectPosition() and
+          node = TDynamicArgumentObject(call)
+        }
+
+        class Call extends FinalAstNode {
+          Call() { isCall(this) }
+        }
+
+        final private class FinalContent = Content;
+
+        final private class FinalContentSet = ContentSet;
+
+        final private class FinalParameterPosition = ParameterPosition;
+
+        final private class FinalArgumentPosition = ArgumentPosition;
+
+        module DataFlowInput implements DataFlow::InputSig<Location> {
+          class Node = DataFlowNode;
+
+          class ArgumentPosition = FinalArgumentPosition;
+
+          class ParameterPosition = FinalParameterPosition;
+
+          class ParameterNode extends Node {
+            ParameterNode() { parameterNodeImpl(_, _, this) }
+          }
+
+          predicate isParameterNode(
+            ParameterNode node, DataFlowCallable callable, ParameterPosition pos
+          ) {
+            parameterNodeImpl(callable.asSourceCallable(), pos, node)
+          }
+
+          class ArgumentNode extends Node {
+            ArgumentNode() { argumentNodeImpl(_, _, this) }
+          }
+
+          predicate isArgumentNode(ArgumentNode node, DataFlowCall call, ArgumentPosition pos) {
+            argumentNodeImpl(call.asSourceCall(), pos, node)
+          }
+
+          private newtype TReturnKind =
+            TValueReturn() or
+            TExceptionalReturn()
+
+          class ReturnKind extends TReturnKind {
+            string toString() {
+              this = TValueReturn() and result = "value"
+              or
+              this = TExceptionalReturn() and result = "exception"
+            }
+          }
+
+          additional DataFlowNode getReturnNodeOfKind(Callable c, ReturnKind kind) {
+            result.asAstNode() = getReturnValueNode(c) and kind = TValueReturn()
+            or
+            result.asAstNode() = getExceptionalReturnValueNode(c) and kind = TExceptionalReturn()
+          }
+
+          additional DataFlowNode getOutNodeOfKind(Call c, ReturnKind kind) {
+            result.asAstNode() = getReturnValueNode(c) and kind = TValueReturn()
+            or
+            result.asAstNode() = getExceptionalReturnValueNode(c) and kind = TExceptionalReturn()
+          }
+
+          class ReturnNode extends Node {
+            ReturnNode() { this = getReturnNodeOfKind(_, _) }
+
+            ReturnKind getKind() { this = getReturnNodeOfKind(_, result) }
+          }
+
+          class OutNode extends Node {
+            OutNode() { this = getOutNodeOfKind(_, _) }
+
+            ReturnKind getKind() { this = getOutNodeOfKind(_, result) }
+          }
+
+          OutNode getAnOutNode(DataFlowCall call, ReturnKind kind) {
+            result = getOutNodeOfKind(call.asSourceCall(), kind)
+          }
+
+          class PostUpdateNode extends Node {
+            PostUpdateNode() { none() } // TODO
+
+            Node getPreUpdateNode() { none() } // TODO
+          }
+
+          private newtype TDataFlowCallable = MkSourceCallable(Callable c)
+
+          class DataFlowCallable extends TDataFlowCallable {
+            Callable asSourceCallable() { this = MkSourceCallable(result) }
+
+            string toString() { result = this.asSourceCallable().toString() }
+
+            Location getLocation() { result = this.asSourceCallable().getLocation() }
+          }
+
+          private newtype TDataFlowCall = MkSourceCall(Call c)
+
+          class DataFlowCall extends TDataFlowCall {
+            Call asSourceCall() { this = MkSourceCall(result) }
+
+            string toString() { result = this.asSourceCall().toString() }
+
+            Location getLocation() { result = this.asSourceCall().getLocation() }
+
+            DataFlowCallable getEnclosingCallable() {
+              result.asSourceCallable() = getEnclosingCallable(this.asSourceCall())
+            }
+          }
+
+          DataFlowCallable nodeGetEnclosingCallable(Node node) {
+            exists(AstNode n | result.asSourceCallable() = getEnclosingCallable(n) |
+              node.asAstNode() = n
+              or
+              node = TWithContentHelper(_, n)
+              or
+              node = TWithoutContentHelper(_, n)
+              or
+              node = TDynamicArgumentObject(n)
+            )
+            or
+            node = TDynamicParameterObject(result.asSourceCallable())
+            or
+            exists(LocalSsaDataFlow::SsaNode n |
+              node = TLocalSsaNode(n) and
+              result.asSourceCallable() = n.getBasicBlock().getScope()
+            )
+            or
+            exists(CaptureSsa::SynthesizedCaptureNode n |
+              node = TCaptureSsaNode(n) and
+              result.asSourceCallable() = n.getEnclosingCallable()
+            )
+          }
+
+          class DataFlowType = Unit; // Nothing fancy at this point
+
+          DataFlowType getNodeType(Node node) { exists(node) and exists(result) }
+
+          predicate compatibleTypes(DataFlowType t1, DataFlowType t2) { t1 = t2 }
+
+          predicate typeStrongerThan(DataFlowType t1, DataFlowType t2) { none() }
+
+          class CastNode extends Node {
+            CastNode() { none() } // TODO
+          }
+
+          predicate nodeIsHidden(Node node) {
+            none() // TODO
+          }
+
+          class DataFlowExpr = AstNode;
+
+          Node exprNode(DataFlowExpr e) { result.asAstNode() = e }
+
+          private module CallGraph {
+            Node trackCallable(DataFlowCallable callable) {
+              exists(ClosureExpr expr |
+                expr.hasBody(callable.asSourceCallable()) and
+                result.asAstNode() = expr
+                or
+                exists(Node mid |
+                  mid = trackCallable(callable) and
+                  localFlowStep(mid, result)
+                )
+              )
+            }
+
+            DataFlowCallable viableCallable(DataFlowCall c) {
+              functionCall(c.asSourceCall(), trackCallable(result).asAstNode())
+            }
+          }
+
+          predicate viableCallable = CallGraph::viableCallable/1;
+
+          class Content = FinalContent;
+
+          predicate forceHighPrecision(Content c) { none() }
+
+          class ContentSet = FinalContentSet;
+
+          class ContentApprox = Unit; // TODO: approx
+
+          ContentApprox getContentApprox(Content c) { exists(c) and exists(result) }
+
+          predicate parameterMatch(ParameterPosition param, ArgumentPosition arg) {
+            arg.asContentSet().getAStoreContent() = param.asContentSet().getAReadContent()
+            or
+            // Pass static->dynamic and dynamic->static argument/parameter object
+            arg = MkStaticArgumentObjectPosition() and param = MkDynamicParameterObjectPosition()
+            or
+            arg = MkDynamicArgumentObjectPosition() and param = MkStaticParameterObjectPosition()
+          }
+
+          additional predicate localFlowStep(DataFlowNode node1, DataFlowNode node2) {
+            dataflowStepEx(node1, TValueStep(), node2)
+            or
+            // With/WithoutContentHelpers are intermediate nodes with expects/clearsContent
+            // and a value step to their intended target node.
+            exists(AstNode source, ContentSet contents, AstNode target |
+              dataflowStep(source, TWithContentStep(contents), target)
+            |
+              node1.asAstNode() = source and
+              node2 = TWithContentHelper(contents, target)
+              or
+              node1 = TWithContentHelper(contents, target) and
+              node2.asAstNode() = target
+            )
+            or
+            exists(AstNode source, ContentSet contents, AstNode target |
+              dataflowStep(source, TWithoutContentStep(contents), target)
+            |
+              node1.asAstNode() = source and
+              node2 = TWithoutContentHelper(contents, target)
+              or
+              node1 = TWithoutContentHelper(contents, target) and
+              node2.asAstNode() = target
+            )
+            or
+            exists(LocalSsaDataFlow::Node n1, LocalSsaDataFlow::Node n2 |
+              LocalSsaDataFlow::localFlowStep(_, n1, n2, _) and
+              node1 = getNodeFromLocalSsa(n1) and
+              node2 = getNodeFromLocalSsa(n2)
+            )
+            or
+            exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
+              CaptureSsa::localFlowStep(n1, n2) and
+              node1 = getNodeFromCaptureSsa(n1) and
+              node2 = getNodeFromCaptureSsa(n2)
+            )
+          }
+
+          predicate simpleLocalFlowStep(Node node1, Node node2, string model) {
+            localFlowStep(node1, node2) and
+            sameContainer(node1, node2) and
+            model = ""
+          }
+
+          predicate readStep(DataFlowNode node1, ContentSet contents, DataFlowNode node2) {
+            dataflowStepEx(node1, TReadStep(contents), node2)
+            or
+            exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
+              CaptureSsa::readStep(n1, contents.asSingleton().asCapturedVariable(), n2) and
+              node1 = getNodeFromCaptureSsa(n1) and
+              node2 = getNodeFromCaptureSsa(n2)
+            )
+          }
+
+          predicate storeStep(DataFlowNode node1, ContentSet contents, DataFlowNode node2) {
+            dataflowStepEx(node1, TStoreStep(contents), node2)
+            or
+            exists(CaptureSsa::ClosureNode n1, CaptureSsa::ClosureNode n2 |
+              CaptureSsa::storeStep(n1, contents.asSingleton().asCapturedVariable(), n2) and
+              node1 = getNodeFromCaptureSsa(n1) and
+              node2 = getNodeFromCaptureSsa(n2)
+            )
+          }
+
+          predicate clearsContent(DataFlowNode node, ContentSet contents) {
+            node = TWithoutContentHelper(contents, _)
+          }
+
+          predicate expectsContent(DataFlowNode node, ContentSet contents) {
+            node = TWithContentHelper(contents, _)
+          }
+
+          bindingset[node1, node2]
+          pragma[inline_late]
+          additional predicate sameContainer(Node node1, Node node2) {
+            nodeGetEnclosingCallable(node1) = nodeGetEnclosingCallable(node2)
+          }
+
+          predicate jumpStep(Node node1, Node node2) {
+            localFlowStep(node1, node2) and
+            not sameContainer(node1, node2)
+          }
+
+          class NodeRegion extends Void {
+            predicate contains(Node n) { none() }
+          }
+
+          predicate isUnreachableInCall(NodeRegion nr, DataFlowCall call) { none() }
+
+          predicate allowParameterReturnInSelf(ParameterNode p) {
+            exists(Callable callable |
+              CaptureSsa::heuristicAllowInstanceParameterReturnInSelf(callable) and
+              p = getCapturedVariableHostParameter(callable)
+            )
+          }
+
+          predicate localMustFlowStep(Node node1, Node node2) {
+            none() // TODO
+          }
+
+          class LambdaCallKind = Void;
+
+          /** Holds if `creation` is an expression that creates a lambda of kind `kind` for `c`. */
+          predicate lambdaCreation(Node creation, LambdaCallKind kind, DataFlowCallable c) {
+            none() // TODO
+          }
+
+          /** Holds if `call` is a lambda call of kind `kind` where `receiver` is the lambda expression. */
+          predicate lambdaCall(DataFlowCall call, LambdaCallKind kind, Node receiver) {
+            none() // TODO
+          }
+
+          /** Extra data-flow steps needed for lambda flow analysis. */
+          predicate additionalLambdaFlowStep(Node nodeFrom, Node nodeTo, boolean preservesValue) {
+            none() // TODO
+          }
+
+          predicate knownSourceModel(Node source, string model) {
+            none() // TODO
+          }
+
+          predicate knownSinkModel(Node sink, string model) {
+            none() // TODO
+          }
+
+          class DataFlowSecondLevelScope = Void;
+        }
+
+        private module DataFlowMake = DataFlow::DataFlowMake<Location, DataFlowInput>;
+
+        module DataFlowPublic {
+          import DataFlowMake
+
+          class Node = DataFlowNode;
+        }
+
+        module TaintTrackingInput implements TaintTracking::InputSig<Location, DataFlowInput> {
+          predicate defaultTaintSanitizer(DataFlowNode node) { none() }
+
+          predicate defaultAdditionalTaintStep(DataFlowNode src, DataFlowNode sink, string model) {
+            dataflowStepEx(src, TTaintStep(), sink) and model = ""
+          }
+
+          bindingset[node]
+          predicate defaultImplicitTaintRead(DataFlowNode node, ContentSet c) { none() }
+
+          predicate speculativeTaintStep(DataFlowNode src, DataFlowNode sink) { none() }
+        }
+
+        module TaintTrackingPublic =
+          TaintTracking::TaintFlowMake<Location, DataFlowInput, TaintTrackingInput>;
+      }
+    }
+  }
+}

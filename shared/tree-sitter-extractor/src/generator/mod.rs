@@ -17,6 +17,7 @@ pub fn generate(
     languages: Vec<language::Language>,
     dbscheme_path: PathBuf,
     ql_library_path: PathBuf,
+    use_facade_ast: bool,
 ) -> std::io::Result<()> {
     let dbscheme_file = File::create(dbscheme_path).map_err(|e| {
         tracing::error!("Failed to create dbscheme file: {}", e);
@@ -44,6 +45,7 @@ pub fn generate(
     ql::write(
         &mut ql_writer,
         &[ql::TopLevel::Import(ql::Import {
+            privacy: ql::Privacy::Public,
             module: "codeql.Locations",
             alias: Some("L"),
         })],
@@ -66,9 +68,17 @@ pub fn generate(
         let token_name = format!("{}_token", &prefix);
         let tokeninfo_name = format!("{}_tokeninfo", &prefix);
         let reserved_word_name = format!("{}_reserved_word", &prefix);
+        let synthetic_node_table_name = format!("{}_synthetic_node_def", &prefix);
+        let synthetic_node_name = format!("{}_synthetic_node", &prefix);
         let nodes = node_types::read_node_types_str(&prefix, language.node_types)?;
         let (dbscheme_entries, mut ast_node_members, token_kinds) = convert_nodes(&nodes);
+        let facade_import_name = if use_facade_ast {
+            format!("FacadeAst::{}", &language.name)
+        } else {
+            language.name.clone()
+        };
         ast_node_members.insert(&token_name);
+        ast_node_members.insert(&synthetic_node_name);
         writeln!(&mut dbscheme_writer, "/*- {} dbscheme -*/", language.name)?;
         dbscheme::write(&mut dbscheme_writer, &dbscheme_entries)?;
         let token_case = create_token_case(&token_name, token_kinds);
@@ -89,17 +99,32 @@ pub fn generate(
                     &node_parent_table_name,
                     &ast_node_name,
                 )),
+                dbscheme::Entry::Table(create_synthetic_node_table(
+                    &synthetic_node_table_name,
+                    &synthetic_node_name,
+                    &ast_node_name,
+                )),
             ],
         )?;
 
         let mut body = vec![
+            ql::TopLevel::Import(ql::Import {
+                privacy: ql::Privacy::Private,
+                module: &facade_import_name,
+                alias: Some("F"),
+            }),
             ql::TopLevel::Class(ql_gen::create_ast_node_class(
                 &ast_node_name,
                 &node_location_table_name,
                 &node_parent_table_name,
+                &synthetic_node_table_name,
             )),
             ql::TopLevel::Class(ql_gen::create_token_class(&token_name, &tokeninfo_name)),
             ql::TopLevel::Class(ql_gen::create_reserved_word_class(&reserved_word_name)),
+            ql::TopLevel::Class(ql_gen::create_synthetic_node_class(
+                &synthetic_node_name,
+                &synthetic_node_table_name,
+            )),
         ];
 
         // Overlay discard predicates
@@ -462,5 +487,45 @@ fn create_token_case<'a>(name: &'a str, token_kinds: Map<&'a str, usize>) -> dbs
         name,
         column: "kind",
         branches,
+    }
+}
+
+/// Creates a dbscheme table for synthetic nodes.
+///
+/// # Arguments
+/// - `name` - the name of the table to create.
+/// - `synthetic_node_name` - the name of the synthetic node type
+/// - `ast_node_name` - the name of the AST node type (parent of the synthetic node).
+fn create_synthetic_node_table<'a>(
+    name: &'a str,
+    synthetic_node_name: &'a str,
+    ast_node_name: &'a str,
+) -> dbscheme::Table<'a> {
+    dbscheme::Table {
+        name,
+        columns: vec![
+            dbscheme::Column {
+                db_type: dbscheme::DbColumnType::Int,
+                name: "id",
+                unique: true,
+                ql_type: ql::Type::At(synthetic_node_name),
+                ql_type_is_ref: false,
+            },
+            dbscheme::Column {
+                db_type: dbscheme::DbColumnType::Int,
+                name: "parent",
+                unique: false,
+                ql_type: ql::Type::At(ast_node_name),
+                ql_type_is_ref: true,
+            },
+            dbscheme::Column {
+                unique: false,
+                db_type: dbscheme::DbColumnType::String,
+                name: "tag",
+                ql_type: ql::Type::String,
+                ql_type_is_ref: true,
+            },
+        ],
+        keysets: Some(vec!["parent", "tag"]),
     }
 }

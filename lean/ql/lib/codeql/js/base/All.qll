@@ -1,0 +1,19 @@
+/**
+ * The "base" layer contains code that is shared with the post-processing upgrade script (PostProcessing.ql).
+ *
+ * It should be kept as small as possible, while facilitating code reuse between the main CodeQL libraries and the post-processing script.
+ *
+ * This file shold re-export everything in the base layer.
+ *
+ * Note: It is not possible to import arbitrary files here, since upgrades currently can't import anything.
+ * We special-case support for importing the files in the "base" layer by inlining them in the generated
+ * upgrade script.
+ *
+ * All file-imports in this layer must use the fully-qualified path, except when importing 'All' or 'FacadeAst'.
+ */
+
+import codeql.Locations
+import codeql.js.base.FacadeAst::JS
+import codeql.js.base.LanguageBaseImpl
+import codeql.js.base.OptionalChainExpresson
+import codeql.js.base.CallableBase
