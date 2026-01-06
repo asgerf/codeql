@@ -515,17 +515,7 @@ module MakeLanguageDataFlow<
         /**
          * Instantiation of SSA for non-captured variables.
          */
-        private module LocalSsaConfig implements Ssa::InputSig<Location> {
-          class BasicBlock = BasicBlocks::BasicBlock;
-
-          class ControlFlowNode = AstNode;
-
-          BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) {
-            result.immediatelyDominates(bb)
-          }
-
-          BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
-
+        private module LocalSsaConfig implements Ssa::InputSig<Location, BasicBlock> {
           class SourceVariable extends FinalLocalVariable {
             SourceVariable() { not this.isCaptured() }
           }
@@ -559,7 +549,7 @@ module MakeLanguageDataFlow<
           }
         }
 
-        private module LocalSsa = Ssa::Make<Location, LocalSsaConfig>;
+        private module LocalSsa = Ssa::Make<Location, Cfg, LocalSsaConfig>;
 
         private module LocalSsaDataFlowConfig implements LocalSsa::DataFlowIntegrationInputSig {
           class Expr extends FinalAstNode {

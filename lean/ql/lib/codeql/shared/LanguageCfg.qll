@@ -384,9 +384,9 @@ module MakeLanguageCfg<
       predicate nodeIsPostDominanceExit(Node node) { node = getCfgExitPoint(_) }
     }
 
-    module BasicBlocks = BB::Make<Location, BasicBlockConfig>;
+    module Cfg = BB::Make<Location, BasicBlockConfig>;
 
-    class BasicBlock = BasicBlocks::BasicBlock;
+    class BasicBlock = Cfg::BasicBlock;
 
     bindingset[node1, node2]
     pragma[inline_late]
