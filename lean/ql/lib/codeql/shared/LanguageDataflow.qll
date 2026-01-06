@@ -556,6 +556,8 @@ module MakeLanguageDataFlow<
             predicate hasCfgNode(BasicBlock bb, int i) { this = bb.getNode(i) }
           }
 
+          class GuardValue = Boolean;
+
           class Guard extends FinalAstNode {
             Guard() { isCondition(this) }
 
@@ -563,13 +565,18 @@ module MakeLanguageDataFlow<
               result.getANode() = getConditionalOutcomeNode(this, branch)
             }
 
-            predicate controlsBranchEdge(BasicBlock bb1, BasicBlock bb2, boolean branch) {
+            predicate hasValueBranchEdge(BasicBlock bb1, BasicBlock bb2, GuardValue branch) {
               bb1.getNode(_) = this and
               bb2 = this.getOutcomeBlock(branch)
             }
+
+            predicate valueControlsBranchEdge(BasicBlock bb1, BasicBlock bb2, GuardValue val) {
+              // TODO: instantiate guards library to get a better implementation of this
+              this.hasValueBranchEdge(bb1, bb2, val)
+            }
           }
 
-          predicate guardDirectlyControlsBlock(Guard guard, BasicBlock bb, boolean branch) {
+          predicate guardDirectlyControlsBlock(Guard guard, BasicBlock bb, GuardValue branch) {
             guard.getOutcomeBlock(branch).dominates(bb)
           }
 
