@@ -634,18 +634,8 @@ module MakeLanguageDataFlow<
           )
         }
 
-        module VariableCaptureConfig implements VariableCapture::InputSig<Location> {
-          class BasicBlock extends BasicBlocks::BasicBlock {
-            Callable getEnclosingCallable() { result = this.getScope() }
-          }
-
-          class ControlFlowNode = AstNode;
-
-          BasicBlock getImmediateBasicBlockDominator(BasicBlock bb) {
-            result.immediatelyDominates(bb)
-          }
-
-          BasicBlock getABasicBlockSuccessor(BasicBlock bb) { result = bb.getASuccessor() }
+        module VariableCaptureConfig implements VariableCapture::InputSig<Location, BasicBlock> {
+          Callable basicBlockGetEnclosingCallable(BasicBlock bb) { result = bb.getScope() }
 
           class CapturedVariable extends FinalLocalVariable {
             CapturedVariable() { this.isCaptured() }
@@ -702,7 +692,7 @@ module MakeLanguageDataFlow<
           }
         }
 
-        private module CaptureSsa = VariableCapture::Flow<Location, VariableCaptureConfig>;
+        private module CaptureSsa = VariableCapture::Flow<Location, Cfg, VariableCaptureConfig>;
 
         predicate parameterReadStep(Callable callable, ContentSet contents, AstNode node2) {
           dataflowStep(getParameterObjectNode(callable), TReadStep(contents), node2)
