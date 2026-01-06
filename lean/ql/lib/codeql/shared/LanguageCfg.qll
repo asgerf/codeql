@@ -41,38 +41,81 @@ module MakeLanguageCfg<
     result = "condition-" + getKnownOutcome(condition, checkedValue)
   }
 
-  class CfgNode instanceof AstNode {
-    // Set bindingset to help catch missing bindings
-    bindingset[this]
-    CfgNode() { any() }
+  private newtype TCfgNode =
+    TEntry(CfgScope scope) or
+    TExit(CfgScope scope) or
+    TBefore(AstNode node) { needsCfg(node) } or
+    TAfter(AstNode node) { needsCfg(node) } or
+    TAfterConditionOutcome(AstNode node, Boolean outcome) { isCondition(node) }
+    TBeforeAssignment(AstNode node) { isInLValuePosition(node) } or
+    TAfterAssignment(AstNode node) { isInLValuePosition(node) } or
+    TBeforeAssignmentWithValue(AstNode node, Boolean outcome) { isConditionInLValue(node) }
 
+  private class CfgNodeBase extends TCfgNode {
     /**
      * Holds if this is the beginning of the execution of the given AST node.
      *
      * If `node` is a synthetic node, this is bound to that node.
      */
-    predicate isBefore(AstNode node) {
-      this = getCfgBegin(node)
-      or
-      not exists(getCfgBegin(node)) and
-      this = node
-    }
+    predicate isBefore(AstNode node) { this = TBefore(node) }
 
     /**
      * Holds if this is the end of the execution of the given AST node.
-     *
-     * This equals the node itself since all nodes are executed in post-order,
-     * but for readability it is best to use this predicate when constructing step relations.
      */
-    predicate isAfter(AstNode node) { this = node }
+    predicate isAfter(AstNode node) { this = TAfter(node) }
 
-    predicate isBeforeAssigningTo(AstNode lvalue) { this = getLValueNode(lvalue) }
+    predicate isBeforeAssigningTo(AstNode lvalue) { this = TBeforeAssignment(lvalue) }
 
-    predicate isAfterAssigningTo(AstNode lvalue) { this = getLValueEndNode(lvalue) }
+    predicate isAfterAssigningTo(AstNode lvalue) { this = TAfterAssignment(lvalue) }
 
-    string toString() { result = super.toString() }
+    AstNode getAstNode() {
+      this = TBefore(result)
+      or
+      this = TAfter(result)
+      or
+      this = TBeforeAssignment(result)
+      or
+      this = TAfterAssignment(result)
+      or
+      this = TAfterConditionOutcome(result, _)
+      or
+      this = TBeforeAssignmentWithValue(result, _)
+      or
+      this = TEntry(result)
+      or
+      this = TExit(result)
 
-    Location getLocation() { result = super.getLocation() }
+    }
+
+    string toString() {
+      exists(AstNode node |
+        this = TEntry(node) and result = "Entry point of " + node
+        or
+        this = TExit(node) and result = "Exit point of " + node
+        or
+        this = TBefore(node) and result = "Before " + node
+        or
+        this = TAfter(node) and result = "After " + node
+        or
+        this = TBeforeAssignment(node) and result = "Before assignment to " + node
+        or
+        this = TAfterAssignment(node) and result = "After assignment to " + node
+        or
+        exists(Boolean outcome |
+          this = TAfterConditionOutcome(node, outcome) and result = "After " + outcome + " outcome of " + node
+          or
+          this = TBeforeAssignmentWithValue(node, outcome) and result = "Before " + outcome + "-assignment + " to " + node
+        )
+      )
+    }
+
+    Location getLocation() { result = this.getAstNode().getLocation() }
+  }
+
+  class CfgNode extends CfgNodeBase {
+    // Set bindingset to help catch missing bindings
+    bindingset[this]
+    CfgNode() { any() }
   }
 
   /**
@@ -97,9 +140,9 @@ module MakeLanguageCfg<
     bindingset[node, filter]
     pragma[inline_late]
     predicate isAfter(AstNode node, ValueFilter filter) {
-      this = node.getSyntheticChildNode(getKnownOutcomeAsTag(filter, getConditionFilter(node)))
+      this = TAfterConditionOutcome(getKnownOutcome(filter, getConditionFilter(node)))
       or
-      not exists(node.getSyntheticChildNode(getKnownOutcomeAsTag(filter, getConditionFilter(node)))) and
+      not exists(TAfterConditionOutcome(getKnownOutcome(filter, getConditionFilter(node)))) and
       this.isAfter(node)
     }
 
@@ -115,10 +158,10 @@ module MakeLanguageCfg<
       // Similar logic as in the two-argument version of isAfter could be applied here, but it won't matter much in practice,
       // so just keep it simple.
       getLValueConditionFilter(lvalue) = filter and
-      this = lvalue.getSyntheticChildNode("lvalue-true")
+      this = TBeforeAssignmentWithValue(lvalue, true)
       or
       getLValueConditionFilter(lvalue) = filter.negate() and
-      this = lvalue.getSyntheticChildNode("lvalue-false")
+      this = TBeforeAssignmentWithValue(lvalue, false)
     }
 
     predicate isAfterTrue(AstNode node) { this.isAfter(node, truthyCondition()) }
@@ -150,9 +193,9 @@ module MakeLanguageCfg<
     predicate isAfter(AstNode node, ValueFilter filter) {
       // Note: the order of the arguments to 'getKnownOutcomeAsTag' is swapped here compared to CfgNode1.isAfter.
       // Here we must provide a guarantee, where in CfgNode1 we must obtain a guarantee.
-      this = node.getSyntheticChildNode(getKnownOutcomeAsTag(getConditionFilter(node), filter))
+      this = TAfterConditionOutcome(node, getKnownOutcome(getConditionFilter(node), filter))
       or
-      not exists(node.getSyntheticChildNode(getKnownOutcomeAsTag(getConditionFilter(node), filter))) and
+      not exists(TAfterConditionOutcome(node, getKnownOutcome(getConditionFilter(node), filter))) and
       this.isAfter(node)
     }
 
@@ -175,17 +218,15 @@ module MakeLanguageCfg<
   }
 
   module MakeCfg1<CfgSig1 CfgConfig> {
-    private class Node = AstNode;
+    private class Node = CfgNodeBase;
 
     private import CfgConfig
 
-    private int getNodeDepth(Node node) {
+    private int getNodeDepth(AstNode node) {
       not exists(node.getParent()) and result = 0
       or
       result = 1 + getNodeDepth(node.getParent())
     }
-
-    private predicate isSyntheticBeginNode(SyntheticNode node) { node.getTag() = "cfg-begin" }
 
     bindingset[node1, node2]
     pragma[inline_late]
@@ -193,7 +234,7 @@ module MakeLanguageCfg<
       getEnclosingCallable(node1) = getEnclosingCallable(node2)
     }
 
-    private predicate isHoisted(Node node) {
+    private predicate isHoisted(AstNode node) {
       hoistToInitializerBlock(node)
       or
       not node instanceof SyntheticNode and
@@ -204,33 +245,33 @@ module MakeLanguageCfg<
       )
     }
 
-    int getHoistingRank(Node node) { if isHoisted(node) then result = -1 else result = 1 }
+    int getHoistingRank(AstNode node) { if isHoisted(node) then result = -1 else result = 1 }
 
-    private predicate ordering(Node node, int line, int column, int tiebreak) {
-      (needsCfg(node) or isHoisted(node)) and
-      not isSyntheticBeginNode(node) and
-      exists(Location loc | loc = node.getLocation() |
+    private predicate ordering(Node node, int line, int column, int tiebreak, int hoist) {
+      exists(Location loc, AstNode astNode |
+        node = TAfter(astNode) and
+        loc = astNode.getLocation() and
         line = loc.getEndLine() and
         column = loc.getEndColumn() + 1 and
-        tiebreak = -getNodeDepth(node)
-      )
-      or
-      exists(Node orig, Location loc |
-        node = orig.getSyntheticChildNode("cfg-begin") and
-        loc = orig.getLocation() and
+        tiebreak = -getNodeDepth(astNode) and
+        hoist = getHoistingRank(astNode)
+        or
+        node = TBefore(astNode) and
+        loc = astNode.getLocation() and
         line = loc.getStartLine() and
         column = loc.getStartColumn() and
-        tiebreak = getNodeDepth(orig)
+        tiebreak = getNodeDepth(astNode) and
+        hoist = getHoistingRank(astNode)
       )
     }
 
     private Node getNthNode(Callable scope, int n) {
       result =
-        rank[n](Node node, int line, int column, int tiebreak |
+        rank[n](Node node, int line, int column, int tiebreak, int hoist |
           getEnclosingCallable(node) = scope and
-          ordering(node, line, column, tiebreak)
+          ordering(node, line, column, tiebreak, hoist)
         |
-          node order by getHoistingRank(node), line, column, tiebreak
+          node order by hoist, line, column, tiebreak
         )
     }
 
@@ -244,16 +285,16 @@ module MakeLanguageCfg<
       )
       or
       exists(Callable scope |
-        node1 = getCfgEntryPoint(scope) and
+        node1 = TEntry(scope) and
         node2 = getNthNode(scope, 1)
         or
         node1 = max(int n | | getNthNode(scope, n) order by n) and
-        node2 = getCfgExitPoint(scope)
+        node2 = TExit(scope)
       )
       or
       exists(AstNode lvalue |
-        node1 = lvalue.getSyntheticChildNode("lvalue") and
-        node2 = lvalue.getSyntheticChildNode("lvalue-end")
+        node1 = TBeforeAssignment(lvaue) and
+        node2 = TAfterAssignment(lvalue)
       )
     }
 
@@ -273,23 +314,23 @@ module MakeLanguageCfg<
     predicate conditionalStep(Node node1, ValueFilter filter, Node node2) {
       exists(AstNode condition |
         isCondition(condition) and
-        node1 = condition
+        node1 = TAfter(condition)
       |
-        node2 = getTrueOutcomeNode(condition) and
+        node2 = TAfterConditionOutcome(condition, true) and
         filter = getConditionFilter(condition)
         or
-        node2 = getFalseOutcomeNode(condition) and
+        node2 = TAfterConditionOutcome(condition, false) and
         filter = getConditionFilter(condition).negate()
       )
       or
       exists(AstNode lvalue |
         isConditionInLValue(lvalue) and
-        node1 = node1.getSyntheticChildNode("lvalue")
+        node1 = TBeforeAssignment(lvalue)
       |
-        node2 = lvalue.getSyntheticChildNode("lvalue-true") and
+        node2 = TBeforeAssignmentWithValue(lvalue, true) and
         filter = getLValueConditionFilter(lvalue)
         or
-        node2 = lvalue.getSyntheticChildNode("lvalue-false") and
+        node2 = TBeforeAssignmentWithValue(lvalue, false) and
         filter = getLValueConditionFilter(lvalue).negate()
       )
     }
@@ -298,7 +339,7 @@ module MakeLanguageCfg<
      * If `node` is a conditional outcome node, gets the associated value filter.
      */
     private Node getConditionalOutcomeWithFilter(Node condition, ValueFilter filter) {
-      exists(boolean outcome | result = getConditionalOutcomeNode(condition, outcome) |
+      exists(boolean outcome | result = TAfterConditionOutcome(condition, outcome) |
         outcome = true and
         filter = getConditionFilter(condition)
         or
@@ -318,10 +359,11 @@ module MakeLanguageCfg<
      * preserving more knowledge of conditional outcomes.
      */
     private predicate sharpenedStep(Node orig1, Node orig2, CfgNode1 node1, CfgNode2 node2) {
-      exists(ValueFilter filter |
+      exists(ValueFilter filter, AstNode conditionAstNode |
         logicalValueStep(orig1, orig2) and
         sharpenStepCandidate(orig1, orig2) and
-        isCondition(orig2) and
+        isCondition(conditionAstNode) and and
+        orig2 = TAfter(conditionAstNode) and
         node1 = getConditionalOutcomeWithFilter(orig1, filter) and
         node2.isAfter(orig2, filter)
       )
@@ -348,9 +390,20 @@ module MakeLanguageCfg<
     private module BasicBlockConfig implements BB::InputSig<Location> {
       class CfgScope = C::Callable;
 
-      class Node = AstNode;
+      class Node = CfgNodeBase;
 
-      predicate nodeGetCfgScope = getEnclosingCallable/1;
+      private CfgScope nodeGetCfgScopeOverride(Node node) {
+        node = TEntry(result)
+        or
+        node = TExit(result)
+      }
+
+      CfgScope nodeGetCfgScope(Node node) {
+        result = nodeGetCfgScopeOverride(node)
+        or
+        not exists(nodeGetCfgScopeOverride(node)) and
+        result = getEnclosingCallable(node.getAstNode())
+      }
 
       Node nodeGetASuccessor(Node node, SuccessorType t) {
         unconditionalStep(node, result) and
