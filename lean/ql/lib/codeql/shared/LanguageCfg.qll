@@ -2,6 +2,7 @@ private import codeql.util.Location
 private import LanguageBase
 private import LanguageCommon
 private import codeql.controlflow.BasicBlock as BB
+private import codeql.controlflow.SuccessorType
 private import codeql.util.Boolean
 private import codeql.ssa.Ssa as Ssa
 private import codeql.dataflow.VariableCapture as VariableCapture
@@ -345,22 +346,6 @@ module MakeLanguageCfg<
     }
 
     private module BasicBlockConfig implements BB::InputSig<Location> {
-      private newtype TSuccessorType =
-        TSimple() or
-        TBoolean(Boolean b)
-
-      class SuccessorType extends TSuccessorType {
-        boolean asBoolean() { this = TBoolean(result) }
-
-        string toString() {
-          this instanceof TSimple and result = "TSimple"
-          or
-          result = "TBoolean(" + this.asBoolean() + ")"
-        }
-      }
-
-      predicate successorTypeIsCondition(SuccessorType t) { t instanceof TBoolean }
-
       class CfgScope = C::Callable;
 
       class Node = AstNode;
@@ -369,17 +354,17 @@ module MakeLanguageCfg<
 
       Node nodeGetASuccessor(Node node, SuccessorType t) {
         unconditionalStep(node, result) and
-        t = TSimple()
+        t instanceof DirectSuccessor
         or
         exists(AstNode condition |
           isCondition(condition) and
           node = condition
         |
           result = getTrueOutcomeNode(condition) and
-          t.asBoolean() = true
+          t.(BooleanSuccessor).getValue() = true
           or
           result = getFalseOutcomeNode(condition) and
-          t.asBoolean() = false
+          t.(BooleanSuccessor).getValue() = false
         )
         or
         exists(AstNode lvalue |
@@ -387,10 +372,10 @@ module MakeLanguageCfg<
           node = lvalue.getSyntheticChildNode("lvalue")
         |
           result = lvalue.getSyntheticChildNode("lvalue-true") and
-          t.asBoolean() = true
+          t.(BooleanSuccessor).getValue() = true
           or
           result = lvalue.getSyntheticChildNode("lvalue-false") and
-          t.asBoolean() = false
+          t.(BooleanSuccessor).getValue() = false
         )
       }
 
