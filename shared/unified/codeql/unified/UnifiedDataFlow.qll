@@ -3043,6 +3043,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               }
             }
 
+            overlay[global]
             private module NamespaceTracking {
               pragma[nomagic]
               Node trackNamespace(NamespaceObject ns) {
@@ -3370,6 +3371,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               }
             }
 
+            overlay[global]
             private module CallGraph {
               private newtype TCallableTrackingState =
                 TNeutral() or
