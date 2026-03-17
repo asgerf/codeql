@@ -1,24 +1,23 @@
 /**
  * @name External API flow
- * @id js/external-api-flow
+ * @id js/external-api-flow-baseline
  * @kind path-problem
  */
 
-import semmle.javascript.internal.unified.minimal.minimal
-import semmle.javascript.internal.unified.JSUnified
+import javascript
 
 module FlowConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node node) {
-    exists(Call call |
-      not exists(CallGraph::viableCallableFromSource(call)) and
-      node.isValueOf(call.getUnderlyingInvokeExpr())
+    exists(DataFlow::InvokeNode call |
+      not exists(call.getACallee()) and
+      node = call
     )
   }
 
   predicate isSink(DataFlow::Node node) {
-    exists(Call call |
-      not exists(CallGraph::viableCallableFromSource(call)) and
-      node.isValueOf(call.getUnderlyingInvokeExpr().getAnArgument())
+    exists(DataFlow::InvokeNode call |
+      not exists(call.getACallee()) and
+      node = call.getAnArgument()
     )
   }
 
