@@ -20,7 +20,7 @@ class RequireCall extends CallExpr {
   string getImportedString() { result = PathStrings::getValueOfExpr(this.getArgument(0)) }
 }
 
-predicate pathResolutionStep(DataFlow2::Node path, DataFlow2::Node importedModule) {
+predicate pathResolutionStep(DataFlow::Node path, DataFlow::Node importedModule) {
   exists(RequireCall call |
     path.isValueOf(call.getArgument(0)) and
     importedModule.isValueOf(call)
@@ -38,7 +38,7 @@ private module PathStringsInput implements ValuePropagationInputSig {
     Value() { this.length() < 200 }
   }
 
-  predicate shouldComputeValue(DataFlow2::Node node) { pathResolutionStep(node, _) }
+  predicate shouldComputeValue(DataFlow::Node node) { pathResolutionStep(node, _) }
 
   predicate allowMayFlow() { none() }
 
@@ -52,7 +52,7 @@ private module PathStringsInput implements ValuePropagationInputSig {
 
   private class PathStringFolding extends ValuePropagationRule {
     bindingset[node]
-    override DataFlow2::Node getADependency(DataFlow2::Node node) {
+    override DataFlow::Node getADependency(DataFlow::Node node) {
       exists(AddExpr binary |
         node.isValueOf(binary) and
         result.isValueOf(binary.getAnOperand())
@@ -65,7 +65,7 @@ private module PathStringsInput implements ValuePropagationInputSig {
     }
 
     bindingset[node]
-    override Value computeValue(DataFlow2::Node node) {
+    override Value computeValue(DataFlow::Node node) {
       exists(PathConcatenation c |
         node.isValueOf(c) and
         result = getValueFromConcat(c)
@@ -87,7 +87,7 @@ private module PathStringsInput implements ValuePropagationInputSig {
 
 module PathStrings = MakeValuePropagation<PathStringsInput>;
 
-private class RelevantNode extends DataFlow2::Node {
+private class RelevantNode extends DataFlow::Node {
   string getValue() { result = PathStrings::getValue(this) }
 
   /** Gets a path mapping affecting this path. */
@@ -239,9 +239,7 @@ File resolveExpr(RelevantNode expr) {
 }
 
 overlay[global]
-private predicate importStepAux(
-  DataFlow2::Node pathNode, DataFlow2::Node node1, DataFlow2::Node node2
-) {
+private predicate importStepAux(DataFlow::Node pathNode, DataFlow::Node node1, DataFlow::Node node2) {
   exists(TopLevel target |
     pathResolutionStep(pathNode, node2) and
     resolveExpr(pathNode) = target.getFile() and
@@ -250,7 +248,7 @@ private predicate importStepAux(
 }
 
 overlay[global]
-predicate importStep(DataFlow2::Node node1, DataFlowBuilder::Step step, DataFlow2::Node node2) {
+predicate importStep(DataFlow::Node node1, DataFlowBuilder::Step step, DataFlow::Node node2) {
   importStepAux(_, node1, node2) and
   step.read(Contents::property("exports"))
 }

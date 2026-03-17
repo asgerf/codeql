@@ -14,7 +14,7 @@ private module FlowTestImpl implements InputSig<Location, DataFlowInput> {
   import utils.test.InlineFlowTestUnifiedUtil
 
   bindingset[src, sink]
-  string getArgString(DataFlow2::Node src, DataFlow2::Node sink) {
+  string getArgString(DataFlow::Node src, DataFlow::Node sink) {
     (if exists(getSourceArgString(src)) then result = getSourceArgString(src) else result = "") and
     exists(sink)
   }

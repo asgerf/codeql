@@ -14,9 +14,8 @@ import semmle.javascript.internal.unified.minimal.minimal
 from Function f, InvokeExpr invoke, string kind
 where
   (
-    DataFlowInput::CallGraphOutput::viableCallable(any(DataFlowInput::DataFlowCall c |
-        c.asSourceCall().getUnderlyingInvokeExpr() = invoke
-      )).asSourceCallable() = f and
+    CallGraph::viableSourceCallableFromSource(any(Call c | c.getUnderlyingInvokeExpr() = invoke)) =
+      f and
     kind = "Call"
     or
     none() and kind = "Accessor call"

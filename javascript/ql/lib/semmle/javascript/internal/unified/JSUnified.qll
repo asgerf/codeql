@@ -44,11 +44,11 @@ module UnifiedDataFlowInput implements
       100
   }
 
-  predicate lateStageStep(DataFlow2::Node node1, StepBase step, DataFlow2::Node node2) {
+  predicate lateStageStep(DataFlow::Node node1, StepBase step, DataFlow::Node node2) {
     importStep(node1, step, node2)
   }
 
-  predicate isTrackedAllocationSite(DataFlow2::Node node) {
+  predicate isTrackedAllocationSite(DataFlow::Node node) {
     node.isSyntheticNode(_,
       ["module-exports-object", "module-object", "prototype", "allocation-site"])
     or
@@ -102,7 +102,7 @@ module UnifiedDataFlowInput implements
     }
   }
 
-  predicate modelEntryPoint(string head, string operand, DataFlow2::Node node) {
+  predicate modelEntryPoint(string head, string operand, DataFlow::Node node) {
     head = "PredefinedVar" and
     exists(Variable v |
       v.getName() = operand and
@@ -452,7 +452,7 @@ module Contents = UnifiedDataFlowInput::Contents;
 
 module Transforms = UnifiedDataFlowInput::Transforms;
 
-module DataFlow2 = DataFlowPublic;
+module DataFlow = DataFlowPublic;
 
 extensible predicate aliasModel(string aliasName, string accessPath);
 
