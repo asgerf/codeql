@@ -34,6 +34,16 @@ module UnifiedDataFlowInput implements
 
   class Callable = JS::StmtContainer;
 
+  predicate isTopLevelLike(Callable container) {
+    container instanceof JS::TopLevel
+    or
+    isTopLevelLike(container.(JS::ImmediatelyInvokedFunctionExpr).getEnclosingContainer())
+    or
+    // Containers declaring >100 captured variables tend to be singletons and are too expensive anyway
+    strictcount(JS::LocalVariable v | v.isCaptured() and v.getDeclaringContainer() = container) >
+      100
+  }
+
   predicate lateStageStep(DataFlow2::Node node1, StepBase step, DataFlow2::Node node2) {
     importStep(node1, step, node2)
   }
@@ -451,3 +461,5 @@ module ModelsAsData = MakeModelsAsData<aliasModel/2>;
 class LocalVariable = JS::LocalVariable;
 
 import UnifiedDataFlowInput
+
+module CallGraph = DataFlowInput::CallGraphOutput;

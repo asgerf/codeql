@@ -53,7 +53,7 @@ class ExprOrType extends @expr_or_type, Documentable {
     exists(Token tk | tk = result.getComment().getNextToken() |
       tk = this.getFirstToken()
       or
-      exists(Expr p | p.getUnderlyingValue() = this | tk = p.getFirstToken())
+      exists(Expr p | p = this | tk = p.getFirstToken())
     )
   }
 
@@ -76,22 +76,6 @@ class ExprOrType extends @expr_or_type, Documentable {
    * Also see `getUnderlyingValue` and `stripParens`.
    */
   Expr getUnderlyingReference() { none() }
-
-  /**
-   * Gets the innermost expression that this expression evaluates to.
-   *
-   * Examples:
-   *
-   * - a parenthesised expression `(e)`: the underlying value of `e`.
-   * - a sequence expression `e1, e2`: the underlying value of `e2`.
-   * - an assignment expression `v = e`: the underlying value of `e`.
-   * - a TypeScript type assertion `e as T`: the underlying value of `e`.
-   * - any other expression: the expression itself.
-   *
-   * Also see `getUnderlyingReference` and `stripParens`.
-   */
-  cached
-  Expr getUnderlyingValue() { result = this }
 }
 
 /**
@@ -298,8 +282,6 @@ class ParExpr extends @par_expr, Expr {
 
   overlay[global]
   override predicate isImpure() { this.getExpression().isImpure() }
-
-  override Expr getUnderlyingValue() { result = this.getExpression().getUnderlyingValue() }
 
   override Expr getUnderlyingReference() { result = this.getExpression().getUnderlyingReference() }
 
@@ -806,8 +788,6 @@ class SeqExpr extends @seq_expr, Expr {
   overlay[global]
   override predicate isImpure() { this.getAnOperand().isImpure() }
 
-  override Expr getUnderlyingValue() { result = this.getLastOperand().getUnderlyingValue() }
-
   override string getAPrimaryQlClass() { result = "SeqExpr" }
 }
 
@@ -861,7 +841,7 @@ class InvokeExpr extends @invokeexpr, Expr {
 
   /** Gets the name of the function or method being invoked, if it can be determined. */
   string getCalleeName() {
-    exists(Expr callee | callee = this.getCallee().getUnderlyingValue() |
+    exists(Expr callee | callee = this.getCallee() |
       result = callee.(Identifier).getName() or
       result = callee.(PropAccess).getPropertyName()
     )
@@ -1488,7 +1468,7 @@ private string getStringValue(Expr e) { result = getConstantString(e) }
  * Gets the constant string value for the expression `e`.
  */
 private string getConstantString(Expr e) {
-  result = getConstantString(e.getUnderlyingValue())
+  result = getConstantString(e.(ParExpr).getExpression())
   or
   result = e.(StringLiteral).getValue()
   or
@@ -1773,8 +1753,6 @@ class Assignment extends @assignment, Expr {
  * ```
  */
 class AssignExpr extends @assign_expr, Assignment {
-  override Expr getUnderlyingValue() { result = this.getRhs().getUnderlyingValue() }
-
   override string getAPrimaryQlClass() { result = "AssignExpr" }
 }
 
@@ -2448,11 +2426,14 @@ class ImmediatelyInvokedFunctionExpr extends Function {
 
   ImmediatelyInvokedFunctionExpr() {
     // direct call
-    this = invk.getCallee().getUnderlyingValue() and kind = "direct"
+    this = invk.getCallee() and kind = "direct"
+    or
+    // direct call
+    this = invk.getCallee().(ParExpr).getExpression() and kind = "direct"
     or
     // reflective call
     exists(MethodCallExpr mce | mce = invk |
-      this = mce.getReceiver().getUnderlyingValue() and
+      this = mce.getReceiver() and
       kind = mce.getMethodName() and
       (kind = "call" or kind = "apply")
     )

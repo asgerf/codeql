@@ -107,7 +107,7 @@ class Function extends @function, Parameterized, TypeParameterized, StmtContaine
         result = p.getName()
       )
       or
-      exists(AssignExpr assign | this = assign.getRhs().getUnderlyingValue() |
+      exists(AssignExpr assign | this = assign.getRhs() |
         result = assign.getTarget().(PropAccess).getPropertyName()
         or
         result = assign.getTarget().(VarRef).getName()

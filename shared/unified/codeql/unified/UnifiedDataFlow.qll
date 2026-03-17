@@ -594,6 +594,12 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
       signature module UnifiedDataFlowSig3 {
         class TransformBase;
+
+        /**
+         * Holds if `callable` can be called at most once, so any captured variables
+         * declared in it can be modeled as global variables.
+         */
+        predicate isTopLevelLike(Callable callable);
       }
 
       module MakeUnifiedDataFlow3<UnifiedDataFlowSig3 D3> {
@@ -675,7 +681,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
           TSyntheticNode(AstNode node, string tag) { synthesizeNode(node, tag, _) } or
           TPostUpdatedValueNode(AstNode node) { hasPostUpdatedValue(node, _) } or
           TNamespaceNode(NamespaceObject ns) or
-          TVariableNode(LocalVariable v, Boolean isRead) or // used in builder stage, replaced with more precise variants below
+          TVariableBuilderNode(LocalVariable v, Boolean isRead) or // used in builder stage, replaced with more precise variants below
           TVariableReadNode(LocalVariable v, BasicBlock bb, int i) {
             hasVariableReadAt(v, bb, i, _)
           } or
@@ -723,7 +729,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               TPostUpdatedArgumentObjectNode or TParameterObjectNode or TCallableNode or
               TCallableSelfReferenceNode or TReturnNode or TInnerReturnNode or
               TExceptionalReturnNode or TInnerExceptionalReturnNode or TSyntheticNode or
-              TPostUpdatedValueNode or TVariableNode or TNamespaceNode;
+              TPostUpdatedValueNode or TVariableBuilderNode or TNamespaceNode;
 
         private class BuilderNode extends TBuilderNode {
           pragma[nomagic]
@@ -876,7 +882,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
            * - Exceptional return nodes (`.isExceptionalReturNode` or `.isInnerExceptionalReturnNode`)
            */
           pragma[nomagic]
-          predicate isVariableRead(LocalVariable v) { this = TVariableNode(v, true) }
+          predicate isVariableRead(LocalVariable v) { this = TVariableBuilderNode(v, true) }
 
           /**
            * Holds if this node represents a value being assigned to the variable `v`.
@@ -884,7 +890,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
            * This should only be used as the target of a flow step, never as the source node.
            */
           pragma[nomagic]
-          predicate isVariableWrite(LocalVariable v) { this = TVariableNode(v, false) }
+          predicate isVariableWrite(LocalVariable v) { this = TVariableBuilderNode(v, false) }
 
           /** Holds if the incoming value is unknown or, if used as a destination node, indicate that the value is used somehow but we don't model precisely how. */
           pragma[nomagic]
@@ -1049,8 +1055,6 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
         /** A type of data flow step. */
         class StepBase extends TStep {
-          predicate receiverHint() { none() }
-
           pragma[nomagic]
           predicate value() { this = TValueStep() }
 
@@ -1437,7 +1441,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
         }
 
         private predicate dataflowNodeHasAmbiguousCfg(BuilderNode node) {
-          node instanceof TVariableNode
+          node instanceof TVariableBuilderNode
           or
           node instanceof TInterceptedExceptionNode
           or
@@ -1476,11 +1480,11 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
           LocalVariable v, BasicBlock bb, int i, boolean needsPostUpdate
         ) {
           exists(BuilderNode node |
-            dataflowStep1(TVariableNode(v, true), _, node) and
+            dataflowStep1(TVariableBuilderNode(v, true), _, node) and
             dataflowNodeHasSuccessorCfgNode(node, bb, i) and
             needsPostUpdate = false
             or
-            dataflowStep1(node, _, TVariableNode(v, true)) and
+            dataflowStep1(node, _, TVariableBuilderNode(v, true)) and
             dataflowNodeHasPredecessorCfgNode(node, bb, i) and
             needsPostUpdate = true
           )
@@ -1488,7 +1492,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
         private predicate hasVariableWriteAt(LocalVariable v, BasicBlock bb, int i) {
           exists(BuilderNode node |
-            dataflowStep1(node, _, TVariableNode(v, false)) and
+            dataflowStep1(node, _, TVariableBuilderNode(v, false)) and
             dataflowNodeHasPredecessorCfgNode(node, bb, i)
           )
           or
@@ -1504,23 +1508,26 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
         bindingset[node]
         pragma[inline_late]
-        private predicate isVariableNode(BuilderNode node) { node instanceof TVariableNode }
+        private predicate shouldRemoveBuilderNode(BuilderNode node) {
+          node instanceof TVariableBuilderNode
+        }
 
+        cached
         private predicate dataflowStep1A(DataFlowNode1 node1, StepBase step, DataFlowNode1 node2) {
           dataflowStep1(node1, step, node2) and
-          not isVariableNode(node1) and
-          not isVariableNode(node2)
+          not shouldRemoveBuilderNode(node1) and
+          not shouldRemoveBuilderNode(node2)
           or
           exists(LocalVariable v, BasicBlock bb, int i |
-            dataflowStep1(TVariableNode(v, true), step, node2) and
+            dataflowStep1(TVariableBuilderNode(v, true), step, node2) and
             dataflowNodeHasSuccessorCfgNode(node2, bb, i) and
             node1 = TVariableReadNode(v, bb, i)
             or
-            dataflowStep1(node1, step, TVariableNode(v, false)) and
+            dataflowStep1(node1, step, TVariableBuilderNode(v, false)) and
             dataflowNodeHasPredecessorCfgNode(node1, bb, i) and
             node2 = TVariableWriteNode(v, bb, i)
             or
-            dataflowStep1(node1, step, TVariableNode(v, true)) and
+            dataflowStep1(node1, step, TVariableBuilderNode(v, true)) and
             dataflowNodeHasPredecessorCfgNode(node1, bb, i) and
             node2 = TVariablePostUpdateNode(v, bb, i)
           )
@@ -1653,7 +1660,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
           )
         }
 
-        pragma[nomagic]
+        cached
         private predicate dataflowStep2(
           DataFlowNode2 node1, DataFlowBuilder::Step step, DataFlowNode2 node2
         ) {
@@ -1696,6 +1703,17 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
             node2 = TExceptionalReturnNode(callable)
           |
             not dataflowStep1(node1, _, _) // Suppress default flow if explicit flow is given
+          )
+          or
+          // Route all global variables through a canonical node (use the builder-stage read node for now)
+          exists(LocalVariable v | treatAsGlobalVariable(v) |
+            node1 = TVariableWriteNode(v, _, _) and
+            step.value() and
+            node2.(BuilderNode).isVariableRead(v)
+            or
+            node1.(BuilderNode).isVariableRead(v) and
+            step.value() and
+            node2 = TVariableReadNode(v, _, _)
           )
         }
 
@@ -1758,7 +1776,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
         private predicate approxCaptureStep(DataFlowNode4 node1, DataFlowNode4 node2) {
           // For captured variables, step from any write to any read. For non-captured variables we instead rely on local SSA flow paths.
-          // To avoid N^2 edges we use the TVariableNode from the builder stage as a pivot connecting any write to any read.
+          // To avoid N^2 edges we use the TVariableBuilderNode from the builder stage as a pivot connecting any write to any read.
           exists(VariableCaptureConfig::CapturedVariable v |
             node1 = TVariableWriteNode(v, _, _) and
             node2.(BuilderNode).isVariableRead(v)
@@ -1782,13 +1800,17 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
           result = TCallableSelfReferenceNode(callable)
         }
 
+        private predicate treatAsGlobalVariable(LocalVariable v) {
+          isTopLevelLike(v.getDeclaringCallable())
+        }
+
         module VariableCaptureConfig implements VariableCapture::InputSig<Location, BasicBlock> {
           Callable basicBlockGetEnclosingCallable(BasicBlock bb) {
             result = getCallableFromBasicBlock(bb)
           }
 
           class CapturedVariable extends FinalLocalVariable {
-            CapturedVariable() { this.isCaptured() }
+            CapturedVariable() { this.isCaptured() and not treatAsGlobalVariable(this) }
 
             /** Gets the callable that defines this variable. */
             Callable getCallable() { result = this.getDeclaringCallable() }
@@ -1911,6 +1933,8 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
           predicate isSyntheticNode(AstNode node, string tag) { this = TSyntheticNode(node, tag) }
 
+          predicate isOut(Call call) { this = TOutNode(call) }
+
           AstNode asAstNode() { this.isValueOf(result) or this.isIncomingValue(result) }
 
           Callable getEnclosingSourceCallable() {
@@ -1995,6 +2019,12 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
             or
             node = TWithoutContentHelper(inner, contents) and
             result = nodeGetEnclosingCallable(inner)
+          )
+          or
+          exists(LocalVariable v |
+            treatAsGlobalVariable(v) and
+            node = TVariableBuilderNode(v, _) and
+            result.asSourceCallable() = v.getDeclaringCallable()
           )
         }
 
@@ -2680,7 +2710,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               v.isCaptured() and
               exists(
                 unique(BuilderNode node1, StepBase step |
-                  dataflowStep1(node1, step, TVariableNode(v, false))
+                  dataflowStep1(node1, step, TVariableBuilderNode(v, false))
                 |
                   node1
                 )
@@ -2693,9 +2723,9 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               or
               exists(LocalVariable v | treatAsConstantEx(v) |
                 node1 = TVariableWriteNode(v, _, _) and
-                node2 = TVariableNode(v, true)
+                node2 = TVariableBuilderNode(v, true)
                 or
-                node1 = TVariableNode(v, true) and
+                node1 = TVariableBuilderNode(v, true) and
                 node2 = TVariableReadNode(v, _, _)
               )
             }
@@ -3014,8 +3044,12 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               CastNode() { none() } // TODO
             }
 
-            predicate nodeIsHidden(Node node) {
-              not (node instanceof TValueNode or node instanceof TIncomingValueNode)
+            predicate nodeIsHidden(Node node) { not neverSkipInPathGraph(node) }
+
+            predicate neverSkipInPathGraph(Node node) {
+              node instanceof TValueNode or
+              node instanceof TIncomingValueNode or
+              node instanceof TPostUpdatedValueNode
             }
 
             class DataFlowExpr = AstNode;
@@ -3903,6 +3937,17 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
             additional module CallGraphOutput {
               predicate viableCallable = CallGraph::viableCallable/1;
+
+              DataFlowCallable viableCallableFromSource(Call c) {
+                exists(DataFlowCall call |
+                  call.asSourceCall() = c and
+                  result = viableCallable(call)
+                )
+              }
+
+              Callable viableSourceCallableFromSource(Call c) {
+                result = viableCallableFromSource(c).asSourceCallable()
+              }
             }
           }
 

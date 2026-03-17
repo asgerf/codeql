@@ -79,7 +79,7 @@ private module PathStringsInput implements ValuePropagationInputSig {
       or
       exists(StringLiteral expr |
         node.isValueOf(expr) and
-        result = expr.getStringValue()
+        result = expr.getValue()
       )
     }
   }

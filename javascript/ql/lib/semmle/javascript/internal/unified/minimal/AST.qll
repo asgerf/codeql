@@ -24,10 +24,6 @@ private import StmtContainers
  * ```
  */
 class AstNode extends @ast_node, NodeInStmtContainer {
-  override File getFile() {
-    result = this.getLocation().getFile() // Specialized for performance reasons
-  }
-
   /** Gets the first token belonging to this element. */
   Token getFirstToken() {
     exists(Location l1, Location l2, string filepath, int startline, int startcolumn |

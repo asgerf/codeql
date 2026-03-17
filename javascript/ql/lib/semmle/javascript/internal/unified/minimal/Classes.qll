@@ -293,7 +293,7 @@ class ClassExpr extends @class_expr, ClassDefinition, Expr {
         result = p.getName()
       )
       or
-      exists(AssignExpr assign | this = assign.getRhs().getUnderlyingValue() |
+      exists(AssignExpr assign | this = assign.getRhs() |
         result = assign.getLhs().(PropAccess).getPropertyName()
         or
         result = assign.getLhs().(VarRef).getName()
@@ -367,13 +367,13 @@ class SuperExpr extends @super_expr, Expr {
  * ```
  */
 class SuperCall extends CallExpr {
-  SuperCall() { this.getCallee().getUnderlyingValue() instanceof SuperExpr }
+  SuperCall() { this.getCallee() instanceof SuperExpr }
 
   /**
    * Gets the function whose `super` binding this call refers to,
    * which is the nearest enclosing non-arrow function.
    */
-  Function getBinder() { result = this.getCallee().getUnderlyingValue().(SuperExpr).getBinder() }
+  Function getBinder() { result = this.getCallee().(SuperExpr).getBinder() }
 }
 
 /**
@@ -386,7 +386,7 @@ class SuperCall extends CallExpr {
  * ```
  */
 class SuperPropAccess extends PropAccess {
-  SuperPropAccess() { this.getBase().getUnderlyingValue() instanceof SuperExpr }
+  SuperPropAccess() { this.getBase() instanceof SuperExpr }
 }
 
 /**

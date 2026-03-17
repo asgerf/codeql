@@ -1246,8 +1246,6 @@ class TypeAssertion extends Expr, @type_assertion {
     result = this.getExpression().getFirstControlFlowNode()
   }
 
-  override Expr getUnderlyingValue() { result = this.getExpression().getUnderlyingValue() }
-
   override Expr getUnderlyingReference() { result = this.getExpression().getUnderlyingReference() }
 
   override string getAPrimaryQlClass() { result = "TypeAssertion" }
@@ -1276,8 +1274,6 @@ class SatisfiesExpr extends Expr, @satisfies_expr {
   override ControlFlowNode getFirstControlFlowNode() {
     result = this.getExpression().getFirstControlFlowNode()
   }
-
-  override Expr getUnderlyingValue() { result = this.getExpression().getUnderlyingValue() }
 
   override Expr getUnderlyingReference() { result = this.getExpression().getUnderlyingReference() }
 
