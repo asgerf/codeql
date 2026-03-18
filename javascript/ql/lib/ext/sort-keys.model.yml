@@ -1,0 +1,34 @@
+extensions:
+  # =============================================================================
+  # sort-keys (npm: "sort-keys") - Sort the keys of an object
+  # =============================================================================
+  #
+  # By Sindre Sorhus. Returns a new object with keys sorted alphabetically
+  # (or by a custom comparator). Values are preserved as-is.
+  #
+  #   import sortKeys from 'sort-keys';
+  #   sortKeys({c: 0, a: 0, b: 0});                   //=> {a: 0, b: 0, c: 0}
+  #   sortKeys({b: {b: 0, a: 0}, a: 0}, {deep: true}); //=> {a: 0, b: {a: 0, b: 0}}
+  #   sortKeys(obj, {compare: (a, b) => -a.localeCompare(b)});
+  #
+  # API:
+  #   sortKeys(object, options?) → object
+  #     options.deep: boolean — recursively sort nested objects
+  #     options.compare: Function — custom key comparison function
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: pure key-reordering transformation, no I/O or eval.
+  # - Taint propagation: the output preserves all property values from the
+  #   input, so taint flows from input to output (value-preserving).
+  #
+  # Existing QLL coverage (Extend.qll):
+  #   Modeled as a CloneStep: Argument[0] → ReturnValue.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # sortKeys(object, options?) → object with sorted keys, same values
+      - ["sort-keys", "", "Argument[0]", "ReturnValue", "value"]

@@ -1,0 +1,70 @@
+extensions:
+  # =============================================================================
+  # react-native (npm: "react-native") — Framework for building native mobile apps
+  # =============================================================================
+  #
+  # React Native lets you build mobile apps using JavaScript and React.
+  # Security-relevant APIs:
+  #
+  #   Linking — deep link handling and URL opening
+  #     Linking.getInitialURL()             — deep link URL that launched the app
+  #     Linking.addEventListener('url', cb) — listens for incoming deep link URLs
+  #     Linking.openURL(url)                — opens a URL in system browser/handler
+  #
+  #   WebView — embedded web content (deprecated; now in react-native-webview)
+  #     <WebView source={{uri: url}} />        — loads a URL
+  #     <WebView source={{html: html}} />      — renders raw HTML
+  #     <WebView injectedJavaScript={code} />  — injects JS on page load
+  #     ref.injectJavaScript(code)             — injects JS imperatively
+  #
+  # Security concerns:
+  # - Deep link URLs (Linking) are attacker-controlled: a malicious app or
+  #   website can craft deep links to pass arbitrary data into the app.
+  # - Linking.openURL() can redirect users to arbitrary URLs or trigger
+  #   unintended protocol handlers (tel:, sms:, mailto:, custom schemes).
+  # - WebView properties accept HTML and JavaScript — injection risks.
+  #
+  # Existing QLL coverage (ReactNative.qll + sink customization files):
+  #   - WebViewElement class identifies <WebView> JSX elements from react-native
+  #   - WebView url / source.uri props → url-redirection sink
+  #   - WebView html / source.html props → html-injection (XSS) sink
+  #   - WebView injectedJavaScript prop → code-injection sink
+  #   - WebView injectJavaScript(code) method call → code-injection sink
+  # These JSX-prop-based sinks cannot be expressed as data extensions and
+  # remain covered by the existing QLL.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: untrusted data entering the application
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Linking.getInitialURL() returns a Promise resolving to the deep link
+      # URL (or null) that launched the app. Deep links are attacker-controlled:
+      # any app or website can craft a link targeting the app's URL scheme.
+      - ["react-native", "Member[Linking].Member[getInitialURL].ReturnValue.Awaited", "remote"]
+
+      # Linking.addEventListener('url', ({url}) => {...})
+      # Fires when the app receives a deep link while already running. The
+      # callback receives an object whose `url` property is the deep link.
+      - ["react-native", "Member[Linking].Member[addEventListener].WithStringArgument[0=url].Argument[1].Parameter[0].Member[url]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: security-sensitive operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Linking.openURL(url) — opens a URL in the default browser or an
+      # associated app handler. Attacker-controlled URLs can redirect the
+      # user to phishing sites or trigger protocol handlers (tel:, sms:, etc.).
+      - ["react-native", "Member[Linking].Member[openURL].Argument[0]", "url-redirection"]
+
+      # ref.injectJavaScript(code) — imperatively injects JavaScript into a
+      # WebView instance. This supplements the QLL model (which identifies
+      # calls specifically on WebView elements) with a fuzzy match that
+      # catches cases where the receiver's type is not precisely tracked.
+      - ["react-native", "Fuzzy.Member[injectJavaScript].Argument[0]", "code-injection"]

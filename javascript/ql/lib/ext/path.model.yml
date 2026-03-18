@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # path (Node.js built-in: "path") - File path utilities
+  # =============================================================================
+  #
+  # The `path` module provides utilities for working with file and directory
+  # paths:
+  #
+  #   const path = require('path');
+  #
+  #   path.join('/foo', 'bar', 'baz');       // '/foo/bar/baz'
+  #   path.resolve('foo', 'bar');             // '/cwd/foo/bar'
+  #   path.normalize('/foo/bar/../baz');      // '/foo/baz'
+  #   path.basename('/foo/bar/baz.txt');      // 'baz.txt'
+  #   path.dirname('/foo/bar/baz.txt');       // '/foo/bar'
+  #   path.extname('index.html');             // '.html'
+  #   path.relative('/data/foo', '/data/bar');// '../bar'
+  #   path.parse('/foo/bar.txt');             // { root, dir, base, ext, name }
+  #   path.format({ dir: '/foo', base: 'b'});// '/foo/b'
+  #   path.isAbsolute('/foo');                // true
+  #   path.toNamespacedPath('C:\\foo');        // '\\\\?\\C:\\foo' (Windows)
+  #
+  #   // Platform-specific variants
+  #   path.posix.join(...)
+  #   path.win32.join(...)
+  #
+  # Security assessment:
+  # - No sources: The library does not fetch or provide access to untrusted data.
+  # - No sinks: The library only manipulates path strings; it does not perform
+  #   any filesystem operations, command execution, or other dangerous actions.
+  # - All functions are pure string transformations — taint propagates through
+  #   them. The existing QLL in NodeJSLib.qll models taint steps for join,
+  #   resolve, normalize, basename, dirname, extname, relative, and
+  #   toNamespacedPath.
+  # - path.isAbsolute() and path.relative() are used as sanitizers in
+  #   TaintedPathCustomizations.qll for path-traversal queries. These are
+  #   internal CodeQL concepts not expressible via data extensions.
+  #
+  # Existing QLL coverage:
+  #   NodeJSLib.qll (PathFlowStep): taint steps for join, resolve, normalize,
+  #     basename, dirname, extname, relative, toNamespacedPath.
+  #   TaintedPathCustomizations.qll: path.normalize/resolve/relative modeled
+  #     as normalizing/resolving path calls; path.isAbsolute as sanitizer.
+  #
+  # No data extensions are needed for this library.
+  # =============================================================================

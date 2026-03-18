@@ -1,0 +1,117 @@
+extensions:
+  # =============================================================================
+  # passport (npm: "passport") — Authentication middleware for Express/Connect
+  # =============================================================================
+  #
+  # Passport authenticates requests using extensible strategies (480+). It
+  # integrates with Express as middleware, adding req.user, req.login(),
+  # req.logout(), and req.isAuthenticated() to request objects.
+  #
+  #   const passport = require('passport');
+  #   const LocalStrategy = require('passport-local').Strategy;
+  #
+  #   passport.use(new LocalStrategy((username, password, done) => {
+  #     User.findOne({ username }, (err, user) => {
+  #       if (!user.verifyPassword(password)) return done(null, false);
+  #       return done(null, user);
+  #     });
+  #   }));
+  #
+  #   passport.serializeUser((user, done) => done(null, user.id));
+  #   passport.deserializeUser((id, done) => User.findById(id, done));
+  #
+  #   app.use(passport.initialize());
+  #   app.use(passport.session());
+  #
+  #   app.post('/login', passport.authenticate('local', {
+  #     successRedirect: '/',
+  #     failureRedirect: '/login'
+  #   }));
+  #
+  # Security concerns:
+  # - passport.authenticate() options.successRedirect / failureRedirect can
+  #   be url-redirection sinks if controlled by user input.
+  # - Strategy verify callbacks receive user-supplied credentials (username,
+  #   password, profile, tokens) — these are untrusted.
+  # - passport.authenticate() with a custom callback passes (err, user, info)
+  #   where info may contain attacker-controlled data.
+  # - passport.deserializeUser callback's first parameter is session-stored
+  #   data (the serialized user identifier).
+  #
+  # Existing QLL coverage (Express.qll):
+  # - PassportRouteSetup: models passport.use(new Strategy({passReqToCallback:
+  #   true}, callback)) to recognize the callback's first param as a request.
+  # - PassportRouteHandler: makes the callback a recognized Express route
+  #   handler with req as Parameter[0].
+  #
+  # Existing QLL coverage (JWT.qll):
+  # - PassportJwt module: models secretOrKey and secretOrKeyProvider in
+  #   passport-jwt Strategy options as credential sinks.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL redirection in authenticate() options
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # passport.authenticate(strategy, { successRedirect: url })
+      - - "passport"
+        - "Member[authenticate].Argument[1].Member[successRedirect]"
+        - "url-redirection"
+      # passport.authenticate(strategy, { failureRedirect: url })
+      - - "passport"
+        - "Member[authenticate].Argument[1].Member[failureRedirect]"
+        - "url-redirection"
+
+  # ---------------------------------------------------------------------------
+  # Summaries: data flow through passport APIs
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # passport.authenticate() returns a middleware function.
+      # When used with a custom callback:
+      #   passport.authenticate('local', (err, user, info) => { ... })(req, res, next)
+      # The strategy's verified user flows to the callback's second param.
+      # =====================================================================
+
+      # =====================================================================
+      # passport.serializeUser((user, done) => { done(null, user.id) })
+      # The user object from authentication flows to Parameter[0] of the
+      # serializer callback.
+      # =====================================================================
+
+      # =====================================================================
+      # passport.deserializeUser((id, done) => { ... })
+      # The deserialized user (passed via done(null, user) in the callback)
+      # flows to req.user on subsequent requests.
+      # Parameter[0] of the deserializer callback receives the serialized
+      # identifier from the session.
+      # =====================================================================
+
+      # =====================================================================
+      # passport.use(strategy) → passport (chainable)
+      # Returns the passport instance for chaining.
+      # =====================================================================
+      - - "passport"
+        - "Member[use]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "value"
+
+      # =====================================================================
+      # passport.authenticate() returns Connect/Express middleware.
+      # The middleware is typically used as:
+      #   app.post('/login', passport.authenticate('local'))
+      # It acts as a GuardedRouteHandler — subsequent route handlers get
+      # the authenticated user on req.user.
+      # =====================================================================
+      - - "passport"
+        - "Member[authenticate]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "taint"

@@ -1,0 +1,67 @@
+extensions:
+  # =============================================================================
+  # react-final-form (npm: "react-final-form") - React form state management
+  # =============================================================================
+  #
+  # react-final-form manages form state, validation, and submission in React.
+  # Form values originate from user input and should be treated as untrusted.
+  #
+  # Key APIs that surface user-controlled form values:
+  #
+  #   // JSX components with render props / callback props
+  #   <Form onSubmit={(values) => ...}
+  #         render={({ values, handleSubmit }) => ...}>
+  #     {({ values, handleSubmit }) => ...}
+  #   </Form>
+  #
+  #   <Field name="email">
+  #     {({ input, meta }) => <input {...input} />}
+  #   </Field>
+  #
+  #   <FormSpy onChange={(formState) => formState.values} />
+  #
+  #   // Hooks
+  #   const { input, meta } = useField('email');
+  #   input.value;                            // user-controlled
+  #
+  #   const formState = useFormState();
+  #   formState.values;                       // user-controlled
+  #
+  #   const form = useForm();
+  #   form.getState().values;                 // user-controlled
+  #
+  # Security concerns:
+  # - Form values are user-controlled input and are sources of taint.
+  # - No sinks. react-final-form does not perform any security-sensitive
+  #   operations.
+  #
+  # Existing QLL coverage (XssThroughDomCustomizations.qll):
+  #   ReactFinalFormSource models <Form onSubmit={(values) => ...}> as an
+  #   XSS-through-DOM source. JSX callback patterns cannot be expressed
+  #   as data extensions; the QLL model should be retained for those.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: user-controlled form values
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Fuzzy: .values on any react-final-form-derived object.
+      # Covers: Form/FormSpy render props, useFormState().values,
+      # form.getState().values, and any other path where .values
+      # is read from a react-final-form-originating object.
+      - ["react-final-form", "Fuzzy.Member[values]", "remote"]
+
+      # Fuzzy: .input.value on any react-final-form-derived object.
+      # Covers: Field render props ({ input }) => input.value,
+      # and useField().input.value.
+      - ["react-final-form", "Fuzzy.Member[input].Member[value]", "remote"]
+
+      # useField('name') returns { input, meta }.
+      # input.value contains the current user input.
+      - ["react-final-form", "Member[useField].ReturnValue.Member[input].Member[value]", "remote"]
+
+      # useFormState() returns { values, ... }
+      - ["react-final-form", "Member[useFormState].ReturnValue.Member[values]", "remote"]

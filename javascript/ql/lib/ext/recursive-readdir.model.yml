@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # recursive-readdir (npm: "recursive-readdir") - Recursively list files
+  # =============================================================================
+  #
+  # recursive-readdir lists all files in a directory tree recursively:
+  #
+  #   var recursive = require("recursive-readdir");
+  #
+  #   // Callback style:
+  #   recursive("some/path", function(err, files) { ... });
+  #
+  #   // With ignore patterns:
+  #   recursive("some/path", ["*.html"], function(err, files) { ... });
+  #
+  #   // Promise style:
+  #   const files = await recursive("some/path");
+  #
+  # API: recursive(path, [ignores], [callback]) → Promise<string[]>
+  #
+  # Security relevance:
+  # - No sources. The library does not provide access to untrusted data.
+  #   (The returned file paths are filesystem-derived, not attacker-controlled.)
+  # - Sinks: The first argument (path) is used as a filesystem path for
+  #   directory listing. If attacker-controlled, this enables path traversal.
+  # - No summaries needed. There is no meaningful taint transformation.
+  #
+  # Existing QLL coverage (Files.qll):
+  # - RecursiveReadDir: modeled as FileSystemAccess (path argument is a sink)
+  #   and FileNameProducer (callback/promise results are file paths).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Path injection via directory path argument
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # recursive(path, ...) — the directory path to read recursively.
+      # If attacker-controlled, enables directory traversal / information
+      # disclosure of arbitrary filesystem paths.
+      - ["recursive-readdir", "Argument[0]", "path-injection"]

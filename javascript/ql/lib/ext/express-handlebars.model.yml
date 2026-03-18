@@ -1,0 +1,117 @@
+extensions:
+  # =============================================================================
+  # express-handlebars (npm: "express-handlebars") - Handlebars view engine
+  # =============================================================================
+  #
+  # A Handlebars view engine for Express providing layouts, partials, and
+  # template caching.
+  #
+  #   import { engine, create, ExpressHandlebars } from 'express-handlebars';
+  #
+  #   // Factory usage (most common):
+  #   app.engine('handlebars', engine({ defaultLayout: 'main' }));
+  #   app.set('view engine', 'handlebars');
+  #   app.get('/', (req, res) => {
+  #     res.render('home', { title: req.query.title }); // data flows into template
+  #   });
+  #
+  #   // Instance usage:
+  #   const hbs = create({ helpers: { ... } });
+  #   app.engine('handlebars', hbs.engine);
+  #
+  #   // Direct rendering:
+  #   const html = await hbs.render('views/home.handlebars', context);
+  #   hbs.renderView('views/home.handlebars', options, callback);
+  #   const tpl = await hbs.getTemplate('views/page.handlebars');
+  #   const partials = await hbs.getPartials();
+  #
+  # API summary:
+  # - engine(config?) → Express engine function
+  # - create(config?) → ExpressHandlebars instance
+  # - new ExpressHandlebars(config?)
+  # - instance.engine — bound renderView for Express registration
+  # - instance.render(filePath, context, options?) → Promise<string>
+  # - instance.renderView(viewPath, options?, callback?) — Express interface
+  # - instance.getTemplate(filePath, options?) → Promise<Function>
+  # - instance.getTemplates(dirPath, options?) → Promise<Object>
+  # - instance.getPartials(options?) → Promise<Object>
+  #
+  # Security analysis:
+  # - Unlike EJS/Eta, Handlebars is logic-less and does NOT allow arbitrary
+  #   code execution in templates. Template strings are NOT code-injection
+  #   sinks. However, Handlebars' triple-stache {{{expr}}} outputs unescaped
+  #   HTML, so untrusted data in the context can lead to XSS.
+  # - File paths passed to render/getTemplate/getTemplates control filesystem
+  #   reads — path-injection sinks.
+  # - Data (context/locals) flows into rendered HTML output — taint summaries.
+  #
+  # Existing QLL coverage:
+  # - TemplateObjectInjectionCustomizations.qll: express-handlebars is listed
+  #   as a vulnerable template engine. The QLL models engine registration via
+  #   app.engine() with both `require('express-handlebars')()` (the call) and
+  #   `.engine` property access patterns. This should be retained.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Path injection — file paths read from filesystem
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # hbs.render(filePath, context?, options?) — reads template from filePath
+      - [
+          "express-handlebars",
+          "Fuzzy.Member[render].Argument[0]",
+          "path-injection",
+        ]
+
+      # hbs.renderView(viewPath, options?, callback?) — Express engine interface
+      - [
+          "express-handlebars",
+          "Fuzzy.Member[renderView].Argument[0]",
+          "path-injection",
+        ]
+
+      # hbs.getTemplate(filePath, options?) — reads and compiles a template file
+      - [
+          "express-handlebars",
+          "Fuzzy.Member[getTemplate].Argument[0]",
+          "path-injection",
+        ]
+
+      # hbs.getTemplates(dirPath, options?) — reads all templates in a directory
+      - [
+          "express-handlebars",
+          "Fuzzy.Member[getTemplates].Argument[0]",
+          "path-injection",
+        ]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Taint propagation from context data into rendered output
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # hbs.render(filePath, context, options?) → Promise<string>
+      # Context data (Argument[1]) taints the rendered HTML (resolved promise)
+      - [
+          "express-handlebars",
+          "Fuzzy.Member[render]",
+          "Argument[1]",
+          "ReturnValue.Awaited",
+          "taint",
+        ]
+
+      # hbs.renderView(viewPath, options, callback)
+      # The options object contains template data that taints the rendered HTML.
+      # Express calls this as: engine(filePath, options, callback)
+      # where callback receives (err, html).
+      - [
+          "express-handlebars",
+          "Fuzzy.Member[renderView]",
+          "Argument[1]",
+          "Argument[2].Parameter[1]",
+          "taint",
+        ]

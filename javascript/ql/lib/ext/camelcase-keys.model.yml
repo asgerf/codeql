@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # camelcase-keys (npm: "camelcase-keys") - Convert object keys to camelCase
+  # =============================================================================
+  #
+  # By Sindre Sorhus. Converts the keys of an object (or array of objects)
+  # to camelCase using the `camelcase` package. Values are preserved as-is.
+  #
+  #   import camelcaseKeys from 'camelcase-keys';
+  #   camelcaseKeys({'foo-bar': true});              //=> {fooBar: true}
+  #   camelcaseKeys([{'foo-bar': 1}]);               //=> [{fooBar: 1}]
+  #   camelcaseKeys(obj, {deep: true});              //=> deep conversion
+  #
+  # Exports: default function camelcaseKeys(input, options?) → object
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure key-renaming transformation.
+  # - Object values are preserved, so taint propagates from input to output.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through camelcase-keys
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # camelcaseKeys(input, options?) → object
+      # The output is essentially a clone of the input with renamed keys,
+      # so object property values are preserved (value flow).
+      - ["camelcase-keys", "", "Argument[0]", "ReturnValue", "value"]

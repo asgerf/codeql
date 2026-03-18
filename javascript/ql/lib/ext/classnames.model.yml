@@ -1,0 +1,51 @@
+extensions:
+  # =============================================================================
+  # classnames (npm: "classnames") — conditionally join CSS class names
+  # Also covers: classnames/dedupe, classnames/bind, clsx
+  # =============================================================================
+  #
+  # classnames is a utility for conditionally joining CSS class name strings.
+  # It accepts strings, objects (keys included when values are truthy), and
+  # arrays (flattened recursively), returning a single space-delimited string.
+  #
+  #   const classNames = require('classnames');
+  #   classNames('foo', { bar: true, baz: false }); // => 'foo bar'
+  #   classNames('a', ['b', { c: true }]);           // => 'a b c'
+  #
+  # Variants:
+  #   classnames/dedupe  — deduplicates classes
+  #   classnames/bind    — binds to a CSS modules style map:
+  #       const cx = classNames.bind(styles);
+  #       cx('foo', { bar: true }); // => mapped class names
+  #   clsx               — drop-in replacement, same API
+  #
+  # Security concerns:
+  # - No sources or sinks: classnames does not fetch data or perform
+  #   security-sensitive operations.
+  # - Taint propagation: arguments flow to the return value via string
+  #   concatenation. If a tainted value is passed as a class name, the
+  #   result is also tainted.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through classnames / clsx calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # classnames('foo', tainted, ...) => tainted result
+      - ["classnames", "", "Argument[0..]", "ReturnValue", "taint"]
+      # classnames/dedupe has the same API
+      - ["classnames/dedupe", "", "Argument[0..]", "ReturnValue", "taint"]
+      # clsx is a drop-in replacement
+      - ["clsx", "", "Argument[0..]", "ReturnValue", "taint"]
+
+      # classnames/bind — first use: const cx = classnames.bind(styles)
+      # Taint from the styles object flows to results of cx()
+      - ["classnames", "Member[bind]", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+      - ["classnames/bind", "Member[bind]", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+      # classnames/bind — second use: cx(tainted, ...)
+      # Taint from cx() arguments flows to the result
+      - ["classnames", "Member[bind].ReturnValue", "Argument[0..]", "ReturnValue", "taint"]
+      - ["classnames/bind", "Member[bind].ReturnValue", "Argument[0..]", "ReturnValue", "taint"]

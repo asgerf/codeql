@@ -1,0 +1,80 @@
+extensions:
+  # =============================================================================
+  # jszip (npm: "jszip") - Create, read, and edit ZIP files in JavaScript
+  # =============================================================================
+  #
+  # JSZip provides an API to create, read, and modify ZIP archives:
+  #
+  #   const JSZip = require('jszip');
+  #
+  #   // Load an existing ZIP
+  #   const zip = await JSZip.loadAsync(data);
+  #
+  #   // Iterate entries (file names are attacker-controlled in untrusted ZIPs)
+  #   zip.forEach((relativePath, file) => { ... });
+  #   zip.filter((relativePath, file) => { ... });
+  #   Object.keys(zip.files);  // file names
+  #
+  #   // Read file content
+  #   const content = await zip.file("name").async("string");
+  #
+  #   // Create a ZIP
+  #   zip.file("hello.txt", "content");
+  #   const blob = await zip.generateAsync({ type: "blob" });
+  #
+  # Security concerns:
+  # - Path injection (zip slip): File names inside a ZIP archive are
+  #   attacker-controlled and may contain path traversal sequences
+  #   (e.g. "../../etc/passwd"). The relative path passed to forEach/filter
+  #   callbacks and keys of the .files object are tainted sources.
+  # - Taint propagation: File content read from a loaded ZIP carries taint
+  #   from the original archive data. Generated ZIP output carries taint
+  #   from the files added to the archive.
+  #
+  # Existing QLL coverage (ZipSlipCustomizations.qll):
+  #   - JSZipFilesSource: Enumerated property names of zip.files object
+  #   - JSZipFileSource: The relativePath parameter in forEach/filter callbacks
+  #   Both are modeled as ZipSlip sources (path-injection with relative posix
+  #   path flow state). These use structural API patterns that are hard to
+  #   fully replicate as data extensions. The QLL models should be retained.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: file names from ZIP entries (zip-slip / path-injection vectors)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # zip.forEach((relativePath, file) => { ... })
+      # relativePath (param 0) is the attacker-controlled file name
+      - ["jszip", "Fuzzy.Member[forEach].Argument[0].Parameter[0]", "remote"]
+
+      # zip.filter((relativePath, file) => { ... })
+      - ["jszip", "Fuzzy.Member[filter].Argument[0].Parameter[0]", "remote"]
+
+      # zip.file("name") returns a ZipObject; its .name property is tainted
+      - ["jszip", "Fuzzy.Member[file].ReturnValue.Member[name]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through JSZip operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # JSZip.loadAsync(data) → Promise<JSZip>
+      # The loaded zip instance is tainted by the input archive data
+      - ["jszip", "Member[loadAsync]", "Argument[0]", "ReturnValue.Awaited", "taint"]
+
+      # zip.file("name").async(type) → Promise<content>
+      # File content read from a zip entry carries taint from the zip instance
+      - ["jszip", "Fuzzy.Member[file].ReturnValue.Member[async]", "Argument[this]", "ReturnValue.Awaited", "taint"]
+
+      # zip.generateAsync(opts) → Promise<output>
+      # Generated ZIP output carries taint from the zip instance
+      - ["jszip", "Fuzzy.Member[generateAsync]", "Argument[this]", "ReturnValue.Awaited", "taint"]
+
+      # zip.file(name, content) — content flows into the zip instance
+      # (sets taint on the receiver for later generateAsync)
+      - ["jszip", "Fuzzy.Member[file]", "Argument[1]", "Argument[this]", "taint"]

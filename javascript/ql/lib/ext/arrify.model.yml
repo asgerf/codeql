@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # arrify (npm: "arrify") - Convert a value to an array
+  # =============================================================================
+  #
+  # arrify converts a value to an array. If the value is already an array, it is
+  # returned as-is. If the value is null or undefined, an empty array is returned.
+  # Otherwise, the value is wrapped in an array.
+  #
+  #   const arrify = require('arrify');
+  #   arrify('unicorn');    //=> ['unicorn']
+  #   arrify(['unicorn']);  //=> ['unicorn']
+  #   arrify(null);         //=> []
+  #   arrify(undefined);    //=> []
+  #
+  # Exports: a single function arrify(value) → array
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure data transformation.
+  # - Taint propagates from the input value to the returned array.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through arrify
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # arrify(value) → array: taint flows from argument to return value
+      - ["arrify", "", "Argument[0]", "ReturnValue", "taint"]

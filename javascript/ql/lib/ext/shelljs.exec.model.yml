@@ -1,0 +1,39 @@
+extensions:
+  # =============================================================================
+  # shelljs.exec (npm: "shelljs.exec") — Fast synchronous shell command execution
+  # =============================================================================
+  #
+  # A standalone, high-performance replacement for shelljs's exec() method.
+  # Exports a single function that executes a shell command synchronously via
+  # child_process.execSync and returns { error, stdout, stderr, code, ok }.
+  #
+  #   const exec = require('shelljs.exec');
+  #   const result = exec('echo hello', { silent: true });
+  #   result.stdout  // 'hello\n'
+  #   result.stderr  // ''
+  #   result.code    // 0
+  #
+  # Security analysis:
+  # - SINK: The first argument is a shell command string passed directly to
+  #   child_process.execSync — command injection.
+  # - stdout/stderr in the return value carry the output of the executed
+  #   command (taint summary from command to output).
+  #
+  # Existing QLL coverage (ShellJS.qll):
+  # - shelljs.exec is recognized as a ShellJS Member with name "exec",
+  #   and modeled as a SystemCommandExecution sink (Argument[0] is a
+  #   shell-interpreted command). This already covers the command-injection
+  #   sink.
+  #
+  # The sink is fully covered by ShellJS.qll. The summary below adds taint
+  # propagation from the command to the return value (stdout/stderr carry
+  # output derived from the command).
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # exec(command) returns { stdout, stderr, ... } — output is tainted
+      # by the command that was run.
+      - ["'shelljs.exec'", "", "Argument[0]", "ReturnValue", "taint"]

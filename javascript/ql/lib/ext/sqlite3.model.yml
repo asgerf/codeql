@@ -1,0 +1,79 @@
+extensions:
+  # =============================================================================
+  # sqlite3 (npm: "sqlite3") — Asynchronous SQLite3 bindings for Node.js
+  # =============================================================================
+  #
+  # sqlite3 provides an asynchronous, non-blocking interface to SQLite databases:
+  #
+  #   const sqlite3 = require('sqlite3');
+  #   const db = new sqlite3.Database('./data.db');
+  #
+  #   // Query methods — first argument is SQL
+  #   db.run('INSERT INTO logs VALUES (?)', [value], callback);
+  #   db.get('SELECT * FROM users WHERE id = ?', [id], (err, row) => {});
+  #   db.all('SELECT * FROM users', (err, rows) => {});
+  #   db.each('SELECT * FROM users', (err, row) => {}, complete);
+  #   db.exec('CREATE TABLE IF NOT EXISTS t (id INT)', callback);
+  #
+  #   // Prepared statements
+  #   const stmt = db.prepare('INSERT INTO t VALUES (?)');
+  #   stmt.run(value);  // bind parameter, NOT SQL
+  #   stmt.finalize();
+  #
+  #   // Verbose mode / cached databases
+  #   const sqlite3v = require('sqlite3').verbose();
+  #   const db2 = new sqlite3v.Database(':memory:');
+  #   const db3 = new sqlite3.cached.Database('./data.db');
+  #
+  # Security concerns:
+  # - SQL injection: db.run(), db.get(), db.all(), db.each(), db.exec(),
+  #   db.prepare() all take raw SQL strings as Argument[0]. Users should
+  #   use parameterized queries (? placeholders) with bind parameters.
+  #   Note: Statement.run/get/all/each take bind *values*, NOT SQL — a
+  #   type model is needed to distinguish Database from Statement.
+  # - Path injection: the Database constructor and db.loadExtension()
+  #   take file paths that control which file is opened/loaded.
+  #
+  # Existing QLL coverage (SQL.qll):
+  # - Sqlite3 module: models all/each/exec/get/prepare/run on
+  #   API::Node::ofType("sqlite3", "Database") as SQL::SqlString sinks.
+  #   Also models query result data via callback parameter and promises.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Type model: identify sqlite3 Database instances
+  # ---------------------------------------------------------------------------
+  # A type model is needed because Database and Statement share method names
+  # (run, get, all, each) with different semantics: on Database the first
+  # argument is SQL, on Statement it is a bind value (safe).
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: typeModel
+    data:
+      # new sqlite3.Database(...), new sqlite3.verbose().Database(...),
+      # new sqlite3.cached.Database(...)
+      - ["sqlite3.Database", "sqlite3", "Fuzzy.Member[Database].Instance"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: SQL injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # db.run(sql), db.get(sql), db.all(sql), db.each(sql), db.exec(sql),
+      # db.prepare(sql) — first argument is a raw SQL string
+      - ["sqlite3.Database", "Member[run,get,all,each,exec,prepare].Argument[0]", "sql-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new sqlite3.Database(filename) — database file path
+      - ["sqlite3", "Fuzzy.Member[Database].Argument[0]", "path-injection"]
+
+      # db.loadExtension(path) — loads a compiled extension (.so/.dll)
+      - ["sqlite3.Database", "Member[loadExtension].Argument[0]", "path-injection"]

@@ -1,0 +1,45 @@
+extensions:
+  # =============================================================================
+  # string-template (npm: "string-template") — simple string interpolation
+  # =============================================================================
+  #
+  # Provides {0}/{name}-style placeholder substitution:
+  #
+  #   const format = require('string-template');
+  #   format("Hello {0}, you have {1} items", name, count);
+  #   format("Hello {name}", { name: "world" });
+  #
+  # Also provides a compile sub-path for reusable templates:
+  #
+  #   const compile = require('string-template/compile');
+  #   const greet = compile("Hello {name}");
+  #   greet({ name: "world" });
+  #
+  # Security concerns:
+  # - No sources: the library does not fetch or expose external data.
+  # - No sinks expressible via data extensions. (The format-string argument is
+  #   a tainted-format-string sink when format arguments are present, but that
+  #   query uses a custom sink class, not the extensible sinkModel predicate.)
+  # - Taint propagation: the template string and substitution arguments flow
+  #   into the returned string.
+  #
+  # Existing QLL coverage:
+  # - StringFormatters.qll recognizes string-template and string-template/compile
+  #   as string formatter calls, modeling taint flow from the format string and
+  #   arguments to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through format/compile calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # format(template, ...args) — template and all arguments taint the return value
+      - ["string-template", "", "Argument[0..]", "ReturnValue", "taint"]
+
+      # compile(template) returns a function whose output is tainted by the template
+      - ["string-template/compile", "", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+      # compile(template)(...args) — arguments to the compiled function taint its output
+      - ["string-template/compile", "ReturnValue", "Argument[0..]", "ReturnValue", "taint"]

@@ -1,0 +1,59 @@
+extensions:
+  # =============================================================================
+  # js-cookie (npm: "js-cookie") - Browser cookie get/set/remove
+  # =============================================================================
+  #
+  # Lightweight library for reading and writing browser cookies.
+  #
+  #   import Cookies from 'js-cookie';
+  #
+  #   Cookies.set('name', 'value', { secure: true, sameSite: 'Strict' });
+  #   Cookies.get('name');        // => 'value'
+  #   Cookies.get();              // => { name: 'value', ... }
+  #   Cookies.remove('name');
+  #
+  # The library also supports creating derived instances with custom defaults
+  # or custom encoding/decoding:
+  #
+  #   const api = Cookies.withAttributes({ path: '/', secure: true });
+  #   const api2 = Cookies.withConverter({ read: ..., write: ... });
+  #
+  # Security concerns:
+  # - SOURCE (remote): get() reads from document.cookie, which may contain
+  #   untrusted data injected by subdomains or other scripts.
+  # - No sinks. The library writes to document.cookie but there is no
+  #   corresponding data-extension sink kind for cookie writes.
+  # - Taint propagation through withAttributes() and withConverter() which
+  #   return new Cookies instances with the same get/set/remove API.
+  #
+  # Existing QLL coverage:
+  # - CookieLibraries.qll: Models get() as PersistentReadAccess and set() as
+  #   PersistentWriteAccess / CookieWrite with secure/sameSite flag checking.
+  #   Also covers the global `Cookie` variable and `noConflict()`.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: cookie values read from document.cookie are untrusted
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Cookies.get(name) → string | undefined
+      # Cookies.get() → { name: value, ... }
+      # Also covers derived instances from withAttributes/withConverter.
+      - ["js-cookie", "Fuzzy.Member[get].ReturnValue", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through derived instances
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Cookies.withAttributes(defaults) returns a new Cookies API instance.
+      # Taint characteristics of the original instance propagate to the new one.
+      - ["js-cookie", "Fuzzy.Member[withAttributes]", "Argument[this]", "ReturnValue", "value"]
+
+      # Cookies.withConverter(converter) returns a new Cookies API instance.
+      - ["js-cookie", "Fuzzy.Member[withConverter]", "Argument[this]", "ReturnValue", "value"]

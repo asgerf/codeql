@@ -1,0 +1,9 @@
+extensions:
+  # Summaries: taint flow through MatTableDataSource
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # new MatTableDataSource(data) — the constructor argument taints the instance,
+      # enabling taint tracking from the data array through to the table's rendered rows.
+      - ["@angular/material/table", "Member[MatTableDataSource]", "Argument[0]", "Instance", "taint"]

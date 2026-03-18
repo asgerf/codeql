@@ -1,0 +1,192 @@
+extensions:
+  # =============================================================================
+  # mysql / mysql2 — MySQL client libraries for Node.js
+  # =============================================================================
+  #
+  # The `mysql` and `mysql2` packages provide MySQL connectivity. Both
+  # share a nearly identical API for connections, pools, and queries.
+  # mysql2 also offers a promise-based interface via `mysql2/promise`.
+  #
+  #   const mysql = require('mysql');
+  #   const conn = mysql.createConnection({ host: '...', user, password });
+  #   conn.query('SELECT * FROM users WHERE id = ' + userId);  // SQL injection
+  #
+  #   const mysql2 = require('mysql2/promise');
+  #   const conn = await mysql2.createConnection({...});
+  #   await conn.execute('SELECT * FROM users WHERE id = ?', [userId]);
+  #
+  # Security concerns:
+  #   - query() and execute() accept SQL strings that are injection sinks
+  #     when constructed from user input without parameterization.
+  #   - escape() and escapeId() are sanitizers for values and identifiers.
+  #   - Connection config objects contain credentials (user, password).
+  #
+  # Existing QLL coverage (SQL.qll):
+  #   - query/execute on Connection/Pool as SQL injection sinks
+  #   - escape/escapeId as SQL sanitizers
+  #   - ConnectionOptions user/password as CredentialsNode
+  #
+  # Existing model.yml coverage:
+  #   - Extensive typeModel for Connection, Pool, PoolCluster, PoolConnection
+  #   - mysql2 and mysql2/promise type chains
+  #   - summaryModel for Pool event listener return types
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks — SQL injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # =====================================================================
+      # mysql — query(sql, ...) and execute(sql, ...)
+      # =====================================================================
+      #
+      # Connection.query(sql, values?, callback?)
+      # Connection.execute(sql, values?, callback?)  (mysql2 only)
+      # Pool.query(sql, values?, callback?)
+      #
+      # The first argument is either a SQL string or an options object
+      # with a `sql` property. Both are injection sinks.
+
+      # Direct SQL string as first argument
+      - ["mysql", "Fuzzy.Member[query,execute].Argument[0]", "sql-injection"]
+      - ["mysql2", "Fuzzy.Member[query,execute].Argument[0]", "sql-injection"]
+      - ["mysql2/promise", "Fuzzy.Member[query,execute].Argument[0]", "sql-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Type models — Connection, Pool, and related types
+  # ---------------------------------------------------------------------------
+  #
+  # These type models ensure that Connection and Pool objects are
+  # properly tracked through the various creation patterns, enabling
+  # the sink models above (and the QLL sinks) to work on all variants.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: typeModel
+    data:
+      # =====================================================================
+      # mysql package
+      # =====================================================================
+
+      # Connection creation
+      - [mysql.Connection, mysql, "Member[createConnection].ReturnValue"]
+      - [mysql.Connection, mysql.PoolConnection, ""]
+      - [mysql.Connection, mysql.Pool, "Member[on,addListener].WithStringArgument[0=acquire,0=connection,0=release].Argument[1].Argument[0]"]
+      - [mysql.Connection, mysql.Query, "Member[RowDataPacket].Argument[2]"]
+
+      # Pool creation
+      - [mysql.Pool, mysql, "Member[createPool].ReturnValue"]
+      - [mysql.Pool, mysql.PoolCluster, "Member[of].ReturnValue"]
+
+      # PoolCluster creation
+      - [mysql.PoolCluster, mysql, "Member[createPoolCluster].ReturnValue"]
+
+      # PoolConnection from Pool/PoolCluster
+      - [mysql.PoolConnection, mysql.Pool, "Member[acquireConnection].Argument[0]"]
+      - [mysql.PoolConnection, mysql.Pool, "Member[acquireConnection].Argument[1].Argument[1]"]
+      - [mysql.PoolConnection, mysql.Pool, "Member[getConnection].Argument[0].Argument[1]"]
+      - [mysql.PoolConnection, mysql.PoolCluster, "Member[getConnection].Argument[1,2].Argument[1]"]
+      - [mysql.PoolConnection, mysql.PoolCluster, "Member[getConnection].WithArity[1].Argument[0].Argument[1]"]
+
+      # Query objects
+      - [mysql.Query, mysql.Query, "Member[on].ReturnValue"]
+      - [mysql.Query, mysql.QueryFunction, ReturnValue]
+      - [mysql.Query, mysql.QueryFunction, "WithArity[1].Argument[0]"]
+      - [mysql.QueryFunction, mysql.Connection, "Member[createQuery,query]"]
+      - [mysql.QueryFunction, mysql.Pool, "Member[query]"]
+
+      # Config types
+      - [mysql.ConnectionConfig, mysql, "Member[createConnection].Argument[0]"]
+      - [mysql.ConnectionConfig, mysql.Connection, "Member[config]"]
+      - [mysql.ConnectionConfig, mysql.PoolConfig, ""]
+      - [mysql.ConnectionOptions, mysql.Connection, "Member[changeUser].WithArity[1,2].Argument[0]"]
+      - [mysql.ConnectionOptions, mysql.ConnectionConfig, ""]
+      - [mysql.PoolConfig, mysql, "Member[createPool].Argument[0]"]
+      - [mysql.PoolConfig, mysql.PoolCluster, "Member[add].Argument[1]"]
+      - [mysql.PoolConfig, mysql.PoolCluster, "Member[add].WithArity[1].Argument[0]"]
+
+      # =====================================================================
+      # mysql2 package
+      # =====================================================================
+
+      # Connection creation
+      - [mysql2.Connection, mysql2, "Member[createConnection].ReturnValue"]
+      - [mysql2.Connection, mysql2.PoolConnection, ""]
+      - [mysql2.Connection, mysql2.authPlugins, "Argument[0].Member[connection]"]
+
+      # Pool creation
+      - [mysql2.Pool, mysql2, "Member[createPool].ReturnValue"]
+      - [mysql2.Pool, mysql2.Pool, "Member[addListener,on,once,prependListener,prependOnceListener].ReturnValue"]
+
+      # PoolConnection from Pool
+      - [mysql2.PoolConnection, mysql2.Pool, "Member[addListener,on,once,prependListener,prependOnceListener].WithArity[2].WithStringArgument[0=acquire,0=connection,0=release].Argument[1].Argument[0]"]
+      - [mysql2.PoolConnection, mysql2.Pool, "Member[getConnection].Argument[0].Argument[1]"]
+
+      # Config types
+      - [mysql2.ConnectionOptions, mysql2, "Member[createConnection].Argument[0]"]
+      - [mysql2.ConnectionOptions, mysql2.PoolOptions, ""]
+      - [mysql2.ConnectionOptions, "mysql2/promise.Connection", "Member[changeUser].Argument[0]"]
+      - [mysql2.ConnectionOptions, "mysql2/promise.Connection", "Member[config]"]
+      - [mysql2.ConnectionOptions, "mysql2/promise", "Member[createConnection].Argument[0]"]
+      - [mysql2.PoolOptions, mysql2, "Member[createPool].Argument[0]"]
+      - [mysql2.PoolOptions, "mysql2/promise", "Member[createPool].Argument[0]"]
+      - [mysql2.authPlugins, mysql2.ConnectionOptions, "Member[authPlugins].AnyMember"]
+
+      # =====================================================================
+      # mysql2/promise package
+      # =====================================================================
+
+      # Promise-based connection
+      - ["mysql2/promise.Connection", mysql2.Connection, "Member[promise].ReturnValue"]
+      - ["mysql2/promise.Connection", "mysql2/promise.PoolConnection", ""]
+      - ["mysql2/promise.Connection", "mysql2/promise", "Member[createConnection].ReturnValue.Awaited"]
+      - ["mysql2/promise.Connection", "mysql2/promise", "Member[createConnectionPromise].ReturnValue.Awaited"]
+      - ["mysql2/promise.Connection", mysql2, "Member[createConnectionPromise].ReturnValue.Awaited"]
+
+      # Promise-based pool
+      - ["mysql2/promise.Pool", mysql2.Pool, "Member[promise].ReturnValue"]
+      - ["mysql2/promise.Pool", "mysql2/promise.Pool", "Member[addListener,on,once,prependListener,prependOnceListener].ReturnValue"]
+      - ["mysql2/promise.Pool", "mysql2/promise", "Member[createPool].ReturnValue"]
+
+      # Promise-based pool connection
+      - ["mysql2/promise.PoolConnection", mysql2.PoolConnection, "Member[promise].ReturnValue"]
+      - ["mysql2/promise.PoolConnection", "mysql2/promise.Pool", "Member[addListener,on,once,prependListener,prependOnceListener].WithArity[2].WithStringArgument[0=acquire,0=connection,0=release].Argument[1].Argument[0]"]
+      - ["mysql2/promise.PoolConnection", "mysql2/promise.Pool", "Member[getConnection].ReturnValue.Awaited"]
+
+      # mysql2 compat type aliases (mysql2/typings/mysql)
+      - ["mysql2/typings/mysql.Connection", mysql2.Connection, ""]
+      - ["mysql2/typings/mysql.Connection", mysql2.Pool, ""]
+      - ["mysql2/typings/mysql.PoolConnection", mysql2.PoolConnection, ""]
+      - ["mysql2/typings/mysql/lib/Connection", "mysql2/typings/mysql.Connection", ""]
+      - ["mysql2/typings/mysql/lib/Connection", "mysql2/typings/mysql/lib/PoolConnection", ""]
+      - ["mysql2/typings/mysql/lib/PoolConnection", "mysql2/typings/mysql.PoolConnection", ""]
+
+  # ---------------------------------------------------------------------------
+  # Summaries — taint propagation and type preservation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Pool event listeners return the same Pool (type preservation)
+      - [mysql2.Pool, "", "", "Member[addListener,on,once,prependListener,prependOnceListener].ReturnValue", type]
+      - ["mysql2/promise.Pool", "", "", "Member[addListener,on,once,prependListener,prependOnceListener].ReturnValue", type]
+      - ["mysql2/typings/mysql/lib/Connection", "", "", "Member[addListener,on,once,prependListener,prependOnceListener].ReturnValue", type]
+
+      # mysql.escape / mysql.escapeId — sanitization (taint from input to output)
+      - ["mysql", "Member[escape,escapeId]", "Argument[0]", "ReturnValue", "taint"]
+      - ["mysql2", "Member[escape,escapeId]", "Argument[0]", "ReturnValue", "taint"]
+
+      # connection.escape / connection.escapeId — sanitization
+      - ["mysql", "Fuzzy.Member[escape,escapeId]", "Argument[0]", "ReturnValue", "taint"]
+      - ["mysql2", "Fuzzy.Member[escape,escapeId]", "Argument[0]", "ReturnValue", "taint"]
+      - ["mysql2/promise", "Fuzzy.Member[escape,escapeId]", "Argument[0]", "ReturnValue", "taint"]
+
+      # mysql.format(sql, values) — builds a SQL string with escaped values
+      - ["mysql", "Member[format]", "Argument[0]", "ReturnValue", "taint"]
+      - ["mysql", "Fuzzy.Member[format]", "Argument[0]", "ReturnValue", "taint"]
+      - ["mysql2", "Member[format]", "Argument[0]", "ReturnValue", "taint"]
+      - ["mysql2", "Fuzzy.Member[format]", "Argument[0]", "ReturnValue", "taint"]

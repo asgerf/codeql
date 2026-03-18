@@ -1,0 +1,35 @@
+extensions:
+  # =============================================================================
+  # redux-immutable (npm: "redux-immutable") — Immutable.js-aware combineReducers
+  # =============================================================================
+  #
+  # A drop-in replacement for Redux's combineReducers that works with
+  # Immutable.js state objects instead of plain JavaScript objects:
+  #
+  #   import { combineReducers } from 'redux-immutable';
+  #   import Immutable from 'immutable';
+  #
+  #   const rootReducer = combineReducers({
+  #     foo: fooReducer,
+  #     bar: barReducer,
+  #   });
+  #
+  #   const store = createStore(rootReducer, Immutable.Map());
+  #
+  # Exports: combineReducers
+  #
+  # Security concerns:
+  # - No sources. The library does not introduce or access untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations
+  #   (no command execution, file I/O, URL navigation, HTML rendering, or
+  #   deserialization).
+  # - combineReducers delegates to individual reducer functions and
+  #   assembles their results into an Immutable.js collection. Taint
+  #   propagation through Redux state (actions → reducers → store → views)
+  #   is already modeled in detail by CodeQL's Redux.qll framework model,
+  #   which explicitly handles redux-immutable's combineReducers at the
+  #   same level as redux's and @reduxjs/toolkit's combineReducers
+  #   (see Redux.qll, DelegatingReducer module).
+  #
+  # Nothing additional to model here.
+  # =============================================================================

@@ -1,0 +1,29 @@
+extensions:
+  # =============================================================================
+  # date-fns/fp/format (sub-path of npm: "date-fns") - Curried format
+  # =============================================================================
+  #
+  # Exports the curried `format` function as a default import:
+  #
+  #   import format from 'date-fns/fp/format';
+  #   format("yyyy-MM-dd 'some text'")(new Date());
+  #   //=> "2024-01-15 some text"
+  #
+  # The format string supports single-quote escaping to embed arbitrary
+  # literal text, so an attacker-controlled format string results in
+  # attacker-controlled output.
+  #
+  # Curried calling convention: format(formatStr)(date) → string
+  #
+  # No sources or sinks — only a taint summary through the format string.
+  #
+  # Existing QLL coverage (DateFunctions.qll):
+  #   Models curried format taint steps via CurriedFormatStep.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # format(formatStr)(date) — taint from formatStr to return value
+      - ["date-fns/fp/format", "", "Argument[0]", "ReturnValue.ReturnValue", "taint"]

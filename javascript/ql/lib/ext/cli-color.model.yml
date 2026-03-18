@@ -1,0 +1,49 @@
+extensions:
+  # =============================================================================
+  # cli-color (npm: "cli-color") - Terminal string styling with ANSI escape codes
+  # =============================================================================
+  #
+  # By Mariusz Nowak (medikoo). Provides colors, formatting, and terminal
+  # utilities via a chainable API.
+  #
+  #   var clc = require("cli-color");
+  #   clc.red("Error!");
+  #   clc.bold.underline.red("Important");
+  #   clc.xterm(202).bgXterm(236)("Orange on dark gray");
+  #
+  # API surface:
+  # - Styles: bold, italic, underline, blink, inverse, strike
+  # - Colors: black, red, green, yellow, blue, magenta, cyan, white
+  # - Bright variants: blackBright, redBright, greenBright, yellowBright,
+  #   blueBright, magentaBright, cyanBright, whiteBright
+  # - Background colors: bgBlack, bgRed, bgGreen, bgYellow, bgBlue,
+  #   bgMagenta, bgCyan, bgWhite, and their bright variants
+  # - xterm(n) / bgXterm(n): 256-color support, returns a styling function
+  # - Chained usage: any combination of the above, e.g. clc.bold.red(str)
+  # - Utilities: slice(str, begin, end), strip(str), getStrippedLength(str),
+  #   art(text, styleConf), columns(data, options)
+  # - Cursor/erase: move, move.to, move.up, move.down, move.right, move.left,
+  #   erase.screen, erase.line, reset (return ANSI escape strings, no taint)
+  # - Separate entry point: require("cli-color/strip")(formattedText)
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure string decoration for terminal output.
+  # - Taint propagates from string arguments through to the return value,
+  #   since the styled output embeds the original text.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through all styling/utility calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # clc.red("text"), clc.bold.underline("text"), clc.xterm(n)("text"),
+      # clc.slice(str, ...), clc.strip(str), clc.art(text, style),
+      # clc.columns(data, opts), and any other chained member call.
+      # Fuzzy matches any value derived from the cli-color import.
+      - ["cli-color", "Fuzzy", "Argument[0]", "ReturnValue", "taint"]
+
+      # require("cli-color/strip")(formattedText) strips ANSI codes
+      - ["cli-color/strip", "", "Argument[0]", "ReturnValue", "taint"]

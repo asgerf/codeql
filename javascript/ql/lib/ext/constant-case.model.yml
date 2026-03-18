@@ -1,0 +1,29 @@
+extensions:
+  # =============================================================================
+  # constant-case (npm: "constant-case") - Convert a string to CONSTANT_CASE
+  # =============================================================================
+  #
+  # Part of the change-case family of packages by Blake Embrey. Converts strings
+  # to CONSTANT_CASE format (upper case with underscores).
+  #
+  #   import { constantCase } from "constant-case";
+  #   constantCase("test string");  //=> "TEST_STRING"
+  #   constantCase("fooBar");       //=> "FOO_BAR"
+  #
+  # Exports:
+  #   constantCase(input, options?) → string
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure string transformation.
+  # - Taint propagates from the input string to the returned string.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through constant-case function
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # constantCase(input, options?) → string
+      - ["constant-case", "Member[constantCase]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,14 @@
+extensions:
+  # =============================================================================
+  # async-es (npm: "async-es") - ES module build of the async library
+  # =============================================================================
+  #
+  # async-es is the ES module version of the "async" library. It exports the
+  # exact same API (map, waterfall, parallel, series, etc.).
+  #
+  #   import { map, waterfall, parallel } from 'async-es';
+  #
+  # All models are defined in async.model.yml, which includes a typeModel entry
+  # aliasing async-es to async so that all summaries apply automatically.
+  # No additional models are needed here.
+  # =============================================================================

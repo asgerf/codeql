@@ -1,0 +1,40 @@
+extensions:
+  # =============================================================================
+  # redux (npm: "redux") — Predictable state container for JavaScript apps
+  # =============================================================================
+  #
+  # Redux provides a centralized store for application state, with data flow:
+  #   action → dispatch → reducer → state → selector
+  #
+  #   import { createStore, combineReducers, applyMiddleware,
+  #            bindActionCreators, compose } from 'redux';
+  #
+  #   const store = createStore(rootReducer, preloadedState, enhancer);
+  #   store.dispatch({ type: 'INCREMENT' });
+  #   const state = store.getState();
+  #   store.subscribe(listener);
+  #   store.replaceReducer(nextReducer);
+  #
+  # Security analysis:
+  # - No sources: Redux manages in-memory application state. It does not
+  #   provide access to external or untrusted data.
+  # - No sinks: Redux does not perform security-sensitive operations
+  #   (no command execution, file I/O, SQL queries, URL navigation, or
+  #   HTML rendering). All operations are pure state transformations.
+  # - Data flow summaries: the Redux data flow model (actions through
+  #   dispatch, reducers, combineReducers, bindActionCreators, compose,
+  #   middleware chains) is complex and deeply interconnected. It requires
+  #   CodeQL's programmatic modeling capabilities (Redux.qll) and cannot
+  #   be meaningfully expressed as data extension summaries.
+  #
+  # Existing QLL coverage (Redux.qll, ComposedFunctions.qll):
+  # - StoreCreation: createStore() from redux / @reduxjs/toolkit
+  # - DelegatingReducer: combineReducers(), handleActions(), etc.
+  # - ActionCreator: createAction(), createActions(), createSlice()
+  # - Store dispatch/getState/subscribe flow
+  # - bindActionCreators() dispatch binding
+  # - compose() as right-to-left function composition
+  # - Full state-to-reducer-to-component data flow modeling
+  #
+  # Nothing additional to model here as data extensions.
+  # =============================================================================

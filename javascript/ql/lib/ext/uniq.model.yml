@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # uniq (npm: "uniq") — Remove duplicates from a sorted array
+  # =============================================================================
+  #
+  # Removes consecutive duplicates from an array in-place:
+  #
+  #   const uniq = require('uniq');
+  #   const arr = [1, 1, 2, 3, 3];
+  #   uniq(arr);  //=> [1, 2, 3]  (arr is mutated)
+  #
+  # Exports: a single function uniq(array, compare?, sorted?)
+  #   - Mutates the input array and also returns it.
+  #   - Optional comparator and sorted flag parameters.
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: the library does not perform security-sensitive operations.
+  # - Taint propagation: array elements flow through to the return value.
+  #
+  # Existing QLL coverage:
+  # - Arrays.qll: arrayCopyCall() recognizes uniq as an array-copying library.
+  # - internal/flow_summaries/Arrays.qll: ArrayCopyingPackage models
+  #   element-level value flow from Argument[0].ArrayElement to
+  #   ReturnValue.ArrayElement.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: value flow through uniq
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # uniq(arr) — array elements flow through to the returned array
+      - ["uniq", "", "Argument[0].ArrayElement", "ReturnValue.ArrayElement", "value"]

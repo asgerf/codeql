@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # read-pkg (npm: "read-pkg") — Read and parse package.json files
+  # =============================================================================
+  #
+  # read-pkg reads a package.json file from disk and returns the parsed object:
+  #
+  #   import { readPackage, readPackageSync, parsePackage } from 'read-pkg';
+  #
+  #   const pkg = await readPackage();                  // reads ./package.json
+  #   const pkg = await readPackage({ cwd: someDir });  // reads someDir/package.json
+  #   const pkg = readPackageSync({ cwd: someDir });
+  #   const pkg = parsePackage(jsonString);
+  #
+  # Security concerns:
+  # - Path injection: the `cwd` option controls which directory's
+  #   package.json is read. If an attacker controls this value they can
+  #   read arbitrary package.json files from the filesystem.
+  # - No sources: the return value is parsed JSON from a local file
+  #   (package.json), not untrusted remote data.
+  #
+  # Existing QLL coverage (TaintedPathCustomizations.qll):
+  # - ReadPkgCwdSink: models cwd option of readPackageAsync and
+  #   readPackageSync as a TaintedPath sink.
+  #
+  # Note: the QLL uses the older names readPackageAsync/readPackageSync.
+  # Current versions export readPackage (async) and readPackageSync.
+  # This model covers both old and new names.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path-injection — cwd option controls filesystem access
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # readPackage({ cwd: dir }) / readPackageSync({ cwd: dir })
+      # Also covers the older export names readPackageAsync/readPackageSync
+      - [
+          "read-pkg",
+          "Member[readPackage,readPackageAsync,readPackageSync].Argument[0].Member[cwd]",
+          "path-injection",
+        ]

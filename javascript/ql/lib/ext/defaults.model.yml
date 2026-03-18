@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # defaults (npm: "defaults") - Apply default options to an options object
+  # =============================================================================
+  #
+  # Deeply merges given options with specified defaults, returning a new object:
+  #
+  #   const defaults = require('defaults');
+  #   defaults(options, defaultOptions)   // returns merged object
+  #
+  # The function is non-mutating: both parameters are deep-cloned and never
+  # modified. The returned object contains properties from both arguments,
+  # with user-provided options taking precedence.
+  #
+  # Security concerns:
+  # - Taint from both operands flows into the return value.
+  #
+  # Existing QLL coverage:
+  #   Extend.qll:  defaults modeled as ExtendCallShallow (value-preserving
+  #                flow from operands to destination and return value).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # defaults(options, defaultOptions) — both operands flow into the return value
+      - ["defaults", "", "Argument[0..1]", "ReturnValue", "value"]

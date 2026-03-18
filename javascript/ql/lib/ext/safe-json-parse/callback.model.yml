@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # safe-json-parse/callback (npm: "safe-json-parse", sub-module "callback")
+  # =============================================================================
+  #
+  # Callback-style wrapper around JSON.parse that avoids throwing on invalid
+  # input, instead passing the error to a callback:
+  #
+  #   const safeParse = require('safe-json-parse/callback');
+  #
+  #   safeParse(str, (err, json) => { ... });
+  #   safeParse(str, reviver, (err, json) => { ... });
+  #
+  # API:
+  #   safeParse(jsonString, [reviver,] callback) → void
+  #     callback(err, parsedObject)
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: the library only wraps JSON.parse; no command execution,
+  #   file I/O, URL navigation, or HTML rendering.
+  # - Taint propagation: the parsed output is derived from the input JSON
+  #   string and delivered via the callback's second parameter.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow from JSON string to parsed value
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # safeParse(str, cb) or safeParse(str, reviver, cb)
+      # The callback is always the last argument; its second parameter receives
+      # the parsed object.
+      - ["safe-json-parse/callback", "", "Argument[0]", "Argument[N-1].Parameter[1]", "taint"]

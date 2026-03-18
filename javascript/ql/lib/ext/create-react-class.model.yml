@@ -1,0 +1,40 @@
+extensions:
+  # =============================================================================
+  # create-react-class (npm: "create-react-class") - Legacy React component factory
+  # =============================================================================
+  #
+  # create-react-class is a legacy utility extracted from React.createClass
+  # (removed in React 16). It provides the old-style API for defining React
+  # components without ES6 classes:
+  #
+  #   const createReactClass = require('create-react-class');
+  #   const MyComponent = createReactClass({
+  #     getInitialState() { return { count: 0 }; },
+  #     render() { return <div>{this.state.count}</div>; }
+  #   });
+  #
+  # The library is a pure component definition helper. It takes a specification
+  # object with lifecycle methods, render, mixins, etc., and returns a React
+  # component class.
+  #
+  # Security concerns:
+  # - No sources. The library does not provide access to HTTP requests,
+  #   cookies, or any other untrusted data.
+  # - No sinks. The library does not perform DOM manipulation, code
+  #   execution, file access, or any other security-sensitive operations.
+  #   (React-specific sinks like dangerouslySetInnerHTML are modeled as
+  #   part of the React framework, not this library.)
+  # - No summaries. The function is a structural component factory; taint
+  #   propagation through React props and state is handled by React's own
+  #   model.
+  #
+  # Existing QLL coverage:
+  # - React.qll: Recognizes require('create-react-class')({...}) as an
+  #   ES5Component, giving it full React component modeling (props, state,
+  #   lifecycle methods, refs, etc.).
+  # =============================================================================
+
+  # No security-relevant models needed for this library.
+  # Component definition is structural; all taint-relevant behavior (props,
+  # state, rendering) is modeled as part of the React framework.
+  []

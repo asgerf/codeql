@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # reselect (npm: "reselect") - Memoized selector library for Redux
+  # =============================================================================
+  #
+  # reselect creates memoized selector functions for efficiently deriving
+  # data from Redux state:
+  #
+  #   import { createSelector, createStructuredSelector } from 'reselect';
+  #
+  #   // createSelector: compose input selectors with a result function
+  #   const selectCompleted = createSelector(
+  #     state => state.items,
+  #     items => items.filter(item => item.completed)
+  #   );
+  #
+  #   // createStructuredSelector: combine selectors into an object
+  #   const selectProps = createStructuredSelector({
+  #     items: state => state.items,
+  #     user: state => state.user,
+  #   });
+  #
+  # API:
+  #   createSelector(...inputSelectors, resultFn) => selector
+  #   createSelector([inputSelectors], resultFn) => selector
+  #   createStructuredSelector({ key: selector, ... }) => selector
+  #
+  # Security concerns:
+  # - No sources: does not introduce untrusted data.
+  # - No sinks: does not perform security-sensitive operations.
+  # - Selector composition and Redux state flow (how tainted Redux state
+  #   propagates through selector callbacks) is modeled by the existing
+  #   CreateSelectorCall and SelectorStateArg abstractions in Redux.qll.
+  #   This higher-order function composition pattern cannot be expressed
+  #   as data extension summaries.
+  # =============================================================================

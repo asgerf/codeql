@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # b64-lite (npm: "b64-lite") - Isomorphic base64 encoding/decoding
+  # =============================================================================
+  #
+  # The b64-lite package exports { btoa, atob, toBase64, fromBase64, toBuffer }
+  # for base64 encoding and decoding in Node, browser, and React Native.
+  #
+  #   const b64 = require('b64-lite');
+  #   b64.btoa('hi there');              // "aGkgdGhlcmU="
+  #   b64.atob('aGkgdGhlcmU=');          // "hi there"
+  #   b64.toBase64('hello 你好');         // "aGVsbG8g5L2g5aW9"
+  #   b64.fromBase64('aGVsbG8g5L2g5aW9'); // "hello 你好"
+  #   b64.toBuffer('5L2g5aW9');           // Uint8Array
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Only decoding (atob, fromBase64, toBuffer) is modeled as taint-propagating,
+  # consistent with the existing CodeQL convention that base64 encoding is not a
+  # taint step (to avoid false positives).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # b64-lite.atob(encoded) - decode base64 to byte string
+      - ["b64-lite", "Member[atob]", "Argument[0]", "ReturnValue", "taint"]
+      # b64-lite.fromBase64(encoded) - decode base64 to unicode string
+      - ["b64-lite", "Member[fromBase64]", "Argument[0]", "ReturnValue", "taint"]
+      # b64-lite.toBuffer(encoded) - decode base64 to Uint8Array
+      - ["b64-lite", "Member[toBuffer]", "Argument[0]", "ReturnValue", "taint"]

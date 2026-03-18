@@ -1,0 +1,52 @@
+extensions:
+  # =============================================================================
+  # body-parser (npm: "body-parser") - Express request body parsing middleware
+  # =============================================================================
+  #
+  # body-parser parses incoming HTTP request bodies and populates req.body:
+  #
+  #   const bodyParser = require('body-parser');
+  #   app.use(bodyParser.json());           // parses JSON bodies
+  #   app.use(bodyParser.urlencoded({...})); // parses URL-encoded bodies
+  #   app.use(bodyParser.text());           // parses text bodies
+  #   app.use(bodyParser.raw());            // parses raw Buffer bodies
+  #   app.use(bodyParser());                // default (deprecated, same as json)
+  #
+  #   app.post('/submit', (req, res) => {
+  #     req.body; // <-- parsed body: untrusted user data
+  #   });
+  #
+  # Security concerns:
+  # - body-parser is middleware that makes req.body a remote flow source.
+  #   All four parsers (json, urlencoded, text, raw) populate req.body with
+  #   attacker-controlled data from the HTTP request body.
+  # - No sinks or summaries. The library itself does not perform any
+  #   security-sensitive operations.
+  #
+  # Note: The existing QLL (ExpressModules.qll) models BodyParser recognition
+  # and its integration with Express routing (req.body as a source when guarded
+  # by body-parser middleware). The GuardedRouteHandler mechanism used here
+  # covers the same pattern via data extensions.
+  # =============================================================================
+
+  # Sources: req.body is untrusted in route handlers guarded by body-parser.
+  #
+  # bodyParser() / bodyParser.json() / bodyParser.urlencoded() / bodyParser.text() / bodyParser.raw()
+  # are used as middleware: app.use(bodyParser.json())
+  # In guarded route handlers, req.body contains parsed request body data.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # bodyParser.json(), bodyParser.urlencoded(), bodyParser.text(), bodyParser.raw()
+      - [
+          "body-parser",
+          "Member[json,urlencoded,text,raw].ReturnValue.GuardedRouteHandler.Parameter[0].Member[body]",
+          "remote",
+        ]
+      # bodyParser() — direct call (deprecated default parser)
+      - [
+          "body-parser",
+          "ReturnValue.GuardedRouteHandler.Parameter[0].Member[body]",
+          "remote",
+        ]

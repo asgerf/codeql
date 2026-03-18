@@ -1,0 +1,119 @@
+extensions:
+  # =============================================================================
+  # rsvp (npm: "rsvp") — Promises/A+ implementation with utility methods
+  # =============================================================================
+  #
+  # RSVP.js is a lightweight promise library implementing the Promises/A+ spec,
+  # with additional utility methods beyond the ES6 Promise API.
+  #
+  # Exports:
+  #   - Promise: Promises/A+ constructor (new RSVP.Promise, .then, .catch, etc.)
+  #   - all(array): like Promise.all
+  #   - allSettled(array): like Promise.allSettled
+  #   - race(array): like Promise.race
+  #   - resolve(value): like Promise.resolve
+  #   - reject(reason): like Promise.reject
+  #   - defer(): creates { promise, resolve, reject } deferred object
+  #   - hash(obj): like all() but for objects — resolves all promise values
+  #   - hashSettled(obj): like allSettled() but for objects
+  #   - map(promises, mapFn): maps resolved values through mapFn
+  #   - filter(promises, filterFn): filters resolved values through filterFn
+  #   - denodeify(fn): converts Node.js callback-style fn to promise-returning fn
+  #   - on/off/configure: event and configuration utilities
+  #   - rethrow(reason): rethrows in a new turn (debugging helper)
+  #   - asap(callback, arg): microtask scheduling helper
+  #   - cast(value): alias for resolve
+  #   - EventTarget: event mixin
+  #
+  # Security analysis:
+  # - No sources: RSVP is a pure promise utility library. It does not access
+  #   external or untrusted data (no network, file, or DOM access).
+  # - No sinks: RSVP does not perform any security-sensitive operations (no
+  #   command execution, file I/O, SQL, HTML rendering, deserialization, etc.).
+  #
+  # Existing QLL coverage (Promises.qll):
+  # - rsvp.Promise is recognized as a promise constructor, so all built-in
+  #   promise flow summaries apply: new Promise(), .then(), .catch(),
+  #   .finally(), Promise.resolve(), Promise.reject(), Promise.all(),
+  #   Promise.race(), Promise.allSettled(), and .defer().
+  #
+  # The summaries below cover RSVP-specific utility methods that are NOT
+  # part of the standard Promise API and are not already modeled.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # RSVP.hash(object)
+      # Resolves all promise values in the object's own properties.
+      # Input object property values flow to output object property values.
+      # =====================================================================
+      - - "rsvp"
+        - "Member[hash]"
+        - "Argument[0].MapValue"
+        - "ReturnValue.Awaited.MapValue"
+        - "value"
+
+      # =====================================================================
+      # RSVP.hashSettled(object)
+      # Like hash() but waits for all to settle. Each result property is
+      # { state: 'fulfilled', value } or { state: 'rejected', reason }.
+      # Values flow to the .value member of each settled result.
+      # =====================================================================
+      - - "rsvp"
+        - "Member[hashSettled]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # =====================================================================
+      # RSVP.map(promises, mapFn)
+      # Resolved array elements flow to mapFn's first parameter;
+      # mapFn return values flow to the output array elements.
+      # =====================================================================
+      - - "rsvp"
+        - "Member[map]"
+        - "Argument[0].ArrayElement"
+        - "Argument[1].Parameter[0]"
+        - "value"
+      - - "rsvp"
+        - "Member[map]"
+        - "Argument[1].ReturnValue.Awaited"
+        - "ReturnValue.Awaited.ArrayElement"
+        - "value"
+
+      # =====================================================================
+      # RSVP.filter(promises, filterFn)
+      # Resolved array elements flow to filterFn's first parameter.
+      # Output is a subset of the input array elements.
+      # =====================================================================
+      - - "rsvp"
+        - "Member[filter]"
+        - "Argument[0].ArrayElement"
+        - "Argument[1].Parameter[0]"
+        - "value"
+      - - "rsvp"
+        - "Member[filter]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # =====================================================================
+      # RSVP.denodeify(nodeFunc)
+      # Wraps a Node.js callback-style function into one that returns a
+      # promise. Arguments to the wrapped function flow to the original
+      # function's parameters, and the callback's success value flows to
+      # the resolved promise value.
+      # =====================================================================
+      - - "rsvp"
+        - "Member[denodeify]"
+        - "ReturnValue.Argument[0..9]"
+        - "Argument[0].Parameter[0..9]"
+        - "value"
+      - - "rsvp"
+        - "Member[denodeify]"
+        - "Argument[0].Parameter[N-1].Argument[1]"
+        - "ReturnValue.ReturnValue.Awaited"
+        - "value"

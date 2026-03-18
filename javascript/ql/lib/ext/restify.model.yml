@@ -1,0 +1,114 @@
+extensions:
+  # =============================================================================
+  # restify (npm: "restify") - REST API framework for Node.js
+  # =============================================================================
+  #
+  # Restify is a Node.js framework for building RESTful web services:
+  #
+  #   const restify = require('restify');
+  #   const server = restify.createServer();
+  #
+  #   server.use(restify.plugins.bodyParser());
+  #   server.use(restify.plugins.queryParser());
+  #
+  #   server.get('/user/:id', (req, res, next) => {
+  #     req.params.id;             // route parameter (untrusted)
+  #     req.query.search;          // query parameter (untrusted)
+  #     req.body;                  // parsed body (untrusted)
+  #     req.getQuery();            // query object (untrusted)
+  #     req.header('X-Custom');    // request header (untrusted)
+  #     req.href();                // full URL (untrusted)
+  #     req.getPath();             // URL path (untrusted)
+  #
+  #     res.send(data);            // send response body (XSS sink)
+  #     res.sendRaw(data);         // send raw response body
+  #     res.redirect(url);         // redirect (url-redirection sink)
+  #   });
+  #
+  # Also covers restify-clients:
+  #   const clients = require('restify-clients');
+  #   const client = clients.createJsonClient({ url: 'https://...' });
+  #
+  # Security concerns:
+  # - Request parameters, body, headers, URL are untrusted → remote sources.
+  # - res.send/sendRaw are XSS/html-injection sinks.
+  # - res.redirect is a url-redirection sink.
+  # - restify-clients URL option is a request-forgery sink.
+  #
+  # Existing QLL coverage (Restify.qll):
+  # - Full route handler framework integration (ServerDefinition, RouteSetup,
+  #   RouteHandler, RequestInputAccess, RequestHeaderAccess, ResponseNode,
+  #   RequestNode, HeaderDefinition, RedirectInvocation, ResponseSendArgument,
+  #   FormatterSetup/Handler, RequestForgerySink, RouterRange).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Untrusted request data in Restify route handlers
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # req.params.x — route parameters
+      - ["restify", "Fuzzy.Member[params]", "remote"]
+
+      # req.query.x — query string parameters (with queryParser plugin)
+      - ["restify", "Fuzzy.Member[query]", "remote"]
+
+      # req.body — parsed request body (with bodyParser plugin)
+      - ["restify", "Fuzzy.Member[body]", "remote"]
+
+      # req.headers — all request headers
+      - ["restify", "Fuzzy.Member[headers]", "remote"]
+
+      # req.getQuery().x — query object via method
+      - ["restify", "Fuzzy.Member[getQuery].ReturnValue", "remote"]
+
+      # req.header(name), req.trailer(name) — individual request headers
+      - ["restify", "Fuzzy.Member[header,trailer].ReturnValue", "remote"]
+
+      # req.userAgent() — User-Agent header
+      - ["restify", "Fuzzy.Member[userAgent].ReturnValue", "remote"]
+
+      # req.getContentType() — Content-Type header
+      - ["restify", "Fuzzy.Member[getContentType].ReturnValue", "remote"]
+
+      # req.href(), req.getPath() — URL-related accessors
+      - ["restify", "Fuzzy.Member[href,getPath].ReturnValue", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: HTML injection / XSS — response body
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # res.send(body) — sends response body, may be HTML
+      - ["restify", "Fuzzy.Member[send].Argument[0]", "html-injection"]
+
+      # res.sendRaw(body) — sends raw response body
+      - ["restify", "Fuzzy.Member[sendRaw].Argument[0]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL redirection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # res.redirect(url) or res.redirect(options, url) or res.redirect(status, url)
+      - ["restify", "Fuzzy.Member[redirect].Argument[0..1]", "url-redirection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Request forgery via restify-clients
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # clients.createClient(url), clients.createJsonClient(url),
+      # clients.createStringClient(url) — string URL argument
+      - ["restify-clients", "Member[createClient,createJsonClient,createStringClient].Argument[0]", "request-forgery"]
+
+      # clients.createClient({ url: '...' }) — URL in options object
+      - ["restify-clients", "Member[createClient,createJsonClient,createStringClient].Argument[0].Member[url]", "request-forgery"]

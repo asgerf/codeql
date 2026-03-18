@@ -1,0 +1,45 @@
+extensions:
+  # =============================================================================
+  # foreground-child (npm: "foreground-child") - Run a child as the foreground
+  # =============================================================================
+  #
+  # foreground-child spawns a child process as if it's the foreground process,
+  # sharing stdio and exiting when it exits. It wraps child_process.spawn.
+  #
+  # API:
+  #   import { foregroundChild } from 'foreground-child'
+  #   // or: const foregroundChild = require('foreground-child')
+  #
+  #   foregroundChild(command, args?, options?, callback?)
+  #   foregroundChild('cat', [__filename])
+  #   foregroundChild(`cat ${file}`, { shell: true })
+  #
+  # Additional exports (not security-relevant):
+  #   proxySignals(childProcess) — from 'foreground-child/proxy-signals'
+  #   watchdog(childProcess) — from 'foreground-child/watchdog'
+  #
+  # Security concerns:
+  # - SINK: The command argument (arg 0) is executed as an OS command →
+  #   command-injection risk.
+  # - SINK: The args array (arg 1) contains command-line arguments passed
+  #   directly to the spawned process → command-injection risk.
+  # - No sources. The library does not provide HTTP or untrusted data access.
+  #
+  # Existing QLL coverage:
+  # - SystemCommandExecutors.qll: Models foreground-child default export call
+  #   as SystemCommandExecution with cmdArg=0, shell=false, argumentList at
+  #   arg 1.
+  # =============================================================================
+
+  # Sinks: Command and arguments are command-injection vectors.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Default export call: foregroundChild(command, args?, options?)
+      - ["foreground-child", "Argument[0]", "command-injection"]
+      - ["foreground-child", "Argument[1]", "command-injection"]
+
+      # Named export: foregroundChild(command, args?, options?)
+      - ["foreground-child", "Member[foregroundChild].Argument[0]", "command-injection"]
+      - ["foreground-child", "Member[foregroundChild].Argument[1]", "command-injection"]

@@ -1,0 +1,193 @@
+extensions:
+  # =============================================================================
+  # ioredis (npm: "ioredis") — Redis client for Node.js
+  # =============================================================================
+  #
+  # Feature-rich Redis client supporting Redis Cluster, Sentinel, Streams,
+  # Pipelining, Lua scripting, and Pub/Sub.
+  #
+  #   import Redis from 'ioredis';
+  #   const redis = new Redis();
+  #
+  #   // Basic usage
+  #   await redis.set('key', 'value');
+  #   const val = await redis.get('key');        // val is untrusted
+  #
+  #   // Cluster
+  #   const cluster = new Redis.Cluster([{ host: '...', port: 6379 }]);
+  #
+  #   // Pipeline / Transaction
+  #   const results = await redis.pipeline().get('k1').get('k2').exec();
+  #
+  #   // Pub/Sub
+  #   redis.subscribe('channel');
+  #   redis.on('message', (channel, message) => { ... });
+  #
+  #   // Lua scripting
+  #   await redis.eval('return redis.call("GET", KEYS[1])', 1, 'key');
+  #
+  # Security concerns:
+  # - Data stored in Redis may originate from untrusted users; read
+  #   commands return potentially attacker-controlled values.
+  # - eval() and script("LOAD") accept Lua source code executed on the
+  #   Redis server — code-injection sinks.
+  # - Pub/Sub messages originate from other Redis clients and are
+  #   untrusted.
+  # - Constructor arguments control which Redis server to connect to —
+  #   request-forgery sinks if attacker-controlled.
+  #
+  # Existing QLL coverage (NoSQL.qll, IoRedis module):
+  # - All method calls on ioredis clients modeled as DatabaseAccess.
+  # - Return values tracked as database results via PromiseFlow.
+  # - No query injection sinks (getAQueryArgument returns none()).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: untrusted data read from Redis
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # -----------------------------------------------------------------------
+      # String commands — return stored string values
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[get,getBuffer,mget,mgetBuffer,getrange,getrangeBuffer,getset,getdel,getex].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Hash commands — return stored hash fields/values
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[hget,hgetBuffer,hmget,hmgetBuffer,hgetall,hgetallBuffer,hkeys,hvals,hrandfield].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # List commands — return stored list elements
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[lindex,lindexBuffer,lrange,lrangeBuffer,lpop,lpopBuffer,rpop,rpopBuffer,blpop,brpop,lmove,blmove,lmpop,blmpop].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Set commands — return stored set members
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[smembers,smembersBuffer,srandmember,srandmemberBuffer,spop,spopBuffer,sinter,sunion,sdiff].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Sorted set commands — return stored members/scores
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[zrange,zrangeBuffer,zrangebyscore,zrevrange,zrevrangebyscore,zpopmin,zpopmax,bzpopmin,bzpopmax,zmpop,bzmpop,zrandmember,zscore,zmscore,zdiff,zunion,zinter].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Stream commands — return stream entries
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[xread,xreadgroup,xrange,xrevrange,xclaim,xautoclaim,xpending,xinfo].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Scan commands — return keys and/or values from the keyspace
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[scan,hscan,sscan,zscan].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Scan streams — return Node.js Readable streams of keys/values
+      #   const stream = redis.scanStream({ match: 'user:*' });
+      #   stream.on('data', (keys) => { ... });
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[scanStream,hscanStream,sscanStream,zscanStream].ReturnValue", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Key and generic commands — return stored data or key names
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[dump,dumpBuffer,keys,randomkey,sort,sort_ro,object].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Geo commands — return stored geospatial data
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[geopos,geodist,geohash,geosearch,georadius,georadiusbymember].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Raw command execution — return values are untrusted
+      #   redis.call('GET', 'key')
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[call,callBuffer].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Pipeline and transaction exec — return collected results
+      #   redis.pipeline().get('k1').hgetall('k2').exec()
+      #   redis.multi().get('k1').exec()
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[exec,execBuffer].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Lua script eval — return values from script execution
+      #   redis.eval('return ARGV[1]', 0, userInput)
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[eval,evalBuffer,evalsha,evalshaBuffer].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Pub/Sub message events — messages from other Redis clients
+      # -----------------------------------------------------------------------
+
+      #   redis.on('message', (channel, message) => { ... })
+      - ["ioredis", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=message].Argument[1].Parameter[0..1]", "remote"]
+      - ["ioredis", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=messageBuffer].Argument[1].Parameter[0..1]", "remote"]
+
+      #   redis.on('pmessage', (pattern, channel, message) => { ... })
+      #   pattern (Parameter[0]) is the local subscription pattern, not untrusted
+      - ["ioredis", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=pmessage].Argument[1].Parameter[1..2]", "remote"]
+      - ["ioredis", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=pmessageBuffer].Argument[1].Parameter[1..2]", "remote"]
+
+      #   redis.on('smessage', (channel, message) => { ... })  — sharded Pub/Sub (Redis 7.0+)
+      - ["ioredis", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=smessage].Argument[1].Parameter[0..1]", "remote"]
+      - ["ioredis", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=smessageBuffer].Argument[1].Parameter[0..1]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Lua script injection (code-injection)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # -----------------------------------------------------------------------
+      # eval(script, numkeys, ...) — first argument is Lua source code
+      #   redis.eval("return redis.call('GET', KEYS[1])", 1, 'key')
+      # An attacker who controls the script text can execute arbitrary
+      # Lua code on the Redis server (e.g. redis.call('FLUSHALL')).
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[eval,evalBuffer].Argument[0]", "code-injection"]
+
+      # -----------------------------------------------------------------------
+      # call/callBuffer with EVAL subcommand — raw command form
+      #   redis.call('EVAL', script, numkeys, key1, arg1)
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[call,callBuffer].WithStringArgument[0=eval,0=EVAL].Argument[1]", "code-injection"]
+
+      # -----------------------------------------------------------------------
+      # script("LOAD", scriptText) — loads a Lua script onto the server
+      #   redis.script('LOAD', 'return redis.call("GET", KEYS[1])')
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[script,scriptBuffer].WithStringArgument[0=load,0=LOAD].Argument[1]", "code-injection"]
+
+      # -----------------------------------------------------------------------
+      # defineCommand(name, { lua: scriptText }) — registers a custom command
+      #   redis.defineCommand('myCmd', { numberOfKeys: 1, lua: '...' })
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Fuzzy.Member[defineCommand].Argument[1].Member[lua]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: connection target (request-forgery)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # -----------------------------------------------------------------------
+      # Constructor — controls which Redis server to connect to
+      #   new Redis('redis://attacker.com:6379')       — URL string
+      #   new Redis(6379, 'attacker.com')              — positional args
+      #   new Redis({ host: 'attacker.com', port: 6379 })  — options
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Argument[0]", "request-forgery"]
+      - ["ioredis", "Argument[1]", "request-forgery"]
+
+      # -----------------------------------------------------------------------
+      # Cluster constructor — controls which cluster nodes to connect to
+      #   new Redis.Cluster([{ host: 'attacker.com', port: 6379 }])
+      # -----------------------------------------------------------------------
+      - ["ioredis", "Member[Cluster].Argument[0]", "request-forgery"]

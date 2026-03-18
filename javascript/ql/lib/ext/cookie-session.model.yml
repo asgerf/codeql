@@ -1,0 +1,54 @@
+extensions:
+  # =============================================================================
+  # cookie-session (npm: "cookie-session") - Express cookie-based session middleware
+  # =============================================================================
+  #
+  # cookie-session stores the entire session in a client-side cookie (unlike
+  # express-session which stores only a session ID in the cookie). Because the
+  # full session data lives in the cookie, req.session contains data that is
+  # readable and potentially tampered with by the client.
+  #
+  #   const cookieSession = require('cookie-session');
+  #   app.use(cookieSession({ keys: ['secret1', 'secret2'] }));
+  #
+  #   app.get('/', (req, res) => {
+  #     req.session;           // session object (stored in cookie, client-readable)
+  #     req.session.views;     // arbitrary session properties
+  #     req.session.isNew;     // true if session is new
+  #     req.session.isChanged; // true if session was modified
+  #     req.sessionOptions;    // per-request session options (not user-controlled)
+  #   });
+  #
+  # Security concerns:
+  # - req.session contains data from the client cookie. Although the cookie is
+  #   signed (preventing tampering when keys are kept secret), the session data
+  #   is NOT encrypted — the client can read it. The session content originates
+  #   from the client and should be treated as untrusted remote input.
+  # - No sinks. The library does not perform security-sensitive operations.
+  #
+  # Existing QLL coverage:
+  # - ExpressModules.qll: Models CookieSession.MiddlewareInstance as
+  #   Http::CookieMiddlewareInstance with secret key extraction from
+  #   options.secret and options.keys.
+  # - CookieLibraries.qll: Models InsecureCookieSession for cookie security
+  #   flag checking (secure, httpOnly, sameSite).
+  # - req.session is not modeled as a source in existing QLL.
+  # =============================================================================
+
+  # Sources: req.session is untrusted in route handlers guarded by cookie-session.
+  #
+  # cookieSession(options) returns the middleware function.
+  # In guarded route handlers, req.session contains the deserialized session
+  # object from the client-side cookie.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # req.session — the session object deserialized from the client cookie.
+      # All properties are client-controlled since the full session is stored
+      # in the cookie (not just an ID).
+      - [
+          "cookie-session",
+          "ReturnValue.GuardedRouteHandler.Parameter[0].Member[session]",
+          "remote",
+        ]

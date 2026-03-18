@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # es6-promise (npm: "es6-promise") - ES6 Promise polyfill
+  # =============================================================================
+  #
+  # A lightweight polyfill for ES6 Promises, providing the standard Promise API
+  # in environments that lack native support.
+  #
+  #   const { Promise } = require('es6-promise');
+  #   // or
+  #   require('es6-promise').polyfill();  // patches global Promise
+  #   // or
+  #   require('es6-promise/auto');        // auto-patches global Promise
+  #
+  # Security concerns:
+  # - No sources. The library does not access any external or untrusted data.
+  # - No sinks. The library does not perform any security-sensitive operations.
+  # - The Promise methods (.then, .catch, .all, .resolve, etc.) propagate data,
+  #   but these are already modeled generically in CodeQL's Promises.qll, which
+  #   recognizes es6-promise.Promise as a promise constructor reference.
+  #
+  # Existing QLL coverage:
+  # - Promises.qll: Recognizes require('es6-promise').Promise as a promise
+  #   constructor, enabling all built-in promise flow summaries.
+  # - ExternalAPIUsedWithUntrustedDataCustomizations.qll: Lists es6-promise as
+  #   a safe package (excluded from untrusted-data reports).
+  #
+  # Nothing to model here. The library is a spec-compliant polyfill with no
+  # security-relevant sources, sinks, or taint summaries beyond what CodeQL
+  # already handles for promises generically.
+  # =============================================================================

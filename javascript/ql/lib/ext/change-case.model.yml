@@ -1,0 +1,57 @@
+extensions:
+  # =============================================================================
+  # change-case (npm: "change-case") - String case conversion utilities
+  # =============================================================================
+  #
+  # change-case provides functions to transform strings between casing styles:
+  #
+  #   import { camelCase, snakeCase } from "change-case";
+  #   camelCase("test string");    //=> "testString"
+  #   snakeCase("testString");     //=> "test_string"
+  #
+  # Exported functions (all: (input, options?) → string):
+  #   camelCase, capitalCase, constantCase, dotCase, kebabCase, noCase,
+  #   pascalCase, pascalSnakeCase, pathCase, sentenceCase, snakeCase,
+  #   trainCase
+  #
+  # Utility exports:
+  #   split(input) → string[]
+  #   splitSeparateNumbers(input) → string[]
+  #
+  # Sub-path "change-case/keys" exports object-key transformation variants
+  # of each case function: (input, depth?, options?) → object
+  #
+  # Security concerns:
+  # - No sources or sinks. All functions are pure string/object transformations.
+  # - Taint propagates from the input string to the returned string.
+  # - For change-case/keys, taint propagates from the input object to the
+  #   returned object (values are preserved, only keys change).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through case-conversion functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # All case-conversion functions: (input, options?) → string
+      - ["change-case", "Member[camelCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[capitalCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[constantCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[dotCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[kebabCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[noCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[pascalCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[pascalSnakeCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[pathCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[sentenceCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[snakeCase]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[trainCase]", "Argument[0]", "ReturnValue", "taint"]
+
+      # split / splitSeparateNumbers: (input) → string[]
+      - ["change-case", "Member[split]", "Argument[0]", "ReturnValue", "taint"]
+      - ["change-case", "Member[splitSeparateNumbers]", "Argument[0]", "ReturnValue", "taint"]
+
+      # change-case/keys: object-key conversion preserves values
+      - ["change-case/keys", "Member[camelCase,capitalCase,constantCase,dotCase,kebabCase,noCase,pascalCase,pascalSnakeCase,pathCase,sentenceCase,snakeCase,trainCase]", "Argument[0]", "ReturnValue", "taint"]

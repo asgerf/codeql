@@ -1,0 +1,201 @@
+extensions:
+  # =============================================================================
+  # preact (npm: "preact") - Lightweight React alternative
+  # =============================================================================
+  #
+  # Preact is a fast 3kB alternative to React with the same modern API.
+  #
+  # Core API (from "preact"):
+  #   h(type, props, ...children)        — create virtual DOM elements
+  #   createElement(type, props, ...children) — alias for h
+  #   render(vnode, container)            — render VNode tree into DOM
+  #   hydrate(vnode, container)           — hydrate server-rendered HTML
+  #   cloneElement(vnode, props, ...children) — clone and modify element
+  #   createRef()                         — create ref object
+  #   createContext(defaultValue)          — context API
+  #   toChildArray(children)              — normalize children to flat array
+  #   Component                           — base class for stateful components
+  #   Fragment                            — group children without extra DOM nodes
+  #   isValidElement(vnode)               — check if value is a VNode
+  #
+  # Hooks (from "preact/hooks"):
+  #   useState, useReducer, useMemo, useCallback, useRef, useContext,
+  #   useEffect, useLayoutEffect, useImperativeHandle, useDebugValue
+  #
+  # Compatibility layer (from "preact/compat"):
+  #   Re-exports all of preact and preact/hooks, plus React-compatible APIs:
+  #   memo, forwardRef, lazy, Suspense, createPortal, findDOMNode,
+  #   unmountComponentAtNode, PureComponent, Children utilities.
+  #   Often aliased to "react"/"react-dom" in bundler config.
+  #
+  # Existing QLL coverage (React.qll, DomBasedXssCustomizations.qll):
+  # - Preact class components extending preact.Component (DefinitePreactComponent)
+  # - Props/state access in Preact render(props, state) method
+  # - Heuristic detection of React/Preact components (HeuristicReactPreactComponent)
+  # - dangerouslySetInnerHTML in JSX attributes (DangerouslySetInnerHtmlSink)
+  # - React.createElement (CreateElementDefinition) — but NOT preact's h()
+  # - React.createContext / useContext flow — but NOT preact's versions
+  #
+  # This data extension covers:
+  # - dangerouslySetInnerHTML.__html sink via preact's h() / createElement()
+  # - Taint propagation through preact core APIs (cloneElement, toChildArray)
+  # - Taint propagation through preact/hooks (useState, useReducer, etc.)
+  # - Taint propagation through preact/compat APIs (memo, forwardRef, etc.)
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # h("div", { dangerouslySetInnerHTML: { __html: tainted } })
+      # The __html property value is rendered as raw HTML — XSS vector.
+      # The QLL handles this for JSX attributes and React.createElement, but
+      # not for direct h() / createElement() calls from the preact package.
+      - [
+          "preact",
+          "Member[h,createElement].Argument[1].Member[dangerouslySetInnerHTML].Member[__html]",
+          "html-injection",
+        ]
+      - [
+          "preact/compat",
+          "Member[h,createElement].Argument[1].Member[dangerouslySetInnerHTML].Member[__html]",
+          "html-injection",
+        ]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through preact APIs
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =======================================================================
+      # preact core
+      # =======================================================================
+
+      # --- h / createElement ---
+      # h(type, props, ...children) creates a VNode.
+      # Props and children carry taint into the resulting element.
+      - ["preact", "Member[h,createElement]", "Argument[1]", "ReturnValue", "taint"]
+      - ["preact", "Member[h,createElement]", "Argument[2..N-1]", "ReturnValue", "taint"]
+
+      # --- cloneElement ---
+      # cloneElement(vnode, newProps, ...children) clones a VNode with overrides.
+      # The original element flows through; new props and children carry taint.
+      - ["preact", "Member[cloneElement]", "Argument[0]", "ReturnValue", "value"]
+      - ["preact", "Member[cloneElement]", "Argument[1]", "ReturnValue", "taint"]
+      - ["preact", "Member[cloneElement]", "Argument[2..N-1]", "ReturnValue", "taint"]
+
+      # --- toChildArray ---
+      # toChildArray(children) flattens/normalizes children to a flat array.
+      - ["preact", "Member[toChildArray]", "Argument[0]", "ReturnValue", "value"]
+
+      # --- isValidElement ---
+      # isValidElement(vnode) returns a boolean — no taint flow needed.
+
+      # =======================================================================
+      # preact/hooks
+      # =======================================================================
+
+      # --- useState ---
+      # const [state, setState] = useState(initialValue);
+      # Initial value flows to state (index 0 of returned array).
+      - ["preact/hooks", "Member[useState]", "Argument[0]", "ReturnValue.Member[0]", "value"]
+      # setState(newValue) — direct update: new value flows to state.
+      - ["preact/hooks", "Member[useState]", "ReturnValue.Member[1].Argument[0]", "ReturnValue.Member[0]", "value"]
+      # setState(prev => newValue) — functional update: return value flows to state.
+      - ["preact/hooks", "Member[useState]", "ReturnValue.Member[1].Argument[0].ReturnValue", "ReturnValue.Member[0]", "value"]
+
+      # --- useReducer ---
+      # const [state, dispatch] = useReducer(reducer, initialArg);
+      # Initial argument flows to state.
+      - ["preact/hooks", "Member[useReducer]", "Argument[1]", "ReturnValue.Member[0]", "value"]
+      # dispatch(action) — action flows through reducer to state (transformed).
+      - ["preact/hooks", "Member[useReducer]", "ReturnValue.Member[1].Argument[0]", "ReturnValue.Member[0]", "taint"]
+
+      # --- useMemo ---
+      # const memoized = useMemo(() => computeValue(), deps);
+      # Factory return value flows to memoized result.
+      - ["preact/hooks", "Member[useMemo]", "Argument[0].ReturnValue", "ReturnValue", "value"]
+
+      # --- useCallback ---
+      # const cb = useCallback(fn, deps);
+      # The function identity is preserved.
+      - ["preact/hooks", "Member[useCallback]", "Argument[0]", "ReturnValue", "value"]
+
+      # --- useRef ---
+      # const ref = useRef(initialValue);
+      # Initial value flows to ref.current.
+      - ["preact/hooks", "Member[useRef]", "Argument[0]", "ReturnValue.Member[current]", "value"]
+
+      # =======================================================================
+      # preact/compat — React compatibility layer
+      # =======================================================================
+      # preact/compat re-exports preact core and hooks, plus additional APIs.
+      # Models below cover both the re-exported APIs and compat-specific ones.
+
+      # --- createElement / h (re-exported) ---
+      - ["preact/compat", "Member[h,createElement]", "Argument[1]", "ReturnValue", "taint"]
+      - ["preact/compat", "Member[h,createElement]", "Argument[2..N-1]", "ReturnValue", "taint"]
+
+      # --- cloneElement (re-exported) ---
+      - ["preact/compat", "Member[cloneElement]", "Argument[0]", "ReturnValue", "value"]
+      - ["preact/compat", "Member[cloneElement]", "Argument[1]", "ReturnValue", "taint"]
+      - ["preact/compat", "Member[cloneElement]", "Argument[2..N-1]", "ReturnValue", "taint"]
+
+      # --- memo ---
+      # memo(Component) wraps a component with shallow prop comparison.
+      # The component identity is preserved (value-preserving wrapper).
+      - ["preact/compat", "Member[memo]", "Argument[0]", "ReturnValue", "value"]
+
+      # --- forwardRef ---
+      # forwardRef(renderFn) wraps a render function to forward refs.
+      # The render function identity is preserved.
+      - ["preact/compat", "Member[forwardRef]", "Argument[0]", "ReturnValue", "value"]
+
+      # --- lazy ---
+      # lazy(() => import('./Component')) enables code-splitting.
+      # The dynamically imported module flows through after resolution.
+      - ["preact/compat", "Member[lazy]", "Argument[0].ReturnValue.Awaited", "ReturnValue", "value"]
+
+      # --- createPortal ---
+      # createPortal(children, container) renders into a different DOM subtree.
+      # Children flow through to the portal's rendered output.
+      - ["preact/compat", "Member[createPortal]", "Argument[0]", "ReturnValue", "value"]
+
+      # --- Children utilities ---
+      # Children.map(children, fn) — each child flows to fn; fn return forms result.
+      - ["preact/compat", "Member[Children].Member[map]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["preact/compat", "Member[Children].Member[map]", "Argument[1].ReturnValue", "ReturnValue.ArrayElement", "value"]
+
+      # Children.forEach(children, fn) — each child flows to fn's first parameter.
+      - ["preact/compat", "Member[Children].Member[forEach]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+
+      # Children.toArray(children) — flattens children to an array.
+      - ["preact/compat", "Member[Children].Member[toArray]", "Argument[0]", "ReturnValue", "value"]
+
+      # Children.only(children) — returns the sole child.
+      - ["preact/compat", "Member[Children].Member[only]", "Argument[0]", "ReturnValue", "value"]
+
+      # --- Hooks re-exported via preact/compat ---
+
+      # useState
+      - ["preact/compat", "Member[useState]", "Argument[0]", "ReturnValue.Member[0]", "value"]
+      - ["preact/compat", "Member[useState]", "ReturnValue.Member[1].Argument[0]", "ReturnValue.Member[0]", "value"]
+      - ["preact/compat", "Member[useState]", "ReturnValue.Member[1].Argument[0].ReturnValue", "ReturnValue.Member[0]", "value"]
+
+      # useReducer
+      - ["preact/compat", "Member[useReducer]", "Argument[1]", "ReturnValue.Member[0]", "value"]
+      - ["preact/compat", "Member[useReducer]", "ReturnValue.Member[1].Argument[0]", "ReturnValue.Member[0]", "taint"]
+
+      # useMemo
+      - ["preact/compat", "Member[useMemo]", "Argument[0].ReturnValue", "ReturnValue", "value"]
+
+      # useCallback
+      - ["preact/compat", "Member[useCallback]", "Argument[0]", "ReturnValue", "value"]
+
+      # useRef
+      - ["preact/compat", "Member[useRef]", "Argument[0]", "ReturnValue.Member[current]", "value"]

@@ -1,0 +1,26 @@
+extensions:
+  # =============================================================================
+  # kebab-case (npm: "kebab-case") - String to kebab-case converter
+  # =============================================================================
+  #
+  # Converts strings to kebab-case (dash-separated lowercase) and back.
+  #
+  #   import kebabCase from 'kebab-case';
+  #   kebabCase('WebkitTransform');            // '-webkit-transform'
+  #   kebabCase('WebkitTransform', false);     // 'webkit-transform'
+  #   kebabCase.reverse('-webkit-transform');   // 'WebkitTransform'
+  #
+  # This library has no sources or sinks. It only performs string transformation.
+  #
+  # Existing QLL coverage (StringFormatters.qll):
+  # - CaseChangingStep: taint from Argument[0] → ReturnValue for both
+  #   the default export and the .reverse member
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # kebabCase(str) — default export, converts to kebab-case
+      - ["kebab-case", "", "Argument[0]", "ReturnValue", "taint"]
+      # kebabCase.reverse(str) — converts kebab-case back to original
+      - ["kebab-case", "Member[reverse]", "Argument[0]", "ReturnValue", "taint"]

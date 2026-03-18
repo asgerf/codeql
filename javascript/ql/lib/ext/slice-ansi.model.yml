@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # slice-ansi (npm: "slice-ansi") — Slice strings with ANSI escape codes
+  # =============================================================================
+  #
+  # Slices a string containing ANSI escape codes (terminal colors/styles)
+  # without breaking the escape sequences — like String.prototype.slice but
+  # ANSI-aware:
+  #
+  #   import sliceAnsi from 'slice-ansi';
+  #   sliceAnsi('\u001B[31mHello World\u001B[39m', 0, 5);
+  #
+  # API:
+  #   sliceAnsi(string, beginIndex [, endIndex]) → string
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: the library only manipulates strings; no command execution,
+  #   file I/O, URL navigation, or HTML rendering.
+  # - Taint propagation: the output is a substring of the input. If the
+  #   input is tainted, the output is tainted.
+  #
+  # Existing QLL coverage (Logging.qll):
+  #   SliceAnsiStep models Argument[0] → ReturnValue as a
+  #   stringManipulationStep (shared taint step).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through string slicing
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # sliceAnsi(inputString, start, end) → sliced string
+      - ["slice-ansi", "", "Argument[0]", "ReturnValue", "taint"]

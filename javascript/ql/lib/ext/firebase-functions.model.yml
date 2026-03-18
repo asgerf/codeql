@@ -1,0 +1,185 @@
+extensions:
+  # =============================================================================
+  # firebase-functions (npm: "firebase-functions") — Firebase Cloud Functions SDK
+  # =============================================================================
+  #
+  # Defines serverless functions that respond to Firebase events (database,
+  # Firestore, auth, storage) or HTTP/callable triggers. Functions run in
+  # a managed Node.js environment.
+  #
+  # v1 API:
+  #   const functions = require('firebase-functions');
+  #
+  #   // HTTP trigger (Express-compatible req/res)
+  #   exports.api = functions.https.onRequest((req, res) => {
+  #     req.body;   // attacker-controlled
+  #   });
+  #
+  #   // Callable function
+  #   exports.fn = functions.https.onCall((data, context) => {
+  #     data;       // attacker-controlled
+  #   });
+  #
+  #   // Database trigger
+  #   exports.onWrite = functions.database.ref('/users/{uid}')
+  #     .onCreate((snapshot, context) => {
+  #       snapshot.val();  // attacker-controlled database value
+  #     });
+  #
+  # v2 API (sub-path imports):
+  #   const { onRequest, onCall } = require('firebase-functions/v2/https');
+  #   const { onDocumentCreated }  = require('firebase-functions/v2/firestore');
+  #   const { onValueCreated }     = require('firebase-functions/v2/database');
+  #   const { onObjectFinalized }  = require('firebase-functions/v2/storage');
+  #   const { onMessagePublished } = require('firebase-functions/v2/pubsub');
+  #
+  # Security concerns:
+  # - HTTP requests (onRequest) carry fully attacker-controlled data in
+  #   body, query, params, headers, URL, cookies, etc.
+  # - Callable function data (onCall) is attacker-controlled input from
+  #   Firebase client SDKs.
+  # - Database, Firestore, and storage triggers fire on user-generated
+  #   content; snapshot/event values are attacker-controlled.
+  # - Pub/Sub messages may contain attacker-controlled payloads.
+  # - Auth triggers receive user records with attacker-influenced fields
+  #   (display name, email, photo URL, etc.).
+  #
+  # Existing QLL coverage (Firebase.qll):
+  #   - functions.https.onRequest() modeled as Express-compatible RouteSetup
+  #   - functions.database.ref(path).on*(callback) as RefBuilderListenCall
+  #   - snapshot.val() / snapshot.exportVal() as remote flow sources
+  #   - snapshot.child(), snapshot.forEach(), change.before/after navigation
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: untrusted data from HTTP triggers, callable functions,
+  #          event triggers, and database snapshots
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # =====================================================================
+      # HTTP triggers — functions.https.onRequest((req, res) => { ... })
+      # The request parameter is Express-compatible.
+      # =====================================================================
+
+      # v1: functions.https.onRequest(handler)
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[body]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[query]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[params]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[headers]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[url]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[originalUrl]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[path]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[hostname]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[cookies]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[ip]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[0].Member[ips]", "remote"]
+
+      # v2: const { onRequest } = require('firebase-functions/v2/https')
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[body]", "remote"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[query]", "remote"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[params]", "remote"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[headers]", "remote"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[url]", "remote"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[originalUrl]", "remote"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[path]", "remote"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[hostname]", "remote"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[cookies]", "remote"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[ip]", "remote"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[0].Member[ips]", "remote"]
+
+      # =====================================================================
+      # Callable functions — functions.https.onCall(handler)
+      # =====================================================================
+
+      # v1: onCall((data, context) => {}) — data (Parameter[0]) is fully
+      # attacker-controlled input from the Firebase client SDK
+      - ["firebase-functions", "Fuzzy.Member[onCall].Argument[N-1].Parameter[0]", "remote"]
+
+      # v2: onCall((request) => { request.data }) — the CallableRequest
+      # wraps data in a .data property
+      - ["firebase-functions/v2/https", "Member[onCall].Argument[N-1].Parameter[0].Member[data]", "remote"]
+
+      # =====================================================================
+      # Database triggers (v1)
+      # functions.database.ref('/path').onCreate/onDelete(snapshot => {})
+      # functions.database.ref('/path').onUpdate/onWrite(change => {})
+      # The callback parameter receives attacker-controlled data.
+      # =====================================================================
+      - ["firebase-functions", "Fuzzy.Member[onCreate,onDelete].Argument[N-1].Parameter[0]", "remote"]
+      - ["firebase-functions", "Fuzzy.Member[onUpdate,onWrite].Argument[N-1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # Pub/Sub triggers (v1)
+      # functions.pubsub.topic(name).onPublish(message => {})
+      # message.data, message.json, message.attributes are untrusted
+      # =====================================================================
+      - ["firebase-functions", "Fuzzy.Member[onPublish].Argument[N-1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # Storage triggers (v1)
+      # functions.storage.object().onFinalize/onDelete/onArchive/
+      #   onMetadataUpdate(object => {})
+      # Object metadata (name, contentType, metadata) is untrusted.
+      # =====================================================================
+      - ["firebase-functions", "Fuzzy.Member[onFinalize,onArchive,onMetadataUpdate].Argument[N-1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # v2 database triggers
+      # const { onValueCreated, ... } = require('firebase-functions/v2/database')
+      # =====================================================================
+      - ["firebase-functions/v2/database", "Member[onValueCreated,onValueUpdated,onValueDeleted,onValueWritten].Argument[N-1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # v2 Firestore triggers
+      # const { onDocumentCreated, ... } = require('firebase-functions/v2/firestore')
+      # =====================================================================
+      - ["firebase-functions/v2/firestore", "Member[onDocumentCreated,onDocumentUpdated,onDocumentDeleted,onDocumentWritten].Argument[N-1].Parameter[0]", "remote"]
+      - ["firebase-functions/v2/firestore", "Member[onDocumentCreatedWithAuthContext,onDocumentUpdatedWithAuthContext,onDocumentDeletedWithAuthContext,onDocumentWrittenWithAuthContext].Argument[N-1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # v2 storage triggers
+      # const { onObjectFinalized, ... } = require('firebase-functions/v2/storage')
+      # =====================================================================
+      - ["firebase-functions/v2/storage", "Member[onObjectFinalized,onObjectDeleted,onObjectArchived,onObjectMetadataUpdated].Argument[N-1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # v2 Pub/Sub triggers
+      # const { onMessagePublished } = require('firebase-functions/v2/pubsub')
+      # =====================================================================
+      - ["firebase-functions/v2/pubsub", "Member[onMessagePublished].Argument[N-1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # v2 auth/identity blocking triggers
+      # const { beforeUserCreated, ... } = require('firebase-functions/v2/identity')
+      # =====================================================================
+      - ["firebase-functions/v2/identity", "Member[beforeUserCreated,beforeUserSignedIn].Argument[N-1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # Snapshot value accessors — belt-and-suspenders on top of the
+      # trigger callback sources above
+      # =====================================================================
+
+      # snapshot.val() — Realtime Database snapshot value
+      - ["firebase-functions", "Fuzzy.Member[val].ReturnValue", "remote"]
+      - ["firebase-functions/v2/database", "Fuzzy.Member[val].ReturnValue", "remote"]
+
+      # snapshot.exportVal() — value with priority information
+      - ["firebase-functions", "Fuzzy.Member[exportVal].ReturnValue", "remote"]
+      - ["firebase-functions/v2/database", "Fuzzy.Member[exportVal].ReturnValue", "remote"]
+
+      # snapshot.data() — Firestore document fields
+      - ["firebase-functions/v2/firestore", "Fuzzy.Member[data].ReturnValue", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: security-sensitive operations on response objects
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # res.redirect(url) in onRequest handlers — open redirect
+      - ["firebase-functions", "Fuzzy.Member[onRequest].Argument[N-1].Parameter[1].Member[redirect].Argument[0]", "url-redirection"]
+      - ["firebase-functions/v2/https", "Member[onRequest].Argument[N-1].Parameter[1].Member[redirect].Argument[0]", "url-redirection"]

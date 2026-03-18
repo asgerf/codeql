@@ -1,0 +1,62 @@
+extensions:
+  # =============================================================================
+  # extend (npm: "extend") - jQuery-style object extend for Node.js
+  # =============================================================================
+  #
+  # extend is a port of jQuery.extend() for Node.js. It copies properties from
+  # one or more source objects into a target object, optionally performing a
+  # deep (recursive) copy.
+  #
+  #   const extend = require('extend');
+  #
+  #   // Shallow copy
+  #   extend(target, source1, source2);
+  #
+  #   // Deep copy (first argument is boolean true)
+  #   extend(true, target, source1, source2);
+  #
+  # API:
+  # - extend([deep], target, object1, [objectN]) → modified target
+  #   - deep: Boolean (optional) — if true, performs recursive deep copy
+  #   - target: Object — the destination object (modified in place)
+  #   - object1..N: Object — source objects whose properties are copied
+  #   - Returns the modified target object
+  #
+  # Security analysis:
+  # - No sources: pure utility function, does not access user input.
+  # - No sinks: does not execute commands, SQL, or render templates.
+  # - Taint flow: properties from source operands flow into the target
+  #   and the return value. This is the primary concern for data flow analysis.
+  # - Prototype pollution: vulnerable in deep mode in versions < 2.0.2
+  #   and 3.0.0–3.0.2. This is already modeled in QLL.
+  #
+  # Existing QLL coverage:
+  # - Extend.qll: ExtendCallWithFlag models extend([deep], target, src1, ...)
+  #   as an ExtendCall, providing source/destination operands and deep detection.
+  #   This feeds into taint tracking and object property flow.
+  # - PrototypePollutionCustomizations.qll: Models extend as vulnerable to
+  #   prototype pollution in specific versions when performing deep copies.
+  # - DataFlowSteps.qll: Models extend-like calls for general data flow steps.
+  # All of these use specialized QLL types (ExtendCall) that cannot be fully
+  # expressed as data extensions. The QLL models should be retained.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Taint flow through extend()
+  # ---------------------------------------------------------------------------
+  #
+  # extend(target, src1, src2, ...) — shallow copy (no boolean flag)
+  # extend(true, target, src1, src2, ...) — deep copy (boolean flag)
+  #
+  # In both cases, properties from source objects flow to the return value.
+  # We model taint from all arguments to the return value, since any argument
+  # (whether target or source) contributes properties to the result.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Taint flows from any argument to the return value.
+      # extend(arg0, arg1, ...) — arg0 may be boolean or target; all object
+      # arguments contribute properties to the returned object.
+      - ["extend", "", "Argument[0..9]", "ReturnValue", "taint"]

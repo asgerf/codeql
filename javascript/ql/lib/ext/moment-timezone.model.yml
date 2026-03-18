@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # moment-timezone (npm: "moment-timezone") — IANA timezone support for Moment.js
+  # =============================================================================
+  #
+  # An add-on for Moment.js that adds timezone conversion via .tz(). The
+  # returned objects are standard Moment instances with the same fluent API:
+  #
+  #   const moment = require('moment-timezone');
+  #   moment("2014-06-01T12:00:00Z").tz('America/New_York').format('ha z');
+  #   moment.tz("2014-06-01 12:00", 'America/New_York').format('ha z');
+  #
+  # Security concerns:
+  # - No sources or sinks. This is a pure date/time computation library with
+  #   no file system or network I/O.
+  # - Taint propagation: the format string argument to .format(f) flows into
+  #   the returned string. An attacker who controls the format string controls
+  #   the output (format strings can embed arbitrary text via escape sequences).
+  #
+  # Existing QLL coverage (DateFunctions.qll):
+  # - Treats moment-timezone identically to moment. Tracks moment objects
+  #   through the fluent API and models .format(f) as a string-manipulation
+  #   taint step from the format argument to the call result.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through formatting
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # momentObj.format(f) — format string flows into the returned string.
+      # Fuzzy covers all moment objects obtained through the fluent API,
+      # factory methods, and .tz() calls.
+      - ["moment-timezone", "Fuzzy.Member[format]", "Argument[0]", "ReturnValue", "taint"]

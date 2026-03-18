@@ -1,0 +1,87 @@
+extensions:
+  # =============================================================================
+  # jsdom (npm: "jsdom") - DOM implementation for Node.js
+  # =============================================================================
+  #
+  # By the jsdom team. A pure-JavaScript implementation of the WHATWG DOM and
+  # HTML standards for Node.js, providing a browser-like environment.
+  #
+  #   const { JSDOM } = require('jsdom');
+  #
+  #   // Parse HTML string
+  #   const dom = new JSDOM('<p>Hello</p>');
+  #   dom.window.document.querySelector('p').textContent; //=> "Hello"
+  #
+  #   // Fetch and parse a URL
+  #   const dom = await JSDOM.fromURL('https://example.com');
+  #
+  #   // Read and parse a local file
+  #   const dom = await JSDOM.fromFile('./page.html');
+  #
+  #   // Parse an HTML fragment
+  #   const frag = JSDOM.fragment('<p>Hello</p>');
+  #
+  #   // Serialize DOM back to HTML
+  #   dom.serialize(); //=> "<!DOCTYPE html><html>..."
+  #
+  #   // Execute scripts (dangerous!)
+  #   new JSDOM(html, { runScripts: "dangerously" });
+  #
+  # Exports: JSDOM, VirtualConsole, CookieJar, requestInterceptor, toughCookie
+  #
+  # Security concerns:
+  # - JSDOM.fromURL(url): URL controls an outbound HTTP request (request-forgery
+  #   sink); the returned JSDOM wraps remote HTML content (remote source).
+  # - JSDOM.fromFile(filename): filename is a path-injection sink.
+  # - new JSDOM(html, { runScripts: "dangerously" }): the HTML argument is
+  #   a code-injection / XSS sink because embedded <script> tags execute.
+  #   (Already modeled in DomBasedXssCustomizations.qll.)
+  # - JSDOM.fromURL is already modeled as a ClientRequest in ClientRequests.qll
+  #   (URL sink), but the response is not marked as a source there.
+  # - Taint propagation: HTML input flows through to the DOM (window, document)
+  #   and back out through serialize().
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # JSDOM.fromURL(url) — URL controls an outbound HTTP request.
+      # (Also modeled in ClientRequests.qll as JSDomFromUrl.)
+      - ["jsdom", "Member[JSDOM].Member[fromURL].Argument[0]", "request-forgery"]
+
+      # JSDOM.fromFile(filename) — filename controls a file system read.
+      - ["jsdom", "Member[JSDOM].Member[fromFile].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: remote HTML from JSDOM.fromURL
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # JSDOM.fromURL(url) returns Promise<JSDOM> wrapping remote HTML.
+      - ["jsdom", "Member[JSDOM].Member[fromURL].ReturnValue.Awaited", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through JSDOM operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- Constructor: new JSDOM(html) ---
+      # Taint from the HTML input propagates to the JSDOM instance (and thus
+      # to .window, .window.document, and everything reachable from the DOM).
+      - ["jsdom", "Member[JSDOM]", "Argument[0]", "Instance", "taint"]
+
+      # --- JSDOM.fragment(html) → DocumentFragment ---
+      # Taint from the HTML input propagates to the returned fragment.
+      - ["jsdom", "Member[JSDOM].Member[fragment]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- jsdom.serialize() → HTML string ---
+      # Taint from the JSDOM instance propagates to the serialized output.
+      - ["jsdom", "Member[JSDOM].Instance.Member[serialize]", "Argument[this]", "ReturnValue", "taint"]

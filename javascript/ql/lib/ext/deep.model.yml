@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # deep (npm: "deep") - Utilities for manipulating nested data structures
+  # =============================================================================
+  #
+  # Provides deep clone, equals, extend, and isPlainObject:
+  #
+  #   const deep = require('deep');
+  #   deep.clone(obj)                      // deep copy
+  #   deep.extend(dst, src1, src2, ...)    // recursive merge into dst
+  #   deep.equals(a, b)                    // structural equality check
+  #   deep.isPlainObject(obj)              // plain-object test
+  #
+  # Security concerns:
+  # - deep.extend() is a deep-merge operation and is vulnerable to prototype
+  #   pollution in all versions. If an attacker controls a source operand,
+  #   they can inject __proto__ properties. (The prototype-pollution query
+  #   is handled by QLL, not expressible via data extensions.)
+  # - Taint from source operands flows into the destination and return value.
+  # - deep.clone() preserves all properties of the input.
+  #
+  # Existing QLL coverage:
+  #   Extend.qll:  deep.extend modeled as ExtendCallDeep (taint from sources
+  #                to destination and return value).
+  #   PrototypePollutionCustomizations.qll: deep.extend flagged as vulnerable
+  #                to prototype pollution in all versions.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # deep.extend(dst, src1, src2, ...) — source operands taint the return value
+      - ["deep", "Member[extend]", "Argument[0..N-1]", "ReturnValue", "taint"]
+
+      # deep.clone(obj) — returns a deep copy preserving all properties
+      - ["deep", "Member[clone]", "Argument[0]", "ReturnValue", "value"]

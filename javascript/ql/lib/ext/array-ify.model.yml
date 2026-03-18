@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # array-ify (npm: "array-ify") - Turn anything into an array
+  # =============================================================================
+  #
+  # array-ify converts a value into an array. If the value is already an array,
+  # it is returned as-is. Otherwise, it is wrapped in an array.
+  # Unlike `arrify`, null and undefined are NOT converted to an empty array.
+  #
+  #   var arrayify = require('array-ify');
+  #   arrayify('unicorn');    //=> ['unicorn']
+  #   arrayify(['unicorn']);  //=> ['unicorn']
+  #   arrayify(null);         //=> [null]
+  #
+  # Exports: a single function arrayify(value) → array
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure data transformation.
+  # - Taint propagates from the input value to the returned array.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through arrayify
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # arrayify(value) → array: taint flows from argument to return value
+      - ["array-ify", "", "Argument[0]", "ReturnValue", "taint"]

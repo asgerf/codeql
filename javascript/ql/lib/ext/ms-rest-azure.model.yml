@@ -1,0 +1,98 @@
+extensions:
+  # =============================================================================
+  # ms-rest-azure (npm: "ms-rest-azure") - Azure authentication and client runtime
+  # =============================================================================
+  #
+  # Runtime library for Azure SDK for Node.js. Provides authentication helpers
+  # and a base HTTP client for Azure services (now deprecated in favor of
+  # @azure/identity).
+  #
+  #   const msRestAzure = require('ms-rest-azure');
+  #
+  #   // Username/password login
+  #   msRestAzure.loginWithUsernamePassword(user, pass, (err, creds) => { ... });
+  #
+  #   // Service principal login
+  #   msRestAzure.loginWithServicePrincipalSecret(clientId, secret, domain, cb);
+  #
+  #   // Credential classes
+  #   new msRestAzure.UserTokenCredentials(clientId, domain, user, pass);
+  #   new msRestAzure.ApplicationTokenCredentials(clientId, domain, secret);
+  #   new msRestAzure.CognitiveServicesCredentials(subscriptionKey);
+  #   new msRestAzure.TopicCredentials(topicKey);
+  #
+  # Existing QLL coverage (Azure.qll):
+  #   loginWithUsernamePassword arg 0 ("user name"), arg 1 ("password")
+  #   loginWithServicePrincipalSecret arg 0 ("user name"), arg 1 ("password")
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Hardcoded credentials in login functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # loginWithUsernamePassword(username, password, [options], callback)
+      # loginWithUsernamePasswordWithAuthResponse(username, password, [options])
+      - [
+          "ms-rest-azure",
+          "Member[loginWithUsernamePassword,loginWithUsernamePasswordWithAuthResponse].Argument[0]",
+          "credentials-username",
+        ]
+      - [
+          "ms-rest-azure",
+          "Member[loginWithUsernamePassword,loginWithUsernamePasswordWithAuthResponse].Argument[1]",
+          "credentials-password",
+        ]
+
+      # loginWithServicePrincipalSecret(clientId, secret, domain, [options], callback)
+      # loginWithServicePrincipalSecretWithAuthResponse(clientId, secret, domain, [options])
+      - [
+          "ms-rest-azure",
+          "Member[loginWithServicePrincipalSecret,loginWithServicePrincipalSecretWithAuthResponse].Argument[0]",
+          "credentials-username",
+        ]
+      - [
+          "ms-rest-azure",
+          "Member[loginWithServicePrincipalSecret,loginWithServicePrincipalSecretWithAuthResponse].Argument[1]",
+          "credentials-password",
+        ]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Hardcoded credentials in credential class constructors
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new UserTokenCredentials(clientId, domain, username, password, [options])
+      - ["ms-rest-azure", "Member[UserTokenCredentials].Argument[2]", "credentials-username"]
+      - ["ms-rest-azure", "Member[UserTokenCredentials].Argument[3]", "credentials-password"]
+
+      # new ApplicationTokenCredentials(clientId, domain, secret, [options])
+      - ["ms-rest-azure", "Member[ApplicationTokenCredentials].Argument[2]", "credentials-password"]
+
+      # new CognitiveServicesCredentials(subscriptionKey)
+      - ["ms-rest-azure", "Member[CognitiveServicesCredentials].Argument[0]", "credentials-key"]
+
+      # new TopicCredentials(topicKey)
+      - ["ms-rest-azure", "Member[TopicCredentials].Argument[0]", "credentials-key"]
+
+      # new MSIAppServiceTokenCredentials({msiSecret, ...})
+      - ["ms-rest-azure", "Member[MSIAppServiceTokenCredentials].Argument[0].Member[msiSecret]", "credentials-password"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: File path in loginWithAuthFile
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # loginWithAuthFile({filePath}, callback) reads credentials from filePath
+      # via fs.readFileSync — controlled path is a path-injection concern.
+      - [
+          "ms-rest-azure",
+          "Member[loginWithAuthFile,loginWithAuthFileAuthResponse].Argument[0].Member[filePath]",
+          "path-injection",
+        ]

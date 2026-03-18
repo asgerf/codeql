@@ -1,0 +1,319 @@
+extensions:
+  # =============================================================================
+  # lodash / underscore — Utility library
+  # =============================================================================
+  #
+  # Lodash and Underscore provide utility functions for arrays, objects,
+  # strings, and functions. They share most of their API surface.
+  #
+  # Import patterns:
+  #   const _ = require('lodash');           // full bundle
+  #   const _ = require('underscore');       // underscore
+  #   import _ from 'lodash-es';            // ES module build
+  #   import map from 'lodash/map';         // per-method import
+  #   import map from 'lodash-es/map';      // per-method ES import
+  #   import map from 'lodash.map';         // standalone package
+  #   // global _ is also common from CDN usage
+  #
+  # Security concerns:
+  #   - _.template(str) compiles a template string that can execute
+  #     arbitrary code via embedded JS expressions — code injection sink.
+  #   - Many collection iteration methods (_.map, _.filter, etc.) can be
+  #     abused for DoS if called with attacker-controlled array-like
+  #     objects — loop-bound injection sink.
+  #   - Deep merge functions (_.merge, _.defaultsDeep, _.mergeWith) can
+  #     be vectors for prototype pollution.
+  #   - Extensive taint propagation through string, array, and object
+  #     utility functions.
+  #
+  # Existing QLL coverage (LodashUnderscore.qll + security customizations):
+  #   - _.template() as code injection sink (TemplateSink)
+  #   - Loop-bound injection sinks for ~50 collection methods
+  #   - Taint steps for string methods, collection pass-throughs
+  #   - Value-preserving summaries for each/map/flatMap/reduce/sortBy/
+  #     partition/tap/groupBy/minBy/maxBy
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # =====================================================================
+      # Code injection via _.template()
+      # =====================================================================
+      #
+      # _.template(str) compiles a template string into a function.
+      # Template strings may contain interpolation (<%= ... %>), escape
+      # (<%- ... %>), and evaluate (<% ... %>) delimiters — the evaluate
+      # form executes arbitrary JavaScript.
+
+      - ["lodash", "Member[template].Argument[0]", "code-injection"]
+      - ["underscore", "Member[template].Argument[0]", "code-injection"]
+      - ["lodash-es", "Member[template].Argument[0]", "code-injection"]
+      - ["lodash/template", ".Argument[0]", "code-injection"]
+      - ["lodash-es/template", ".Argument[0]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries — taint propagation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # String methods — taint from Argument[0] to ReturnValue
+      # =====================================================================
+      #
+      # These functions transform a string input and return a derived
+      # string. Taint is preserved through the transformation.
+
+      - ["lodash", "Member[camelCase,capitalize,deburr,kebabCase,lowerCase,lowerFirst,pad,padEnd,padStart,repeat,snakeCase,startCase,toLower,toUpper,trim,trimEnd,trimStart,truncate,unescape,upperCase,upperFirst]", "Argument[0]", "ReturnValue", "taint"]
+      - ["underscore", "Member[camelCase,capitalize,deburr,kebabCase,lowerCase,lowerFirst,pad,padEnd,padStart,repeat,snakeCase,startCase,toLower,toUpper,trim,trimEnd,trimStart,truncate,unescape,upperCase,upperFirst]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[camelCase,capitalize,deburr,kebabCase,lowerCase,lowerFirst,pad,padEnd,padStart,repeat,snakeCase,startCase,toLower,toUpper,trim,trimEnd,trimStart,truncate,unescape,upperCase,upperFirst]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.replace(string, pattern, replacement) — taint from string arg
+      - ["lodash", "Member[replace]", "Argument[0]", "ReturnValue", "taint"]
+      - ["underscore", "Member[replace]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[replace]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.split(string, sep) → array of strings
+      - ["lodash", "Member[split]", "Argument[0]", "ReturnValue", "taint"]
+      - ["underscore", "Member[split]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[split]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.words(string) → array of words
+      - ["lodash", "Member[words]", "Argument[0]", "ReturnValue", "taint"]
+      - ["underscore", "Member[words]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[words]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =====================================================================
+      # Collection pass-through — Argument[0] → ReturnValue (taint)
+      # =====================================================================
+      #
+      # These functions select, filter, reorder, or reshape the input
+      # collection. The output carries taint from the input.
+
+      - ["lodash", "Member[find,findLast,filter,reject,sample,sampleSize,shuffle,first,head,last,nth,compact,flatten,flattenDeep,flattenDepth,initial,tail,rest,take,takeRight,reverse,uniq,unique,sortedUniq,without,difference,differenceBy,differenceWith,intersection,intersectionBy,intersectionWith,pull,pullAll,pullAllBy,pullAllWith,pullAt,remove,slice,chunk,drop,dropRight,dropWhile,dropRightWhile,takeWhile,takeRightWhile,unzip,fromPairs,toArray,clone,cloneDeep,cloneWith,cloneDeepWith,identity,tap,thru,values,valuesIn,toPairs,toPairsIn,entries,entriesIn,pick,omit,defaults,assign,assignIn,extend,extendWith,merge,mergeWith,defaultsDeep,toPlainObject]", "Argument[0]", "ReturnValue", "taint"]
+      - ["underscore", "Member[find,findLast,findWhere,where,filter,reject,sample,sampleSize,shuffle,first,head,last,nth,compact,flatten,flattenDeep,flattenDepth,initial,tail,rest,take,takeRight,reverse,uniq,unique,sortedUniq,without,difference,intersection,pull,remove,slice,chunk,drop,dropRight,unzip,transpose,fromPairs,toArray,clone,identity,tap,thru,values,toPairs,entries,pick,omit,defaults,assign,extend,merge,toPlainObject,pluck,object]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[find,findLast,filter,reject,sample,sampleSize,shuffle,first,head,last,nth,compact,flatten,flattenDeep,flattenDepth,initial,tail,rest,take,takeRight,reverse,uniq,unique,sortedUniq,without,difference,differenceBy,differenceWith,intersection,intersectionBy,intersectionWith,pull,pullAll,pullAllBy,pullAllWith,pullAt,remove,slice,chunk,drop,dropRight,dropWhile,dropRightWhile,takeWhile,takeRightWhile,unzip,fromPairs,toArray,clone,cloneDeep,cloneWith,cloneDeepWith,identity,tap,thru,values,valuesIn,toPairs,toPairsIn,entries,entriesIn,pick,omit,defaults,assign,assignIn,extend,extendWith,merge,mergeWith,defaultsDeep,toPlainObject]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.union / _.zip — taint from any argument
+      - ["lodash", "Member[union,unionBy,unionWith,zip,zipWith,concat]", "Argument[0,1,2,3,4]", "ReturnValue", "taint"]
+      - ["underscore", "Member[union,zip,concat]", "Argument[0,1,2,3,4]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[union,unionBy,unionWith,zip,zipWith,concat]", "Argument[0,1,2,3,4]", "ReturnValue", "taint"]
+
+      # _.get(object, path) — deep property access, taint from object
+      - ["lodash", "Member[get,result]", "Argument[0]", "ReturnValue", "taint"]
+      - ["underscore", "Member[get,result]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[get,result]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.at(object, paths) — pick multiple deep paths
+      - ["lodash", "Member[at]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[at]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.invoke(object, path, args) — taint from object
+      - ["lodash", "Member[invoke]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[invoke]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.join(array, sep) → string
+      - ["lodash", "Member[join]", "Argument[0]", "ReturnValue", "taint"]
+      - ["underscore", "Member[join]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[join]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.toString(value) — converts to string
+      - ["lodash", "Member[toString]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[toString]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =====================================================================
+      # Deep merge sinks for prototype pollution
+      # =====================================================================
+      #
+      # _.merge(target, ...sources), _.defaultsDeep(target, ...sources),
+      # _.mergeWith(target, ...sources, customizer)
+      # When called with attacker-controlled source objects, these can
+      # pollute Object.prototype via __proto__ or constructor.prototype
+      # paths (in lodash < 4.17.12, and still a concern for user objects).
+      # The taint flows from source arguments to the target/return.
+
+      - ["lodash", "Member[merge,mergeWith,defaultsDeep]", "Argument[1,2,3,4]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[merge,mergeWith,defaultsDeep]", "Argument[1,2,3,4]", "ReturnValue", "taint"]
+
+      # _.set / _.setWith — propagate taint from value to object
+      - ["lodash", "Member[set,setWith,update,updateWith]", "Argument[2]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[set,setWith,update,updateWith]", "Argument[2]", "ReturnValue", "taint"]
+
+      # =====================================================================
+      # Iteration methods — value-preserving: array elements → callback
+      # =====================================================================
+
+      # _.each / _.forEach(collection, iteratee) — element → callback param 0
+      - ["lodash", "Member[each,eachRight,forEach,forEachRight,every,some]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[each,eachRight,forEach,forEachRight,every,some]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[each,eachRight,forEach,forEachRight,every,some]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+
+      # _.map(collection, iteratee) — element → callback param 0, callback return → result element
+      - ["lodash", "Member[map]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash", "Member[map]", "Argument[1].ReturnValue", "ReturnValue.ArrayElement", "value"]
+      - ["underscore", "Member[map]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[map]", "Argument[1].ReturnValue", "ReturnValue.ArrayElement", "value"]
+      - ["lodash-es", "Member[map]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[map]", "Argument[1].ReturnValue", "ReturnValue.ArrayElement", "value"]
+
+      # _.flatMap(collection, iteratee)
+      - ["lodash", "Member[flatMap]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash", "Member[flatMap]", "Argument[1].ReturnValue", "ReturnValue.ArrayElement", "taint"]
+      - ["underscore", "Member[flatMap]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[flatMap]", "Argument[1].ReturnValue", "ReturnValue.ArrayElement", "taint"]
+      - ["lodash-es", "Member[flatMap]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[flatMap]", "Argument[1].ReturnValue", "ReturnValue.ArrayElement", "taint"]
+
+      # _.flatMapDeep / _.flatMapDepth
+      - ["lodash", "Member[flatMapDeep,flatMapDepth]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash", "Member[flatMapDeep,flatMapDepth]", "Argument[1].ReturnValue", "ReturnValue.ArrayElement", "taint"]
+      - ["lodash-es", "Member[flatMapDeep,flatMapDepth]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[flatMapDeep,flatMapDepth]", "Argument[1].ReturnValue", "ReturnValue.ArrayElement", "taint"]
+
+      # _.reduce / _.reduceRight(collection, iteratee, accumulator)
+      #   element → callback param 1, accumulator → callback param 0 & return
+      - ["lodash", "Member[reduce,reduceRight]", "Argument[0].ArrayElement", "Argument[1].Parameter[1]", "value"]
+      - ["lodash", "Member[reduce,reduceRight]", "Argument[1].ReturnValue", "ReturnValue", "value"]
+      - ["lodash", "Member[reduce,reduceRight]", "Argument[1].ReturnValue", "Argument[1].Parameter[0]", "value"]
+      - ["lodash", "Member[reduce,reduceRight]", "Argument[2]", "ReturnValue", "value"]
+      - ["lodash", "Member[reduce,reduceRight]", "Argument[2]", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[reduce,reduceRight]", "Argument[0].ArrayElement", "Argument[1].Parameter[1]", "value"]
+      - ["underscore", "Member[reduce,reduceRight]", "Argument[1].ReturnValue", "ReturnValue", "value"]
+      - ["underscore", "Member[reduce,reduceRight]", "Argument[1].ReturnValue", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[reduce,reduceRight]", "Argument[2]", "ReturnValue", "value"]
+      - ["underscore", "Member[reduce,reduceRight]", "Argument[2]", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[reduce,reduceRight]", "Argument[0].ArrayElement", "Argument[1].Parameter[1]", "value"]
+      - ["lodash-es", "Member[reduce,reduceRight]", "Argument[1].ReturnValue", "ReturnValue", "value"]
+      - ["lodash-es", "Member[reduce,reduceRight]", "Argument[1].ReturnValue", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[reduce,reduceRight]", "Argument[2]", "ReturnValue", "value"]
+      - ["lodash-es", "Member[reduce,reduceRight]", "Argument[2]", "Argument[1].Parameter[0]", "value"]
+
+      # _.sortBy / _.orderBy — element → callback param 0 & result element
+      - ["lodash", "Member[sortBy,orderBy]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash", "Member[sortBy,orderBy]", "Argument[0].ArrayElement", "ReturnValue.ArrayElement", "value"]
+      - ["underscore", "Member[sortBy,orderBy]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[sortBy,orderBy]", "Argument[0].ArrayElement", "ReturnValue.ArrayElement", "value"]
+      - ["lodash-es", "Member[sortBy,orderBy]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[sortBy,orderBy]", "Argument[0].ArrayElement", "ReturnValue.ArrayElement", "value"]
+
+      # _.filter / _.reject with callback — element → callback param 0, same element → result
+      - ["lodash", "Member[filter,reject]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[filter,reject]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[filter,reject]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+
+      # _.find / _.findLast with callback — element → callback param 0
+      - ["lodash", "Member[find,findLast]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[find,findLast]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[find,findLast]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+
+      # _.minBy / _.maxBy — element → callback param 0 & result
+      - ["lodash", "Member[minBy,maxBy]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash", "Member[minBy,maxBy]", "Argument[0].ArrayElement", "ReturnValue", "value"]
+      - ["lodash-es", "Member[minBy,maxBy]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[minBy,maxBy]", "Argument[0].ArrayElement", "ReturnValue", "value"]
+
+      # _.partition — element → callback param 0, element → result array of arrays
+      - ["lodash", "Member[partition]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[partition]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[partition]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+
+      # _.tap(value, interceptor) — value flows through to return and callback
+      - ["lodash", "Member[tap]", "Argument[0]", "Argument[1].Parameter[0]", "value"]
+      - ["lodash", "Member[tap]", "Argument[0]", "ReturnValue", "value"]
+      - ["underscore", "Member[tap]", "Argument[0]", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[tap]", "Argument[0]", "ReturnValue", "value"]
+      - ["lodash-es", "Member[tap]", "Argument[0]", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[tap]", "Argument[0]", "ReturnValue", "value"]
+
+      # _.thru(value, interceptor) — callback return → result
+      - ["lodash", "Member[thru]", "Argument[0]", "Argument[1].Parameter[0]", "value"]
+      - ["lodash", "Member[thru]", "Argument[1].ReturnValue", "ReturnValue", "value"]
+      - ["lodash-es", "Member[thru]", "Argument[0]", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[thru]", "Argument[1].ReturnValue", "ReturnValue", "value"]
+
+      # _.groupBy(collection, iteratee) — taint from collection
+      - ["lodash", "Member[groupBy,keyBy,countBy,indexBy]", "Argument[0]", "Argument[1].Parameter[0]", "taint"]
+      - ["lodash", "Member[groupBy,keyBy,countBy,indexBy]", "Argument[0]", "ReturnValue", "taint"]
+      - ["underscore", "Member[groupBy,keyBy,countBy,indexBy]", "Argument[0]", "Argument[1].Parameter[0]", "taint"]
+      - ["underscore", "Member[groupBy,keyBy,countBy,indexBy]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[groupBy,keyBy,countBy,indexBy]", "Argument[0]", "Argument[1].Parameter[0]", "taint"]
+      - ["lodash-es", "Member[groupBy,keyBy,countBy,indexBy]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.mapKeys / _.mapValues — object value → callback, callback return → result
+      - ["lodash", "Member[mapKeys,mapValues]", "Argument[0].AnyMember", "Argument[1].Parameter[0]", "value"]
+      - ["lodash", "Member[mapValues]", "Argument[1].ReturnValue", "ReturnValue.AnyMember", "value"]
+      - ["lodash-es", "Member[mapKeys,mapValues]", "Argument[0].AnyMember", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[mapValues]", "Argument[1].ReturnValue", "ReturnValue.AnyMember", "value"]
+
+      # _.mapObject (underscore) — object value → callback, callback return → result
+      - ["underscore", "Member[mapObject]", "Argument[0].AnyMember", "Argument[1].Parameter[0]", "value"]
+      - ["underscore", "Member[mapObject]", "Argument[1].ReturnValue", "ReturnValue.AnyMember", "value"]
+
+      # _.transform(object, iteratee, accumulator) — like reduce for objects
+      - ["lodash", "Member[transform]", "Argument[0]", "Argument[1].Parameter[1]", "taint"]
+      - ["lodash", "Member[transform]", "Argument[2]", "Argument[1].Parameter[0]", "value"]
+      - ["lodash", "Member[transform]", "Argument[2]", "ReturnValue", "value"]
+      - ["lodash-es", "Member[transform]", "Argument[0]", "Argument[1].Parameter[1]", "taint"]
+      - ["lodash-es", "Member[transform]", "Argument[2]", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[transform]", "Argument[2]", "ReturnValue", "value"]
+
+      # _.invokeMap(collection, path, args) — taint from collection
+      - ["lodash", "Member[invokeMap]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[invokeMap]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =====================================================================
+      # Object methods — taint propagation
+      # =====================================================================
+
+      # _.pickBy / _.omitBy — object + predicate
+      - ["lodash", "Member[pickBy,omitBy]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[pickBy,omitBy]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.invert / _.invertBy
+      - ["lodash", "Member[invert,invertBy]", "Argument[0]", "ReturnValue", "taint"]
+      - ["underscore", "Member[invert,invertBy]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[invert,invertBy]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.keys / _.keysIn — property names from object
+      - ["lodash", "Member[keys,keysIn]", "Argument[0]", "ReturnValue", "taint"]
+      - ["underscore", "Member[keys,keysIn]", "Argument[0]", "ReturnValue", "taint"]
+      - ["lodash-es", "Member[keys,keysIn]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.assign / _.extend / _.merge with multiple sources — taint from sources
+      - ["lodash", "Member[assign,assignIn,assignWith,assignInWith,defaults,defaultsDeep,extend,extendWith,merge,mergeWith]", "Argument[1,2,3,4]", "Argument[0]", "taint"]
+      - ["lodash-es", "Member[assign,assignIn,assignWith,assignInWith,defaults,defaultsDeep,extend,extendWith,merge,mergeWith]", "Argument[1,2,3,4]", "Argument[0]", "taint"]
+      - ["underscore", "Member[assign,defaults,extend,merge]", "Argument[1,2,3,4]", "Argument[0]", "taint"]
+
+      # =====================================================================
+      # Per-method imports (lodash/xyz and lodash.xyz packages)
+      # =====================================================================
+      #
+      # The most security-critical per-method import is _.template.
+      # Taint summaries for per-method imports are largely covered by
+      # the Member[x] models above since CodeQL resolves lodash/map etc.
+      # as members. Below we cover the standalone lodash.xxx packages
+      # for the most important functions.
+
+      # lodash.template — already covered by sink above
+
+      # lodash.get / lodash.set
+      - ["'lodash.get'", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["'lodash.set'", "", "Argument[2]", "ReturnValue", "taint"]
+
+      # lodash.merge / lodash.mergewith / lodash.defaultsdeep
+      - ["'lodash.merge'", "", "Argument[1,2,3,4]", "ReturnValue", "taint"]
+      - ["'lodash.mergewith'", "", "Argument[1,2,3,4]", "ReturnValue", "taint"]
+      - ["'lodash.defaultsdeep'", "", "Argument[1,2,3,4]", "ReturnValue", "taint"]
+
+      # lodash.clone / lodash.clonedeep
+      - ["'lodash.clone'", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["'lodash.clonedeep'", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # lodash.template
+      - ["'lodash.template'", "", "Argument[0]", "ReturnValue", "taint"]

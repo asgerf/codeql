@@ -1,0 +1,50 @@
+extensions:
+  # =============================================================================
+  # command-line-args (npm: "command-line-args") - Command-line argument parser
+  # =============================================================================
+  #
+  # By Lloyd Brookes (75lb). Parses command-line arguments from an option
+  # definition array and returns an object of parsed values.
+  #
+  #   const commandLineArgs = require('command-line-args');
+  #   const options = commandLineArgs([
+  #     { name: 'src', type: String, multiple: true, defaultOption: true },
+  #     { name: 'timeout', alias: 't', type: Number },
+  #     { name: 'verbose', alias: 'v', type: Boolean }
+  #   ]);
+  #   // options => { src: ['one.js'], timeout: 1000, verbose: true }
+  #
+  #   // With custom argv:
+  #   const options = commandLineArgs(defs, { argv: customArgv });
+  #
+  # The module exports a single function:
+  #   commandLineArgs(definitions, options?) => object of parsed values
+  #     - definitions: array of option definition objects
+  #     - options.argv: optional custom argv array (defaults to process.argv)
+  #
+  # Security concerns:
+  # - The return value contains parsed command-line arguments, which are
+  #   untrusted user input (commandargs threat model).
+  # - When a custom argv array is passed via options.argv, taint propagates
+  #   from that array to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: parsed command-line arguments are untrusted input
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # commandLineArgs(definitions) => { src: ..., timeout: ..., verbose: ... }
+      - ["command-line-args", "ReturnValue", "commandargs"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from custom argv to parsed result
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # commandLineArgs(defs, { argv: arr }) — taint from argv to return value
+      - ["command-line-args", "", "Argument[1].Member[argv]", "ReturnValue", "taint"]

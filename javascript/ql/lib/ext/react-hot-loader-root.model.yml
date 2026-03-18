@@ -1,0 +1,29 @@
+extensions:
+  # =============================================================================
+  # react-hot-loader/root (npm: "react-hot-loader", subpath "react-hot-loader/root")
+  #   — Hot module replacement for React components
+  # =============================================================================
+  #
+  # Provides the hot() higher-order component for enabling hot module
+  # replacement during development:
+  #
+  #   import { hot } from 'react-hot-loader/root';
+  #   const App = () => <div>Hello</div>;
+  #   export default hot(App);
+  #
+  # The hot() function wraps a React component so that code changes are
+  # applied without a full page reload, preserving component state.
+  #
+  # Security concerns:
+  # - No sources. The library does not access external or untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations.
+  # - No taint summaries needed beyond what CodeQL handles generically for
+  #   React higher-order components.
+  #
+  # Existing QLL coverage (React.qll):
+  # - Recognizes hot() as a higher-order component builder, ensuring that
+  #   hot(App) is treated as equivalent to App for React component analysis.
+  #   This is a React framework pattern not expressible as data extensions.
+  #
+  # Nothing to model here as data extensions.
+  # =============================================================================

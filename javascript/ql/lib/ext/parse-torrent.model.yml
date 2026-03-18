@@ -1,0 +1,55 @@
+extensions:
+  # =============================================================================
+  # parse-torrent (npm: "parse-torrent") - Parse torrent identifiers
+  # =============================================================================
+  #
+  # parse-torrent parses magnet URIs, .torrent files, and info hashes into
+  # JavaScript objects containing torrent metadata:
+  #
+  #   import parseTorrent from 'parse-torrent';
+  #
+  #   // Synchronous: parse magnet URI, .torrent buffer, or info hash
+  #   const torrent = parseTorrent(input);
+  #   torrent.name         // remote source
+  #   torrent.announce     // remote source
+  #   torrent.files        // remote source
+  #
+  #   // Async: fetch and parse a remote torrent
+  #   parseTorrent.remote(uri, (err, torrent) => {
+  #     torrent.name       // remote source
+  #   });
+  #
+  # Security concerns:
+  # - Remote flow sources: parsed torrent objects contain attacker-controlled
+  #   metadata (name, announce URLs, file names/paths, comments, etc.).
+  #   Properties like `name`, `announce`, `files`, `comment`, `urlList`,
+  #   `created`, `createdBy` are all user-controlled. Only `private`,
+  #   `infoHash`, and `length` are excluded as safe.
+  # - No sinks: parse-torrent does not execute commands or access files.
+  # - Taint propagation: input flows to the return value (parsing step).
+  #
+  # Existing QLL coverage:
+  # - TorrentLibraries.qll: ParsedTorrent models the return value of
+  #   parseTorrent() and the callback parameter of parseTorrent.remote().
+  #   UserControlledTorrentInfo marks property reads on parsed torrents
+  #   as RemoteFlowSource (excluding `private`, `infoHash`, `length`).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # parseTorrent(input) — properties of the returned object are remote
+      # sources (name, announce, files, comment, urlList, etc.).
+      # The QLL excludes only `private`, `infoHash`, and `length`; we use
+      # AnyMember as data extensions cannot express exclusions.
+      - ["parse-torrent", "ReturnValue.AnyMember", "remote"]
+
+      # parseTorrent.remote(uri, callback) — callback's torrent parameter
+      - ["parse-torrent", "Member[remote].Argument[1].Parameter[1].AnyMember", "remote"]
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # parseTorrent(input) — input flows to return value
+      - ["parse-torrent", "", "Argument[0]", "ReturnValue", "taint"]

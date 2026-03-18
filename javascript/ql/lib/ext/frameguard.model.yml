@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # frameguard (npm: "frameguard") - X-Frame-Options middleware
+  # =============================================================================
+  #
+  # By Helmet contributors. Express/Connect middleware that sets the
+  # X-Frame-Options HTTP response header to mitigate clickjacking attacks.
+  # Also available as part of the Helmet suite.
+  #
+  #   const frameguard = require('frameguard');
+  #   app.use(frameguard());                          // defaults to SAMEORIGIN
+  #   app.use(frameguard({ action: 'deny' }));        // X-Frame-Options: DENY
+  #   app.use(frameguard({ action: 'sameorigin' }));  // X-Frame-Options: SAMEORIGIN
+  #
+  # API:
+  # - frameguard([options]) → Express middleware function
+  #   - options.action: "deny" | "sameorigin" (default: "sameorigin")
+  #
+  # Security analysis:
+  # - No sources. The library does not provide access to untrusted external data.
+  # - No sinks. The options object only accepts a fixed enum ("deny" or
+  #   "sameorigin") and the middleware merely sets a response header.
+  # - No taint summaries needed. The library does not transform or propagate
+  #   user-controlled data in a security-relevant way.
+  #
+  # The library is purely defensive infrastructure — it protects against
+  # clickjacking attacks but does not introduce any attack surface of its own.
+  # =============================================================================
+
+  # No sources, sinks, or summaries needed for this library.
+  []

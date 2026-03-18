@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # dateformat (npm: "dateformat") - Date formatting utility
+  # =============================================================================
+  #
+  # A simple date formatting function for Node.js and browsers.
+  #
+  #   const dateFormat = require('dateformat');
+  #   dateFormat(new Date(), "dddd, mmmm dS, yyyy, h:MM:ss TT");
+  #   //=> "Saturday, June 9th, 2007, 5:46:21 PM"
+  #
+  # Signature: dateFormat(date?, mask?, utc?, gmt?) → string
+  #
+  # Security concerns:
+  # - The mask (format string) can use single-quote escaping to embed
+  #   arbitrary literal text. If the mask is attacker-controlled,
+  #   arbitrary content appears in the output string.
+  #
+  # No sources or sinks — only a taint summary through the format string.
+  #
+  # Existing QLL coverage (DateFunctions.qll):
+  #   Models dateformat taint steps (format string → return value) via
+  #   DateFormatStep.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # dateFormat(date, mask) — taint from mask to return value
+      - ["dateformat", "", "Argument[1]", "ReturnValue", "taint"]

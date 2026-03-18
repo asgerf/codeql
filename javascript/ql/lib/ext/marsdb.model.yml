@@ -1,0 +1,49 @@
+extensions:
+  # =============================================================================
+  # marsdb (npm: "marsdb") - MongoDB-like client-side database
+  # =============================================================================
+  #
+  # marsdb is a lightweight, Promise-based, MongoDB-like database for
+  # JavaScript. It uses Mongo-style query operators for find, update, and
+  # remove operations:
+  #
+  #   import Collection from 'marsdb';
+  #   const db = new Collection('mydb');
+  #
+  #   db.find({ age: { $gt: 18 } })        // query is a NoSQL injection sink
+  #   db.findOne({ name: userInput })       // query is a NoSQL injection sink
+  #   db.update(query, modifier)            // both query and modifier are sinks
+  #   db.remove(query)                      // query is a NoSQL injection sink
+  #   db.count(query)                       // query is a NoSQL injection sink
+  #   db.ids(query)                         // query is a NoSQL injection sink
+  #
+  # Security concerns:
+  # - NoSQL injection: if an attacker controls the query object passed to
+  #   find, findOne, update, remove, count, or ids, they can inject MongoDB
+  #   query operators ($gt, $ne, $regex, etc.) to bypass filters or
+  #   exfiltrate data. The modifier argument to update is also a sink
+  #   (operators like $set, $unset, etc.).
+  # - No sources: marsdb is a client-side in-memory database and does not
+  #   provide access to external/untrusted data.
+  # - insert/insertAll store data but do not interpret query operators,
+  #   so they are not NoSQL injection sinks.
+  #
+  # Existing QLL coverage:
+  # - NoSQL.model.yml: typeModel entries map marsdb Collection instances
+  #   to mongoose.Model and mongoose.Query, inheriting mongoose's NoSQL
+  #   injection sink coverage via mongodb/model.yml.
+  # - NoSQL.qll: Mongoose module treats query submissions (exec/then/await)
+  #   as DatabaseAccess nodes.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # find(query), findOne(query) — query argument is a NoSQL injection sink
+      - ["marsdb", "Fuzzy.Member[find,findOne].Argument[0]", "nosql-injection"]
+
+      # update(query, modifier) — both arguments are NoSQL injection sinks
+      - ["marsdb", "Fuzzy.Member[update].Argument[0,1]", "nosql-injection"]
+
+      # remove(query), count(query), ids(query) — query argument is a sink
+      - ["marsdb", "Fuzzy.Member[remove,count,ids].Argument[0]", "nosql-injection"]

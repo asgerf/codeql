@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # showdown (npm: "showdown") — Bidirectional Markdown ↔ HTML converter
+  # =============================================================================
+  #
+  # Showdown converts Markdown to HTML and vice versa via a Converter class:
+  #
+  #   const showdown = require('showdown');
+  #   const converter = new showdown.Converter({ tables: true });
+  #
+  #   converter.makeHtml('# Hello');         // → '<h1>Hello</h1>'
+  #   converter.makeMarkdown('<h1>Hi</h1>'); // → '# Hi'
+  #
+  # Security concerns:
+  # - makeHtml() converts Markdown to raw, unsanitized HTML. If the output is
+  #   inserted into the DOM, untrusted Markdown input becomes an XSS vector.
+  #   Showdown does NOT sanitize its output — HTML tags in the Markdown input
+  #   are passed through unchanged.
+  # - makeMarkdown() converts HTML to Markdown. Tainted HTML input produces
+  #   tainted Markdown output, which may later be converted back to HTML.
+  # - No sources or sinks of its own: the library is a pure converter.
+  #
+  # Existing QLL coverage (Markdown.qll):
+  #   ShowDownStep models taint from Argument[0] → ReturnValue for
+  #   new showdown.Converter().makeHtml() and .makeMd(). The step's
+  #   preservesHtml() returns true, feeding into XSS sink detection
+  #   via UnsafeHtmlConstructionCustomizations.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through Markdown ↔ HTML conversion
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # converter.makeHtml(markdownStr) → HTML string
+      # Taint flows from the Markdown input to the raw HTML output.
+      # Uses Fuzzy to match any Converter instance without needing a type model.
+      - ["showdown", "Fuzzy.Member[makeHtml]", "Argument[0]", "ReturnValue", "taint"]
+
+      # converter.makeMarkdown(htmlStr) → Markdown string
+      # Taint flows from the HTML input to the Markdown output.
+      - ["showdown", "Fuzzy.Member[makeMarkdown]", "Argument[0]", "ReturnValue", "taint"]

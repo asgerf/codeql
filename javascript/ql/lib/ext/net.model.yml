@@ -1,0 +1,77 @@
+extensions:
+  # =============================================================================
+  # net (Node.js built-in: "net") - TCP/IPC networking
+  # =============================================================================
+  #
+  # The `net` module provides asynchronous TCP/IPC server and client APIs:
+  #
+  #   const net = require('net');
+  #
+  #   // Create a TCP server
+  #   const server = net.createServer((socket) => {
+  #     socket.on('data', (data) => { /* data from client */ });
+  #     socket.write('response');
+  #   });
+  #   server.listen(8080);
+  #
+  #   // Create a TCP client
+  #   const client = net.createConnection({ port: 8080, host: 'localhost' });
+  #   const client2 = net.connect(8080, 'localhost');
+  #   const client3 = new net.Socket();
+  #   client3.connect(8080, 'localhost');
+  #
+  #   client.write('hello');
+  #   client.on('data', (data) => { /* data from server */ });
+  #
+  # Security concerns:
+  # - net.createServer(): The connection callback's socket emits 'data' events
+  #   containing untrusted remote input — these are remote flow sources.
+  # - net.createConnection / net.connect / socket.connect(): The host/port/path
+  #   arguments control where the TCP connection is made — request-forgery sinks.
+  # - socket.write(data): Sends data over the socket. If this is a server
+  #   socket, response data may carry tainted content (but is not itself a sink
+  #   in the usual sense — it's an output, not a dangerous operation).
+  #
+  # Existing QLL coverage:
+  #   NodeJSLib.qll: net.createServer() connection 'data' events modeled as
+  #     RemoteFlowSource (NodeJSNetServerItemAsRemoteFlow).
+  #   ClientRequests.qll: new net.Socket().connect() modeled as
+  #     ClientRequest (NetSocketRequest) with URL, host, data, and response
+  #     data nodes.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: data received on server sockets is untrusted remote input
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # net.createServer(callback) — callback receives a socket; data events
+      # on that socket carry remote input.
+      # server.on('connection', (socket) => { socket.on('data', cb) })
+      - ["net", "Member[createServer].Argument[0].Parameter[0].Member[on,once,addListener].WithStringArgument[0=data].Argument[1].Parameter[0]", "remote"]
+
+      # Also via server.on('connection', (socket) => ...)
+      - ["net", "Member[createServer].ReturnValue.Member[on,once,addListener].WithStringArgument[0=connection].Argument[1].Parameter[0].Member[on,once,addListener].WithStringArgument[0=data].Argument[1].Parameter[0]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: host/port/path arguments control outbound connections
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # net.createConnection(options) — options.host / options.port
+      - ["net", "Member[createConnection,connect].Argument[0].Member[host]", "request-forgery"]
+      - ["net", "Member[createConnection,connect].Argument[0].Member[path]", "request-forgery"]
+
+      # net.createConnection(port, host) — positional form
+      - ["net", "Member[createConnection,connect].Argument[1]", "request-forgery"]
+
+      # new net.Socket().connect(options) — options.host / options.path
+      - ["net", "Fuzzy.Member[connect].Argument[0].Member[host]", "request-forgery"]
+      - ["net", "Fuzzy.Member[connect].Argument[0].Member[path]", "request-forgery"]
+
+      # new net.Socket().connect(port, host) — positional form
+      - ["net", "Fuzzy.Member[connect].Argument[1]", "request-forgery"]

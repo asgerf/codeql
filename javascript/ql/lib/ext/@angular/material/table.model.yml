@@ -1,0 +1,39 @@
+extensions:
+  # =============================================================================
+  # @angular/material/table – Angular Material data table components
+  # =============================================================================
+  #
+  # This package provides the Material Design data table (MatTable) and a
+  # convenience data source class (MatTableDataSource). The table renders data
+  # via Angular templates, which auto-sanitize output by default.
+  #
+  # Sources: none — this library does not introduce untrusted data.
+  # Sinks:   none — DOM output is handled by Angular's template sanitization.
+  #
+  # The primary security concern is taint propagation: ensuring that data
+  # flowing into MatTableDataSource is tracked through the data pipeline to
+  # where it is consumed.
+  #
+  # Note: template-level taint flow (from [dataSource] bindings to
+  # *matCellDef row variables) requires HTML/template analysis and is
+  # handled in QLL (Angular2.qll), not expressible as data extensions.
+  # Similarly, property writes such as `instance.data = taintedValue` are
+  # handled in QLL and cannot be expressed as data extensions.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through MatTableDataSource
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # new MatTableDataSource(data) — the constructor argument taints the
+      # instance, enabling taint tracking from the initial data array through
+      # to the table's rendered rows.
+      - ["@angular/material/table", "Member[MatTableDataSource]", "Argument[0]", "Instance", "taint"]
+
+      # MatTableDataSource.connect() — called by the table to obtain an
+      # Observable stream of data rows. Taint flows from the data source
+      # instance (receiver) to the returned Observable.
+      - ["@angular/material/table", "Fuzzy.Member[connect]", "Argument[this]", "ReturnValue", "taint"]

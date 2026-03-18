@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # socket.io (npm: "socket.io") — Real-time bidirectional event-based
+  # communication library (server-side)
+  # =============================================================================
+  #
+  # Provides a WebSocket server with automatic fallback to HTTP long-polling:
+  #
+  #   const io = require('socket.io')(httpServer);
+  #   io.on('connection', (socket) => {
+  #     socket.on('chat', (msg) => { ... });   // receive from client
+  #     socket.emit('chat', data);              // send to client
+  #   });
+  #
+  # Key concepts: servers, namespaces (identified by path), and sockets.
+  # Data flows between client and server through sockets belonging to
+  # namespaces.
+  #
+  # Security concerns:
+  # - Sources: data received from clients via socket.on() callbacks is
+  #   untrusted remote input. Each parameter of the listener callback
+  #   (except acknowledgment callbacks) is a remote flow source.
+  # - No sinks in the library itself.
+  # - Taint propagation: data sent via emit/send/write flows to the
+  #   corresponding client-side receive handler, and vice versa.
+  #
+  # Existing QLL coverage (SocketIO.qll — 666 lines):
+  # - Server creation: require('socket.io')() and .listen()
+  # - Namespace resolution: server.of(path), server.sockets
+  # - Socket objects: obtained from 'connection'/'connect' event handlers
+  # - Remote flow sources: all parameters of socket.on() callbacks are
+  #   marked as RemoteFlowSource with isUserControlledObject()
+  # - Send/receive modeling: emit(), send(), write() are modeled as
+  #   EventDispatch/EventRegistration with channel-aware matching
+  # - Acknowledgment callbacks: last parameter of send, last argument of
+  #   receive are modeled as bidirectional acknowledgment channels
+  # - Chainable methods: adapter, attach, bind, listen, binary, compress,
+  #   in, to, use, json, local, volatile, broadcast — all tracked
+  # - Client-side (socket.io-client): socket creation, send/receive,
+  #   namespace path resolution, cross-package server matching
+  #
+  # This is a complex framework-level model involving EventEmitter
+  # patterns, cross-component client-server data flow, namespace
+  # resolution, and chainable method tracking that cannot be expressed
+  # as data extensions. Nothing additional to model here.
+  # =============================================================================

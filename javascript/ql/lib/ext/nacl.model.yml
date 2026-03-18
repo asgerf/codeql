@@ -1,0 +1,57 @@
+extensions:
+  # =============================================================================
+  # nacl / nacl-fast (npm: "nacl", "nacl-fast") — NaCl cryptography bindings
+  # =============================================================================
+  #
+  # Bindings for the Networking and Cryptography library (NaCl). Provides
+  # authenticated encryption (crypto_box), signing, and hashing:
+  #
+  #   const nacl = require('nacl');
+  #   nacl.box(message, nonce, pubkey, privkey);
+  #   nacl.unbox(box, nonce, pubkey, privkey);
+  #   nacl.sign(message, privkey);
+  #   nacl.unsign(message, pubkey);
+  #   nacl.hash(message);  // SHA-512 (nacl-fast only)
+  #
+  # Security concerns:
+  # - No sources or sinks. All functions are pure cryptographic operations
+  #   with no file system or network I/O.
+  # - Taint propagation: the message input flows to the output for box,
+  #   sign, unbox, unsign, and hash operations.
+  #
+  # Existing QLL coverage (CryptoLibraries.qll):
+  # - Models nacl.sign() as ed25519 and nacl.hash() as SHA-512
+  #   CryptographicOperation, with Argument[0] as input.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through crypto operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- nacl ---
+
+      # nacl.box(message, nonce, pubkey, privkey) → encrypted Buffer
+      - ["nacl", "Member[box]", "Argument[0]", "ReturnValue", "taint"]
+
+      # nacl.unbox(box, nonce, pubkey, privkey) → decrypted Buffer
+      - ["nacl", "Member[unbox]", "Argument[0]", "ReturnValue", "taint"]
+
+      # nacl.sign(message, privkey) → signed Buffer
+      - ["nacl", "Member[sign]", "Argument[0]", "ReturnValue", "taint"]
+
+      # nacl.unsign(message, pubkey) → unsigned Buffer
+      - ["nacl", "Member[unsign]", "Argument[0]", "ReturnValue", "taint"]
+
+      # nacl.hash(message) → SHA-512 hash (nacl-fast)
+      - ["nacl", "Member[hash]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- nacl-fast (same API) ---
+
+      - ["nacl-fast", "Member[box]", "Argument[0]", "ReturnValue", "taint"]
+      - ["nacl-fast", "Member[unbox]", "Argument[0]", "ReturnValue", "taint"]
+      - ["nacl-fast", "Member[sign]", "Argument[0]", "ReturnValue", "taint"]
+      - ["nacl-fast", "Member[unsign]", "Argument[0]", "ReturnValue", "taint"]
+      - ["nacl-fast", "Member[hash]", "Argument[0]", "ReturnValue", "taint"]

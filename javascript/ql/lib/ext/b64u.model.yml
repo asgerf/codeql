@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # b64u (npm: "b64u") - Base64 URL encoding/decoding
+  # =============================================================================
+  #
+  # The b64u package exports { encode, decode, toBase64, fromBase64, toBuffer }
+  # plus a default export (the encode function) for Base64 URL encoding/decoding.
+  #
+  #   import b64u from 'b64u';
+  #   b64u('hello');                       // encode to base64url
+  #   b64u.encode('hello');                // encode to base64url
+  #   b64u.decode('aGVsbG8');              // decode base64url to string
+  #   b64u.toBase64('aGVsbG8');            // base64url -> base64
+  #   b64u.fromBase64('aGVsbG8=');         // base64 -> base64url
+  #   b64u.toBuffer('dGlueQ');             // decode base64url to Buffer
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Only decoding (decode, fromBase64, toBuffer) is modeled as taint-propagating,
+  # consistent with the existing CodeQL convention that base64 encoding is not a
+  # taint step (to avoid false positives).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # b64u.decode(encoded) - decode base64url to string
+      - ["b64u", "Member[decode]", "Argument[0]", "ReturnValue", "taint"]
+      # b64u.fromBase64(encoded) - convert base64 string to base64url string
+      - ["b64u", "Member[fromBase64]", "Argument[0]", "ReturnValue", "taint"]
+      # b64u.toBuffer(encoded) - decode base64url to Buffer
+      - ["b64u", "Member[toBuffer]", "Argument[0]", "ReturnValue", "taint"]

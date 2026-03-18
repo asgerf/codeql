@@ -1,0 +1,85 @@
+extensions:
+  # =============================================================================
+  # d3-node (npm: "d3-node") - Server-side D3.js rendering with JSDOM
+  # =============================================================================
+  #
+  # d3-node provides a D3Node class for server-side D3.js visualization
+  # rendering. It wraps D3 and JSDOM to generate SVG/HTML on the server:
+  #
+  #   const D3Node = require('d3-node');
+  #   const d3n = new D3Node({ container: '<div id="chart"></div>' });
+  #   d3n.d3.select('#chart').append('svg');
+  #   const svg = d3n.svgString();    // serialized SVG markup
+  #   const html = d3n.html();        // full HTML document
+  #   const chart = d3n.chartHTML();   // selected element HTML
+  #
+  # Key API:
+  #   new D3Node({ d3Module, selector, container, styles, canvasModule })
+  #   d3n.d3            — the D3 module instance
+  #   d3n.d3Element     — a D3 selection on the document body
+  #   d3n.createSVG()   — creates an SVG element, returns D3 selection
+  #   d3n.html()        — serializes the full JSDOM document to HTML
+  #   d3n.svgString()   — serializes the SVG element to a string
+  #   d3n.chartHTML()   — serializes the selected chart element to HTML
+  #
+  # Security concerns:
+  # - SINK (html-injection): The constructor `container` option is raw HTML
+  #   parsed by JSDOM. If the output is served to clients, untrusted container
+  #   content causes XSS.
+  # - SINK (html-injection): D3 selection .html(content) sets innerHTML on
+  #   selections obtained via d3n.d3, d3n.d3Element, or d3n.createSVG().
+  # - Taint propagates from constructor options through output methods
+  #   (html(), svgString(), chartHTML()) to the serialized HTML/SVG strings.
+  #
+  # Existing QLL coverage (D3.qll):
+  #   API::moduleImport("d3-node").getInstance().getMember("d3") → d3 module
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Type model: d3n.d3 is the D3 module — all d3 models apply to it
+  # ---------------------------------------------------------------------------
+  # This is necessary because d3-node re-exports d3 through its .d3 property,
+  # and without this, d3 sink/source/summary models would not apply to objects
+  # accessed via d3n.d3. Fuzzy alone cannot bridge this gap without duplicating
+  # every d3 model.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: typeModel
+    data:
+      - ["d3", "d3-node", "Instance.Member[d3]"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: html-injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new D3Node({ container: html }) — html is parsed by JSDOM and will be
+      # serialized by html()/chartHTML(), enabling XSS if served to clients
+      - ["d3-node", "Argument[0].Member[container]", "html-injection"]
+
+      # D3 selection .html(content) on any object derived from d3-node
+      # (covers d3n.d3Element.html(), d3n.createSVG().append(...).html(), etc.)
+      - ["d3-node", "Fuzzy.Member[html].Argument[0]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through D3Node
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Constructor: taint from container/styles options flows into the instance
+      - ["d3-node", "", "Argument[0].Member[container]", "ReturnValue", "taint"]
+      - ["d3-node", "", "Argument[0].Member[styles]", "ReturnValue", "taint"]
+
+      # Output methods: taint from D3Node instance flows to serialized output.
+      # html() uses Instance to avoid ambiguity with d3 selection .html(content).
+      - ["d3-node", "Instance.Member[html]", "Argument[this]", "ReturnValue", "taint"]
+      # svgString() and chartHTML() are unique to D3Node — Fuzzy is safe
+      - ["d3-node", "Fuzzy.Member[svgString]", "Argument[this]", "ReturnValue", "taint"]
+      - ["d3-node", "Fuzzy.Member[chartHTML]", "Argument[this]", "ReturnValue", "taint"]
+
+      # createSVG(): taint from instance propagates to the returned SVG selection
+      - ["d3-node", "Fuzzy.Member[createSVG]", "Argument[this]", "ReturnValue", "taint"]

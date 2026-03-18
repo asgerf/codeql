@@ -1,0 +1,34 @@
+extensions:
+  # =============================================================================
+  # apollo-link-http (npm: "apollo-link-http") - HTTP transport for Apollo Client
+  # =============================================================================
+  #
+  # apollo-link-http provides the HTTP transport layer used by Apollo Client to
+  # send GraphQL operations to a server. It is now bundled into @apollo/client
+  # but remains widely used via Apollo Client v2.x.
+  #
+  #   import { HttpLink, createHttpLink } from "apollo-link-http";
+  #   const link = new HttpLink({ uri: "https://api.example.com/graphql" });
+  #   // or
+  #   const link = createHttpLink({ uri: "https://api.example.com/graphql" });
+  #
+  # Exports:
+  #   - HttpLink — class extending ApolloLink; constructor takes options with uri
+  #   - createHttpLink — factory function; takes options with uri
+  #
+  # Security concerns:
+  # - The `uri` option on HttpLink and createHttpLink controls the destination of
+  #   outbound HTTP requests → request-forgery vector.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URI options control outbound request destinations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new HttpLink({ uri: <tainted> })
+      - ["apollo-link-http", "Member[HttpLink].Argument[0].Member[uri]", "request-forgery"]
+      # createHttpLink({ uri: <tainted> })
+      - ["apollo-link-http", "Member[createHttpLink].Argument[0].Member[uri]", "request-forgery"]

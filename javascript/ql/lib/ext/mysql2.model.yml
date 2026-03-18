@@ -1,0 +1,83 @@
+extensions:
+  # =============================================================================
+  # mysql2 (npm: "mysql2", "mysql2/promise") - MySQL client for Node.js
+  # =============================================================================
+  #
+  # mysql2 is a fast MySQL driver for Node.js, API-compatible with the
+  # original `mysql` package. It supports both callback and promise APIs.
+  #
+  #   const mysql = require('mysql2');
+  #   const connection = mysql.createConnection({ host: '...', user: '...', password: '...' });
+  #
+  #   // Query with SQL string
+  #   connection.query('SELECT * FROM users WHERE id = ?', [id], (err, rows) => { ... });
+  #
+  #   // Query with options object
+  #   connection.query({ sql: 'SELECT ...', values: [...] }, (err, rows) => { ... });
+  #
+  #   // Prepared statements via execute
+  #   connection.execute('SELECT * FROM users WHERE id = ?', [id], (err, rows) => { ... });
+  #
+  #   // Promise API
+  #   const mysql = require('mysql2/promise');
+  #   const conn = await mysql.createConnection({ ... });
+  #   const [rows] = await conn.query('SELECT ...', [params]);
+  #   const [rows] = await conn.execute('SELECT ...', [params]);
+  #
+  #   // Pool
+  #   const pool = mysql.createPool({ ... });
+  #   pool.query('SELECT ...', (err, rows) => { ... });
+  #   const conn = await pool.getConnection();
+  #
+  # Key API:
+  #   mysql.createConnection(options) => Connection
+  #   mysql.createPool(options)       => Pool
+  #   connection.query(sql, [values], [cb])   — execute SQL query
+  #   connection.query({sql, values}, [cb])   — execute with options object
+  #   connection.execute(sql, [values], [cb]) — prepared statement
+  #   pool.query(sql, [values], [cb])         — query via pool
+  #   pool.execute(sql, [values], [cb])       — prepared statement via pool
+  #   mysql.escape(value)                     — escape a value for SQL
+  #   mysql.escapeId(value)                   — escape an identifier
+  #   connection.escape(value)                — escape a value for SQL
+  #   connection.escapeId(value)              — escape an identifier
+  #
+  # Security concerns:
+  # - SQL injection: the first argument to query() and execute() is interpreted
+  #   as a SQL string. If an options object is passed, its `sql` property is
+  #   the SQL string. Both are sql-injection sinks.
+  # - Credentials: the `user` and `password` properties on connection/pool
+  #   options contain database credentials.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: SQL injection via query and execute
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # connection.query(sql, ...) / pool.query(sql, ...)
+      # Fuzzy matches connections and pools obtained through any path.
+      - ["mysql2", "Fuzzy.Member[query].Argument[0]", "sql-injection"]
+      - ["mysql2/promise", "Fuzzy.Member[query].Argument[0]", "sql-injection"]
+
+      # connection.execute(sql, ...) / pool.execute(sql, ...)
+      - ["mysql2", "Fuzzy.Member[execute].Argument[0]", "sql-injection"]
+      - ["mysql2/promise", "Fuzzy.Member[execute].Argument[0]", "sql-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: escape/escapeId sanitizes SQL values
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # mysql.escape(value) / connection.escape(value)
+      # mysql.escapeId(value) / connection.escapeId(value)
+      # These return a sanitized SQL string. Taint still flows through, but the
+      # SQL.qll SqlSanitizer mechanism handles actual sanitization recognition.
+      - ["mysql2", "Fuzzy.Member[escape]", "Argument[0]", "ReturnValue", "taint"]
+      - ["mysql2", "Fuzzy.Member[escapeId]", "Argument[0]", "ReturnValue", "taint"]
+      - ["mysql2/promise", "Fuzzy.Member[escape]", "Argument[0]", "ReturnValue", "taint"]
+      - ["mysql2/promise", "Fuzzy.Member[escapeId]", "Argument[0]", "ReturnValue", "taint"]

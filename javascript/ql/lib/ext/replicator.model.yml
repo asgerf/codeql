@@ -1,0 +1,41 @@
+extensions:
+  # =============================================================================
+  # replicator (npm: "replicator") — Advanced JavaScript object serialization
+  # =============================================================================
+  #
+  # Serializes and deserializes complex JavaScript objects, including circular
+  # references and extended types (Date, RegExp, Error, Map, Set, typed arrays):
+  #
+  #   const Replicator = require('replicator');
+  #   const replicator = new Replicator();
+  #
+  #   const encoded = replicator.encode(obj);   // object → string
+  #   const decoded = replicator.decode(str);    // string → object
+  #
+  #   replicator.addTransforms(customTransform);
+  #   replicator.removeTransforms(customTransform);
+  #
+  # Exports: Replicator constructor
+  #
+  # Security concerns:
+  # - No sources. The library does not access external or untrusted data.
+  # - No sinks. encode/decode use JSON.parse/stringify internally, which is
+  #   safe. The library does not perform command execution, file I/O, URL
+  #   navigation, or HTML rendering. Custom transforms could theoretically
+  #   introduce eval, but that is user-defined code outside the library.
+  # - Taint propagation: encode serializes an object to a string, decode
+  #   deserializes a string back to an object. Both propagate taint.
+  #
+  # Existing QLL coverage:
+  # - JsonStringifiers.qll recognizes new Replicator().encode() as a JSON
+  #   stringifier (taint: Argument[0] → ReturnValue).
+  # - JsonParsers.qll recognizes new Replicator().decode() as a JSON
+  #   parser (taint: Argument[0] → ReturnValue).
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      - ["replicator", "Fuzzy.Member[encode]", "Argument[0]", "ReturnValue", "taint"]
+      - ["replicator", "Fuzzy.Member[decode]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,39 @@
+extensions:
+  # =============================================================================
+  # printj (npm: "printj") — Extended sprintf implementation
+  # =============================================================================
+  #
+  # A standards-compliant sprintf/vsprintf implementation for JS:
+  #
+  #   const { sprintf, vsprintf } = require('printj');
+  #   sprintf("Hello %s, you are %d", name, age);   // => formatted string
+  #   vsprintf("Hello %s, you are %d", [name, age]); // => formatted string
+  #
+  # Security concerns:
+  # - No sources or sinks. The library performs pure string formatting.
+  # - Taint propagation: the format string and substitution arguments flow
+  #   into the returned string. An attacker who controls either the format
+  #   string or the arguments has significant control over the output.
+  #
+  # Existing QLL coverage:
+  # - StringFormatters.qll recognizes printj.sprintf and printj.vsprintf as
+  #   string formatter calls, modeling taint flow from the format string and
+  #   arguments to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through sprintf/vsprintf
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # sprintf(format, ...args) — format string taints the return value
+      - ["printj", "Member[sprintf]", "Argument[0]", "ReturnValue", "taint"]
+      # sprintf(format, ...args) — each substitution argument taints the return value
+      - ["printj", "Member[sprintf]", "Argument[1..]", "ReturnValue", "taint"]
+
+      # vsprintf(format, argv) — format string taints the return value
+      - ["printj", "Member[vsprintf]", "Argument[0]", "ReturnValue", "taint"]
+      # vsprintf(format, argv) — array of arguments taints the return value
+      - ["printj", "Member[vsprintf]", "Argument[1]", "ReturnValue", "taint"]

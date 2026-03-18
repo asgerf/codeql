@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # send (npm: "send") — streaming static file server for Node.js
+  # =============================================================================
+  #
+  # send is a library for streaming files from the file system as an HTTP
+  # response. It is the underlying library used by Express's res.sendFile().
+  #
+  #   const send = require('send');
+  #   send(req, '/path/to/file.html').pipe(res);
+  #   send(req, userPath, { root: '/public' }).pipe(res);
+  #
+  # API:
+  #   send(req, path, options?) → SendStream
+  #
+  # Parameters:
+  #   req     — HTTP request object (used for conditional GET, range, etc.)
+  #   path    — file path to serve (relative to options.root or absolute)
+  #   options — optional: root, maxAge, index, dotfiles, extensions, etc.
+  #
+  # SendStream events: error, directory, file, headers, stream, end
+  # SendStream methods: .pipe(res), .root(path), .maxage(ms), etc.
+  #
+  # Security concerns:
+  # - The path argument (argument 1) is a path-injection sink. If an
+  #   attacker controls this value, they can read arbitrary files from the
+  #   server's file system.
+  # - No sources. The library does not produce untrusted data.
+  # - No taint summaries needed.
+  #
+  # Existing QLL coverage (TaintedPathCustomizations.qll):
+  #   SendPathSink models send(req, path).getArgument(1) as a tainted
+  #   path sink.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path injection via the file path argument
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # send(req, path, options?) — path is a file system path
+      - ["send", "Argument[1]", "path-injection"]

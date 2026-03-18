@@ -1,0 +1,322 @@
+extensions:
+  # =============================================================================
+  # kew (npm: "kew") - Lightweight promise/deferred library
+  # =============================================================================
+  #
+  # kew is a lightweight promise/deferred framework for Node.js by Medium,
+  # providing a subset of Q library functionality with better performance:
+  #
+  #   const Q = require('kew');
+  #   Q.resolve(val).then(fn).fail(errFn);
+  #   const defer = Q.defer(); defer.resolve(val);
+  #
+  # Security concerns:
+  # - No sources or sinks. kew is a pure promise utility library.
+  # - Taint propagates through promise resolution, deferred patterns,
+  #   and various utility methods.
+  #
+  # The core promise framework (Promises.qll) already models: new kew.Promise(),
+  # .then(), .catch(), .finally(), and kew.Promise.resolve/reject/all/defer.
+  #
+  # The summaries below cover:
+  # 1. Direct module exports (kew.resolve, kew.all, etc.) which are NOT
+  #    accessed through kew.Promise and thus not covered by the generic model.
+  # 2. kew-specific instance methods (.fail, .fin, .spread, .thenBound, etc.)
+  #    not covered by generic promise handling.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: static methods on require('kew')
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # Q.resolve(val)
+      # Creates a promise resolved with val.
+      # =====================================================================
+      - - "kew"
+        - "Member[resolve]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # Q.reject(val)
+      # Creates a promise rejected with val.
+      # =====================================================================
+      - - "kew"
+        - "Member[reject]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # Q.all(promises) or Q.all(p1, p2, ...)
+      # Waits for all promises. Array elements flow to output array elements.
+      # =====================================================================
+      - - "kew"
+        - "Member[all]"
+        - "Argument[0].ArrayElement"
+        - "ReturnValue.Awaited.ArrayElement"
+        - "value"
+      - - "kew"
+        - "Member[all]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # Q.allSettled(promises)
+      # Waits for all to settle. Returns array of {state, value/reason}.
+      # =====================================================================
+      - - "kew"
+        - "Member[allSettled]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # =====================================================================
+      # Q.delay(val, ms) — 2-arg form resolves with val after ms delay.
+      # =====================================================================
+      - - "kew"
+        - "Member[delay].WithArity[2]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # Q.fcall(fn, arg1, arg2, ...)
+      # Calls fn(arg1, arg2, ...) in next tick; wraps result in a promise.
+      # =====================================================================
+      - - "kew"
+        - "Member[fcall]"
+        - "Argument[1]"
+        - "Argument[0].Parameter[0]"
+        - "value"
+      - - "kew"
+        - "Member[fcall]"
+        - "Argument[2]"
+        - "Argument[0].Parameter[1]"
+        - "value"
+      - - "kew"
+        - "Member[fcall]"
+        - "Argument[3]"
+        - "Argument[0].Parameter[2]"
+        - "value"
+      - - "kew"
+        - "Member[fcall]"
+        - "Argument[0].ReturnValue"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # Q.nfcall(fn, arg1, arg2, ...)
+      # Calls fn(arg1, arg2, ..., nodeCallback) with Node-style callback.
+      # =====================================================================
+      - - "kew"
+        - "Member[nfcall]"
+        - "Argument[1]"
+        - "Argument[0].Parameter[0]"
+        - "value"
+      - - "kew"
+        - "Member[nfcall]"
+        - "Argument[2]"
+        - "Argument[0].Parameter[1]"
+        - "value"
+      - - "kew"
+        - "Member[nfcall]"
+        - "Argument[3]"
+        - "Argument[0].Parameter[2]"
+        - "value"
+
+      # =====================================================================
+      # Q.ncall(fn, thisObj, arg1, arg2, ...)
+      # Like nfcall but with a this context.
+      # =====================================================================
+      - - "kew"
+        - "Member[ncall]"
+        - "Argument[2]"
+        - "Argument[0].Parameter[0]"
+        - "value"
+      - - "kew"
+        - "Member[ncall]"
+        - "Argument[3]"
+        - "Argument[0].Parameter[1]"
+        - "value"
+      - - "kew"
+        - "Member[ncall]"
+        - "Argument[4]"
+        - "Argument[0].Parameter[2]"
+        - "value"
+
+      # =====================================================================
+      # Q.defer()
+      # Creates a deferred object. defer.resolve(val) and defer.reject(err)
+      # flow to defer.promise. defer.makeNodeResolver() returns a
+      # (err, data) node callback whose data flows to the promise.
+      # =====================================================================
+      - - "kew"
+        - "Member[defer]"
+        - "ReturnValue.Member[resolve].Argument[0]"
+        - "ReturnValue.Member[promise].Awaited"
+        - "value"
+      - - "kew"
+        - "Member[defer]"
+        - "ReturnValue.Member[resolve].Argument[0]"
+        - "ReturnValue.Awaited"
+        - "value"
+      - - "kew"
+        - "Member[defer]"
+        - "ReturnValue.Member[reject].Argument[0]"
+        - "ReturnValue.Member[promise].Awaited"
+        - "value"
+      - - "kew"
+        - "Member[defer]"
+        - "ReturnValue.Member[reject].Argument[0]"
+        - "ReturnValue.Awaited"
+        - "value"
+      - - "kew"
+        - "Member[defer]"
+        - "ReturnValue.Member[makeNodeResolver].ReturnValue.Parameter[1]"
+        - "ReturnValue.Member[promise].Awaited"
+        - "value"
+      - - "kew"
+        - "Member[defer]"
+        - "ReturnValue.Member[makeNodeResolver].ReturnValue.Parameter[1]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+  # ---------------------------------------------------------------------------
+  # Summaries: instance methods on kew promise/deferred objects (via Fuzzy)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # .fail(handler)
+      # Alias for .catch(). Error flows to handler; handler return flows
+      # to output promise. Non-error values pass through.
+      # =====================================================================
+      - - "kew"
+        - "Fuzzy.Member[fail]"
+        - "Argument[this].Awaited"
+        - "Argument[0].Parameter[0]"
+        - "taint"
+      - - "kew"
+        - "Fuzzy.Member[fail]"
+        - "Argument[0].ReturnValue"
+        - "ReturnValue.Awaited"
+        - "value"
+      - - "kew"
+        - "Fuzzy.Member[fail]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # .fin(handler)
+      # Alias for .finally(). Original value passes through regardless of
+      # whether handler succeeds or fails.
+      # =====================================================================
+      - - "kew"
+        - "Fuzzy.Member[fin]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # .spread(handler)
+      # Like .then() but spreads resolved array into handler arguments.
+      # Handler return flows to output promise.
+      # =====================================================================
+      - - "kew"
+        - "Fuzzy.Member[spread]"
+        - "Argument[this].Awaited"
+        - "Argument[0].Parameter[0]"
+        - "taint"
+      - - "kew"
+        - "Fuzzy.Member[spread]"
+        - "Argument[0].ReturnValue"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # .thenBound(fn, thisObj, ...args)
+      # Like .then() with bound context. Extra args are prepended;
+      # resolved value is appended as fn's last argument.
+      # =====================================================================
+      - - "kew"
+        - "Fuzzy.Member[thenBound]"
+        - "Argument[this].Awaited"
+        - "Argument[0].Parameter[N-1]"
+        - "value"
+      - - "kew"
+        - "Fuzzy.Member[thenBound]"
+        - "Argument[2]"
+        - "Argument[0].Parameter[0]"
+        - "value"
+      - - "kew"
+        - "Fuzzy.Member[thenBound]"
+        - "Argument[3]"
+        - "Argument[0].Parameter[1]"
+        - "value"
+      - - "kew"
+        - "Fuzzy.Member[thenBound]"
+        - "Argument[0].ReturnValue"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # .failBound(fn, thisObj, ...args)
+      # Like .fail() with bound context. Extra args are prepended;
+      # error is appended as fn's last argument.
+      # =====================================================================
+      - - "kew"
+        - "Fuzzy.Member[failBound]"
+        - "Argument[this].Awaited"
+        - "Argument[0].Parameter[N-1]"
+        - "taint"
+      - - "kew"
+        - "Fuzzy.Member[failBound]"
+        - "Argument[2]"
+        - "Argument[0].Parameter[0]"
+        - "value"
+      - - "kew"
+        - "Fuzzy.Member[failBound]"
+        - "Argument[3]"
+        - "Argument[0].Parameter[1]"
+        - "value"
+      - - "kew"
+        - "Fuzzy.Member[failBound]"
+        - "Argument[0].ReturnValue"
+        - "ReturnValue.Awaited"
+        - "value"
+      - - "kew"
+        - "Fuzzy.Member[failBound]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # .end() / .done()
+      # No-op methods that return the same promise (pass-through).
+      # =====================================================================
+      - - "kew"
+        - "Fuzzy.Member[end,done]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "value"
+
+      # =====================================================================
+      # .timeout(timeoutMs, [timeoutMsg])
+      # Returns a new promise that resolves with the same value, or rejects
+      # on timeout. Resolved value passes through.
+      # =====================================================================
+      - - "kew"
+        - "Fuzzy.Member[timeout]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "value"

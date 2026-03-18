@@ -1,0 +1,48 @@
+extensions:
+  # =============================================================================
+  # redux-ts-utils (npm: "redux-ts-utils") — TypeScript utilities for Redux
+  # =============================================================================
+  #
+  # Deprecated library (superseded by @reduxjs/toolkit) providing type-safe
+  # Redux utilities with immer-based immutable state updates.
+  #
+  # Exports:
+  #   - createAction(type, payloadCreator?, metaCreator?)
+  #       Creates a typed, FSA-compliant action creator.
+  #   - handleAction(actionCreator, reducerFn, initialState?)
+  #       Creates a reducer for a single action type using immer drafts.
+  #   - reduceReducers(reducers[], initialState?)
+  #       Composes multiple reducers into one by running them sequentially.
+  #   - createAsyncActions(name, startPc?, successPc?, errorPc?)
+  #       Creates a tuple of three action creators (start/success/error).
+  #
+  # Security analysis:
+  # - No sources: redux-ts-utils manages in-memory application state. It does
+  #   not fetch data from the network, read from the DOM, or provide access to
+  #   any external or untrusted data.
+  # - No sinks: redux-ts-utils does not perform security-sensitive operations
+  #   (no command execution, file I/O, SQL queries, URL navigation, HTML
+  #   rendering, or deserialization of external data). All operations are pure
+  #   state transformations.
+  # - Data flow summaries: the Redux data flow (action creation → dispatch →
+  #   reducer matching → state update → selector → component) is modeled in
+  #   detail by CodeQL's Redux.qll. This involves tracking action type strings
+  #   across creation and handling sites, matching dispatched actions to the
+  #   correct reducer handlers, modeling immer draft-based mutations, and
+  #   propagating state through reducer composition. These complex
+  #   interprocedural patterns cannot be expressed as data extension summaries.
+  #
+  # Existing QLL coverage (Redux.qll):
+  # - createAction: recognized as an ActionCreator; tracks the action type
+  #   string and optional payloadCreator middleware function.
+  # - handleAction: recognized as a DelegatingReducer; connects the action
+  #   type to the reducer callback so dispatched payloads flow to handlers.
+  # - handleActions: recognized as a DelegatingReducer; maps of action-type
+  #   keys to handler callbacks are resolved for dispatch-to-reducer flow.
+  # - reduceReducers: recognized as a DelegatingReducer; state flows through
+  #   the composed reducer chain.
+  # - combineActions: recognized for combining multiple action types into a
+  #   single reducer handler key.
+  #
+  # Nothing additional to model here as data extensions.
+  # =============================================================================

@@ -1,0 +1,76 @@
+extensions:
+  # =============================================================================
+  # react-hot-loader (npm: "react-hot-loader") — Hot module replacement for React
+  # =============================================================================
+  #
+  # react-hot-loader is a development tool that enables live-editing of React
+  # components while preserving state. Its public API consists of higher-order
+  # component wrappers and configuration helpers:
+  #
+  #   // Modern API (from /root sub-path)
+  #   import { hot } from 'react-hot-loader/root';
+  #   export default hot(MyComponent);
+  #
+  #   // Classic API
+  #   import { hot } from 'react-hot-loader';
+  #   export default hot(module)(MyComponent);
+  #
+  #   // Exclude a component from HMR
+  #   import { cold } from 'react-hot-loader';
+  #   export default cold(MyComponent);
+  #
+  #   // Legacy wrapper component
+  #   import { AppContainer } from 'react-hot-loader';
+  #   <AppContainer><App /></AppContainer>
+  #
+  # Security analysis:
+  # - No sources: this library does not provide access to untrusted data.
+  # - No sinks: this library does not interpret strings as code, SQL,
+  #   commands, URLs, or paths. It only wraps React components for HMR.
+  # - Summaries: hot() and cold() are identity-like HOC wrappers — the
+  #   input component flows through to the return value. These summaries
+  #   ensure taint tracking is not broken by the wrapping.
+  #
+  # Existing QLL coverage (React.qll):
+  # - higherOrderComponentBuilder() includes hot() from both
+  #   react-hot-loader and react-hot-loader/root as HOC builders.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: value flow through HOC wrappers
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # hot(module)(Component) — classic API
+      # hot(module) returns a wrapper function; calling that with a component
+      # returns the (wrapped) component. Value flows from the argument to the
+      # return value of the inner call.
+      - [
+          "react-hot-loader",
+          "Member[hot].ReturnValue",
+          "Argument[0]",
+          "ReturnValue",
+          "value",
+        ]
+
+      # hot(Component) — modern API from react-hot-loader/root
+      # Directly wraps and returns the component.
+      - [
+          "react-hot-loader/root",
+          "Member[hot]",
+          "Argument[0]",
+          "ReturnValue",
+          "value",
+        ]
+
+      # cold(Component) — excludes a component from HMR but still wraps it.
+      # The component value flows through.
+      - [
+          "react-hot-loader",
+          "Member[cold]",
+          "Argument[0]",
+          "ReturnValue",
+          "value",
+        ]

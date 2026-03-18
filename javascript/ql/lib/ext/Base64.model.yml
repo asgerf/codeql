@@ -1,0 +1,23 @@
+extensions:
+  # =============================================================================
+  # Base64 (npm: "Base64") - Base64 encoding/decoding polyfill
+  # =============================================================================
+  #
+  # The Base64 package by David Chambers exports { btoa, atob } as a polyfill
+  # for environments lacking native base64 support.
+  #
+  #   const { atob, btoa } = require("Base64");
+  #   const encoded = btoa("hello");   // "aGVsbG8="
+  #   const decoded = atob("aGVsbG8="); // "hello"
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Only decoding (atob) is modeled as taint-propagating, consistent with the
+  # existing CodeQL convention that base64 encoding is not a taint step (to
+  # avoid false positives from encoded values being treated as attacker-controlled).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Base64.atob(encoded) - decode base64 string. Taint flows from input to output.
+      - ["Base64", "Member[atob]", "Argument[0]", "ReturnValue", "taint"]

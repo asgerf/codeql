@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # js-extend (npm: "js-extend") — deep object extend utility
+  # =============================================================================
+  #
+  # js-extend provides a deep extend function based on Underscore.js that
+  # recursively merges properties from source objects into a destination object.
+  #
+  #   const extend = require('js-extend').extend;
+  #   extend(dst, src1, src2);
+  #   // dst now has all properties from src1 and src2 (deep merged)
+  #
+  # Security concerns:
+  # - No sources: js-extend does not fetch external data.
+  # - Prototype pollution: js-extend performs deep merging without guarding
+  #   against __proto__/constructor keys. This is modeled in QLL via
+  #   PrototypePollutionCustomizations.qll (not expressible as a data
+  #   extension sink kind).
+  # - Taint/value propagation: source operands flow into the destination
+  #   object and the return value.
+  #
+  # Existing QLL coverage:
+  # - Extend.qll: js-extend.extend classified as ExtendCallDeep with
+  #   value-preserving steps from source operands to destination and return.
+  # - PrototypePollutionCustomizations.qll: listed as vulnerable to
+  #   prototype pollution in all versions.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: value propagation through extend calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # extend(dst, src1, src2, ...) — source operands flow to return value
+      - ["js-extend", "Member[extend]", "Argument[0..]", "ReturnValue", "value"]

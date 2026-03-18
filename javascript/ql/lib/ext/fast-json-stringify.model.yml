@@ -1,0 +1,72 @@
+extensions:
+  # =============================================================================
+  # fast-json-stringify (npm: "fast-json-stringify") - Fast JSON serializer
+  # =============================================================================
+  #
+  # fast-json-stringify compiles a JSON Schema (Draft 7) into a highly
+  # optimized stringify function using the Function constructor:
+  #
+  #   const fastJson = require('fast-json-stringify');
+  #
+  #   const stringify = fastJson({
+  #     type: 'object',
+  #     properties: { name: { type: 'string' } }
+  #   });
+  #   stringify({ name: 'hello' });  // '{"name":"hello"}'
+  #
+  #   // Debug mode — returns object with generated code
+  #   const debug = fastJson(schema, { mode: 'debug' });
+  #   const stringify2 = fastJson.restore(debug);
+  #
+  #   // Standalone mode — returns generated JavaScript source code
+  #   const code = fastJson(schema, { mode: 'standalone' });
+  #   fs.writeFileSync('stringify.js', code);
+  #
+  # Security concerns:
+  # - The schema (first argument to fastJson) is compiled into JavaScript
+  #   via `new Function(...)`. If an attacker controls the schema, this is
+  #   a code-injection vulnerability.
+  # - fastJson.restore(debugObj) evaluates the generated code from a debug
+  #   object. If the debug object is attacker-controlled, this is also
+  #   code-injection.
+  # - The generated stringify function propagates taint from its data
+  #   argument to the returned JSON string.
+  #
+  # Existing QLL coverage:
+  #   JsonStringifiers.qll: fast-json-stringify is listed as a module
+  #   import in JsonStringifyCall (taint from arg 0 to return value).
+  #   The new model corrects this by modeling the two-step API: the
+  #   factory call (schema → function) and the stringify call (data →
+  #   JSON string).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # fastJson(schema) — schema is compiled into JS via the Function
+      # constructor. User-controlled schemas enable code injection.
+      - ["fast-json-stringify", "Argument[0]", "code-injection"]
+
+      # fastJson.restore(debugObj) — the debug object contains generated
+      # JavaScript source code that is evaluated. Attacker-controlled
+      # debug objects enable code injection.
+      - ["fast-json-stringify", "Member[restore].Argument[0]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through the stringify pipeline
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # fastJson(schema) returns a stringify function.
+      # stringify(data) → JSON string: taint flows from data to return value.
+      - ["fast-json-stringify", "ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+
+      # fastJson.restore(debugObj) also returns a stringify function.
+      # Taint flows from data argument to return value the same way.
+      - ["fast-json-stringify", "Member[restore].ReturnValue", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,68 @@
+extensions:
+  # =============================================================================
+  # sockjs-client (npm: "sockjs-client")
+  # WebSocket emulation library with cross-browser fallback transports
+  # =============================================================================
+  #
+  # sockjs-client provides a WebSocket-like API with automatic fallback to
+  # HTTP-based transports (xhr-streaming, xhr-polling, jsonp-polling,
+  # eventsource, etc.) when native WebSocket is unavailable.
+  #
+  #   var SockJS = require('sockjs-client');
+  #   var sock = new SockJS('http://example.com/echo');
+  #
+  #   sock.onopen = function() { sock.send('hello'); };
+  #   sock.onmessage = function(e) { console.log(e.data); };
+  #   sock.onclose = function() { console.log('closed'); };
+  #
+  # Also available as the global `SockJS` variable in browser environments.
+  #
+  # API:
+  #   Constructor: new SockJS(url [, _reserved [, options]])
+  #     - url (string): server endpoint URL
+  #     - options: { server, transports, sessionId, timeout }
+  #   Methods: send(data), close([code, reason])
+  #   Events: onopen, onmessage, onclose
+  #   EventTarget: addEventListener('message'|'open'|'close', handler)
+  #   Properties: readyState, protocol, url, extensions
+  #
+  # Security concerns:
+  # - Sources: data received from the server via onmessage or
+  #   addEventListener('message', ...) callbacks is untrusted remote input.
+  #   The message payload is in event.data.
+  # - Sinks: the URL argument to the constructor controls the WebSocket
+  #   connection destination — a request-forgery vector if attacker-controlled.
+  #
+  # Existing QLL coverage (WebSocket.qll):
+  #   Recognizes require('sockjs-client') and global SockJS as client socket
+  #   constructors. Models addEventListener('message', handler) and onmessage
+  #   receive patterns with event.data extraction. Marks received data as
+  #   RemoteFlowSource. Models send() as EventDispatch to SockJS servers.
+  #   Constructor URL tracked via ClientRequest::Range.getUrl().
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: data received from the server is untrusted
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # sock.addEventListener('message', function(e) { e.data })
+      - ["sockjs-client", "Instance.Member[addEventListener].WithStringArgument[0=message].Argument[1].Parameter[0].Member[data]", "remote"]
+      - ["global", "Member[SockJS].Instance.Member[addEventListener].WithStringArgument[0=message].Argument[1].Parameter[0].Member[data]", "remote"]
+
+      # sock.onmessage = function(e) { e.data }
+      - ["sockjs-client", "Instance.Member[onmessage].Parameter[0].Member[data]", "remote"]
+      - ["global", "Member[SockJS].Instance.Member[onmessage].Parameter[0].Member[data]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: constructor URL controls outbound connection destination
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new SockJS(url)
+      - ["sockjs-client", "Argument[0]", "request-forgery"]
+      - ["global", "Member[SockJS].Argument[0]", "request-forgery"]

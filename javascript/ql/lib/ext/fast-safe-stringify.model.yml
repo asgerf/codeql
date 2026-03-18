@@ -1,0 +1,47 @@
+extensions:
+  # =============================================================================
+  # fast-safe-stringify (npm: "fast-safe-stringify") - Safe JSON serializer
+  # =============================================================================
+  #
+  # A drop-in replacement for JSON.stringify that safely handles circular
+  # references (replacing them with "[Circular]") instead of throwing:
+  #
+  #   const stringify = require('fast-safe-stringify');
+  #
+  #   const obj = { a: 1 };
+  #   obj.self = obj;
+  #
+  #   stringify(obj);                          // '{"a":1,"self":"[Circular]"}'
+  #   stringify(obj, replacer, 2);             // pretty-printed with replacer
+  #   stringify(obj, null, 0, { depthLimit: 5, edgesLimit: 100 });
+  #
+  #   stringify.stableStringify(obj);          // deterministic key ordering
+  #   stringify.stableStringify(obj, replacer, 2);
+  #
+  # The API mirrors JSON.stringify(value, replacer?, space?) with an
+  # additional options parameter for depth/edge limits.
+  #
+  # Security notes:
+  # - No code generation or eval — purely a serializer.
+  # - No sinks: the library does not interpret its inputs as code, SQL,
+  #   paths, or URLs.
+  # - Taint flows from the value argument (arg 0) through to the returned
+  #   JSON string, just like JSON.stringify.
+  #
+  # Existing QLL coverage:
+  #   JsonStringifiers.qll: fast-safe-stringify is listed as a module
+  #   import in JsonStringifyCall (taint from arg 0 to return value).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through serialization
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # stringify(value, replacer?, space?, options?) → JSON string
+      - ["fast-safe-stringify", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # stringify.stableStringify(value, replacer?, space?, options?) → JSON string
+      - ["fast-safe-stringify", "Member[stableStringify]", "Argument[0]", "ReturnValue", "taint"]

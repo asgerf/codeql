@@ -1,0 +1,42 @@
+extensions:
+  # =============================================================================
+  # sprintf-js (npm: "sprintf-js") — sprintf/vsprintf string formatting
+  # =============================================================================
+  #
+  # A complete, standards-compliant sprintf/vsprintf implementation:
+  #
+  #   const { sprintf, vsprintf } = require('sprintf-js');
+  #   sprintf("Hello %s, you are %d", name, age);    // => formatted string
+  #   vsprintf("Hello %s, you are %d", [name, age]); // => formatted string
+  #
+  # Security concerns:
+  # - No sources: the library does not fetch or expose external data.
+  # - No sinks expressible via data extensions. (The format-string argument is
+  #   a tainted-format-string sink when format arguments are present, but that
+  #   query uses a custom sink class, not the extensible sinkModel predicate.)
+  # - Taint propagation: the format string and substitution arguments flow into
+  #   the returned string. An attacker who controls either the format string or
+  #   the arguments has significant control over the output.
+  #
+  # Existing QLL coverage:
+  # - StringFormatters.qll recognizes sprintf-js.sprintf and sprintf-js.vsprintf
+  #   as string formatter calls, modeling taint flow from the format string and
+  #   arguments to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through sprintf/vsprintf
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # sprintf(format, ...args) — format string taints the return value
+      - ["sprintf-js", "Member[sprintf]", "Argument[0]", "ReturnValue", "taint"]
+      # sprintf(format, ...args) — each substitution argument taints the return value
+      - ["sprintf-js", "Member[sprintf]", "Argument[1..]", "ReturnValue", "taint"]
+
+      # vsprintf(format, argv) — format string taints the return value
+      - ["sprintf-js", "Member[vsprintf]", "Argument[0]", "ReturnValue", "taint"]
+      # vsprintf(format, argv) — array of arguments taints the return value
+      - ["sprintf-js", "Member[vsprintf]", "Argument[1]", "ReturnValue", "taint"]

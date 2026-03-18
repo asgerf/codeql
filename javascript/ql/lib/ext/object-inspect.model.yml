@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # object-inspect (npm: "object-inspect") - String representations of objects
+  # =============================================================================
+  #
+  # object-inspect produces string representations of JavaScript values,
+  # similar to util.inspect but works in both Node.js and browsers:
+  #
+  #   const inspect = require('object-inspect');
+  #   inspect({ a: 1, b: [3, 4] });  // "{ a: 1, b: [ 3, 4 ] }"
+  #   inspect(obj, { depth: 2 });     // with options
+  #
+  # Security concerns:
+  # - No sources or sinks. object-inspect is a pure serialization utility.
+  # - Taint propagates from the input value to the returned string.
+  #
+  # Existing QLL coverage:
+  # - JsonStringifiers.qll: object-inspect modeled as a JsonStringifyCall,
+  #   with taint flowing from Argument[0] to the return value via
+  #   JsonStringifyTaintStep in TaintTracking.qll.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # inspect(object, options?) → string
+      - ["object-inspect", "", "Argument[0]", "ReturnValue", "taint"]

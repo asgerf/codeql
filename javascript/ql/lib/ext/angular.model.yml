@@ -1,0 +1,77 @@
+extensions:
+  # =============================================================================
+  # angular (npm: "angular") - AngularJS 1.x framework
+  # =============================================================================
+  #
+  # AngularJS 1.x exposes a global `angular` object (or module export) with
+  # utility methods. Many security-critical features (DI-injected services like
+  # $compile, $parse, $sce; scope methods like $eval; expression parsing in
+  # templates; route parameter tracking) are deeply tied to the DI system and
+  # are modeled in QLL (AngularJSCore.qll, DependencyInjections.qll,
+  # AngularJSExpressions.qll). This file models the static utility methods
+  # on the `angular` object that can be expressed as data extensions.
+  #
+  #   const angular = require("angular");
+  #   angular.extend(dst, src);
+  #   angular.merge(dst, src);      // deep merge — prototype pollution risk
+  #   angular.fromJson(jsonString);
+  #   angular.element("<div>");     // jQuery-like HTML wrapper
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # angular.element(html) - interprets its argument as HTML, like jQuery's $().
+      # If the argument is a string containing user-controlled content, it is an
+      # HTML injection vector.
+      - ["angular", "Member[element].Argument[0]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through angular utility methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- angular.extend(dst, src1, src2, ...) ---
+      # Shallow copy of properties from source objects to destination.
+      # Taint flows from each source operand to both the return value and
+      # the destination object (argument 0). Return value === dst.
+      - ["angular", "Member[extend]", "Argument[1..N-1]", "ReturnValue", "taint"]
+      - ["angular", "Member[extend]", "Argument[1..N-1]", "Argument[0]", "taint"]
+      - ["angular", "Member[extend]", "Argument[0]", "ReturnValue", "value"]
+
+      # --- angular.merge(dst, src1, src2, ...) ---
+      # Deep recursive merge. Same taint propagation pattern as extend.
+      - ["angular", "Member[merge]", "Argument[1..N-1]", "ReturnValue", "taint"]
+      - ["angular", "Member[merge]", "Argument[1..N-1]", "Argument[0]", "taint"]
+      - ["angular", "Member[merge]", "Argument[0]", "ReturnValue", "value"]
+
+      # --- angular.copy(source, destination?) ---
+      # Deep copy. Taint flows from source to return value (and destination
+      # if provided).
+      - ["angular", "Member[copy]", "Argument[0]", "ReturnValue", "taint"]
+      - ["angular", "Member[copy]", "Argument[0]", "Argument[1]", "taint"]
+
+      # --- angular.fromJson(jsonString) ---
+      # Equivalent to JSON.parse(). Taint flows from the JSON string to the
+      # parsed object.
+      - ["angular", "Member[fromJson]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- angular.toJson(obj, pretty?) ---
+      # Equivalent to JSON.stringify(). Taint flows from the object to the
+      # serialized string.
+      - ["angular", "Member[toJson]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- angular.forEach(obj, iterator, context?) ---
+      # Iterates over object properties or array elements. Taint flows from
+      # the collection to the iterator callback's parameters:
+      #   - Parameter 0: the value (array element or object property value)
+      #   - Parameter 1: the key (array index or object property name)
+      - ["angular", "Member[forEach]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      - ["angular", "Member[forEach]", "Argument[0].MapValue", "Argument[1].Parameter[0]", "value"]
+      - ["angular", "Member[forEach]", "Argument[0]", "Argument[1].Parameter[1]", "taint"]

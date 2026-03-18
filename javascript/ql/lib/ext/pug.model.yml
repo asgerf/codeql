@@ -1,0 +1,93 @@
+extensions:
+  # =============================================================================
+  # pug (npm: "pug") — High-performance template engine (formerly Jade)
+  # =============================================================================
+  #
+  # Pug is a high-performance template engine for Node.js, using clean
+  # whitespace-sensitive syntax to generate HTML. Renamed from Jade in 2016.
+  #
+  #   const pug = require('pug');
+  #
+  #   // Compile a template string into a function
+  #   const fn = pug.compile('h1= title');
+  #   fn({ title: 'Hello' });  //=> '<h1>Hello</h1>'
+  #
+  #   // Render a template string directly
+  #   pug.render('h1= title', { title: 'Hello' });
+  #
+  #   // Render a template file
+  #   pug.renderFile('views/page.pug', { title: 'Hello' }, (err, html) => {});
+  #
+  #   // Compile a template file into a function
+  #   const fn = pug.compileFile('views/page.pug');
+  #
+  #   // Compile to client-side JS source
+  #   pug.compileClient('h1= title');
+  #   pug.compileClientWithDependenciesTracked('h1= title');
+  #
+  #   // Express integration
+  #   app.set('view engine', 'pug');
+  #   // or: app.engine('pug', pug.__express);
+  #
+  # Security concerns:
+  # - Template strings (first argument to compile/render/compileClient) are
+  #   compiled into JavaScript and evaluated — code-injection sinks.
+  # - File paths (first argument to renderFile/compileFile) control which file
+  #   is read from the filesystem — path-injection sinks.
+  # - Data (locals) flows into the rendered output as taint.
+  #
+  # Existing QLL coverage:
+  #   CodeInjectionCustomizations.qll: PugTemplateSink models pug.compile()
+  #   and pug.render() argument 0 as a code-injection sink.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # pug.compile(source, opts?) — template string compiled into JS
+      - ["pug", "Member[compile].Argument[0]", "code-injection"]
+
+      # pug.compileClient(source, opts?) — template compiled to client JS source
+      - ["pug", "Member[compileClient].Argument[0]", "code-injection"]
+
+      # pug.compileClientWithDependenciesTracked(source, opts?)
+      - ["pug", "Member[compileClientWithDependenciesTracked].Argument[0]", "code-injection"]
+
+      # pug.render(source, opts?) — template string rendered directly
+      - ["pug", "Member[render].Argument[0]", "code-injection"]
+
+      # pug.renderFile(path, opts?, callback?) — file path controls filesystem read
+      - ["pug", "Member[renderFile].Argument[0]", "path-injection"]
+
+      # pug.compileFile(path, opts?) — file path controls filesystem read
+      - ["pug", "Member[compileFile].Argument[0]", "path-injection"]
+
+      # pug.__express is an alias for renderFile (used with Express)
+      - ["pug", "Member[__express].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from data/template into rendered output
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # pug.render(source, opts?) → rendered HTML string
+      # opts (which contains locals) taints the rendered output
+      - ["pug", "Member[render]", "Argument[1]", "ReturnValue", "taint"]
+
+      # pug.renderFile(path, opts, callback) — callback(err, html)
+      - ["pug", "Member[renderFile]", "Argument[1]", "Argument[2].Parameter[1]", "taint"]
+
+      # pug.__express — same flows as renderFile
+      - ["pug", "Member[__express]", "Argument[1]", "Argument[2].Parameter[1]", "taint"]
+
+      # pug.compile(source, opts?) → function(locals) → string
+      - ["pug", "Member[compile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+
+      # pug.compileFile(path, opts?) → function(locals) → string
+      - ["pug", "Member[compileFile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]

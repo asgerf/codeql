@@ -1,0 +1,33 @@
+extensions:
+  # =============================================================================
+  # events (npm: "events") - Node.js EventEmitter polyfill
+  # =============================================================================
+  #
+  # Browser-compatible polyfill of the Node.js EventEmitter class. Provides the
+  # standard event-driven API: on, once, emit, removeListener, etc.
+  #
+  #   const EventEmitter = require('events');
+  #   const emitter = new EventEmitter();
+  #   emitter.on('data', (payload) => { ... });
+  #   emitter.emit('data', payload);
+  #
+  # Security concerns:
+  # - No sources. The library does not access any external or untrusted data.
+  # - No sinks. The library does not perform any security-sensitive operations.
+  # - Data flows from emit() arguments to on()/once() listener parameters, but
+  #   this is already modeled generically in CodeQL's EventEmitter framework
+  #   (NodeJSLib.qll), which recognizes require('events') as an EventEmitter
+  #   import and tracks data flow through emit/on/once for all instances and
+  #   subclasses.
+  #
+  # Existing QLL coverage:
+  # - NodeJSLib.qll: Recognizes require('events') and
+  #   require('events').EventEmitter as EventEmitter imports. Tracks
+  #   instantiations, subclasses, and data flow between emit() and
+  #   on()/once() listeners.
+  #
+  # Nothing to model here. The library is a spec-compliant polyfill of
+  # Node.js EventEmitter with no security-relevant sources or sinks. Data
+  # flow through emit/on is already handled by CodeQL's EventEmitter
+  # framework.
+  # =============================================================================

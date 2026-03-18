@@ -1,0 +1,92 @@
+extensions:
+  # =============================================================================
+  # http (Node.js built-in) - HTTP server and client
+  # =============================================================================
+  #
+  # The http module provides HTTP server and client functionality:
+  #
+  #   const http = require('http');
+  #
+  #   // Server
+  #   http.createServer((req, res) => {
+  #     req.url;                    // user-controlled
+  #     req.headers;                // user-controlled
+  #     req.on('data', (chunk) => { ... });  // user-controlled body
+  #     res.write(data);            // response sink (html-injection)
+  #     res.end(data);              // response sink (html-injection)
+  #   });
+  #
+  #   // Client
+  #   http.request(url, (res) => {
+  #     res.on('data', (chunk) => { ... });  // remote flow source
+  #   });
+  #   http.get(url, (res) => { ... });
+  #
+  # Security concerns:
+  # - Sources: server request properties (url, headers, body) are untrusted
+  #   user input. Client response data is a remote flow source.
+  # - Sinks: http.request/http.get URL argument is a request-forgery sink.
+  #   Server response write/end is an html-injection sink.
+  #
+  # Existing QLL coverage (NodeJSLib.qll):
+  #   The http module is extensively modeled via structural QLL patterns:
+  #   - Server: createServer, route handlers, RequestNode, ResponseNode,
+  #     RequestInputAccess (req.url, req.body, req.headers), ResponseSendArgument
+  #   - Client: NodeHttpUrlRequest (http.request/get), ClientRequestResponseEvent,
+  #     ClientRequestDataEvent, ClientRequestLoginEvent, ClientRequestErrorEvent
+  #   Most server-side patterns use Http::Servers::* base classes and cannot be
+  #   fully expressed as data extensions. The QLL models should be retained.
+  #   The data extensions below provide additional/complementary coverage.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: server-side request inputs (user-controlled)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # http.createServer((req, res) => { req.url })
+      - ["http", "Member[createServer].Argument[0].Parameter[0].Member[url]", "remote"]
+      - ["https", "Member[createServer].Argument[0].Parameter[0].Member[url]", "remote"]
+
+      # http.createServer((req, res) => { req.headers })
+      - ["http", "Member[createServer].Argument[0].Parameter[0].Member[headers]", "remote"]
+      - ["https", "Member[createServer].Argument[0].Parameter[0].Member[headers]", "remote"]
+
+      # http.createServer((req, res) => { req.body })
+      # (body may be populated by middleware or manual stream reading)
+      - ["http", "Member[createServer].Argument[0].Parameter[0].Member[body]", "remote"]
+      - ["https", "Member[createServer].Argument[0].Parameter[0].Member[body]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: request-forgery — URL argument to client requests
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # http.request(url, ...) — first arg is the URL
+      - ["http", "Member[request].Argument[0]", "request-forgery"]
+      - ["https", "Member[request].Argument[0]", "request-forgery"]
+
+      # http.get(url, ...) — first arg is the URL
+      - ["http", "Member[get].Argument[0]", "request-forgery"]
+      - ["https", "Member[get].Argument[0]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: html-injection — response body written to client
+  # ---------------------------------------------------------------------------
+  # The response object is the second parameter of the createServer callback.
+  # res.write(data) and res.end(data) include data in the HTTP response body.
+  # Note: "write" and "end" are too common to use with Fuzzy safely.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # res.write(data)
+      - ["http", "Member[createServer].Argument[0].Parameter[1].Member[write].Argument[0]", "html-injection"]
+      - ["https", "Member[createServer].Argument[0].Parameter[1].Member[write].Argument[0]", "html-injection"]
+      # res.end(data)
+      - ["http", "Member[createServer].Argument[0].Parameter[1].Member[end].Argument[0]", "html-injection"]
+      - ["https", "Member[createServer].Argument[0].Parameter[1].Member[end].Argument[0]", "html-injection"]

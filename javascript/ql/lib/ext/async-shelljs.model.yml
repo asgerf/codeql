@@ -1,0 +1,75 @@
+extensions:
+  # =============================================================================
+  # async-shelljs (npm: "async-shelljs") - Async wrapper around shelljs
+  # =============================================================================
+  #
+  # async-shelljs re-exports all of shelljs's functions and adds asyncExec(),
+  # a promise-based wrapper around shelljs.exec.
+  #
+  #   const shell = require('async-shelljs');
+  #   shell.cat('file.txt');              // re-exported from shelljs
+  #   await shell.asyncExec('ls -la');    // async command execution
+  #
+  # Exported API (all re-exported from shelljs):
+  #   cat, cd, chmod, cp, pushd, popd, dirs, echo, exec, find, grep, ln, ls,
+  #   mkdir, mv, pwd, rm, sed, set, tempdir, test, touch, which, exit, error,
+  #   env, config, ShellString
+  #
+  # Additional:
+  #   asyncExec(command, options?) → Promise<string>
+  #
+  # Security concerns:
+  # - SINK: exec() and asyncExec() take shell command strings — command injection
+  # - SINK: File-path arguments to cat, cp, find, ls, mkdir, mv, rm, etc. — path injection
+  # - SOURCE: env is process.env — environment variables
+  # - Taint propagates from file reads (cat, head, sort, tail, uniq, grep, sed)
+  #   to their return values.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # exec(command, ...) — shell-interpreted command string
+      - ["async-shelljs", "Member[exec].Argument[0]", "command-injection"]
+      # asyncExec(command, ...) — shell-interpreted command string
+      - ["async-shelljs", "Member[asyncExec].Argument[0]", "command-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path injection (file system access)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Single-path functions: cd, mkdir, touch, which, ln
+      - ["async-shelljs", "Member[cd,mkdir,touch,which].Argument[0]", "path-injection"]
+      # Multi-path functions: cp, mv, rm, find, ls, ln, chmod
+      - ["async-shelljs", "Member[cp,mv,rm,find,ls,ln,chmod].Argument[0..]", "path-injection"]
+      # cat(file1, file2, ...)
+      - ["async-shelljs", "Member[cat].Argument[0..]", "path-injection"]
+      # head(file), sort(file), tail(file), uniq(file)
+      - ["async-shelljs", "Member[head,sort,tail,uniq].Argument[0..]", "path-injection"]
+      # grep(regex, file, ...) — files start at arg 1
+      - ["async-shelljs", "Member[grep].Argument[1..]", "path-injection"]
+      # sed(regex, replacement, file, ...) — files start at arg 2
+      - ["async-shelljs", "Member[sed].Argument[2..]", "path-injection"]
+      # to(file), toEnd(file) — on ShellString return values
+      - ["async-shelljs", "Fuzzy.Member[to,toEnd].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # asyncExec returns stdout as resolved promise value
+      - ["async-shelljs", "Member[asyncExec]", "Argument[0]", "ReturnValue.Awaited", "taint"]
+      # File-reading functions return file contents
+      - ["async-shelljs", "Member[cat,head,sort,tail,uniq,grep,sed]", "Argument[0]", "ReturnValue", "taint"]
+      # exec returns a ShellString with stdout
+      - ["async-shelljs", "Member[exec]", "Argument[0]", "ReturnValue", "taint"]

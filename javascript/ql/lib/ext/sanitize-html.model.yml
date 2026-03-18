@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # sanitize-html (npm: "sanitize-html") — HTML sanitizer for Node.js
+  # =============================================================================
+  #
+  # sanitize-html strips or escapes dangerous HTML from untrusted input,
+  # allowing only a configurable whitelist of tags and attributes:
+  #
+  #   const sanitizeHtml = require('sanitize-html');
+  #
+  #   const clean = sanitizeHtml(dirty);
+  #   const clean = sanitizeHtml(dirty, {
+  #     allowedTags: ['b', 'i', 'em', 'strong', 'a'],
+  #     allowedAttributes: { 'a': ['href'] }
+  #   });
+  #
+  # Security analysis:
+  # - No sources: does not provide access to untrusted data.
+  # - No sinks: does not perform security-sensitive operations.
+  # - Sanitizer: sanitize-html is an HTML sanitizer — its output is
+  #   considered safe for html-injection purposes. The existing QLL
+  #   (HtmlSanitizers.qll) recognizes sanitize-html as an
+  #   HtmlSanitizerCall, which acts as a barrier in taint tracking
+  #   for XSS/html-injection queries.
+  # - Taint summary: input taints output (the output is derived from
+  #   the input), but the output is sanitized HTML. This summary
+  #   preserves taint for non-HTML queries (e.g., log injection)
+  #   while the sanitizer barrier handles the HTML case.
+  #
+  # Existing QLL coverage (HtmlSanitizers.qll):
+  # - sanitize-html default import recognized as htmlSanitizerFunction().
+  # - Calls modeled as HtmlSanitizerCall with argument 0 as input.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow through the sanitizer (for non-HTML queries)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # sanitizeHtml(dirty) — input taints output
+      # The output is sanitized HTML, so html-injection barriers will
+      # block this flow for XSS queries, but other taint queries
+      # (e.g., log-injection) should still track this flow.
+      - ["sanitize-html", "", "Argument[0]", "ReturnValue", "taint"]

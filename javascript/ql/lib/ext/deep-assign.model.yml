@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # deep-assign (npm: "deep-assign") - Recursive Object.assign()
+  # =============================================================================
+  #
+  # Deeply merges properties from source objects into a target object:
+  #
+  #   const deepAssign = require('deep-assign');
+  #   deepAssign(target, src1, src2, ...)   // recursive merge into target
+  #
+  # Security concerns:
+  # - deepAssign() is a deep-merge operation and is vulnerable to prototype
+  #   pollution in all versions. If an attacker controls a source operand,
+  #   they can inject __proto__ properties. (The prototype-pollution query
+  #   is handled by QLL, not expressible via data extensions.)
+  # - Taint from source operands flows into the destination and return value.
+  #
+  # Existing QLL coverage:
+  #   Extend.qll:  deep-assign modeled as ExtendCallDeep (value-preserving
+  #                flow from operands to destination and return value).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # deepAssign(target, src1, src2, ...) — source operands flow into the destination
+      - ["deep-assign", "", "Argument[1..N-1]", "Argument[0]", "value"]
+
+      # deepAssign(target, src1, src2, ...) — all operands flow into the return value
+      - ["deep-assign", "", "Argument[0..N-1]", "ReturnValue", "value"]

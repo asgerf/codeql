@@ -1,0 +1,39 @@
+extensions:
+  # =============================================================================
+  # json-stable-stringify (npm: "json-stable-stringify") - Deterministic JSON
+  # =============================================================================
+  #
+  # json-stable-stringify is a deterministic version of JSON.stringify() that
+  # sorts object keys to produce consistent output, useful for hashing and
+  # comparison.
+  #
+  #   const stringify = require('json-stable-stringify');
+  #
+  #   stringify({ c: 8, b: [{ z: 6, y: 5 }], a: 3 });
+  #   // '{"a":3,"b":[{"y":5,"z":6}],"c":8}'
+  #
+  # API: stringify(value, opts?) → string
+  #   - value: any JSON-serializable value
+  #   - opts: { cmp, space, replacer, cycles }
+  #
+  # Security concerns:
+  # - No sources. The library does not access untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations.
+  # - SUMMARY (taint): The input value flows to the output string.
+  #   The existing QLL (JsonStringifiers.qll) models this as a
+  #   JsonStringifyCall, which provides taint steps (input→output)
+  #   and acts as a sanitizer for code-injection and log-injection.
+  #   The sanitizer role is not expressible via data extensions and
+  #   remains in QLL.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flows through stringify
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # stringify(value, opts?) → string
+      # The input value is serialized into the output JSON string
+      - ["json-stable-stringify", "", "Argument[0]", "ReturnValue", "taint"]

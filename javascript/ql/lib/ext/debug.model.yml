@@ -1,0 +1,45 @@
+extensions:
+  # =============================================================================
+  # debug (npm: "debug") - Lightweight debugging utility
+  # =============================================================================
+  #
+  # A tiny debugging utility modelled after Node.js core's debugging technique.
+  # Creates namespaced logging functions that write to stderr:
+  #
+  #   const debug = require('debug')('http');
+  #   debug('request %s', url);           // logs to stderr when DEBUG=http
+  #   debug('user %O', userObj);          // pretty-prints objects
+  #
+  # API:
+  #   require('debug')(namespace) → debugFn     — create a namespaced logger
+  #   debugFn(fmt, ...args)                     — log a message (printf-style)
+  #   debugFn.extend(suffix) → debugFn          — create sub-namespace logger
+  #   debugFn.log = fn                          — override output function
+  #   debug.enable(namespaces)                  — dynamically enable namespaces
+  #   debug.disable()                           — disable all namespaces
+  #   debug.formatters                          — custom format specifiers
+  #
+  # Security concerns:
+  # - Arguments to the debug function are written to stderr (or a configured
+  #   output stream). If attacker-controlled data reaches these arguments,
+  #   it constitutes log injection (newlines can forge log entries).
+  #
+  # Existing QLL coverage (Logging.qll):
+  #   DebugLoggerCall models require('debug')(...)(args) as a LoggerCall,
+  #   which makes all arguments log-injection sinks via LogInjectionQuery.qll.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: log injection via debug logger calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # require('debug')('namespace')(...args) — all arguments are logged
+      # ReturnValue gets the debug function from debug('namespace'),
+      # then Argument[0..N] of calls to that function are sinks.
+      - ["debug", "ReturnValue.Argument[0..N-1]", "log-injection"]
+
+      # debug('namespace').extend('sub')(...args) — extended loggers
+      - ["debug", "ReturnValue.Member[extend].ReturnValue.Argument[0..N-1]", "log-injection"]

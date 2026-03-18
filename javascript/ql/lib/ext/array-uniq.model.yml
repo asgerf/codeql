@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # array-uniq (npm: "array-uniq") - Create an array without duplicates
+  # =============================================================================
+  #
+  # array-uniq returns a new array with duplicates removed.
+  #
+  #   const arrayUniq = require('array-uniq');
+  #   arrayUniq([1, 1, 2, 3, 3]);
+  #   //=> [1, 2, 3]
+  #
+  # Exports: a single function arrayUniq(array) → array
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure data transformation.
+  # - Taint propagates from the input array to the returned array.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through arrayUniq
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # arrayUniq(arr) → deduplicated array: taint flows from argument to return
+      - ["array-uniq", "", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,86 @@
+extensions:
+  # =============================================================================
+  # needle — Lightweight HTTP client for Node.js
+  # =============================================================================
+  #
+  # Needle is a streaming HTTP client supporting all HTTP methods.
+  #
+  # API patterns:
+  #   // Generic call (returns Promise)
+  #   needle('get', url, options)
+  #   needle('post', url, data, options)
+  #
+  #   // Method shortcuts (callback-based, return ReadableStream)
+  #   needle.get(url, options?, callback?)
+  #   needle.head(url, options?, callback?)
+  #   needle.post(url, data, options?, callback?)
+  #   needle.put(url, data, options?, callback?)
+  #   needle.patch(url, data, options?, callback?)
+  #   needle.delete(url, data, options?, callback?)
+  #   needle.request(method, url, data, options?, callback?)
+  #
+  # Callbacks receive (error, response, body).
+  # Promises resolve to the response object.
+  #
+  # Security concerns:
+  #   - The URL argument controls where requests are sent; if attacker-
+  #     controlled, this is a server-side request forgery (SSRF) sink.
+  #   - Response data (body, response.body) comes from an external server
+  #     and is a remote flow source.
+  #   - Data arguments sent in request bodies may carry sensitive info.
+  #
+  # Existing QLL coverage (ClientRequests.qll):
+  #   - needle(method, url, ...) as ClientRequest (PromisedNeedleRequest)
+  #     with getUrl() → Argument[1], response data as remote source.
+  #   - needle.get/post/put/etc. as ClientRequest (NeedleMethodRequest)
+  #     with getUrl() → Argument[0], response via callback params.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks — request forgery via URL argument
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # needle(method, url, ...) — generic call, URL is Argument[1]
+      - ["needle", ".Argument[1]", "request-forgery"]
+
+      # needle.get(url, ...) / needle.head(url, ...) — URL is Argument[0]
+      - ["needle", "Member[get,head,post,put,patch,delete,request].Argument[0]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources — response data from external servers
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # needle(method, url, ...) returns Promise<response>
+      # response.body contains the parsed response data
+      - ["needle", ".ReturnValue.Awaited", "remote"]
+      - ["needle", ".ReturnValue.Awaited.Member[body]", "remote"]
+
+      # needle.get(url, opts, callback) — callback(err, resp, body)
+      # resp is parameter 1, body is parameter 2
+      - ["needle", "Member[get,head].Argument[1,2].Parameter[1]", "remote"]
+      - ["needle", "Member[get,head].Argument[1,2].Parameter[2]", "remote"]
+
+      # needle.post/put/patch/delete(url, data, opts, callback)
+      # callback is the last argument (position 2 or 3)
+      - ["needle", "Member[post,put,patch,delete].Argument[2,3].Parameter[1]", "remote"]
+      - ["needle", "Member[post,put,patch,delete].Argument[2,3].Parameter[2]", "remote"]
+
+      # needle.request(method, url, data, opts, callback)
+      - ["needle", "Member[request].Argument[3,4].Parameter[1]", "remote"]
+      - ["needle", "Member[request].Argument[3,4].Parameter[2]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries — taint propagation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Response object .body property carries response data
+      - ["needle", "Fuzzy.Member[body]", "Argument[this]", "ReturnValue", "taint"]

@@ -1,0 +1,75 @@
+extensions:
+  # =============================================================================
+  # object-assign (npm: "object-assign") — Object.assign() ponyfill
+  # =============================================================================
+  #
+  # object-assign is a ponyfill for ES2015 Object.assign(). It copies
+  # enumerable own properties from one or more source objects to a target
+  # object and returns the target:
+  #
+  #   const objectAssign = require('object-assign');
+  #   const result = objectAssign({a: 1}, {b: 2}, {c: 3});
+  #   // result === {a: 1, b: 2, c: 3}
+  #
+  # Signature: objectAssign(target, ...sources) → target
+  #
+  # Security concerns:
+  # - No sources or sinks. This is a pure object utility.
+  # - Taint flows from source objects to the target/return value, and the
+  #   target (first argument) is also returned as the return value.
+  #
+  # Existing QLL coverage (Extend.qll):
+  # - ExtendCallShallow models object-assign as a shallow extend call with
+  #   destination = Argument[0] and sources = Argument[1..N].
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # objectAssign(target, ...sources) → target
+      # Source objects' properties are copied into the target. The target
+      # is mutated in place and returned.
+      # =====================================================================
+
+      # Return value is the target object (identity).
+      - - "object-assign"
+        - ""
+        - "Argument[0]"
+        - "ReturnValue"
+        - "value"
+
+      # Source arguments taint the return value (properties are merged in).
+      - - "object-assign"
+        - ""
+        - "Argument[1]"
+        - "ReturnValue"
+        - "taint"
+      - - "object-assign"
+        - ""
+        - "Argument[2]"
+        - "ReturnValue"
+        - "taint"
+      - - "object-assign"
+        - ""
+        - "Argument[3]"
+        - "ReturnValue"
+        - "taint"
+
+      # Source arguments also taint the target (first argument is mutated).
+      - - "object-assign"
+        - ""
+        - "Argument[1]"
+        - "Argument[0]"
+        - "taint"
+      - - "object-assign"
+        - ""
+        - "Argument[2]"
+        - "Argument[0]"
+        - "taint"
+      - - "object-assign"
+        - ""
+        - "Argument[3]"
+        - "Argument[0]"
+        - "taint"

@@ -1,0 +1,38 @@
+extensions:
+  # =============================================================================
+  # react-hot-loader/root (npm: "react-hot-loader", subpath "/root")
+  #   — Modern hot module replacement API for React components
+  # =============================================================================
+  #
+  # Exports:
+  #   hot(Component) — wraps a React component for HMR during development.
+  #     import { hot } from 'react-hot-loader/root';
+  #     export default hot(App);
+  #
+  # Security analysis:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: the library does not interpret strings as code, SQL, commands,
+  #   URLs, or paths. It only wraps React components for HMR.
+  # - Summaries: hot() is an identity-like HOC wrapper — the input component
+  #   flows through to the return value.
+  #
+  # Existing QLL coverage (React.qll):
+  # - higherOrderComponentBuilder() recognizes hot() from react-hot-loader/root
+  #   as an HOC builder. The summary below ensures taint/value flow is preserved.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: value flow through hot() wrapper
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # hot(Component) — wraps and returns the component unchanged.
+      - [
+          "react-hot-loader/root",
+          "Member[hot]",
+          "Argument[0]",
+          "ReturnValue",
+          "value",
+        ]

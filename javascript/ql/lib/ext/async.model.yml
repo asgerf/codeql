@@ -1,0 +1,128 @@
+extensions:
+  # =============================================================================
+  # async (npm: "async", "async-es") - Async utility functions
+  # =============================================================================
+  #
+  # The async library provides powerful functions for working with asynchronous
+  # JavaScript: collection iteration, control flow, and utility helpers.
+  #
+  #   const async = require('async');
+  #   async.map(['file1','file2'], fs.stat, (err, results) => { ... });
+  #   async.waterfall([task1, task2], (err, result) => { ... });
+  #   async.parallel([fn1, fn2], (err, results) => { ... });
+  #
+  # Security concerns:
+  # - No sources or sinks. All functions are pure control-flow / data plumbing.
+  # - Taint propagates through collection iteration (elements → iteratee),
+  #   from iteratee results to final callbacks, and through control-flow
+  #   constructs like series/parallel.
+  #
+  # Note: async.waterfall's inter-task chaining (each task's callback args
+  # become the next task's parameters) is modeled in AsyncPackage.qll via
+  # PartialInvokeNode, which cannot be expressed as data extension summaries.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Type model: async-es exports the same API as async
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: typeModel
+    data:
+      - ["async", "async-es", ""]
+
+  # ---------------------------------------------------------------------------
+  # Summaries
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # 1. Collection elements → iteratee parameter (value flow)
+      #
+      # For all collection functions, array/object elements flow to the
+      # iteratee's first parameter.
+      # =====================================================================
+
+      # --- fn(coll, iteratee, callback?) — iteratee at index 1 ---
+      - ["async", "Member[each,eachSeries,eachOf,eachOfSeries,forEach,forEachSeries,forEachOf,forEachOfSeries,map,mapSeries,mapValues,mapValuesSeries,filter,filterSeries,select,selectSeries,reject,rejectSeries,detect,detectSeries,find,findSeries,some,someSeries,any,anySeries,every,everySeries,all,allSeries,concat,concatSeries,flatMap,flatMapSeries,groupBy,groupBySeries,sortBy]", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+
+      # --- fn(coll, limit, iteratee, callback?) — iteratee at index 2 ---
+      - ["async", "Member[eachLimit,eachOfLimit,forEachLimit,forEachOfLimit,mapLimit,mapValuesLimit,filterLimit,selectLimit,rejectLimit,detectLimit,findLimit,someLimit,anyLimit,everyLimit,allLimit,concatLimit,flatMapLimit,groupByLimit]", "Argument[0].ArrayElement", "Argument[2].Parameter[0]", "value"]
+
+      # --- reduce/reduceRight/transform(coll, memo, iteratee, callback?)
+      #     iteratee receives (memo, item, ...) so items go to Parameter[1] ---
+      - - "async"
+        - "Member[reduce,reduceRight,foldl,foldr,transform]"
+        - "Argument[0].ArrayElement"
+        - "Argument[2].Parameter[1]"
+        - "value"
+
+      # --- reduce/transform: initial memo/accumulator → iteratee Parameter[0] ---
+      - - "async"
+        - "Member[reduce,reduceRight,foldl,foldr,transform]"
+        - "Argument[1]"
+        - "Argument[2].Parameter[0]"
+        - "taint"
+
+      # =====================================================================
+      # 2. Collection → output results (taint)
+      #
+      # For result-producing functions, taint from the input collection
+      # reaches the final callback's result parameter and the promise.
+      # =====================================================================
+
+      # --- fn(coll, iteratee, callback?) → callback(err, results) ---
+      - ["async", "Member[map,mapSeries,mapValues,mapValuesSeries,filter,filterSeries,select,selectSeries,reject,rejectSeries,detect,detectSeries,find,findSeries,concat,concatSeries,flatMap,flatMapSeries,groupBy,groupBySeries,sortBy]", "Argument[0]", "Argument[2].Parameter[1]", "taint"]
+
+      # --- fn(coll, iteratee, callback?) → Promise ---
+      - ["async", "Member[map,mapSeries,mapValues,mapValuesSeries,filter,filterSeries,select,selectSeries,reject,rejectSeries,detect,detectSeries,find,findSeries,concat,concatSeries,flatMap,flatMapSeries,groupBy,groupBySeries,sortBy]", "Argument[0]", "ReturnValue.Awaited", "taint"]
+
+      # --- fn(coll, limit, iteratee, callback?) → callback(err, results) ---
+      - ["async", "Member[mapLimit,mapValuesLimit,filterLimit,selectLimit,rejectLimit,detectLimit,findLimit,concatLimit,flatMapLimit,groupByLimit]", "Argument[0]", "Argument[3].Parameter[1]", "taint"]
+
+      # --- fn(coll, limit, iteratee, callback?) → Promise ---
+      - ["async", "Member[mapLimit,mapValuesLimit,filterLimit,selectLimit,rejectLimit,detectLimit,findLimit,concatLimit,flatMapLimit,groupByLimit]", "Argument[0]", "ReturnValue.Awaited", "taint"]
+
+      # --- reduce(coll, memo, iteratee, callback?) → callback(err, result) ---
+      - ["async", "Member[reduce,reduceRight,foldl,foldr,transform]", "Argument[0]", "Argument[3].Parameter[1]", "taint"]
+      - ["async", "Member[reduce,reduceRight,foldl,foldr,transform]", "Argument[1]", "Argument[3].Parameter[1]", "taint"]
+
+      # --- reduce(coll, memo, iteratee, callback?) → Promise ---
+      - ["async", "Member[reduce,reduceRight,foldl,foldr,transform]", "Argument[0]", "ReturnValue.Awaited", "taint"]
+      - ["async", "Member[reduce,reduceRight,foldl,foldr,transform]", "Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # =====================================================================
+      # 3. Iteratee callback result → final output (taint)
+      #
+      # For map/concat-like functions, the value passed to the iteratee's
+      # callback (cb(err, result)) flows to the final callback / promise.
+      # =====================================================================
+
+      # --- map/concat(coll, iteratee, cb?) — iteratee cb result → output ---
+      - ["async", "Member[map,mapSeries,mapValues,mapValuesSeries,concat,concatSeries,flatMap,flatMapSeries,times,timesSeries]", "Argument[1].Parameter[N-1].Argument[1]", "Argument[2].Parameter[1]", "taint"]
+      - ["async", "Member[map,mapSeries,mapValues,mapValuesSeries,concat,concatSeries,flatMap,flatMapSeries,times,timesSeries]", "Argument[1].Parameter[N-1].Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # --- mapLimit/concatLimit(coll, limit, iteratee, cb?) ---
+      - ["async", "Member[mapLimit,mapValuesLimit,concatLimit,flatMapLimit,timesLimit]", "Argument[2].Parameter[N-1].Argument[1]", "Argument[3].Parameter[1]", "taint"]
+      - ["async", "Member[mapLimit,mapValuesLimit,concatLimit,flatMapLimit,timesLimit]", "Argument[2].Parameter[N-1].Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # --- reduce/reduceRight(coll, memo, iteratee, cb?) ---
+      - ["async", "Member[reduce,reduceRight,foldl,foldr]", "Argument[2].Parameter[N-1].Argument[1]", "Argument[3].Parameter[1]", "taint"]
+      - ["async", "Member[reduce,reduceRight,foldl,foldr]", "Argument[2].Parameter[N-1].Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # =====================================================================
+      # 4. series / parallel — task results → final output
+      #
+      # Each task function receives a callback; the second argument to that
+      # callback (the result) is collected into the final results.
+      # =====================================================================
+
+      # --- series/parallel(tasks, callback?) ---
+      - ["async", "Member[series,parallel]", "Argument[0].ArrayElement.Parameter[0].Argument[1]", "Argument[1].Parameter[1]", "taint"]
+      - ["async", "Member[series,parallel]", "Argument[0].ArrayElement.Parameter[0].Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # --- parallelLimit(tasks, limit, callback?) ---
+      - ["async", "Member[parallelLimit]", "Argument[0].ArrayElement.Parameter[0].Argument[1]", "Argument[2].Parameter[1]", "taint"]
+      - ["async", "Member[parallelLimit]", "Argument[0].ArrayElement.Parameter[0].Argument[1]", "ReturnValue.Awaited", "taint"]

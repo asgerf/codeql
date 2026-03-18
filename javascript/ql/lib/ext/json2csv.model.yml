@@ -1,0 +1,50 @@
+extensions:
+  # =============================================================================
+  # json2csv (npm: "json2csv") - Convert JSON to CSV
+  # =============================================================================
+  #
+  # json2csv converts JSON objects/arrays to CSV format. It supports
+  # synchronous parsing, streaming, and async modes.
+  #
+  #   const { parse } = require('json2csv');
+  #   const { Parser, AsyncParser } = require('json2csv');
+  #
+  #   // Convenience function
+  #   const csv = parse(data, opts);
+  #
+  #   // Parser class
+  #   const parser = new Parser(opts);
+  #   const csv = parser.parse(data);
+  #
+  #   // AsyncParser (streaming)
+  #   const asyncParser = new AsyncParser(opts);
+  #   const csv = await asyncParser.parse(data).promise();
+  #
+  # Security concerns:
+  # - No sources. The library does not access untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations.
+  # - SUMMARY (taint): Input JSON data flows to the output CSV string.
+  #   If tainted data is converted to CSV and then used in a sensitive
+  #   context (e.g., HTML response), the taint must be preserved.
+  #
+  # Existing QLL coverage (JsonStringifiers.qll):
+  # - Json2CsvTaintStep: Models taint flow from the argument of
+  #   new Parser().parse(data) to its return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flows through json2csv conversion
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # parse(data, opts?) → csv string (convenience function)
+      - ["json2csv", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # new Parser(opts).parse(data) → csv string
+      - ["json2csv", "Member[Parser].Instance.Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # new AsyncParser(opts).parse(data).promise() → csv string
+      # Modelled with Fuzzy to cover the chained promise resolution
+      - ["json2csv", "Fuzzy.Member[parse]", "Argument[0]", "ReturnValue", "taint"]

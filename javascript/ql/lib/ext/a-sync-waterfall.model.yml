@@ -1,0 +1,20 @@
+extensions:
+  # =============================================================================
+  # a-sync-waterfall — Simple sync/async waterfall control flow
+  # =============================================================================
+  #
+  # This library exports a single function that runs an array of tasks in
+  # series, passing results from each task to the next via callbacks.
+  #
+  #   const waterfall = require("a-sync-waterfall");
+  #   waterfall([
+  #     function(callback) { callback(null, "result1"); },
+  #     function(result1, callback) { callback(null, "result2"); },
+  #   ], function(err, finalResult) { /* ... */ });
+  #
+  # This is a pure control-flow utility with no sources or sinks.
+  #
+  # The complex inter-task data flow (callback args → next task params) is
+  # already modeled in AsyncPackage.qll using PartialInvokeNode, which cannot
+  # be expressed as data extension summaries. No additional models are needed.
+  # =============================================================================

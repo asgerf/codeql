@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # promise-polyfill (npm: "promise-polyfill", "promise-polyfill/src/polyfill")
+  # Lightweight ES6 Promise polyfill
+  # =============================================================================
+  #
+  # promise-polyfill provides a standard-compliant Promise implementation for
+  # environments that lack native Promise support:
+  #
+  #   // As a global polyfill (patches window.Promise if missing)
+  #   import 'promise-polyfill/src/polyfill';
+  #
+  #   // As a ponyfill (does not modify globals)
+  #   import Promise from 'promise-polyfill';
+  #
+  #   new Promise((resolve, reject) => { ... })
+  #     .then(result => { ... })
+  #     .catch(err => { ... });
+  #
+  # The API is identical to the native ES6 Promise: new Promise(), .then(),
+  # .catch(), .finally(), Promise.all(), Promise.race(), Promise.resolve(),
+  # Promise.reject().
+  #
+  # Security assessment:
+  # - No sources: The library does not fetch or provide access to untrusted data.
+  # - No sinks: The library does not perform any dangerous operations.
+  # - No custom taint behavior: It implements the standard Promise API, which
+  #   CodeQL already understands natively. The existing QLL in Promises.qll
+  #   recognizes promise-polyfill as a Promise implementation.
+  #
+  # Existing QLL coverage:
+  #   Promises.qll: recognizes require('promise-polyfill') and
+  #     require('promise-polyfill/src/polyfill') as Promise implementations.
+  #
+  # No data extensions are needed for this library.
+  # =============================================================================

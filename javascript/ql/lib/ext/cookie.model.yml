@@ -1,0 +1,66 @@
+extensions:
+  # =============================================================================
+  # cookie (npm: "cookie") - HTTP cookie parsing and serialization
+  # =============================================================================
+  #
+  # Low-level utility for parsing and serializing HTTP cookies (RFC 6265).
+  #
+  #   const cookie = require('cookie');
+  #
+  #   // Parse a Cookie header string into an object of name-value pairs
+  #   cookie.parseCookie('foo=bar; equation=E%3Dmc%5E2');
+  #   //=> { foo: 'bar', equation: 'E=mc^2' }
+  #   cookie.parse('foo=bar');  // deprecated alias
+  #
+  #   // Parse a Set-Cookie header into a structured object
+  #   cookie.parseSetCookie('foo=bar; httpOnly');
+  #   //=> { name: 'foo', value: 'bar', httpOnly: true }
+  #
+  #   // Serialize a cookie object into a Cookie header string
+  #   cookie.stringifyCookie({ a: 'foo', b: 'bar' });
+  #   //=> 'a=foo; b=bar'
+  #
+  #   // Serialize a Set-Cookie object into a Set-Cookie header string
+  #   cookie.stringifySetCookie({ name: 'foo', value: 'bar' });
+  #   //=> 'foo=bar'
+  #   cookie.serialize('foo', 'bar', opts);  // deprecated alias
+  #
+  # Security concerns:
+  # - No sinks. The library does not perform security-sensitive operations.
+  # - Taint propagates through parse and serialize functions: cookie header
+  #   strings (typically from untrusted HTTP headers) flow into parsed
+  #   objects and their properties, and cookie values flow into serialized
+  #   strings.
+  #
+  # Existing QLL coverage:
+  # - CookieLibraries.qll: Models cookie.parse as PersistentReadAccess and
+  #   cookie.serialize as PersistentWriteAccess / CookieWrite with secure
+  #   flag checking.
+  # =============================================================================
+
+  # Summaries: Taint propagation through cookie parsing and serialization.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- Parsing: cookie header string → parsed object ---
+
+      # cookie.parseCookie(str) → { name: value, ... }
+      # cookie.parse(str) → { name: value, ... }  (deprecated alias)
+      # The input Cookie header string taints all values in the returned object.
+      - ["cookie", "Member[parseCookie,parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # cookie.parseSetCookie(str) → { name, value, domain, path, ... }
+      # The input Set-Cookie header string taints the returned object.
+      - ["cookie", "Member[parseSetCookie]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- Serialization: cookie data → header string ---
+
+      # cookie.stringifyCookie(obj) → "name=value; name=value"
+      - ["cookie", "Member[stringifyCookie]", "Argument[0]", "ReturnValue", "taint"]
+
+      # cookie.stringifySetCookie(obj) → "name=value; HttpOnly; ..."
+      - ["cookie", "Member[stringifySetCookie]", "Argument[0]", "ReturnValue", "taint"]
+
+      # cookie.serialize(name, value, opts) → "name=value; ..." (deprecated)
+      - ["cookie", "Member[serialize]", "Argument[0..1]", "ReturnValue", "taint"]

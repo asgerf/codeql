@@ -1,0 +1,115 @@
+extensions:
+  # =============================================================================
+  # koa-route (npm: "koa-route") - Simple routing for Koa
+  # =============================================================================
+  #
+  # koa-route provides simple routing middleware for Koa, exposing HTTP method
+  # functions that return middleware:
+  #
+  #   const route = require('koa-route');
+  #   const Koa = require('koa');
+  #   const app = new Koa();
+  #
+  #   app.use(route.get('/pets/:id', (ctx, id) => {
+  #     ctx.body = `Pet ${id}`;    // id is user-controlled
+  #   }));
+  #
+  #   app.use(route.post('/pets', (ctx) => {
+  #     ctx.request.body;          // user-controlled
+  #   }));
+  #
+  # API:
+  #   route.<method>(path, handler) → middleware
+  #   Methods: get, post, put, delete, del, patch, head, options, all,
+  #            plus many other HTTP methods.
+  #   Handler signature: (ctx, ...routeParams) => { ... }
+  #     - ctx: Koa context (param 0)
+  #     - routeParams: URL parameters extracted from path (params 1+)
+  #
+  # Security concerns:
+  # - Sources: The ctx parameter (param 0) provides access to all request data
+  #   (url, headers, query, body, cookies, params). Route parameters (params 1+)
+  #   are user-controlled URL segments.
+  # - Sinks: ctx.redirect(url) is a URL redirection sink.
+  # - No summaries needed beyond standard Koa context behavior.
+  #
+  # Existing QLL coverage (Koa.qll):
+  #   KoaRouteHandler models koa-route handlers as Koa route handlers. The ctx
+  #   parameter gets standard Koa source treatment (url, headers, body, etc.)
+  #   via the base RouteHandler/ContextNode/RequestInputAccess classes.
+  #   getARequestParameterAccess() covers route params (index >= 1).
+  #   The QLL model should be retained; data extensions add complementary
+  #   coverage.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: user-controlled data from route handler parameters
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # ===== Route parameters (param 1+) are user-controlled URL segments =====
+      # route.get('/pets/:id', (ctx, id) => { ... })
+      # id (and any subsequent params) are extracted from the URL path
+      - [
+          "koa-route",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all].Argument[1].Parameter[1..N-1]",
+          "remote",
+        ]
+
+      # ===== Sources on ctx (first parameter of route handlers) =====
+      - [
+          "koa-route",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all].Argument[1].Parameter[0].Member[params,query,url,originalUrl,href,path,search,querystring,host,hostname,ip,ips,headers,header,origin,subdomains]",
+          "remote",
+        ]
+
+      # ===== Sources on ctx.request =====
+      - [
+          "koa-route",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all].Argument[1].Parameter[0].Member[request].Member[body,query,params,url,originalUrl,href,path,search,querystring,host,hostname,headers,header,origin,subdomains,ip,ips]",
+          "remote",
+        ]
+
+      # ctx.get(headerName) - returns a request header value
+      - [
+          "koa-route",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all].Argument[1].Parameter[0].Member[get].ReturnValue",
+          "remote",
+        ]
+
+      # ctx.request.get(headerName) - returns a request header value
+      - [
+          "koa-route",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all].Argument[1].Parameter[0].Member[request].Member[get].ReturnValue",
+          "remote",
+        ]
+
+      # ctx.cookies.get(name) - returns a cookie value
+      - [
+          "koa-route",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all].Argument[1].Parameter[0].Member[cookies].Member[get].ReturnValue",
+          "remote",
+        ]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: url-redirection via ctx.redirect
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ctx.redirect(url) - open redirect sink
+      - [
+          "koa-route",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all].Argument[1].Parameter[0].Member[redirect].Argument[0]",
+          "url-redirection",
+        ]
+
+      # ctx.response.redirect(url) - open redirect via response object
+      - [
+          "koa-route",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all].Argument[1].Parameter[0].Member[response].Member[redirect].Argument[0]",
+          "url-redirection",
+        ]

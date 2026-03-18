@@ -1,0 +1,57 @@
+extensions:
+  # =============================================================================
+  # jsonwebtoken (npm: "jsonwebtoken") — JSON Web Token sign/verify/decode
+  # =============================================================================
+  #
+  # jsonwebtoken provides three main functions:
+  #
+  #   const jwt = require('jsonwebtoken');
+  #
+  #   // Sign: create a token from a payload
+  #   const token = jwt.sign(payload, secretOrPrivateKey, options?);
+  #   jwt.sign(payload, secretOrPrivateKey, options?, (err, token) => {});
+  #
+  #   // Verify: verify and decode a token
+  #   const decoded = jwt.verify(token, secretOrPublicKey, options?);
+  #   jwt.verify(token, secretOrPublicKey, options?, (err, decoded) => {});
+  #
+  #   // Decode: decode without verification (UNSAFE)
+  #   const decoded = jwt.decode(token, options?);
+  #
+  # Security concerns:
+  # - jwt.decode() does NOT verify the signature — the decoded payload is
+  #   untrusted and attacker-controlled.
+  # - jwt.verify() validates the signature, but the decoded payload still
+  #   originates from external input (the token) — taint propagates.
+  # - jwt.sign() encodes the payload into a token string — taint propagates
+  #   from payload to the returned token.
+  # - The secret/key arguments to sign and verify are credentials.
+  #
+  # Existing QLL coverage:
+  # - JWT.qll: verify callback taint step (token → decoded payload in cb).
+  # - JWT.qll: sign/verify arg 1 as CredentialsNode ("jwt key").
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # jwt.sign(payload, key, opts?) → token string (sync)
+      - ["jsonwebtoken", "Member[sign]", "Argument[0]", "ReturnValue", "taint"]
+
+      # jwt.sign(payload, key, opts?, (err, token) => {}) → async callback
+      - ["jsonwebtoken", "Member[sign]", "Argument[0]", "Argument[3].Parameter[1]", "taint"]
+
+      # jwt.verify(token, key, opts?) → decoded payload (sync)
+      - ["jsonwebtoken", "Member[verify]", "Argument[0]", "ReturnValue", "taint"]
+
+      # jwt.verify(token, key, opts?, (err, decoded) => {}) → async callback
+      - ["jsonwebtoken", "Member[verify]", "Argument[0]", "Argument[3].Parameter[1]", "taint"]
+      # Also handle the case where options are omitted and callback is arg 2
+      - ["jsonwebtoken", "Member[verify]", "Argument[0]", "Argument[2].Parameter[1]", "taint"]
+
+      # jwt.decode(token, opts?) → decoded payload (no verification!)
+      - ["jsonwebtoken", "Member[decode]", "Argument[0]", "ReturnValue", "taint"]

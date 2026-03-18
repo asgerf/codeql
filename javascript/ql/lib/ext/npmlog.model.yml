@@ -1,0 +1,45 @@
+extensions:
+  # =============================================================================
+  # npmlog (npm: "npmlog") - Logger used by npm
+  # =============================================================================
+  #
+  # npmlog is the logging utility used by npm itself. It provides leveled
+  # logging methods that write to stderr.
+  #
+  #   const log = require('npmlog');
+  #   log.silly('prefix', 'message', ...args);
+  #   log.verbose('prefix', 'message', ...args);
+  #   log.info('prefix', 'message', ...args);
+  #   log.http('prefix', 'message', ...args);
+  #   log.warn('prefix', 'message', ...args);
+  #   log.error('prefix', 'message', ...args);
+  #   log.log('levelname', 'prefix', 'message', ...args);
+  #
+  # Security concerns:
+  # - All logging methods are log-injection sinks. Attacker-controlled input
+  #   in log messages can forge entries, inject misleading data, or exploit
+  #   log viewers via special characters (newlines, ANSI escapes).
+  # - No sources or summaries. The library does not produce or transform
+  #   untrusted data.
+  #
+  # Existing QLL coverage (Logging.qll):
+  # - Npmlog class models npmlog.method(prefix, msg) as LoggerCall for
+  #   standard method names (info, warn, error, verbose, silly, etc.),
+  #   making all arguments log-injection sinks via LogInjectionQuery.qll.
+  #   For log.log(), arguments from index 1 onward are message components.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: log injection via npmlog logging calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # log.silly/verbose/info/http/warn/error(prefix, message, ...args)
+      # All arguments (prefix + message) are log-injection sinks.
+      - ["npmlog", "Member[silly,verbose,info,http,warn,error].Argument[0..N-1]", "log-injection"]
+
+      # log.log(level, prefix, message, ...args)
+      # Arguments from index 1 onward are message components (arg 0 is the level).
+      - ["npmlog", "Member[log].Argument[1..N-1]", "log-injection"]

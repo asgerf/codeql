@@ -1,0 +1,20 @@
+extensions:
+  # =============================================================================
+  # any-promise (npm: "any-promise") - Promise implementation resolver
+  # =============================================================================
+  #
+  # The any-promise package re-exports whichever ES6-compatible Promise
+  # constructor the application author has registered (e.g. Bluebird, Q),
+  # falling back to the native global Promise.
+  #
+  #   var Promise = require("any-promise");
+  #   new Promise(function(resolve, reject) { ... });
+  #
+  # It exposes no methods of its own — only the standard Promise constructor.
+  # There are no sources, sinks, or taint-relevant transformations to model.
+  #
+  # The existing CodeQL core already recognises any-promise as a Promise
+  # polyfill (see Promises.qll), so no additional data-extension models are
+  # needed.
+  # =============================================================================
+  []

@@ -1,0 +1,136 @@
+extensions:
+  # =============================================================================
+  # libxmljs — XML/HTML parsing with libxml2 bindings for Node.js
+  # =============================================================================
+  #
+  # Provides DOM and SAX parsing of XML and HTML content.
+  #
+  # DOM parsing:
+  #   const libxmljs = require('libxmljs');
+  #   const doc = libxmljs.parseXml(xmlString);
+  #   const root = doc.root();
+  #   root.get('//name').text();     // tainted by xmlString
+  #   root.child(0).attr('id').value();
+  #
+  # SAX parsing:
+  #   const parser = new libxmljs.SaxParser();
+  #   parser.on('startElement', (name, attrs) => { ... });
+  #   parser.parseString(xmlString);
+  #
+  # SAX push parsing:
+  #   const pushParser = new libxmljs.SaxPushParser();
+  #   pushParser.on('startElement', (name, attrs) => { ... });
+  #   pushParser.push(xmlString);
+  #
+  # Also available as libxmljs2 (maintained fork with identical API).
+  #
+  # Security concerns:
+  #   - Parsed XML content may be attacker-controlled; values extracted
+  #     from documents (text(), name(), attr().value()) carry taint.
+  #   - By default libxmljs does NOT resolve external entities, but
+  #     setting { noent: true } enables XXE. The XXE detection is
+  #     handled by a dedicated query, not modeled here.
+  #
+  # Existing QLL coverage (XmlParsers.qll):
+  #   - parseXml/parseXmlString as ParserInvocation with taint steps
+  #     from Argument[0] through doc → element → attr chains to
+  #     text(), name(), value(), namespace().href()/prefix().
+  #   - SaxParser.parseString with taint to on() callback parameters.
+  #   - SaxPushParser.push with taint to on() callback parameters.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries — taint propagation through parsing and DOM traversal
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # DOM parsing: parseXml / parseXmlString / parseHtml / parseHtmlString
+      # =====================================================================
+      # Argument[0] (the XML/HTML string) taints the returned Document.
+
+      - ["libxmljs", "Member[parseXml,parseXmlString,parseHtml,parseHtmlString]", "Argument[0]", "ReturnValue", "taint"]
+      - ["libxmljs2", "Member[parseXml,parseXmlString,parseHtml,parseHtmlString]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Async variants return a Promise<Document>
+      - ["libxmljs", "Member[parseXmlAsync,parseHtmlAsync]", "Argument[0]", "ReturnValue.Awaited", "taint"]
+      - ["libxmljs2", "Member[parseXmlAsync,parseHtmlAsync]", "Argument[0]", "ReturnValue.Awaited", "taint"]
+
+      # =====================================================================
+      # Document → Element traversal
+      # =====================================================================
+      # doc.root(), doc.child(i), doc.get(xpath), doc.node(name)
+      # return Element/Node objects carrying taint from the document.
+
+      - ["libxmljs", "Fuzzy.Member[root,child,get,node]", "Argument[this]", "ReturnValue", "taint"]
+      - ["libxmljs2", "Fuzzy.Member[root,child,get,node]", "Argument[this]", "ReturnValue", "taint"]
+
+      # doc.childNodes(), doc.find(xpath) return arrays of nodes.
+      - ["libxmljs", "Fuzzy.Member[childNodes,find]", "Argument[this]", "ReturnValue.ArrayElement", "taint"]
+      - ["libxmljs2", "Fuzzy.Member[childNodes,find]", "Argument[this]", "ReturnValue.ArrayElement", "taint"]
+
+      # =====================================================================
+      # Element → Element traversal
+      # =====================================================================
+      # el.parent(), el.prevSibling(), el.nextSibling(), el.remove(),
+      # el.clone(), el.child(i), el.prevElement(), el.nextElement()
+
+      - ["libxmljs", "Fuzzy.Member[parent,prevSibling,nextSibling,remove,clone,prevElement,nextElement]", "Argument[this]", "ReturnValue", "taint"]
+      - ["libxmljs2", "Fuzzy.Member[parent,prevSibling,nextSibling,remove,clone,prevElement,nextElement]", "Argument[this]", "ReturnValue", "taint"]
+
+      # el.forEach(callback) — callback receives child nodes
+      - ["libxmljs", "Fuzzy.Member[forEach]", "Argument[this]", "Argument[0].Parameter[0]", "taint"]
+      - ["libxmljs2", "Fuzzy.Member[forEach]", "Argument[this]", "Argument[0].Parameter[0]", "taint"]
+
+      # =====================================================================
+      # Element → value extraction (text, name, attributes)
+      # =====================================================================
+
+      # el.text(), el.name(), el.toString() — return string content
+      - ["libxmljs", "Fuzzy.Member[text,name,toString]", "Argument[this]", "ReturnValue", "taint"]
+      - ["libxmljs2", "Fuzzy.Member[text,name,toString]", "Argument[this]", "ReturnValue", "taint"]
+
+      # el.attr(name) returns an Attribute object
+      - ["libxmljs", "Fuzzy.Member[attr,getAttribute]", "Argument[this]", "ReturnValue", "taint"]
+      - ["libxmljs2", "Fuzzy.Member[attr,getAttribute]", "Argument[this]", "ReturnValue", "taint"]
+
+      # el.attrs() returns array of Attribute objects
+      - ["libxmljs", "Fuzzy.Member[attrs]", "Argument[this]", "ReturnValue.ArrayElement", "taint"]
+      - ["libxmljs2", "Fuzzy.Member[attrs]", "Argument[this]", "ReturnValue.ArrayElement", "taint"]
+
+      # attr.value(), attr.name() — extract string from attribute
+      - ["libxmljs", "Fuzzy.Member[value]", "Argument[this]", "ReturnValue", "taint"]
+      - ["libxmljs2", "Fuzzy.Member[value]", "Argument[this]", "ReturnValue", "taint"]
+
+      # =====================================================================
+      # Element → namespace extraction
+      # =====================================================================
+      # el.namespace() returns a Namespace; ns.href(), ns.prefix()
+
+      - ["libxmljs", "Fuzzy.Member[namespace]", "Argument[this]", "ReturnValue", "taint"]
+      - ["libxmljs2", "Fuzzy.Member[namespace]", "Argument[this]", "ReturnValue", "taint"]
+
+      - ["libxmljs", "Fuzzy.Member[href,prefix]", "Argument[this]", "ReturnValue", "taint"]
+      - ["libxmljs2", "Fuzzy.Member[href,prefix]", "Argument[this]", "ReturnValue", "taint"]
+
+      # =====================================================================
+      # SAX parser: SaxParser.parseString
+      # =====================================================================
+      # new SaxParser() → parser.on(event, callback) → parser.parseString(xml)
+      # The xml input taints the callback parameters of on() listeners.
+      # We model this as: parseString Argument[0] taints the receiver's
+      # on() callback parameters. With fuzzy models, we capture the
+      # callback parameters on objects derived from the libxmljs import.
+
+      - ["libxmljs", "Member[SaxParser].Instance.Member[parseString]", "Argument[0]", "Argument[this].Member[on].Argument[1].Parameter[0,1]", "taint"]
+      - ["libxmljs2", "Member[SaxParser].Instance.Member[parseString]", "Argument[0]", "Argument[this].Member[on].Argument[1].Parameter[0,1]", "taint"]
+
+      # =====================================================================
+      # SAX push parser: SaxPushParser.push
+      # =====================================================================
+      # Same pattern as SaxParser but uses push() instead of parseString().
+
+      - ["libxmljs", "Member[SaxPushParser].Instance.Member[push]", "Argument[0]", "Argument[this].Member[on].Argument[1].Parameter[0,1]", "taint"]
+      - ["libxmljs2", "Member[SaxPushParser].Instance.Member[push]", "Argument[0]", "Argument[this].Member[on].Argument[1].Parameter[0,1]", "taint"]

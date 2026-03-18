@@ -1,0 +1,33 @@
+extensions:
+  # =============================================================================
+  # next/link (npm: "next/link") - Next.js client-side navigation component
+  # =============================================================================
+  #
+  # The next/link module exports the <Link> React component, which provides
+  # client-side navigation between pages in a Next.js application.
+  #
+  #   import Link from 'next/link';
+  #   <Link href="/about">About</Link>
+  #   <Link href={{ pathname: '/post', query: { id: 1 } }}>Post</Link>
+  #   <Link href={userProvidedUrl}>Go</Link>
+  #
+  # The module exports a single default component:
+  #   Link — React component with an `href` prop that specifies the target URL
+  #
+  # Security concerns:
+  # - URL redirection: the `href` prop controls where the user navigates.
+  #   If attacker-controlled input is passed as `href`, it can redirect the
+  #   user to a malicious URL, including `javascript:` URLs that execute
+  #   code in the browser context.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL redirection via the href prop
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # <Link href={url}> — the href prop is a URL redirection sink.
+      # JSX attributes are modeled as properties on Argument[0] (the props object).
+      - ["next/link", "Argument[0].Member[href]", "url-redirection"]

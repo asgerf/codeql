@@ -1,0 +1,27 @@
+extensions:
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # transform, transformSync, transformAsync: source code (arg 0) taints the result
+      - ["@babel/core", "Member[transform,transformSync,transformAsync]", "Argument[0]", "ReturnValue", "taint"]
+      # transform with callback: source code taints callback's result parameter
+      - ["@babel/core", "Member[transform]", "Argument[0]", "Argument[N-1].Parameter[1]", "taint"]
+      # transformFromAst, transformFromAstSync, transformFromAstAsync: AST (arg 0) and code string (arg 1) taint the result
+      - ["@babel/core", "Member[transformFromAst,transformFromAstSync,transformFromAstAsync]", "Argument[0,1]", "ReturnValue", "taint"]
+      # transformFromAst with callback: AST and code taint callback's result parameter
+      - ["@babel/core", "Member[transformFromAst]", "Argument[0,1]", "Argument[N-1].Parameter[1]", "taint"]
+      # parse, parseSync, parseAsync: source code (arg 0) taints the returned AST
+      - ["@babel/core", "Member[parse,parseSync,parseAsync]", "Argument[0]", "ReturnValue", "taint"]
+      # parse with callback: source code taints callback's ast parameter
+      - ["@babel/core", "Member[parse]", "Argument[0]", "Argument[N-1].Parameter[1]", "taint"]
+      # transformFile, transformFileSync, transformFileAsync: file contents taint the result
+      - ["@babel/core", "Member[transformFileSync,transformFileAsync]", "Argument[0]", "ReturnValue", "taint"]
+      # transformFile with callback: file contents taint callback's result parameter
+      - ["@babel/core", "Member[transformFile]", "Argument[0]", "Argument[N-1].Parameter[1]", "taint"]
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # transformFile, transformFileSync, transformFileAsync: filename (arg 0) is a path-injection sink
+      - ["@babel/core", "Member[transformFile,transformFileSync,transformFileAsync].Argument[0]", "path-injection"]

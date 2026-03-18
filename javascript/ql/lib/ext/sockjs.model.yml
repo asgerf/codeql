@@ -1,0 +1,90 @@
+extensions:
+  # =============================================================================
+  # sockjs (npm: "sockjs") — SockJS-node WebSocket emulation server
+  # =============================================================================
+  #
+  # SockJS-node is a server-side counterpart to sockjs-client, providing a
+  # WebSocket-like API with fallback transports (xhr-polling, eventsource, etc).
+  #
+  #   const sockjs = require('sockjs');
+  #   const server = sockjs.createServer({ prefix: '/echo' });
+  #   server.on('connection', (conn, req) => {
+  #     conn.on('data', (message) => { ... });  // receive from client
+  #     conn.write(data);                        // send to client
+  #     conn.url;                                // url from last request
+  #     conn.headers;                            // headers from last request
+  #   });
+  #   server.attach(httpServer);
+  #
+  # Security relevance:
+  # - Sources:
+  #   (1) conn.on('data', (message) => ...) — message is untrusted remote data.
+  #   (2) Connection properties reflecting client request data: url, pathname,
+  #       headers (origin, referer, x-forwarded-for), prefix.
+  #   (3) The `req` parameter (2nd param) in the connection callback is an
+  #       http.IncomingMessage with url, headers, etc.
+  # - No sinks: conn.write() sends data to the client but does not perform
+  #   any security-sensitive server-side operation.
+  # - No summaries: standard data flow through EventEmitter patterns.
+  #
+  # Existing QLL coverage (WebSocket.qll):
+  # - Server creation: sockjs.createServer() recognized
+  # - Connection handling: server.on('connection', ...) modeled
+  # - Remote flow: conn.on('data', callback) parameter[0] is RemoteFlowSource
+  #   with isUserControlledObject()
+  # - HTTP request: req parameter modeled as Http::Servers::RequestSource with
+  #   url, headers, rawHeaders, cookie access kinds
+  # - Send/receive: conn.write() and conn.on('data') modeled as
+  #   EventDispatch/EventRegistration for cross-component data flow
+  # - Client-server matching: SockJS client traffic is matched only to SockJS
+  #   servers (not ws/WebSocket)
+  #
+  # The QLL uses EventEmitter infrastructure and HTTP request modeling that
+  # cannot be fully replicated via data extensions. The models below cover
+  # the source patterns that ARE expressible.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: data received from clients
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # conn.on('data', (message) => ...) — message is remote input
+      # Uses Fuzzy to reach the connection object from the sockjs package
+      - [
+          "sockjs",
+          "Fuzzy.Member[on,addListener,once,prependListener,prependOnceListener].WithStringArgument[0=data].Argument[1].Parameter[0]",
+          "remote",
+        ]
+
+      # Connection properties copied from the client's last request:
+      # conn.url — URL from the last request
+      # conn.pathname — pathname portion of the URL
+      # conn.headers — object with origin, referer, x-forwarded-for
+      # conn.prefix — URL prefix on which the request was handled
+      - [
+          "sockjs",
+          "Member[createServer].ReturnValue.Member[on,addListener,once,prependListener,prependOnceListener].WithStringArgument[0=connection].Argument[1].Parameter[0].Member[url,pathname,prefix]",
+          "remote",
+        ]
+      - [
+          "sockjs",
+          "Member[createServer].ReturnValue.Member[on,addListener,once,prependListener,prependOnceListener].WithStringArgument[0=connection].Argument[1].Parameter[0].Member[headers].AnyMember",
+          "remote",
+        ]
+
+      # req parameter (2nd param of connection callback) — http.IncomingMessage
+      # req.url
+      - [
+          "sockjs",
+          "Member[createServer].ReturnValue.Member[on,addListener,once,prependListener,prependOnceListener].WithStringArgument[0=connection].Argument[1].Parameter[1].Member[url]",
+          "remote",
+        ]
+      # req.headers.* and req.rawHeaders.*
+      - [
+          "sockjs",
+          "Member[createServer].ReturnValue.Member[on,addListener,once,prependListener,prependOnceListener].WithStringArgument[0=connection].Argument[1].Parameter[1].Member[headers,rawHeaders].AnyMember",
+          "remote",
+        ]

@@ -1,0 +1,52 @@
+extensions:
+  # =============================================================================
+  # multiparty (npm: "multiparty") — Multipart/form-data parser (file uploads)
+  # =============================================================================
+  #
+  # Parses HTTP requests with content-type multipart/form-data:
+  #
+  #   const multiparty = require('multiparty');
+  #   const form = new multiparty.Form();
+  #
+  #   // Callback API: fields and files are passed to the callback
+  #   form.parse(req, (err, fields, files) => { ... });
+  #
+  #   // Event API: listen for 'part', 'field', and 'file' events
+  #   form.on('part', (part) => { ... });
+  #   form.on('field', (name, value) => { ... });
+  #   form.on('file', (name, file) => { ... });
+  #
+  # Security concerns:
+  # - SOURCE (remote): All parsed form data originates from an HTTP request
+  #   and is attacker-controlled. This includes:
+  #   - Callback parameters: fields (param 1) and files (param 2) from parse()
+  #   - Event callback parameters: part objects, field names/values, file objects
+  # - No sinks. The library only parses incoming data.
+  #
+  # Existing QLL coverage (FormParsers.qll):
+  # - Models all callback parameters from form.parse() and form.on() events
+  #   ('part', 'field', 'file') as RemoteFlowSource.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: parsed form data from HTTP requests (remote flow)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # form.parse(req, (err, fields, files) => { ... })
+      # fields (parameter 1) and files (parameter 2) are attacker-controlled
+      - ["multiparty", "Member[Form].Instance.Member[parse].Argument[1].Parameter[1,2]", "remote"]
+
+      # form.on('part', (part) => { ... })
+      # The part is a ReadableStream with attacker-controlled data and metadata
+      - ["multiparty", "Member[Form].Instance.Member[on,addListener].WithStringArgument[0=part].Argument[1].Parameter[0]", "remote"]
+
+      # form.on('field', (name, value) => { ... })
+      # Both name and value come from the multipart form submission
+      - ["multiparty", "Member[Form].Instance.Member[on,addListener].WithStringArgument[0=field].Argument[1].Parameter[0,1]", "remote"]
+
+      # form.on('file', (name, file) => { ... })
+      # name is the field name; file is an object with originalFilename, path, headers, etc.
+      - ["multiparty", "Member[Form].Instance.Member[on,addListener].WithStringArgument[0=file].Argument[1].Parameter[0,1]", "remote"]

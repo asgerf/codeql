@@ -1,0 +1,97 @@
+extensions:
+  # =============================================================================
+  # os (Node.js built-in) — Operating system utilities
+  # =============================================================================
+  #
+  # The os module provides operating system-related utility methods and properties:
+  #
+  #   const os = require('os');
+  #   os.tmpdir()            // '/tmp'
+  #   os.homedir()           // '/home/user'
+  #   os.hostname()          // 'my-server'
+  #   os.userInfo()          // { username: 'user', uid: 1000, ... }
+  #   os.networkInterfaces() // { eth0: [ { address: '192.168.1.1', ... } ] }
+  #   os.cpus()              // [ { model: 'Intel ...', speed: 2400, ... } ]
+  #   os.type()              // 'Linux'
+  #   os.platform()          // 'linux'
+  #   os.arch()              // 'x64'
+  #   os.release()           // '5.4.0-42-generic'
+  #   os.version()           // '#46-Ubuntu SMP ...'
+  #   os.machine()           // 'x86_64'
+  #
+  # Security concerns:
+  # - Environment sources: many os functions return data influenced by
+  #   environment variables (TMPDIR, TEMP, TMP, HOME, USERPROFILE) or by
+  #   OS-level configuration that may be attacker-controlled in containerized
+  #   or shared environments. Under the "environment" threat model, these
+  #   are treated as untrusted.
+  # - os.tmpdir() is additionally relevant to the InsecureTemporaryFile query
+  #   (already modeled in QLL as InsecureTemporaryFile::OSTempDir).
+  # - os.homedir() and os.userInfo().homedir return user directory paths that
+  #   can be influenced by environment variables.
+  # - os.hostname(), os.userInfo().username, os.networkInterfaces() return
+  #   system identifiers that could be spoofed in cloud/container contexts.
+  #
+  # The os module has no sinks — it does not perform I/O operations that
+  # accept untrusted input in a security-sensitive way.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: environment data from the OS (threat-model: environment)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- Path-returning functions (influenced by environment variables) ---
+
+      # os.tmpdir() — returns temp directory from TMPDIR/TEMP/TMP env vars
+      - ["os", "Member[tmpdir].ReturnValue", "environment"]
+
+      # os.homedir() — returns home directory from HOME/USERPROFILE env vars
+      - ["os", "Member[homedir].ReturnValue", "environment"]
+
+      # --- System identity functions ---
+
+      # os.hostname() — returns the system hostname
+      - ["os", "Member[hostname].ReturnValue", "environment"]
+
+      # os.userInfo() — returns { username, uid, gid, shell, homedir }
+      - ["os", "Member[userInfo].ReturnValue", "environment"]
+
+      # os.networkInterfaces() — returns network interface addresses/MACs
+      - ["os", "Member[networkInterfaces].ReturnValue", "environment"]
+
+      # --- System metadata functions ---
+
+      # os.type() — returns OS name (e.g. 'Linux', 'Darwin')
+      - ["os", "Member[type].ReturnValue", "environment"]
+
+      # os.platform() — returns platform (e.g. 'linux', 'win32')
+      - ["os", "Member[platform].ReturnValue", "environment"]
+
+      # os.arch() — returns CPU architecture (e.g. 'x64', 'arm64')
+      - ["os", "Member[arch].ReturnValue", "environment"]
+
+      # os.release() — returns OS release string
+      - ["os", "Member[release].ReturnValue", "environment"]
+
+      # os.version() — returns kernel version string
+      - ["os", "Member[version].ReturnValue", "environment"]
+
+      # os.machine() — returns machine type string
+      - ["os", "Member[machine].ReturnValue", "environment"]
+
+      # os.cpus() — returns array of CPU info objects (includes model strings)
+      - ["os", "Member[cpus].ReturnValue", "environment"]
+
+      # os.endianness() — returns 'BE' or 'LE'
+      - ["os", "Member[endianness].ReturnValue", "environment"]
+
+      # --- Properties ---
+
+      # os.EOL — platform-specific end-of-line marker
+      - ["os", "Member[EOL]", "environment"]
+
+      # os.devNull — platform-specific null device path
+      - ["os", "Member[devNull]", "environment"]

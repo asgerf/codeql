@@ -1,0 +1,35 @@
+extensions:
+  # =============================================================================
+  # camel-case (npm: "camel-case") - Convert a string to camelCase
+  # =============================================================================
+  #
+  # Part of the change-case family of packages by Blake Embrey. Converts strings
+  # to camelCase format.
+  #
+  #   import { camelCase } from "camel-case";
+  #   camelCase("test string");  //=> "testString"
+  #   camelCase("foo-bar");      //=> "fooBar"
+  #
+  # Exports:
+  #   camelCase(input, options?) → string
+  #   camelCaseTransform(input, index) → string
+  #   camelCaseTransformMerge(input, index) → string
+  #
+  # Security concerns:
+  # - No sources or sinks. All functions are pure string transformations.
+  # - Taint propagates from the input string to the returned string.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through camel-case functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # camelCase(input, options?) → string
+      - ["camel-case", "Member[camelCase]", "Argument[0]", "ReturnValue", "taint"]
+      # camelCaseTransform(input, index) → string
+      - ["camel-case", "Member[camelCaseTransform]", "Argument[0]", "ReturnValue", "taint"]
+      # camelCaseTransformMerge(input, index) → string
+      - ["camel-case", "Member[camelCaseTransformMerge]", "Argument[0]", "ReturnValue", "taint"]

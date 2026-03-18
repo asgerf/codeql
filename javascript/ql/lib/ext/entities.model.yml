@@ -1,0 +1,59 @@
+extensions:
+  # =============================================================================
+  # entities (npm: "entities") - Encode & decode HTML/XML entities
+  # =============================================================================
+  #
+  # A fast, zero-dependency library for encoding and decoding HTML and XML
+  # entities. Widely used by cheerio, htmlparser2, and others.
+  #
+  #   const entities = require('entities');
+  #
+  #   entities.encodeHTML('Tom & Jerry < "cats"');
+  #     // 'Tom &amp; Jerry &lt; &quot;cats&quot;'
+  #   entities.encodeXML('2 > 1 & "quotes"');
+  #     // '2 &gt; 1 &amp; &quot;quotes&quot;'
+  #
+  #   entities.decodeHTML('Tom &amp; Jerry &copy;');  // 'Tom & Jerry ©'
+  #   entities.decodeXML('2 &gt; 1');                 // '2 > 1'
+  #
+  #   entities.escapeUTF8(str);  // encode non-ASCII to numeric entities
+  #
+  # Security concerns:
+  # - encodeHTML/encodeXML are HTML sanitizers: they convert unsafe characters
+  #   to entity references, making output safe for HTML/XML embedding.
+  # - decodeHTML/decodeXML reverse encoding: they restore raw characters,
+  #   re-introducing potentially dangerous content. Taint propagates.
+  # - escapeUTF8 encodes non-ASCII characters; similar to encode functions.
+  #
+  # Existing QLL coverage:
+  #   HtmlSanitizers.qll: entities.encodeHTML and entities.encodeXML are
+  #     recognized as HTML sanitizer functions.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through entities functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- Encoding (sanitization) ---
+      # entities.encodeHTML(str) → HTML-entity-encoded string.
+      # Output is sanitized for HTML, but taint propagates for other sink kinds.
+      - ["entities", "Member[encodeHTML]", "Argument[0]", "ReturnValue", "taint"]
+
+      # entities.encodeXML(str) → XML-entity-encoded string.
+      - ["entities", "Member[encodeXML]", "Argument[0]", "ReturnValue", "taint"]
+
+      # entities.escapeUTF8(str) → numeric-entity-encoded string.
+      - ["entities", "Member[escapeUTF8]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- Decoding (de-sanitization) ---
+      # entities.decodeHTML(str) → decoded string with raw characters restored.
+      - ["entities", "Member[decodeHTML]", "Argument[0]", "ReturnValue", "taint"]
+
+      # entities.decodeXML(str) → decoded string with raw characters restored.
+      - ["entities", "Member[decodeXML]", "Argument[0]", "ReturnValue", "taint"]
+
+      # entities.decodeHTMLStrict(str) → strict variant (legacy API, v2)
+      - ["entities", "Member[decodeHTMLStrict]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,21 @@
+extensions:
+  # =============================================================================
+  # atob (npm: "atob") - Base64 decoding polyfill
+  # =============================================================================
+  #
+  # The atob package exports a single function (the default export) that decodes
+  # a base64-encoded string, mirroring the browser-native atob() function.
+  #
+  #   const atob = require("atob");
+  #   const decoded = atob("aGVsbG8="); // "hello"
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Decoding is modeled as taint-propagating: an attacker who controls the
+  # base64 input controls the decoded output.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # atob(encoded) - decode base64 string. Taint flows from input to output.
+      - ["atob", "", "Argument[0]", "ReturnValue", "taint"]

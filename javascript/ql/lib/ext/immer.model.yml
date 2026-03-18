@@ -1,0 +1,141 @@
+extensions:
+  # =============================================================================
+  # immer (npm: "immer") - Immutable state with a mutable API
+  # =============================================================================
+  #
+  # Immer allows working with immutable state in a convenient way by using
+  # "draft" proxies that record mutations and produce new immutable objects.
+  #
+  #   import { produce, createDraft, finishDraft, current, original,
+  #            applyPatches } from 'immer';
+  #
+  #   // Core: produce(baseState, recipe) → nextState
+  #   const next = produce(state, draft => { draft.x = 1; });
+  #
+  #   // Curried: produce(recipe) → producer function
+  #   const toggle = produce(draft => { draft.done = !draft.done; });
+  #   const next = toggle(state);
+  #
+  #   // Manual draft lifecycle
+  #   const draft = createDraft(state);
+  #   draft.x = 1;
+  #   const next = finishDraft(draft);
+  #
+  #   // Introspection
+  #   current(draft);   // snapshot of draft's current state
+  #   original(draft);  // original state before mutations
+  #
+  #   // Patches
+  #   const next = applyPatches(state, patches);
+  #
+  # Security concerns:
+  # - No sources. The library does not provide access to untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations
+  #   (no shell execution, file access, HTML rendering, SQL, etc.).
+  # - SUMMARIES: Taint flows through produce, createDraft, finishDraft,
+  #   current, original, and applyPatches. These are important so that
+  #   tainted state is not lost when processed through immer.
+  #
+  # Existing QLL coverage (Redux.qll):
+  # - ImmerProduce: Models immer()/immer.produce() as a DelegatingReducer
+  #   in the Redux context only. General taint flow is not modelled.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow through immer functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- produce(baseState, recipe) → nextState ---
+      # baseState (arg 0) flows to the draft parameter of recipe (arg 1, param 0)
+      - [
+          "immer",
+          "Member[produce]",
+          "Argument[0]",
+          "Argument[1].Parameter[0]",
+          "value",
+        ]
+      # The return value of produce carries state derived from baseState
+      - [
+          "immer",
+          "Member[produce]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]
+      # Default export is also `produce`
+      - ["immer", "", "Argument[0]", "Argument[1].Parameter[0]", "value"]
+      - ["immer", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- produce(recipe) → producer(state) → nextState (curried form) ---
+      # The curried producer passes its argument to the recipe's draft param
+      - [
+          "immer",
+          "Member[produce].ReturnValue",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]
+      - [
+          "immer",
+          "ReturnValue",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]
+
+      # --- createDraft(state) → draft ---
+      - [
+          "immer",
+          "Member[createDraft]",
+          "Argument[0]",
+          "ReturnValue",
+          "value",
+        ]
+
+      # --- finishDraft(draft) → nextState ---
+      - [
+          "immer",
+          "Member[finishDraft]",
+          "Argument[0]",
+          "ReturnValue",
+          "value",
+        ]
+
+      # --- current(draft) → snapshot ---
+      - [
+          "immer",
+          "Member[current]",
+          "Argument[0]",
+          "ReturnValue",
+          "value",
+        ]
+
+      # --- original(draft) → originalState ---
+      - [
+          "immer",
+          "Member[original]",
+          "Argument[0]",
+          "ReturnValue",
+          "value",
+        ]
+
+      # --- applyPatches(state, patches) → nextState ---
+      # State flows through
+      - [
+          "immer",
+          "Member[applyPatches]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]
+      # Patches also contribute to the output
+      - [
+          "immer",
+          "Member[applyPatches]",
+          "Argument[1]",
+          "ReturnValue",
+          "taint",
+        ]

@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # slash (npm: "slash") — Convert Windows backslash paths to forward slashes
+  # =============================================================================
+  #
+  # Converts Windows-style backslash paths to forward-slash paths:
+  #
+  #   import slash from 'slash';
+  #   slash('foo\\bar');  // => 'foo/bar'
+  #
+  # Exports: slash(path) function
+  #
+  # Security concerns:
+  # - No sources. The library does not access external or untrusted data.
+  # - No sinks. The library performs a simple string replacement.
+  # - Taint propagation: the output is derived from the input path with
+  #   backslashes replaced by forward slashes. Taint is preserved.
+  #
+  # Existing QLL coverage (TaintedPathCustomizations.qll):
+  # - slash(path) is modeled as a flow step in the tainted-path query,
+  #   preserving flow state (path type). The state-preserving aspect is
+  #   specific to the tainted-path query and cannot be expressed as a data
+  #   extension, but the general taint summary below covers other queries.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      - ["slash", "", "Argument[0]", "ReturnValue", "taint"]

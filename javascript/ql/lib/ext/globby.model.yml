@@ -1,0 +1,66 @@
+extensions:
+  # =============================================================================
+  # globby (npm: "globby") - User-friendly glob matching
+  # =============================================================================
+  #
+  # globby is a convenience wrapper around fast-glob, providing async, sync,
+  # and stream APIs for matching files by glob patterns:
+  #
+  #   import { globby, globbySync, globbyStream } from 'globby';
+  #
+  #   // Async — returns Promise<string[]>
+  #   const paths = await globby(['src/**/*.js', '!test/**']);
+  #   // or default export (older versions):
+  #   const globby = require('globby');
+  #   const paths = await globby(['src/**/*.js']);
+  #
+  #   // Sync — returns string[]
+  #   const paths = globbySync('*.ts');
+  #
+  #   // Stream — returns Readable stream of matching paths
+  #   for await (const path of globbyStream('*.ts')) { ... }
+  #
+  #   // Utility: generate underlying fast-glob tasks
+  #   const tasks = await generateGlobTasks(['src/**'], options);
+  #   const tasks = generateGlobTasksSync(['src/**'], options);
+  #
+  #   // Utility: check if a pattern is dynamic
+  #   isDynamicPattern('foo*'); // true
+  #
+  #   // Gitignore helpers
+  #   const isIgnored = await isGitIgnored();
+  #   const isIgnored = isGitIgnoredSync();
+  #
+  # Security concerns:
+  # - SINK (path-injection): The patterns argument (arg 0) to globby,
+  #   globbySync, globbyStream, and generateGlobTasks controls which file
+  #   system paths are accessed. Attacker-controlled patterns can traverse
+  #   directories and read arbitrary files.
+  # - No sources modellable via data extensions: return values are file
+  #   system paths (FileNameSource), handled by QLL (Files.qll), not via
+  #   the sourceModel extensible predicate.
+  #
+  # Existing QLL coverage (Files.qll):
+  #   GlobbyFileNameSource models return values from the default export
+  #   call (promise resolved value) and .sync() as FileNameSource nodes.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: glob patterns control which files are accessed
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # globby(patterns, options?) — default export (CJS) or named export, async
+      - ["globby", "Argument[0]", "path-injection"]
+      - ["globby", "Member[globby].Argument[0]", "path-injection"]
+
+      # globbySync(patterns, options?)
+      - ["globby", "Member[globbySync,sync].Argument[0]", "path-injection"]
+
+      # globbyStream(patterns, options?)
+      - ["globby", "Member[globbyStream,stream].Argument[0]", "path-injection"]
+
+      # generateGlobTasks(patterns, options?) / generateGlobTasksSync
+      - ["globby", "Member[generateGlobTasks,generateGlobTasksSync].Argument[0]", "path-injection"]

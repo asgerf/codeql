@@ -1,0 +1,75 @@
+extensions:
+  # =============================================================================
+  # cookie-parser (npm: "cookie-parser") - Express cookie parsing middleware
+  # =============================================================================
+  #
+  # cookie-parser parses the Cookie header and populates req.cookies and
+  # req.signedCookies on the request object:
+  #
+  #   const cookieParser = require('cookie-parser');
+  #   app.use(cookieParser('secret'));
+  #
+  #   app.get('/', (req, res) => {
+  #     req.cookies;        // { name: 'value', ... } — unsigned cookies
+  #     req.signedCookies;  // { name: 'value', ... } — signed cookies (validated)
+  #   });
+  #
+  # Utility functions:
+  #   cookieParser.JSONCookie(str)            — parse a JSON-encoded cookie value
+  #   cookieParser.JSONCookies(cookies)       — parse all JSON values in a cookies object
+  #   cookieParser.signedCookie(str, secret)  — unsign a single signed cookie string
+  #   cookieParser.signedCookies(cookies, secret) — unsign all signed cookies
+  #
+  # Security concerns:
+  # - req.cookies and req.signedCookies contain attacker-controlled data
+  #   from the HTTP Cookie header and are remote flow sources.
+  # - The utility functions propagate taint from cookie input arguments to
+  #   return values.
+  # - No sinks. The library does not perform security-sensitive operations.
+  #
+  # Existing QLL coverage:
+  # - ExpressModules.qll: Models CookieParser.MiddlewareInstance as
+  #   Http::CookieMiddlewareInstance with secret key extraction.
+  # - Express.qll: Models req.cookies as a source (kind "cookie") in
+  #   Express route handlers.
+  # - req.signedCookies is not modeled in existing QLL.
+  # =============================================================================
+
+  # Sources: req.cookies and req.signedCookies are untrusted in route handlers
+  # guarded by cookie-parser middleware.
+  #
+  # cookieParser() or cookieParser(secret) returns the middleware function.
+  # In guarded route handlers, req.cookies and req.signedCookies contain
+  # parsed cookie data from the HTTP Cookie header.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # req.cookies — object of unsigned cookie name-value pairs
+      # req.signedCookies — object of validated signed cookie name-value pairs
+      - [
+          "cookie-parser",
+          "ReturnValue.GuardedRouteHandler.Parameter[0].Member[cookies,signedCookies]",
+          "remote",
+        ]
+
+  # Summaries: Taint propagation through utility functions.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # cookieParser.JSONCookie(str) → parsed value
+      # Parses a single JSON-encoded cookie value string.
+      - ["cookie-parser", "Member[JSONCookie]", "Argument[0]", "ReturnValue", "taint"]
+
+      # cookieParser.JSONCookies(cookies) → { name: parsedValue, ... }
+      # Parses all JSON-encoded values in a cookies object.
+      - ["cookie-parser", "Member[JSONCookies]", "Argument[0]", "ReturnValue", "taint"]
+
+      # cookieParser.signedCookie(str, secret) → unsigned value or false
+      # Validates and unsigns a single signed cookie string.
+      - ["cookie-parser", "Member[signedCookie]", "Argument[0]", "ReturnValue", "taint"]
+
+      # cookieParser.signedCookies(cookies, secret) → { name: unsignedValue, ... }
+      # Validates and unsigns all signed cookies in an object.
+      - ["cookie-parser", "Member[signedCookies]", "Argument[0]", "ReturnValue", "taint"]

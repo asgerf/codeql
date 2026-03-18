@@ -1,0 +1,34 @@
+extensions:
+  # =============================================================================
+  # object.defaults (npm: "object.defaults") - Assign default properties to objects
+  # =============================================================================
+  #
+  # Copies own enumerable properties from source objects to a target object,
+  # but only for properties that are undefined on the target.
+  #
+  #   const defaults = require('object.defaults');
+  #   defaults(target, srcA, srcB);          // mutates and returns target
+  #   defaults.immutable(srcA, srcB, srcC);  // returns a new merged object
+  #
+  # Security concerns:
+  # - Taint from source operands flows into the return value and target.
+  # - No sources or sinks.
+  #
+  # Existing QLL coverage (Extend.qll):
+  #   Modeled as ExtendCallShallow — value-preserving flow from source
+  #   operands (args 1+) and destination (arg 0) to the return value,
+  #   and from source operands into the destination object.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: value flow through defaults() and defaults.immutable()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # defaults(target, src1, src2, ...) — all operands flow to return value
+      - ["object.defaults", "", "Argument[0..N-1]", "ReturnValue", "value"]
+
+      # defaults.immutable(src1, src2, ...) — all sources flow to return value
+      - ["object.defaults", "Member[immutable]", "Argument[0..N-1]", "ReturnValue", "value"]

@@ -1,0 +1,55 @@
+extensions:
+  # =============================================================================
+  # dot (npm: "dot") - doT.js JavaScript template engine
+  # =============================================================================
+  #
+  # doT.js compiles template strings into functions using new Function():
+  #
+  #   const dot = require('dot');
+  #   const fn = dot.template('Hello {{=it.name}}');
+  #   const html = fn({ name: 'World' });
+  #
+  # API:
+  #   dot.template(tmplString, settings?, defs?) → compiledFunction
+  #   dot.compile(tmplString, settings?)         → compiledFunction (alias)
+  #   compiledFunction(data)                     → rendered string
+  #
+  # Template syntax:
+  #   {{= expr }}  — HTML-encoded interpolation
+  #   {{! expr }}  — raw (unescaped) interpolation
+  #   {{ code }}   — evaluation (arbitrary JS)
+  #
+  # Security concerns:
+  # - Template strings are compiled via new Function(), so an attacker-
+  #   controlled template string is a code-injection vector.
+  # - Data passed to the compiled function taints the rendered output.
+  #
+  # Existing QLL coverage:
+  #   CodeInjectionCustomizations.qll: DotTemplateSink models Argument[0] of
+  #     dot.template() and dot.compile() as a code-injection sink.
+  #   Templating.qll: DotStyleSyntax models {{! }} as raw interpolation in
+  #     .dot template files for XSS detection.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: template strings are compiled into code via new Function()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # dot.template(tmplStr, ...) / dot.compile(tmplStr, ...)
+      - ["dot", "Member[template,compile].Argument[0]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: data flows through the compiled template to rendered output
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # compiledFn(data) → rendered string: data taints the output
+      - ["dot", "Member[template,compile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+
+      # The template string itself taints the rendered output
+      - ["dot", "Member[template,compile]", "Argument[0]", "ReturnValue.ReturnValue", "taint"]

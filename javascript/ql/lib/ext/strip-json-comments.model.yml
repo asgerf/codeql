@@ -1,0 +1,35 @@
+extensions:
+  # =============================================================================
+  # strip-json-comments (npm: "strip-json-comments")
+  # Strip comments from JSON strings
+  # =============================================================================
+  #
+  # By Sindre Sorhus. Strips single-line (//) and multi-line (/* */)
+  # comments from JSON strings, making them valid JSON for parsing.
+  #
+  #   import stripJsonComments from 'strip-json-comments';
+  #   const json = stripJsonComments('{ "a": 1 // comment\n}');
+  #   //=> '{ "a": 1 \n}'
+  #   JSON.parse(json);
+  #
+  # API:
+  #   stripJsonComments(jsonString, options?) → string
+  #     options.trailingCommas: boolean — replace trailing commas too
+  #     options.whitespace: boolean — replace comments with whitespace
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: pure string transformation, no I/O or eval.
+  # - Taint propagation: the output is derived from the input string
+  #   with comments removed — taint flows through.
+  #
+  # Existing QLL coverage (JsonParsers.qll):
+  #   Modeled as a SharedTaintStep: Argument[0] → ReturnValue.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # stripJsonComments(jsonString, options?) → cleaned string
+      - ["strip-json-comments", "", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,57 @@
+extensions:
+  # =============================================================================
+  # graphql (npm: "graphql") - GraphQL.js reference implementation
+  # =============================================================================
+  #
+  # The graphql package is the reference implementation of GraphQL for
+  # JavaScript. It provides functions to parse, validate, and execute
+  # GraphQL queries against a schema.
+  #
+  # Key functions:
+  #   graphql(schema, source, ...)         — parse + validate + execute (positional)
+  #   graphql({ schema, source, ... })     — same, named-parameter style (v15+)
+  #   parse(source)                        — parse a GraphQL query string to AST
+  #   execute(schema, document, ...)       — execute a pre-parsed AST
+  #   subscribe(schema, document, ...)     — execute a subscription
+  #   validate(schema, document)           — validate an AST against a schema
+  #   buildSchema(source)                  — build a schema from SDL string
+  #
+  # Security concerns:
+  # - GraphQL injection: If an attacker controls the query string passed to
+  #   graphql() or parse(), they can craft arbitrary queries to access or
+  #   mutate data beyond what the application intended. This is analogous to
+  #   SQL injection and is modeled as the sql-injection sink kind (matching
+  #   the existing QLL classification in SqlInjectionCustomizations.qll).
+  # - buildSchema(): If the SDL string is attacker-controlled, arbitrary
+  #   schema definitions could be created, but this is not a standard
+  #   injection category and is very unlikely in practice.
+  # - execute/subscribe/validate take a pre-parsed AST (DocumentNode), not
+  #   a string, so they are not directly vulnerable to string injection.
+  #
+  # Existing QLL coverage (GraphQL.qll):
+  #   GraphQLLib::GraphQLString models the second positional argument of
+  #   graphql.graphql(schema, source) as a GraphQL::GraphQLString, which
+  #   feeds into SqlInjectionCustomizations.qll as GraphqlInjectionSink.
+  #
+  # This data extension covers:
+  # - graphql() positional style: source argument (already in QLL)
+  # - graphql() named-parameter style: source property of options object
+  # - parse(): source argument
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: GraphQL query injection (sql-injection kind)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # graphql(schema, source, ...) — positional style, arg 1 is the query string
+      - ["graphql", "Member[graphql].Argument[1]", "sql-injection"]
+
+      # graphql({ schema, source, ... }) — named-parameter style (v15+)
+      # The source property of the options object is the query string.
+      - ["graphql", "Member[graphql].Argument[0].Member[source]", "sql-injection"]
+
+      # parse(source) — arg 0 is the GraphQL query string
+      - ["graphql", "Member[parse].Argument[0]", "sql-injection"]

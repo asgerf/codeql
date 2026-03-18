@@ -1,0 +1,51 @@
+extensions:
+  # =============================================================================
+  # string-template/compile (npm: "string-template", subpath "compile")
+  # Precompile string-template format strings for reuse
+  # =============================================================================
+  #
+  #   var compile = require('string-template/compile');
+  #
+  #   // Compile a template with positional placeholders
+  #   var greet = compile('Hello {0}, you have {1} messages');
+  #   greet('Robert', 12);       //=> 'Hello Robert, you have 12 messages'
+  #   greet(['Robert', 12]);     //=> 'Hello Robert, you have 12 messages'
+  #
+  #   // Compile a template with named placeholders
+  #   var greet = compile('Hello {name}, you have {count} messages');
+  #   greet({ name: 'Robert', count: 12 });
+  #   //=> 'Hello Robert, you have 12 messages'
+  #
+  #   // With `true` as second arg, uses `new Function` for speed
+  #   var greet = compile('Hello {0}', true);
+  #
+  # API:
+  #   compile(template, [useNewFunction]) → function(...args) → string
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: The library performs simple string interpolation using regex
+  #   replacement. It does NOT eval templates as code (the `new Function`
+  #   optimization is applied to the static template, not user data).
+  # - Taint propagation: the format string and substitution values both
+  #   flow into the returned string.
+  #
+  # Existing QLL coverage (StringFormatters.qll):
+  #   Modeled as a PrintfStyleCall with format string at Argument[0].
+  #   However, compile() returns a function — the actual interpolation
+  #   happens when the returned function is called. The summaries below
+  #   model taint flow through the compiled template function.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # compile(template) → fn: template string flows into compiled output
+      - ["string-template/compile", "", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+
+      # compiled fn called with positional args: fn(val0, val1, ...)
+      - ["string-template/compile", "ReturnValue", "Argument[0,1,2,3,4,5,6,7,8,9]", "ReturnValue", "taint"]
+
+      # compiled fn called with array/object: fn([vals]) or fn({key: val})
+      - ["string-template/compile", "ReturnValue", "Argument[0].Member[unknown]", "ReturnValue", "taint"]

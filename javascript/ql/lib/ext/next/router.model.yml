@@ -1,0 +1,111 @@
+extensions:
+  # =============================================================================
+  # next/router (npm: "next") - Next.js client-side routing (Pages Router)
+  # =============================================================================
+  #
+  # The next/router module provides client-side routing for Next.js Pages Router.
+  #
+  # Usage patterns:
+  #   import { useRouter } from 'next/router';
+  #   const router = useRouter();
+  #   router.query;    // URL query params & dynamic route segments (untrusted)
+  #   router.asPath;   // actual browser URL path + query string (untrusted)
+  #   router.push(url);    // navigate to URL (url-redirection sink)
+  #   router.replace(url); // navigate, replacing history (url-redirection sink)
+  #
+  #   import Router from 'next/router';     // singleton with same API
+  #   Router.query; Router.push(url); ...
+  #
+  #   import { withRouter } from 'next/router';
+  #   export default withRouter(function Page({ router }) {
+  #     router.query;    // untrusted
+  #     router.push(url);
+  #   });
+  #
+  #   router.beforePopState(({ url, as }) => { ... }); // url is user-controlled
+  #
+  # Properties NOT user-controlled:
+  #   router.pathname  — route pattern, e.g. /post/[id] (not the actual URL)
+  #   router.route     — same as pathname
+  #   router.basePath  — configured in next.config.js
+  #   router.locale    — from a configured set of locales
+  #   router.isReady / router.isFallback / router.isPreview — booleans
+  #
+  # Existing QLL coverage (Next.qll, ClientSideUrlRedirectCustomizations.qll):
+  # - Sources: nextRouter().query → RemoteFlowSource (NextParams)
+  # - Sinks: nextRouter().push/replace(arg0) → ClientSideUrlRedirect::Sink
+  #          (also treated as XSS sink for javascript: URL schemes)
+  # - nextRouter() covers useRouter() calls and withRouter() HOC
+  #
+  # This data extension additionally covers:
+  # - router.asPath as a source (not in QLL)
+  # - beforePopState callback url/as parameters
+  # - Explicit withRouter HOC patterns for robustness
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Untrusted data from router object
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # router.query — parsed URL query parameters and dynamic route segments.
+      # Attacker-controlled via the URL, e.g. /post/[id]?foo=bar yields
+      # { id: "...", foo: "bar" }.
+      # Fuzzy covers useRouter().query, Router.query (singleton), and derived patterns.
+      - ["next/router", "Fuzzy.Member[query]", "remote"]
+
+      # router.asPath — the actual path shown in the browser including the
+      # query string, e.g. "/post/abc?foo=bar#hash". Attacker-controlled.
+      - ["next/router", "Fuzzy.Member[asPath]", "remote"]
+
+      # withRouter HOC — the wrapped component receives { router } in props.
+      # Fuzzy cannot trace through HOC prop injection, so model explicitly.
+      # withRouter(function({ router }) { router.query; })
+      - [
+          "next/router",
+          "Member[withRouter].Argument[0].Parameter[0].Member[router].Member[query]",
+          "remote",
+        ]
+      - [
+          "next/router",
+          "Member[withRouter].Argument[0].Parameter[0].Member[router].Member[asPath]",
+          "remote",
+        ]
+
+      # router.beforePopState(({ url, as, options }) => { ... })
+      # Called on browser back/forward; url and as are user-controlled.
+      - [
+          "next/router",
+          "Fuzzy.Member[beforePopState].Argument[0].Parameter[0].Member[url,as]",
+          "remote",
+        ]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL redirection via client-side navigation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # router.push(url) — navigates to a new URL. If url is attacker-controlled,
+      # this enables open redirects and XSS via javascript: URLs.
+      # Fuzzy covers useRouter().push(), Router.push() (singleton), etc.
+      - ["next/router", "Fuzzy.Member[push].Argument[0]", "url-redirection"]
+
+      # router.replace(url) — same as push but replaces the current history entry.
+      - ["next/router", "Fuzzy.Member[replace].Argument[0]", "url-redirection"]
+
+      # withRouter HOC — explicit sink for the wrapped component's router.
+      # withRouter(function({ router }) { router.push(untrusted); })
+      - [
+          "next/router",
+          "Member[withRouter].Argument[0].Parameter[0].Member[router].Member[push].Argument[0]",
+          "url-redirection",
+        ]
+      - [
+          "next/router",
+          "Member[withRouter].Argument[0].Parameter[0].Member[router].Member[replace].Argument[0]",
+          "url-redirection",
+        ]

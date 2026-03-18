@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # punycode (npm: "punycode") — Unicode ↔ ASCII Punycode converter
+  # =============================================================================
+  #
+  # RFC 3492 compliant Punycode converter for internationalized domain names.
+  # Also available as Node.js built-in via require('punycode/').
+  #
+  #   const punycode = require('punycode/');
+  #
+  #   punycode.encode('mañana')           //=> 'maana-pta'
+  #   punycode.decode('maana-pta')        //=> 'mañana'
+  #   punycode.toASCII('mañana.com')      //=> 'xn--maana-pta.com'
+  #   punycode.toUnicode('xn--maana-pta.com') //=> 'mañana.com'
+  #   punycode.ucs2.decode('abc')         //=> [0x61, 0x62, 0x63]
+  #   punycode.ucs2.encode([0x61, 0x62])  //=> 'ab'
+  #
+  # Security concerns:
+  # - No sources: does not fetch external data.
+  # - No sinks: does not execute code, make requests, or write files.
+  # - Pure encoding utility: taint flows from input to output for all methods.
+  #
+  # Existing QLL coverage (UriLibraries.qll, Punycode module):
+  #   Models encode, decode, toASCII, toUnicode as uriStep taint steps.
+  #   ucs2.encode and ucs2.decode are not modeled in QLL.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through encoding/decoding methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # punycode.encode(string) → ASCII Punycode string
+      # punycode.decode(string) → Unicode string
+      # punycode.toASCII(domain) → ASCII domain with xn-- prefix
+      # punycode.toUnicode(domain) → Unicode domain
+      - ["punycode", "Member[encode,decode,toASCII,toUnicode]", "Argument[0]", "ReturnValue", "taint"]
+
+      # punycode.ucs2.decode(string) → array of code points
+      # punycode.ucs2.encode(codePoints) → string
+      - ["punycode", "Member[ucs2].Member[encode,decode]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # optimist (npm: "optimist") - Light-weight command-line option parser
+  # =============================================================================
+  #
+  # optimist parses process.argv into a convenient object:
+  #
+  #   const argv = require('optimist').argv;
+  #   console.log(argv.x, argv.y);  // node script.js -x 10 -y 21
+  #
+  #   // Chained configuration
+  #   const argv = require('optimist')
+  #     .usage('Usage: $0 -x [num] -y [num]')
+  #     .demand(['x', 'y'])
+  #     .default('x', 10)
+  #     .alias('x', 'xval')
+  #     .boolean('verbose')
+  #     .argv;
+  #
+  #   // .parse(args) method
+  #   const parsed = require('optimist').parse(process.argv.slice(2));
+  #
+  #   // argv._ contains non-option arguments, argv.$0 is the script name
+  #
+  # Note: optimist is deprecated; minimist or yargs are recommended instead.
+  #
+  # Security concerns:
+  # - require('optimist').argv and .parse() return objects derived from
+  #   command-line arguments, which are untrusted user input. In server-side
+  #   or CLI tool contexts, these values should be treated as tainted.
+  #
+  # Existing QLL coverage:
+  #   CommandLineArguments.qll: require('optimist').argv modeled as a
+  #     CommandLineArguments source (threat model: commandargs).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: parsed command-line arguments are untrusted input
+  # ---------------------------------------------------------------------------
+  # Note: These are "commandargs" threat-model sources in the QLL. The data
+  # extension sourceModel only supports "remote" as a kind, so we cannot
+  # precisely express the "commandargs" threat model here. The existing QLL
+  # coverage handles this correctly.
+  #
+  # No data extensions are needed for this library.
+  # =============================================================================

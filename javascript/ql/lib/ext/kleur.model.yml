@@ -1,0 +1,39 @@
+extensions:
+  # =============================================================================
+  # kleur (npm: "kleur") - Terminal string color formatting
+  # =============================================================================
+  #
+  # Lightweight ANSI color formatting library with a chainable API.
+  #
+  #   import kleur from 'kleur';
+  #   kleur.red('Error!');
+  #   kleur.bold().underline().red('important');
+  #   kleur.red().bold('also works');
+  #
+  # Each color/style method can be called with a string argument (returns
+  # styled string) or without arguments (returns chainable instance).
+  # Chained methods return the result of the final call.
+  #
+  # Colors: black, red, green, yellow, blue, magenta, cyan, white, gray, grey
+  # Styles: bold, dim, italic, underline, inverse, hidden, strikethrough, reset
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure string decoration for terminal output.
+  # - Taint propagates from the string argument through to the return value.
+  #
+  # Existing QLL coverage:
+  # - Logging.qll: KleurStep models stringManipulationStep for taint from
+  #   Argument[0] to the return of any member call on kleur or its chains.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through color/style calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # kleur.red("text"), kleur.bold().red("text"), etc.
+      # Any chain of style methods ending in a call propagates taint from
+      # the string argument to the styled return value.
+      - ["kleur", "Fuzzy", "Argument[0]", "ReturnValue", "taint"]

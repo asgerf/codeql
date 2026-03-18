@@ -1,0 +1,42 @@
+extensions:
+  # =============================================================================
+  # array-from (npm: "array-from") - Array.from polyfill
+  # =============================================================================
+  #
+  # array-from is a polyfill for Array.from(). It converts iterables,
+  # array-like objects, Sets, Maps, etc. into arrays.
+  #
+  #   const from = require('array-from');
+  #   from([1, 2, 3]);           //=> [1, 2, 3]
+  #   from('abc');                //=> ['a', 'b', 'c']
+  #   from(new Set([1, 2]));     //=> [1, 2]
+  #   from([1, 2], x => x * 2); //=> [2, 4]
+  #
+  # Signature: from(arrayLike, mapFn?, thisArg?)
+  #   - arrayLike: iterable or array-like object to convert
+  #   - mapFn:     optional mapping function applied to each element
+  #   - thisArg:   optional `this` binding for mapFn
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure data transformation.
+  # - Taint/value propagates from the input to the output array.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: data flow through from()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- 1-arg form: from(arrayLike) ---
+      # Taint propagates from input to return value
+      - ["array-from", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- 2+ arg form: from(arrayLike, mapFn, thisArg?) ---
+      # Array/iterable elements flow to mapFn's first parameter
+      - ["array-from", "", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      # mapFn return value flows to result array elements
+      - ["array-from", "", "Argument[1].ReturnValue", "ReturnValue.ArrayElement", "value"]
+      # thisArg flows to mapFn's `this`
+      - ["array-from", "", "Argument[2]", "Argument[1].Parameter[this]", "value"]

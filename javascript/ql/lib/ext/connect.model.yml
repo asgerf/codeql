@@ -1,0 +1,90 @@
+extensions:
+  # =============================================================================
+  # connect (npm: "connect") - Extensible HTTP server framework for Node.js
+  # =============================================================================
+  #
+  # Connect is a middleware framework that uses "plugins" known as middleware.
+  # Middleware functions receive the Node.js http request and response objects:
+  #
+  #   const connect = require('connect');
+  #   const app = connect();
+  #
+  #   // Standard middleware: (req, res, next)
+  #   app.use(function(req, res, next) {
+  #     req.url;         // untrusted URL (modified by route matching)
+  #     req.originalUrl; // untrusted original URL (set by connect)
+  #     req.headers;     // untrusted HTTP headers
+  #     next();
+  #   });
+  #
+  #   // Mounted middleware: app.use('/path', handler)
+  #   app.use('/api', function(req, res, next) { ... });
+  #
+  #   // Error middleware: (err, req, res, next) — 4 arguments
+  #   app.use(function(err, req, res, next) {
+  #     // req is at Parameter[1] in error handlers
+  #   });
+  #
+  #   app.listen(3000);
+  #
+  # Security concerns:
+  # - The req parameter in middleware callbacks provides access to
+  #   attacker-controlled HTTP request data (URL, headers, etc.).
+  # - Connect sets req.originalUrl to preserve the original URL before
+  #   route-based URL rewriting in mounted middleware.
+  # - Cookie access (req.cookies.get) is available when cookie middleware
+  #   is installed.
+  # - The response object (res) is a plain Node.js http.ServerResponse;
+  #   its methods (res.end, res.write) are modeled by the Node.js HTTP
+  #   framework, not here.
+  #
+  # Note: basic-auth-connect credential sources/sinks are in a separate
+  # model file (basic-auth-connect.model.yml).
+  # =============================================================================
+
+  # Sources: Untrusted request data accessible in middleware handlers.
+  #
+  # app.use([route], handler) registers middleware. The handler may be:
+  #   (req, res, next)       — standard middleware, req at Parameter[0]
+  #   (err, req, res, next)  — error middleware, req at Parameter[1]
+  #
+  # Argument[0..N-1] covers both app.use(handler) and app.use(route, handler).
+  # Fuzzy traces through connect() invocation and .use() chaining.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- Standard middleware: req is Parameter[0] ---
+
+      # req.url            — request URL (rewritten by connect for mounted routes)
+      # req.originalUrl    — original request URL before route-based rewriting
+      # req.headers        — parsed HTTP request headers (lowercase keys)
+      # req.rawHeaders     — raw HTTP headers as alternating [name, value, ...] array
+      # req.method         — HTTP method (GET, POST, etc.)
+      - [
+          "connect",
+          "Fuzzy.Member[use].Argument[0..N-1].Parameter[0].Member[url,originalUrl,headers,rawHeaders,method]",
+          "remote",
+        ]
+
+      # --- Error middleware: req is Parameter[1] ---
+      # Same properties, but req is the second parameter in (err, req, res, next).
+      - [
+          "connect",
+          "Fuzzy.Member[use].Argument[0..N-1].Parameter[1].Member[url,originalUrl,headers,rawHeaders,method]",
+          "remote",
+        ]
+
+      # --- Cookie access via middleware-injected req.cookies ---
+      # req.cookies.get(name) returns a cookie value from the HTTP Cookie header.
+      # The .cookies property is injected by cookie middleware (e.g. cookies package).
+      - [
+          "connect",
+          "Fuzzy.Member[use].Argument[0..N-1].Parameter[0].Member[cookies].Member[get].ReturnValue",
+          "remote",
+        ]
+      - [
+          "connect",
+          "Fuzzy.Member[use].Argument[0..N-1].Parameter[1].Member[cookies].Member[get].ReturnValue",
+          "remote",
+        ]

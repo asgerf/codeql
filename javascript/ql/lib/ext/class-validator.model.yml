@@ -1,0 +1,91 @@
+extensions:
+  # =============================================================================
+  # class-validator (npm: "class-validator")
+  # Decorator-based property validation for TypeScript classes
+  # =============================================================================
+  #
+  # class-validator provides decorators that constrain class property values.
+  # After validation with validate(obj), decorated fields are guaranteed to
+  # conform to the decorator's constraint (e.g. @IsEmail(), @IsInt()).
+  #
+  #   import { IsEmail, IsInt, Min, validate } from 'class-validator';
+  #   class User {
+  #     @IsEmail()  email: string;
+  #     @IsInt() @Min(0) age: number;
+  #   }
+  #   const user = plainToClass(User, untrustedInput);
+  #   const errors = await validate(user);
+  #   if (errors.length === 0) { /* user.email and user.age are safe */ }
+  #
+  # Security relevance:
+  # - Most validation decorators act as sanitizers/barriers: a field decorated
+  #   with @IsEmail() can only contain a valid email address after validation,
+  #   blocking injection payloads (SQL, XSS, command injection, etc.).
+  # - Some decorators do NOT sanitize (e.g. @IsString(), @IsOptional(),
+  #   @MaxLength()) because they don't restrict the value's character set.
+  # - No sources or sinks: class-validator does not introduce untrusted data
+  #   or perform security-sensitive operations.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Barriers: sanitizing decorators constrain field values to safe formats
+  # ---------------------------------------------------------------------------
+  #
+  # Decorators that ARE sanitizing (constrain value domain):
+  #   Equals, IsEmpty, IsIn, IsBoolean, IsDate, IsNumber, IsInt, IsEnum,
+  #   IsDivisibleBy, IsPositive, IsNegative, Min, Max, MinDate, MaxDate,
+  #   IsBooleanString, IsDateString, IsNumberString,
+  #   IsAlpha, IsAlphanumeric, IsDecimal,
+  #   IsBase32, IsBase58, IsBase64, IsIBAN, IsBIC,
+  #   IsCreditCard, IsCurrency, IsISO4217CurrencyCode,
+  #   IsEthereumAddress, IsBtcAddress, IsEmail,
+  #   IsFullWidth, IsHalfWidth, IsVariableWidth,
+  #   IsHexColor, IsHSL, IsRgbColor,
+  #   IsIdentityCard, IsPassportNumber, IsPostalCode,
+  #   IsHexadecimal, IsOctal, IsMACAddress, IsIP, IsPort,
+  #   IsISBN, IsEAN, IsISIN, IsISO8601,
+  #   IsLatLong, IsLatitude, IsLongitude, IsMobilePhone,
+  #   IsISO6391, IsISO31661Alpha2, IsISO31661Alpha3, IsISO31661Numeric,
+  #   IsLocale, IsPhoneNumber, IsMongoId, IsMultibyte,
+  #   IsTaxId, IsMagnetURI, IsUUID, IsFirebasePushId,
+  #   IsMilitaryTime, IsTimeZone, IsHash, IsMimeType, IsSemVer,
+  #   IsISSN, IsISRC, IsRFC3339, IsStrongPassword, IsInstance
+  #
+  # Decorators that are NOT sanitizing (do not restrict character domain):
+  #   IsDefined, IsOptional, NotEquals, IsNotEmpty, IsNotIn, IsString,
+  #   IsArray, Contains, NotContains, IsAscii, IsByteLength, IsDataURI,
+  #   IsFQDN, IsJSON, IsJWT, IsObject, IsNotEmptyObject, IsLowercase,
+  #   IsSurrogatePair, IsUrl, IsUppercase, Length, MinLength, MaxLength,
+  #   ArrayContains, ArrayNotContains, ArrayNotEmpty, ArrayMinSize,
+  #   ArrayMaxSize, ArrayUnique, Allow, ValidateNested, Validate, Matches
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: barrierModel
+    data:
+      # Each entry marks fields decorated with a sanitizing class-validator
+      # decorator as a barrier for the given query kind.
+      # Path: Member[<decorator>].ReturnValue gets the decorator function
+      # returned by e.g. IsEmail(); DecoratedMember gets the decorated field.
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "html-injection"]
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "sql-injection"]
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "nosql-injection"]
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "command-injection"]
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "code-injection"]
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "path-injection"]
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "request-forgery"]
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "url-redirection"]
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "log-injection"]
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "unsafe-deserialization"]
+
+      - ["class-validator", "Member[Equals,IsEmpty,IsIn,IsBoolean,IsDate,IsNumber,IsInt,IsEnum,IsDivisibleBy,IsPositive,IsNegative,Min,Max,MinDate,MaxDate,IsBooleanString,IsDateString,IsNumberString,IsAlpha,IsAlphanumeric,IsDecimal,IsBase32,IsBase58,IsBase64,IsIBAN,IsBIC,IsCreditCard,IsCurrency,IsISO4217CurrencyCode,IsEthereumAddress,IsBtcAddress,IsEmail,IsFullWidth,IsHalfWidth,IsVariableWidth,IsHexColor,IsHSL,IsRgbColor,IsIdentityCard,IsPassportNumber,IsPostalCode,IsHexadecimal,IsOctal,IsMACAddress,IsIP,IsPort,IsISBN,IsEAN,IsISIN,IsISO8601,IsLatLong,IsLatitude,IsLongitude,IsMobilePhone,IsISO6391,IsISO31661Alpha2,IsISO31661Alpha3,IsISO31661Numeric,IsLocale,IsPhoneNumber,IsMongoId,IsMultibyte,IsTaxId,IsMagnetURI,IsUUID,IsFirebasePushId,IsMilitaryTime,IsTimeZone,IsHash,IsMimeType,IsSemVer,IsISSN,IsISRC,IsRFC3339,IsStrongPassword,IsInstance].ReturnValue.DecoratedMember", "cors-origin"]

@@ -1,0 +1,48 @@
+extensions:
+  # =============================================================================
+  # javascript-stringify (npm: "javascript-stringify") - Stringify to JS source
+  # =============================================================================
+  #
+  # javascript-stringify converts JavaScript values to source code strings.
+  # It is "to eval as JSON.stringify is to JSON.parse" — the output is
+  # intended to be valid JavaScript that reproduces the original value.
+  #
+  #   import { stringify } from 'javascript-stringify';
+  #   // or: const stringify = require('javascript-stringify');
+  #
+  #   stringify({ x: 5, y: 6 });         // "{x:5,y:6}"
+  #   stringify('foo');                   // "'foo'"
+  #   stringify([1, 2, 3]);              // "[1,2,3]"
+  #   stringify(function() {});          // "function () {}"
+  #   stringify(undefined);              // "undefined"
+  #
+  # API: stringify(value, replacer?, space?, options?) → string
+  #   - value: any JavaScript value
+  #   - replacer: optional custom serializer function
+  #   - space: optional indentation (string or number)
+  #   - options: { maxDepth, maxValues, references, skipUndefinedProperties }
+  #
+  # Security concerns:
+  # - No sources. The library does not access untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations.
+  # - SUMMARY (taint): The input value flows to the output string.
+  #   The existing QLL (JsonStringifiers.qll) models this as a
+  #   JsonStringifyCall, which provides taint steps (input→output),
+  #   and acts as a sanitizer for code-injection and log-injection.
+  #   The taint flow summary is handled by internal QLL flow summaries
+  #   (JsonStringify.qll), but we also express it here for completeness.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flows through stringify
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # stringify(value, replacer?, space?, options?) → string
+      # The input value is serialized into the output string
+      - ["javascript-stringify", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # Named export: stringify(value, ...) → string
+      - ["javascript-stringify", "Member[stringify]", "Argument[0]", "ReturnValue", "taint"]

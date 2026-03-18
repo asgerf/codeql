@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # b2a (npm: "b2a") - Unicode-safe Base64 / Base64URL encoding and decoding
+  # =============================================================================
+  #
+  # The b2a package exports { btoa, atob, btoau, atobu } providing Unicode-safe
+  # Base64 and Base64URL encoding/decoding.
+  #
+  #   import { btoa, atob, btoau, atobu } from 'b2a';
+  #   btoa('hello');           // "aGVsbG8="
+  #   atob('aGVsbG8=');        // "hello"
+  #   btoau('hello');          // Base64URL encode
+  #   atobu('aGVsbG8');        // Base64URL decode
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Only decoding (atob, atobu) is modeled as taint-propagating, consistent with
+  # the existing CodeQL convention that base64 encoding is not a taint step (to
+  # avoid false positives from encoded values being treated as attacker-controlled).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # b2a.atob(encoded) - decode base64 string
+      - ["b2a", "Member[atob]", "Argument[0]", "ReturnValue", "taint"]
+      # b2a.atobu(encoded) - decode base64url string
+      - ["b2a", "Member[atobu]", "Argument[0]", "ReturnValue", "taint"]

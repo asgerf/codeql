@@ -1,0 +1,49 @@
+extensions:
+  # =============================================================================
+  # object.assign (npm: "object.assign") - Object.assign() polyfill/ponyfill
+  # =============================================================================
+  #
+  # object.assign is a spec-compliant polyfill for Object.assign(). It copies
+  # enumerable own properties from one or more source objects to a target
+  # object and returns the modified target.
+  #
+  #   const assign = require('object.assign');
+  #
+  #   // Shallow copy from sources into target
+  #   assign(target, source1, source2);
+  #   // target is modified and returned
+  #
+  #   // Install as shim (patches Object.assign if missing)
+  #   require('object.assign').shim();
+  #
+  # API:
+  #   assign(target, ...sources) => modified target
+  #     - target: Object — destination object (modified in place)
+  #     - sources: Objects — one or more source objects
+  #     - Returns the modified target object
+  #
+  # Security concerns:
+  # - No sources: pure utility function, does not access user input.
+  # - No sinks: does not execute commands, SQL, or render templates.
+  # - Taint/value flow: properties from all operands (target and sources)
+  #   flow into the return value. Source operand properties also flow into
+  #   the destination (target) object.
+  #
+  # Existing QLL coverage:
+  #   Extend.qll: object.assign modeled as ExtendCallShallow with
+  #   value-preserving steps from source operands to destination and
+  #   return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: value propagation through assign()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # assign(target, src1, src2, ...) — source operands flow into destination
+      - ["object.assign", "", "Argument[1..N-1]", "Argument[0]", "value"]
+
+      # assign(target, src1, src2, ...) — all operands flow into return value
+      - ["object.assign", "", "Argument[0..N-1]", "ReturnValue", "value"]

@@ -1,0 +1,109 @@
+extensions:
+  # =============================================================================
+  # URIjs / urijs — URI.js URL parsing and manipulation library
+  # =============================================================================
+  #
+  # URI.js (npm: "urijs", formerly "URIjs") provides a fluent API for parsing
+  # and manipulating URLs. It has no sources or sinks — it is purely a
+  # data-transformation library.
+  #
+  # Usage:
+  #   const URI = require("urijs");  // or require("URIjs")
+  #   const uri = new URI("https://example.com/path?q=1#hash");
+  #   uri.hostname();           // "example.com" (getter, 0 args)
+  #   uri.hostname("evil.com"); // returns uri (setter, chainable)
+  #   uri.toString();           // "https://evil.com/path?q=1#hash"
+  #
+  # The library uses a convention where:
+  #   - 0-arg calls are getters that return a string
+  #   - 1+-arg calls are setters that return the URI instance (chainable)
+  #
+  # Taint must propagate through both patterns. We use Fuzzy to capture the
+  # many method names (hostname, path, query, protocol, etc.) without
+  # enumerating each one.
+  #
+  # Both "urijs" and "URIjs" package names are modeled.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- Constructor: URI(url) / new URI(url) ---
+      # Taint flows from the URL string argument into the URI instance.
+      - ["urijs", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["URIjs", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- Constructor with base: URI(url, base) ---
+      # Taint from both arguments flows into the result.
+      - ["urijs", "", "Argument[1]", "ReturnValue", "taint"]
+      - ["URIjs", "", "Argument[1]", "ReturnValue", "taint"]
+
+      # --- Chainable setter methods ---
+      # uri.method(value) mutates the URI and returns the same instance.
+      # Taint from the receiver propagates to the return value.
+      # Taint from the argument also propagates to the return value.
+      #
+      # Covers: protocol, username, password, hostname, port, path, directory,
+      # filename, suffix, query, search, hash, fragment, href, origin,
+      # authority, resource, subdomain, domain, tld, segment, normalize,
+      # absoluteTo, relativeTo, clone, and all other chainable methods.
+      - ["urijs", "Fuzzy.ReturnValue", "Argument[this]", "ReturnValue", "taint"]
+      - ["URIjs", "Fuzzy.ReturnValue", "Argument[this]", "ReturnValue", "taint"]
+      - ["urijs", "Fuzzy.ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+      - ["URIjs", "Fuzzy.ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- Getter methods (0-arg calls return string values) ---
+      # uri.hostname(), uri.path(), uri.toString(), etc.
+      # Taint from the receiver flows to the return value.
+      # (These are the same methods as above, but called with 0 args.)
+      # The summaries above already cover this: the receiver taint flows
+      # to ReturnValue regardless of arity.
+
+      # --- Static methods ---
+      # URI.parse(url) returns { protocol, username, password, hostname, ... }
+      - ["urijs", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+      - ["URIjs", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # URI.build(parts) builds a URL string from parts object
+      - ["urijs", "Member[build]", "Argument[0]", "ReturnValue", "taint"]
+      - ["URIjs", "Member[build]", "Argument[0]", "ReturnValue", "taint"]
+
+      # URI.buildAuthority(parts), URI.buildHost(parts), etc.
+      - [
+          "urijs",
+          "Member[buildAuthority,buildHost,buildQuery,buildUserinfo]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]
+      - [
+          "URIjs",
+          "Member[buildAuthority,buildHost,buildQuery,buildUserinfo]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]
+
+      # URI.encode(str) / URI.decode(str) / URI.encodeQuery(str) / etc.
+      - [
+          "urijs",
+          "Member[encode,decode,encodeQuery,decodeQuery,encodeReserved,iso8859]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]
+      - [
+          "URIjs",
+          "Member[encode,decode,encodeQuery,decodeQuery,encodeReserved,iso8859]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]
+
+      # URI.parseQuery(queryString) returns an object of key-value pairs
+      - ["urijs", "Member[parseQuery]", "Argument[0]", "ReturnValue", "taint"]
+      - ["URIjs", "Member[parseQuery]", "Argument[0]", "ReturnValue", "taint"]
+
+      # URI.withinString(text, callback) finds and replaces URIs in text
+      - ["urijs", "Member[withinString]", "Argument[0]", "ReturnValue", "taint"]
+      - ["URIjs", "Member[withinString]", "Argument[0]", "ReturnValue", "taint"]

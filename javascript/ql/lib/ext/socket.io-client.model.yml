@@ -1,0 +1,97 @@
+extensions:
+  # =============================================================================
+  # socket.io-client (npm: "socket.io-client") — Real-time bidirectional
+  # event-based communication library (client-side)
+  # =============================================================================
+  #
+  # The client-side counterpart to socket.io. Provides WebSocket-based
+  # communication with automatic fallback to HTTP long-polling:
+  #
+  #   const io = require('socket.io-client');
+  #   const socket = io('http://localhost:3000');
+  #
+  #   socket.on('message', (data) => { ... });   // receive from server
+  #   socket.emit('chat', data);                 // send to server
+  #
+  # Also importable via:
+  #   import { io, connect, Manager, Socket } from 'socket.io-client';
+  #   const socket = io('http://localhost');
+  #   const socket = connect('http://localhost');
+  #   const manager = new Manager('http://localhost');
+  #
+  # In browsers (via <script> tag), the global `io` variable is set.
+  #
+  # Key API:
+  #   io(url?, options?)            — create socket connection
+  #   io.connect(url?, options?)    — alias for io()
+  #   new Manager(url?, options?)   — create connection manager
+  #   socket.on(event, callback)    — register event listener
+  #   socket.once(event, callback)  — one-time event listener
+  #   socket.onAny(callback)        — listen for all events
+  #   socket.emit(event, ...args)   — send event to server
+  #   socket.send(...args)          — alias for emit('message', ...)
+  #   socket.write(...args)         — alias for emit('message', ...)
+  #   socket.connect() / .open()    — manually connect
+  #   socket.disconnect() / .close()— disconnect
+  #
+  # Security concerns:
+  # - Sources: Data received from the server via socket.on() callbacks is
+  #   untrusted remote input. Parameters of the listener callback (except
+  #   acknowledgment callbacks) are remote flow sources.
+  # - Sinks: The URL argument to io()/connect()/Manager() controls the
+  #   WebSocket connection endpoint — a request-forgery sink.
+  # - No other sinks: emit/send/write deliver data to a server but are
+  #   not security-sensitive operations like SQL injection or code exec.
+  #
+  # Existing QLL coverage (SocketIO.qll — SocketIOClient module):
+  # - Socket creation: io(), io.connect(), require('socket.io-client')(),
+  #   plus global io variable and require('io') alias
+  # - Send/receive: emit/send/write modeled as EventDispatch, on() modeled
+  #   as EventRegistration, with channel-aware server-client matching
+  # - Acknowledgment callbacks: bidirectional ack flow modeled
+  # - Namespace path resolution and cross-package server matching
+  # - Chainable method tracking (via type tracking)
+  #
+  # Gaps filled by data extensions below:
+  # - QLL does NOT mark client-side received items as RemoteFlowSource
+  #   (server-side does via SocketIO.ReceivedItemAsRemoteFlow; WebSocket.qll
+  #   marks both sides). We add source models for event handler callback
+  #   parameters.
+  # - QLL does NOT model the URL argument as a request-forgery sink
+  #   (unlike WebSocket.qll's ClientSocket which extends ClientRequest).
+  # - QLL does not model onAny()/prependAny() listeners.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: data received from the server is untrusted remote input
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # socket.on(event, (data, ...) => { ... })
+      # socket.once(event, (data, ...) => { ... })
+      # socket.addListener(event, (data, ...) => { ... })
+      # All callback parameters are server-controlled. The last parameter
+      # may be an ack callback, which data extensions cannot distinguish;
+      # this is an acceptable over-approximation.
+      - ["socket.io-client", "Fuzzy.Member[on,once,addListener].Argument[1].Parameter[0..9]", "remote"]
+
+      # socket.onAny((eventName, ...args) => { ... })
+      # socket.prependAny((eventName, ...args) => { ... })
+      # Parameter 0 is the event name, subsequent are data — all from server.
+      - ["socket.io-client", "Fuzzy.Member[onAny,prependAny].Argument[0].Parameter[0..9]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: connection URL controls the WebSocket endpoint
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # io(url, options?) — first argument is the connection URL
+      - ["socket.io-client", "Argument[0]", "request-forgery"]
+      # io.connect(url, options?) — alias for io()
+      - ["socket.io-client", "Member[connect].Argument[0]", "request-forgery"]
+      # new Manager(url, options?) — connection manager
+      - ["socket.io-client", "Member[Manager].Argument[0]", "request-forgery"]

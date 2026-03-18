@@ -1,0 +1,134 @@
+extensions:
+  # =============================================================================
+  # jquery (npm: "jquery") - jQuery DOM manipulation library
+  # =============================================================================
+  #
+  # jQuery provides DOM manipulation, event handling, AJAX, and animation.
+  # It is accessed via the `$` or `jQuery` global, or imported from npm.
+  #
+  #   const $ = require('jquery');
+  #
+  #   // DOM manipulation (html-injection sinks)
+  #   $('div').html(content);
+  #   $('div').append(content);
+  #   $(htmlString);             // also interprets as HTML if starts with '<'
+  #
+  #   // AJAX (request-forgery sinks, remote sources)
+  #   $.ajax({ url: target });
+  #   $.get(url, (data) => { ... });
+  #   $.post(url, body, (data) => { ... });
+  #   $.getJSON(url, (data) => { ... });
+  #
+  #   // Code evaluation
+  #   $.globalEval(code);
+  #
+  # Security concerns:
+  # - html-injection: Many jQuery methods interpret arguments as HTML and
+  #   insert them into the DOM. These are XSS sinks if tainted data reaches
+  #   them: html, append, prepend, after, before, replaceWith, wrap,
+  #   wrapAll, wrapInner, appendTo, insertAfter, insertBefore, prependTo,
+  #   and the $() constructor itself.
+  # - code-injection: $.globalEval() evaluates a string as JavaScript.
+  # - request-forgery: $.ajax, $.get, $.post, $.getJSON, $.getScript URLs.
+  #
+  # Existing QLL coverage (jQuery.qll, DomBasedXssCustomizations.qll):
+  #   jQuery is extensively modeled via structural QLL patterns:
+  #   - JQuery::MethodCall.interpretsArgumentAsHtml — detects all HTML sinks
+  #   - JQuery::MethodCall.interpretsArgumentAsSelector — $() selector/HTML
+  #   - JQueryClientRequest ($.ajax, $.get, $.post, etc.) — ClientRequest
+  #   - JQueryDomElementDefinition — $("<div/>") as DOM element
+  #   - JQueryAttributeDefinition — .attr()/.prop() for DOM attributes
+  #   - DomBasedXssCustomizations: LibrarySink, JQueryHtmlOrSelectorSink
+  #   - Extend.qll: $.extend modeled for prototype pollution
+  #   Most patterns use structural type tracking (dollar(), objectRef()) that
+  #   cannot be fully expressed as data extensions. The QLL models should be
+  #   retained. The data extensions below provide complementary coverage.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: html-injection — jQuery methods that interpret args as HTML
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # $().html(content) — sets inner HTML of matched elements
+      - ["jquery", "Fuzzy.Member[html].Argument[0]", "html-injection"]
+
+      # $().append(content), $().prepend(content) — insert HTML content
+      - ["jquery", "Fuzzy.Member[append,prepend].Argument[0]", "html-injection"]
+
+      # $().after(content), $().before(content) — insert HTML adjacent
+      - ["jquery", "Fuzzy.Member[after,before].Argument[0]", "html-injection"]
+
+      # $().replaceWith(content) — replace elements with new HTML
+      - ["jquery", "Fuzzy.Member[replaceWith].Argument[0]", "html-injection"]
+
+      # $().wrap(html), $().wrapAll(html), $().wrapInner(html)
+      - ["jquery", "Fuzzy.Member[wrap,wrapAll,wrapInner].Argument[0]", "html-injection"]
+
+      # $().appendTo(target), $().insertAfter(target), etc.
+      # These interpret their argument as a selector OR HTML
+      - ["jquery", "Fuzzy.Member[appendTo,insertAfter,insertBefore,prependTo].Argument[0]", "html-injection"]
+
+      # $(htmlString) — the jQuery constructor interprets strings starting
+      # with '<' as HTML. This is a major XSS vector.
+      - ["jquery", "Argument[0]", "html-injection"]
+
+      # $.parseHTML(htmlString) — parses an HTML string into DOM nodes
+      - ["jquery", "Member[parseHTML].Argument[0]", "html-injection"]
+
+      # $().jGrowl(content) — jQuery notification plugin, renders HTML
+      - ["jquery", "Fuzzy.Member[jGrowl].Argument[0]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: code-injection — $.globalEval
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # $.globalEval(code) — evaluates a string as JavaScript
+      - ["jquery", "Member[globalEval].Argument[0]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: request-forgery — AJAX URL arguments
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # $.ajax(url) or $.ajax({url: ...}) — first arg may be a URL string
+      - ["jquery", "Member[ajax].Argument[0]", "request-forgery"]
+
+      # $.get(url), $.post(url), $.getJSON(url), $.getScript(url)
+      - ["jquery", "Member[get,post,getJSON,getScript].Argument[0]", "request-forgery"]
+
+      # $().load(url) — loads HTML from a URL into matched elements
+      - ["jquery", "Fuzzy.Member[load].Argument[0]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through jQuery methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # $().val() with no args returns user input (form field value).
+      # When called with an arg, it sets the value: $().val(newVal)
+      # The getter form returns a tainted value — modeled as source instead.
+
+      # $().text() / $().html() — getter forms (no args) return content from
+      # the DOM. These are modeled as XSS-through-DOM sources in QLL.
+
+      # $.parseHTML(htmlString) → array of DOM nodes: taint propagates
+      - ["jquery", "Member[parseHTML]", "Argument[0]", "ReturnValue", "taint"]
+
+      # $.parseJSON(jsonString) → parsed object: taint propagates
+      - ["jquery", "Member[parseJSON]", "Argument[0]", "ReturnValue", "taint"]
+
+      # $.trim(str) → trimmed string: taint propagates
+      - ["jquery", "Member[trim]", "Argument[0]", "ReturnValue", "taint"]
+
+      # $.extend(target, src1, src2, ...) — merges objects, taint flows
+      - ["jquery", "Member[extend]", "Argument[0..9]", "ReturnValue", "taint"]

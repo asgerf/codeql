@@ -1,0 +1,49 @@
+extensions:
+  # =============================================================================
+  # loglevel (npm: "loglevel") - Minimal logging library for JavaScript
+  # =============================================================================
+  #
+  # By Tim Perry. A lightweight, zero-dependency logging library with standard
+  # log levels and dynamic level control. Works in Node.js and browsers.
+  #
+  #   const log = require('loglevel');
+  #   log.setLevel('info');
+  #   log.trace('trace msg');        // not logged (below info level)
+  #   log.info('info msg');          // logged
+  #   log.error('error msg');        // logged
+  #
+  #   const myLog = log.getLogger('myapp');
+  #   myLog.setLevel('debug');
+  #   myLog.debug('debug msg');      // logged
+  #
+  # Logging methods: trace, debug, info, warn, error, log
+  # Level control: setLevel, getLevel, setDefaultLevel, enableAll, disableAll
+  # Named loggers: getLogger(name) returns an independent logger instance
+  # Customization: methodFactory for custom log method generation
+  #
+  # Security concerns:
+  # - All logging methods are log-injection sinks. Attacker-controlled data
+  #   in log messages can forge log entries, inject newlines, or exploit
+  #   log viewers that interpret special characters (ANSI escapes, etc.).
+  # - No sources. The library does not produce or expose untrusted data.
+  # - No taint summaries needed. Arguments flow directly to log output.
+  #
+  # Existing QLL coverage (Logging.qll):
+  #   LoglevelLoggerCall models require('loglevel').{trace,debug,info,...}(args)
+  #   as LoggerCall, making all arguments log-injection sinks. However, the
+  #   QLL does not cover named loggers from getLogger().
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: log injection via loglevel logging methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Direct logging: log.trace(), .debug(), .info(), .warn(), .error(), .log()
+      # (Also covered by Logging.qll for the direct module import.)
+      - ["loglevel", "Member[trace,debug,info,warn,error,log].Argument[0..N-1]", "log-injection"]
+
+      # Named loggers: log.getLogger('name').info(), etc.
+      - ["loglevel", "Member[getLogger].ReturnValue.Member[trace,debug,info,warn,error,log].Argument[0..N-1]", "log-injection"]

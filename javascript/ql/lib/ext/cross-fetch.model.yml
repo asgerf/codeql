@@ -1,0 +1,63 @@
+extensions:
+  # =============================================================================
+  # cross-fetch (npm: "cross-fetch") - Universal WHATWG Fetch API polyfill
+  # =============================================================================
+  #
+  # cross-fetch provides a universal implementation of the WHATWG fetch API
+  # for Node.js, browsers, and React Native. It delegates to node-fetch on
+  # Node.js and whatwg-fetch in browsers.
+  #
+  #   const fetch = require('cross-fetch');
+  #
+  #   // Basic GET request
+  #   const res = await fetch('https://api.example.com/data');
+  #   const json = await res.json();
+  #
+  #   // POST with headers and body
+  #   const res = await fetch('https://api.example.com/submit', {
+  #     method: 'POST',
+  #     headers: { 'Content-Type': 'application/json' },
+  #     body: JSON.stringify({ key: 'value' })
+  #   });
+  #
+  # The API is the standard fetch(url, init?) returning a Promise<Response>.
+  # The Response object provides: .json(), .text(), .blob(), .arrayBuffer(),
+  # .body (ReadableStream), .headers, .status, .url, etc.
+  #
+  # Security concerns:
+  # - The first argument (URL) controls the request destination →
+  #   request-forgery sink.
+  # - Response data (.json(), .text(), .body, etc.) is untrusted when the
+  #   response comes from an external source.
+  #
+  # Existing QLL coverage:
+  # - ClientRequests.qll: Models cross-fetch as a FetchUrlRequest alongside
+  #   node-fetch and isomorphic-fetch, with URL sink and response data
+  #   source (responseType "fetch.response").
+  # =============================================================================
+
+  # Sinks: The URL argument controls the request destination.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # fetch(url, init?) — first argument is the request URL
+      - ["cross-fetch", "Argument[0]", "request-forgery"]
+
+  # Sources: Response data from fetch calls is untrusted.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # await fetch(url) → Response object
+      - ["cross-fetch", "ReturnValue.Awaited", "response"]
+
+  # Summaries: Taint propagation through Response methods.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # res.json() — parses response body as JSON
+      # res.text() — returns response body as text
+      # These propagate taint from the Response to the awaited result.
+      - ["cross-fetch", "ReturnValue.Awaited.Member[json,text,arrayBuffer,blob,formData]", "Argument[this]", "ReturnValue.Awaited", "taint"]

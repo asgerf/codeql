@@ -1,0 +1,40 @@
+extensions:
+  # =============================================================================
+  # promise/domains/es6-extensions
+  # (npm: "promise", subpath "domains/es6-extensions")
+  # =============================================================================
+  #
+  # The "promise" package (then/promise) is a Promises/A+ implementation with
+  # several subpath imports for different configurations:
+  #
+  #   const Promise = require('promise');
+  #   const Promise = require('promise/domains');
+  #   const Promise = require('promise/setimmediate');
+  #   const Promise = require('promise/lib/es6-extensions');
+  #   const Promise = require('promise/domains/es6-extensions');
+  #   const Promise = require('promise/setimmediate/es6-extensions');
+  #
+  # All subpaths export a Promise constructor with the standard API:
+  #   new Promise((resolve, reject) => { ... });
+  #   Promise.resolve(value);
+  #   Promise.reject(reason);
+  #   Promise.all([p1, p2]);
+  #   Promise.race([p1, p2]);
+  #   promise.then(onFulfilled, onRejected);
+  #   promise.catch(onRejected);
+  #
+  # The "domains/es6-extensions" variant adds domain support and ES6 static
+  # methods (resolve, reject, all, race) on top of the core implementation.
+  #
+  # Security concerns:
+  # - No sources. The library does not access any external or untrusted data.
+  # - No sinks. The library does not perform any security-sensitive operations.
+  # - Promise data flow (.then, .catch, .all, .resolve, etc.) is already
+  #   modeled generically in CodeQL's Promises.qll, which recognizes all
+  #   subpath imports of the "promise" package as promise constructors.
+  #
+  # Nothing to model here. The library is a spec-compliant Promise
+  # implementation with no security-relevant sources, sinks, or taint
+  # summaries beyond what CodeQL already handles for promises generically.
+  # =============================================================================
+  []

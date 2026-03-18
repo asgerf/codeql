@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # basic-auth-connect (npm: "basic-auth-connect") - HTTP Basic Auth middleware
+  # =============================================================================
+  #
+  # The basic-auth-connect package is a Connect/Express middleware that parses
+  # the HTTP Authorization header for Basic Auth credentials.
+  #
+  #   const basicAuth = require('basic-auth-connect');
+  #
+  #   // Hardcoded credentials (sink: cleartext credentials)
+  #   app.use(basicAuth('admin', 's3cret'));
+  #
+  #   // Callback receives attacker-controlled user/pass from Authorization header
+  #   app.use(basicAuth(function(user, pass) {
+  #     return user === 'tj' && pass === 'wahoo';
+  #   }));
+  #
+  #   // Async callback
+  #   app.use(basicAuth(function(user, pass, fn) {
+  #     User.authenticate({ user: user, pass: pass }, fn);
+  #   }));
+  #
+  # =============================================================================
+
+  # The user and pass parameters in the callback originate from the HTTP
+  # Authorization header and are attacker-controlled remote input.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # basicAuth(callback) - callback receives (user, pass) from Authorization header
+      - ["basic-auth-connect", "Argument[0].Parameter[0]", "remote"]
+      - ["basic-auth-connect", "Argument[0].Parameter[1]", "remote"]
+
+  # Hardcoded username and password passed directly to basicAuth are credentials.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # basicAuth(username, password) - hardcoded credentials
+      - ["basic-auth-connect", "WithArity[2].Argument[0]", "credentials-username"]
+      - ["basic-auth-connect", "WithArity[2].Argument[1]", "credentials-password"]

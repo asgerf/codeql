@@ -1,0 +1,58 @@
+extensions:
+  # =============================================================================
+  # whatwg-fetch (npm: "whatwg-fetch") — WHATWG Fetch API polyfill for browsers
+  # =============================================================================
+  #
+  # A polyfill for the WHATWG Fetch API. Unlike node-fetch/cross-fetch which
+  # export fetch as a module default, whatwg-fetch exports it as a named member:
+  #
+  #   import { fetch } from 'whatwg-fetch';
+  #   // or (side-effect import that patches the global):
+  #   import 'whatwg-fetch';
+  #
+  #   const res = await fetch('https://api.example.com/data');
+  #   const json = await res.json();
+  #
+  # Also exports: Headers, Request, Response, DOMException.
+  #
+  # Security concerns:
+  # - Request forgery: The first argument (URL) controls the request
+  #   destination.
+  # - Response data (.json(), .text(), etc.) is untrusted when the response
+  #   comes from an external source.
+  #
+  # Existing QLL coverage (ClientRequests.qll):
+  # - FetchUrlRequest models whatwg-fetch.fetch as a ClientRequest alongside
+  #   node-fetch, cross-fetch, and isomorphic-fetch, with URL as sink and
+  #   response as data source.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL argument controls the request destination
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # fetch(url, init?) — first argument is the request URL
+      - ["whatwg-fetch", "Member[fetch].Argument[0]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: Response data from fetch calls is untrusted
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # await fetch(url) → Response object (contains remote data)
+      - ["whatwg-fetch", "Member[fetch].ReturnValue.Awaited", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through Response body-reading methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # res.json() / res.text() / etc. — parse response body
+      - ["whatwg-fetch", "Member[fetch].ReturnValue.Awaited.Member[json,text,arrayBuffer,blob,formData]", "Argument[this]", "ReturnValue.Awaited", "taint"]

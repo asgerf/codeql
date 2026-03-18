@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # promise/setimmediate (npm: "promise", subpath "promise/setimmediate") —
+  #   Promise polyfill using setImmediate for async scheduling
+  # =============================================================================
+  #
+  # The "promise" package (also known as "then/promise") is a Promise/A+
+  # implementation. The "promise/setimmediate" entry point uses setImmediate
+  # instead of setTimeout for scheduling asynchronous callbacks, which can
+  # improve performance in Node.js environments.
+  #
+  #   const Promise = require('promise/setimmediate');
+  #   new Promise((resolve, reject) => { resolve(value); });
+  #   Promise.resolve(value).then(v => ...);
+  #
+  # Security concerns:
+  # - No sources. The library does not access any external or untrusted data.
+  # - No sinks. The library does not perform any security-sensitive operations.
+  # - Promise data flow (.then, .catch, .all, .resolve, .reject, .race) is
+  #   already modeled generically in CodeQL's Promises.qll, which recognizes
+  #   all entry points of the "promise" package as promise constructor
+  #   references.
+  #
+  # Nothing additional to model here. The library is a spec-compliant Promise
+  # polyfill with no security-relevant sources, sinks, or taint summaries
+  # beyond what CodeQL already handles for promises generically.
+  # =============================================================================

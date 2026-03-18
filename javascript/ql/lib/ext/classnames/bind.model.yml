@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # classnames/bind (npm: "classnames/bind") — CSS modules–aware class name joiner
+  # =============================================================================
+  #
+  # classnames/bind is a variant of the classnames utility designed for use
+  # with CSS modules. It binds to a styles object so that class name strings
+  # are automatically mapped to their module-scoped equivalents.
+  #
+  #   const classNames = require('classnames/bind');
+  #   const cx = classNames.bind(styles);
+  #   cx('foo', { bar: true }); // => mapped class names from styles object
+  #
+  # It can also be called directly (without bind) just like the base
+  # classnames package:
+  #
+  #   classNames('foo', { bar: true }); // => 'foo bar'
+  #
+  # Security concerns:
+  # - No sources or sinks: classnames/bind does not fetch external data or
+  #   perform security-sensitive operations.
+  # - Taint propagation: arguments flow to the return value via string
+  #   concatenation. If a tainted value is passed as a class name, the
+  #   result is also tainted.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through classnames/bind calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Direct call: classNames('foo', tainted) => tainted result
+      - ["classnames/bind", "", "Argument[0..]", "ReturnValue", "taint"]
+
+      # Bind step 1: classNames.bind(styles)
+      # Taint from the styles object flows to results of calling the bound function
+      - ["classnames/bind", "Member[bind]", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+
+      # Bind step 2: cx(tainted, ...)
+      # Taint from arguments of the bound function flows to its return value
+      - ["classnames/bind", "Member[bind].ReturnValue", "Argument[0..]", "ReturnValue", "taint"]

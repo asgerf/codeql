@@ -1,0 +1,63 @@
+extensions:
+  # =============================================================================
+  # htmlparser2 (npm: "htmlparser2") - Fast HTML/XML parser for Node.js
+  # =============================================================================
+  #
+  # By Felix Böhm. A streaming, event-driven HTML/XML parser with a
+  # callback-based API and higher-level DOM building functions.
+  #
+  #   const htmlparser2 = require('htmlparser2');
+  #
+  #   // Event-based streaming parser
+  #   const parser = new htmlparser2.Parser({
+  #     onopentag(name, attribs) { ... },
+  #     ontext(text) { ... },
+  #     onattribute(name, value) { ... },
+  #   });
+  #   parser.write(html);
+  #   parser.end();
+  #
+  #   // DOM-based parsing
+  #   const dom = htmlparser2.parseDocument(html);
+  #   const feed = htmlparser2.parseFeed(rss);
+  #
+  #   // Stream-based parsing (via htmlparser2/WritableStream)
+  #   const { WritableStream } = require('htmlparser2/WritableStream');
+  #   readableStream.pipe(new WritableStream({ ontext(t) { ... } }));
+  #
+  # Handler callbacks: onopentag, onclosetag, ontext, oncomment,
+  #   onattribute, onopentagname, onprocessinginstruction, oncdatastart,
+  #   oncdataend, oncommentend, onerror, onend, onreset, onparserinit
+  #
+  # Security concerns:
+  # - No sources: the library does not fetch external data.
+  # - No sinks: the library only parses; it does not execute code, make
+  #   requests, or write files.
+  # - Taint propagation: untrusted HTML/XML fed to the parser flows through
+  #   to handler callback parameters and DOM output. The existing QLL in
+  #   XmlParsers.qll already models the Parser.write() → callback-parameter
+  #   taint step. This catalog adds summaries for the higher-level
+  #   parseDocument/parseFeed functions and DomHandler.
+  # - htmlparser2 does NOT expand entities (safe from XXE).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through htmlparser2 parsing functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- Event-based Parser ---
+      # new Parser(handler).write(html): taint flows from the html argument
+      # to all parameters of all callback functions in the handler object.
+      # This is already modeled in XmlParsers.qll.
+
+      # --- DOM-based parsing ---
+      # parseDocument(html) → Document: the returned DOM tree is derived
+      # from the untrusted input.
+      - ["htmlparser2", "Member[parseDocument]", "Argument[0]", "ReturnValue", "taint"]
+
+      # parseFeed(feed) → Feed object: RSS/Atom/RDF content flows through
+      # to the returned feed structure.
+      - ["htmlparser2", "Member[parseFeed]", "Argument[0]", "ReturnValue", "taint"]

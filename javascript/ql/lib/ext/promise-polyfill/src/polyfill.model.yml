@@ -1,0 +1,39 @@
+extensions:
+  # =============================================================================
+  # promise-polyfill/src/polyfill
+  # Lightweight ES2015 Promise polyfill — global polyfill entry point
+  # =============================================================================
+  #
+  # The "promise-polyfill/src/polyfill" module patches the global Promise if the
+  # environment lacks native support. It is typically imported purely for its
+  # side effect:
+  #
+  #   import 'promise-polyfill/src/polyfill';
+  #
+  # After this import, the standard Promise API is available globally:
+  #
+  #   new Promise((resolve, reject) => { ... })
+  #     .then(result => { ... })
+  #     .catch(err => { ... })
+  #     .finally(() => { ... });
+  #
+  #   Promise.all([p1, p2]);
+  #   Promise.race([p1, p2]);
+  #   Promise.resolve(value);
+  #   Promise.reject(reason);
+  #   Promise.allSettled([p1, p2]);
+  #
+  # Security assessment:
+  # - No sources: The library does not fetch or provide access to untrusted
+  #   data. It is a pure async control-flow utility.
+  # - No sinks: The library does not perform any security-sensitive operations
+  #   (no eval, exec, file I/O, network requests, HTML rendering, etc.).
+  # - No custom summaries needed: The API is identical to the native ES2015
+  #   Promise. CodeQL's Promises.qll already recognizes both
+  #   require('promise-polyfill') and require('promise-polyfill/src/polyfill')
+  #   as Promise implementations, so taint propagation through .then(),
+  #   .catch(), .all(), .race(), .resolve(), and .reject() is handled
+  #   automatically.
+  #
+  # No data extensions are needed for this library.
+  # =============================================================================

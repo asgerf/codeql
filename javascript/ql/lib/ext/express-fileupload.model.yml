@@ -1,0 +1,113 @@
+extensions:
+  # =============================================================================
+  # express-fileupload (npm: "express-fileupload") - File upload middleware
+  # =============================================================================
+  #
+  # express-fileupload is Express middleware that parses multipart/form-data
+  # file uploads and populates req.files with file objects.
+  #
+  #   const fileUpload = require('express-fileupload');
+  #   app.use(fileUpload({ useTempFiles: true, tempFileDir: '/tmp/' }));
+  #
+  #   app.post('/upload', (req, res) => {
+  #     const file = req.files.myFile;
+  #     file.name;          // original filename (untrusted)
+  #     file.mimetype;      // MIME type (untrusted)
+  #     file.data;          // Buffer with file contents (untrusted)
+  #     file.tempFilePath;  // path to temp file (server-controlled)
+  #     file.size;          // file size in bytes
+  #     file.truncated;     // whether file exceeded size limit
+  #     file.md5;           // hash checksum of the file
+  #     file.mv(path, cb);  // move file to destination path (path-injection sink)
+  #   });
+  #
+  # Existing QLL coverage (Express.qll, ExpressModules.qll):
+  # - Sources: req.files and req.file are modeled as "body" kind request input
+  #   in Express.qll's RequestInputAccess.
+  # - Sinks: ExpressModules.qll::FileUpload::Move models req.files.<name>.mv()
+  #   as a FileSystemWriteAccess with getAPathArgument() = Argument[0].
+  #
+  # This data extension covers:
+  # - Sources: File object properties that carry untrusted data (name, mimetype,
+  #   data) accessible via req.files in guarded route handlers.
+  # - Sinks: The .mv(path) call as a path-injection sink.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Untrusted file data in guarded route handlers
+  # ---------------------------------------------------------------------------
+  #
+  # When express-fileupload middleware is installed via app.use(fileUpload()),
+  # downstream route handlers have req.files populated with file objects.
+  # The file object properties name, mimetype, and data are attacker-controlled.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # req.files — the entire files object is untrusted (keys are field names
+      # from the form, values are file objects with attacker-controlled data).
+      # This covers req.files.<fieldName>.name, .data, .mimetype, etc.
+      - [
+          "express-fileupload",
+          "ReturnValue.GuardedRouteHandler.Parameter[0].Member[files]",
+          "remote",
+        ]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Path injection via .mv(path)
+  # ---------------------------------------------------------------------------
+  #
+  # req.files.<name>.mv(path) moves the uploaded file to the given path.
+  # If the path is derived from untrusted input (e.g. the uploaded filename),
+  # this is a path-injection / path-traversal vulnerability.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # file.mv(path) — first argument is the destination file path
+      - [
+          "express-fileupload",
+          "Fuzzy.Member[mv].Argument[0]",
+          "path-injection",
+        ]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Taint propagation through file object properties
+  # ---------------------------------------------------------------------------
+  #
+  # The file object's .name and .mimetype properties carry attacker-controlled
+  # strings. The .data property carries the raw file buffer. We model taint
+  # flowing from the file object to these properties.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # req.files.<field>.name — original filename from the upload
+      # Taint flows from the file object (selected by AnyMember on req.files)
+      # to the .name property, which is attacker-controlled.
+      - [
+          "express-fileupload",
+          "ReturnValue.GuardedRouteHandler.Parameter[0].Member[files].AnyMember",
+          "",
+          "Member[name]",
+          "value",
+        ]
+      # req.files.<field>.mimetype — MIME type from the upload
+      - [
+          "express-fileupload",
+          "ReturnValue.GuardedRouteHandler.Parameter[0].Member[files].AnyMember",
+          "",
+          "Member[mimetype]",
+          "value",
+        ]
+      # req.files.<field>.data — raw file content buffer
+      - [
+          "express-fileupload",
+          "ReturnValue.GuardedRouteHandler.Parameter[0].Member[files].AnyMember",
+          "",
+          "Member[data]",
+          "value",
+        ]

@@ -1,0 +1,64 @@
+extensions:
+  # =============================================================================
+  # ssh2-streams (npm: "ssh2-streams") — SSH2 and SFTP protocol streams
+  # =============================================================================
+  #
+  # Low-level SSH2 and SFTP (v3) client/server protocol streams for Node.js.
+  # Used internally by the higher-level `ssh2` package but can also be used
+  # directly for custom SSH implementations.
+  #
+  # Exports:
+  #   const { SSH2Stream, SFTPStream, utils, constants } = require('ssh2-streams');
+  #
+  # SSH2Stream — duplex stream for raw SSH2 protocol messages:
+  #   new SSH2Stream({ server: true, hostKeys: {...} })  // server mode
+  #   new SSH2Stream()                                    // client mode
+  #
+  # Client methods (security-relevant):
+  #   stream.exec(channel, command [, wantReply])   — executes a remote command
+  #   stream.subsystem(channel, name [, wantReply]) — requests a subsystem
+  #   stream.shell(channel [, wantReply])           — requests a shell
+  #   stream.env(channel, key, value [, wantReply]) — sets an env variable
+  #
+  # Server events (data received from SSH clients — untrusted):
+  #   'USERAUTH_REQUEST' (username, svcName, authMethod, authData)
+  #   'CHANNEL_DATA:<ch>' (data)
+  #   'CHANNEL_OPEN' (channelInfo)
+  #   'GLOBAL_REQUEST' (reqName, wantReply, reqData)
+  #
+  # SFTPStream — SFTP subsystem for file operations:
+  #   No additional command-injection sinks; file operations are modeled
+  #   via path arguments but the library does not directly access the
+  #   filesystem — it only serializes/deserializes SFTP protocol messages.
+  #
+  # Existing QLL coverage (SystemCommandExecutors.qll):
+  # - SSH2Stream.exec(channel, command) — argument[1] is a command-injection
+  #   sink (shell-interpreted).
+  #
+  # Security relevance:
+  # - Sinks: exec() is a command-injection sink (already in QLL, replicated
+  #   below as a data extension for completeness).
+  # - No sources modeled: ssh2-streams is a low-level protocol library.
+  #   When used in server mode, data received from clients (via events like
+  #   CHANNEL_DATA, USERAUTH_REQUEST) is untrusted, but these patterns use
+  #   dynamic event names (e.g. 'CHANNEL_DATA:<channel>') that cannot be
+  #   expressed via data extensions. The higher-level `ssh2` package provides
+  #   the typical server API; modeling sources there would be more effective.
+  # - No summaries needed: the library doesn't transform data in
+  #   taint-relevant ways beyond standard stream/buffer operations.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command injection via SSH2Stream.exec()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new SSH2Stream().exec(channel, command) — command (arg[1]) is a
+      # shell-interpreted remote command execution sink.
+      - [
+          "ssh2-streams",
+          "Member[SSH2Stream].Instance.Member[exec].Argument[1]",
+          "command-injection",
+        ]

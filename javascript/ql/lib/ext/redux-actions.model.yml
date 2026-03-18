@@ -1,0 +1,68 @@
+extensions:
+  # =============================================================================
+  # redux-actions (npm: "redux-actions") — Flux Standard Action utilities for Redux
+  # =============================================================================
+  #
+  # Provides utility functions for creating action creators and reducers that
+  # follow the Flux Standard Action convention ({ type, payload, error?, meta? }).
+  #
+  #   const { createAction, createActions, handleAction, handleActions,
+  #           combineActions } = require('redux-actions');
+  #
+  #   // Create action creators
+  #   const increment = createAction('INCREMENT');
+  #   increment(10);  // => { type: 'INCREMENT', payload: 10 }
+  #
+  #   const add = createAction('ADD', (a, b) => a + b);
+  #   add(1, 2);      // => { type: 'ADD', payload: 3 }
+  #
+  #   // Create reducers
+  #   const reducer = handleAction('INCREMENT', (state, action) => {
+  #     return state + action.payload;
+  #   }, 0);
+  #
+  #   const reducer2 = handleActions({
+  #     INCREMENT: (state, action) => state + action.payload,
+  #     DECREMENT: (state, action) => state - action.payload,
+  #   }, 0);
+  #
+  # Security concerns:
+  # - No sources or sinks. redux-actions is a state management utility that
+  #   does not access external data or perform security-sensitive operations.
+  # - Taint propagation:
+  #   - createAction(type): the action creator's argument becomes the
+  #     payload in the returned action object.
+  #   - createAction(type, payloadCreator): the action creator's argument
+  #     flows to payloadCreator's parameter; payloadCreator's return flows
+  #     to the action's payload.
+  #   - The complex cross-procedural flows between action creators, reducers,
+  #     and state (action dispatch → reducer → state → selector) are modeled
+  #     in detail by CodeQL's Redux.qll and cannot be expressed as data
+  #     extensions.
+  #
+  # Existing QLL coverage (Redux.qll):
+  # - createAction: recognized as ActionCreator, connecting dispatched
+  #   payloads to reducer handlers via action type tag matching.
+  # - createActions: recognized as MultiAction, connecting each action
+  #   creator to its corresponding reducer.
+  # - handleAction/handleActions: recognized as DelegatingReducer, routing
+  #   actions to the correct handler based on type.
+  # - combineActions: recognized for combining action type references.
+  # - reduceReducers: recognized as DelegatingReducer for chained reducers.
+  # - Full action→reducer→state→selector flow is modeled.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through action creation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # createAction(type): actionCreator(x) => { type, payload: x }
+      # The argument to the action creator flows to the payload of the action.
+      - ["redux-actions", "Member[createAction].ReturnValue", "Argument[0]", "ReturnValue.Member[payload]", "taint"]
+
+      # createAction(type, payloadCreator): the action creator's arguments
+      # flow into the payloadCreator's parameters.
+      - ["redux-actions", "Member[createAction]", "Argument[1].ReturnValue", "ReturnValue.ReturnValue.Member[payload]", "taint"]

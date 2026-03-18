@@ -1,0 +1,47 @@
+extensions:
+  # =============================================================================
+  # path-exists (npm: "path-exists") - Check if a filesystem path exists
+  # =============================================================================
+  #
+  # path-exists checks whether a file or directory path exists on disk.
+  #
+  #   const pathExists = require('path-exists');
+  #
+  #   // Async (default export)
+  #   const exists = await pathExists('foo.js');
+  #   // => true or false
+  #
+  #   // Sync
+  #   const exists = pathExists.sync('foo.js');
+  #   // => true or false
+  #
+  #   // ESM named exports (v5+)
+  #   import { pathExists, pathExistsSync } from 'path-exists';
+  #
+  # API:
+  #   pathExists(path) => Promise<boolean>   — async check
+  #   pathExists.sync(path) => boolean       — sync check (v3-v4)
+  #   pathExistsSync(path) => boolean        — sync check (v5+ ESM)
+  #
+  # Security concerns:
+  # - Path injection: the first argument is a filesystem path. If attacker-
+  #   controlled input reaches it, an attacker can probe for the existence
+  #   of arbitrary files on the system (information disclosure / path
+  #   traversal).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path injection via the path argument
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # pathExists(path) — default export called directly (async)
+      - ["path-exists", "Argument[0]", "path-injection"]
+
+      # pathExists.sync(path) — sync variant (v3-v4 CJS API)
+      - ["path-exists", "Member[sync].Argument[0]", "path-injection"]
+
+      # Named export: pathExistsSync(path) (v5+ ESM)
+      - ["path-exists", "Member[pathExistsSync].Argument[0]", "path-injection"]

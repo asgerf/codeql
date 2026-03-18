@@ -1,0 +1,89 @@
+extensions:
+  # =============================================================================
+  # jade (npm: "jade") - Template engine (now renamed to "pug")
+  # =============================================================================
+  #
+  # Jade is a high-performance template engine for Node.js. It was renamed to
+  # Pug in 2016, but the jade npm package is still widely used.
+  #
+  #   const jade = require('jade');
+  #
+  #   // Compile a template string into a function
+  #   const fn = jade.compile('h1= title');
+  #   fn({ title: 'Hello' });
+  #
+  #   // Render a template string directly
+  #   jade.render('h1= title', { title: 'Hello' });
+  #
+  #   // Render a template file
+  #   jade.renderFile('views/page.jade', { title: 'Hello' }, (err, html) => {});
+  #
+  #   // Compile a template file into a function
+  #   const fn = jade.compileFile('views/page.jade');
+  #
+  #   // Compile to client-side JS source
+  #   jade.compileClient('h1= title');
+  #   jade.compileClientWithDependenciesTracked('h1= title');
+  #
+  # Security concerns:
+  # - Template strings (first argument to compile/render/compileClient) are
+  #   compiled into JavaScript and evaluated — code-injection sinks.
+  # - File paths (first argument to renderFile/compileFile) control which file
+  #   is read from the filesystem — path-injection sinks.
+  # - Data (locals) flows into the rendered output as taint.
+  #
+  # Existing QLL coverage:
+  #   CodeInjectionCustomizations.qll: PugTemplateSink models jade.compile()
+  #   and jade.render() argument 0 as a code-injection sink.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # jade.compile(source, opts?) — template string compiled into JS
+      - ["jade", "Member[compile].Argument[0]", "code-injection"]
+
+      # jade.compileClient(source, opts?) — template compiled to client JS source
+      - ["jade", "Member[compileClient].Argument[0]", "code-injection"]
+
+      # jade.compileClientWithDependenciesTracked(source, opts?)
+      - ["jade", "Member[compileClientWithDependenciesTracked].Argument[0]", "code-injection"]
+
+      # jade.render(source, opts?) — template string rendered directly
+      - ["jade", "Member[render].Argument[0]", "code-injection"]
+
+      # jade.renderFile(path, opts?, callback?) — file path controls filesystem read
+      - ["jade", "Member[renderFile].Argument[0]", "path-injection"]
+
+      # jade.compileFile(path, opts?) — file path controls filesystem read
+      - ["jade", "Member[compileFile].Argument[0]", "path-injection"]
+
+      # jade.__express is an alias for renderFile (used with Express)
+      - ["jade", "Member[__express].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from data/template into rendered output
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # jade.render(source, opts?) → rendered HTML string
+      # opts (which contains locals) taints the rendered output
+      - ["jade", "Member[render]", "Argument[1]", "ReturnValue", "taint"]
+
+      # jade.renderFile(path, opts, callback) — callback(err, html)
+      - ["jade", "Member[renderFile]", "Argument[1]", "Argument[2].Parameter[1]", "taint"]
+
+      # jade.__express — same flows as renderFile
+      - ["jade", "Member[__express]", "Argument[1]", "Argument[2].Parameter[1]", "taint"]
+
+      # jade.compile(source, opts?) → function(locals) → string
+      - ["jade", "Member[compile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+
+      # jade.compileFile(path, opts?) → function(locals) → string
+      - ["jade", "Member[compileFile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,35 @@
+extensions:
+  # =============================================================================
+  # cli-highlight (npm: "cli-highlight") - Terminal syntax highlighting
+  # =============================================================================
+  #
+  # By Felix Becker. Applies syntax highlighting with ANSI color codes to source
+  # code strings using highlight.js under the hood.
+  #
+  #   const { highlight } = require("cli-highlight");
+  #   highlight(code);                              // auto-detect language
+  #   highlight(code, { language: "sql" });          // explicit language
+  #
+  # Exports:
+  #   highlight(code, options?) — returns highlighted string (also default export)
+  #   listLanguages() — returns array of supported language names (no taint)
+  #   supportsLanguage(name) — returns boolean (no taint)
+  #   DEFAULT_THEME, Theme, plain — theme-related exports (no taint)
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure string decoration for terminal output.
+  # - Taint propagates from the code argument through to the return value,
+  #   since the highlighted output embeds the original text.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through highlight()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # highlight(code, options?) and default export: code string flows to return
+      - ["cli-highlight", "Member[highlight]", "Argument[0]", "ReturnValue", "taint"]
+      # Default export is also `highlight`
+      - ["cli-highlight", "", "Argument[0]", "ReturnValue", "taint"]

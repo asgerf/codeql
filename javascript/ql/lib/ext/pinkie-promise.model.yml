@@ -1,0 +1,24 @@
+extensions:
+  # =============================================================================
+  # pinkie-promise (npm: "pinkie-promise") — ES2015 Promise ponyfill
+  # Also covers: pinkie (npm: "pinkie")
+  # =============================================================================
+  #
+  # A minimal Promise ponyfill that exports native Promise if available, or
+  # falls back to the "pinkie" implementation:
+  #
+  #   const Promise = require('pinkie-promise');
+  #   new Promise((resolve, reject) => { resolve(value); });
+  #   Promise.resolve(value).then(v => ...);
+  #
+  # Security concerns:
+  # - No sources. The library does not access any external or untrusted data.
+  # - No sinks. The library does not perform any security-sensitive operations.
+  # - Promise data flow (.then, .catch, .all, .resolve, .reject, .race) is
+  #   already modeled generically in CodeQL's Promises.qll, which recognizes
+  #   both pinkie-promise and pinkie as promise constructor references.
+  #
+  # Nothing additional to model here. The library is a spec-compliant ponyfill
+  # with no security-relevant sources, sinks, or taint summaries beyond what
+  # CodeQL already handles for promises generically.
+  # =============================================================================

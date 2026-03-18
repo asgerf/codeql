@@ -1,0 +1,89 @@
+extensions:
+  # =============================================================================
+  # Sources: GitHub API responses can contain attacker-controlled content
+  # =============================================================================
+  #
+  # In contexts like GitHub Actions, data returned by the GitHub API (PR titles,
+  # issue bodies, branch names, commit messages, etc.) is attacker-controlled
+  # and can be used to exploit injection vulnerabilities.
+  #
+  # Octokit usage patterns:
+  #   const octokit = new Octokit({ auth: token });
+  #   const response = await octokit.request("GET /repos/{owner}/{repo}/issues");
+  #   // response.data contains attacker-controlled issue data
+  #
+  #   const data = await octokit.graphql(`query { ... }`);
+  #   // data contains attacker-controlled response
+  #
+  # Fuzzy is used because Octokit instances are commonly created through
+  # chained plugin()/defaults() calls:
+  #   const MyOctokit = Octokit.plugin(plugin1).defaults({ baseUrl: "..." });
+  #   const octokit = new MyOctokit();
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # octokit.request(route, params) returns Promise<{ data, status, headers, url }>
+      # The .data property contains the API response body.
+      - [
+          "@octokit/core",
+          "Fuzzy.Member[request].ReturnValue.Awaited.Member[data]",
+          "remote",
+        ]
+
+      # octokit.graphql(query, variables) returns the data directly (unwrapped).
+      - [
+          "@octokit/core",
+          "Fuzzy.Member[graphql].ReturnValue.Awaited",
+          "remote",
+        ]
+
+  # =============================================================================
+  # Sinks
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ===== Request forgery =====
+      # octokit.request(route) - first argument is the route/URL template.
+      # E.g. octokit.request("GET /repos/{owner}/{repo}")
+      # Also covers module-level: require("@octokit/core").request(route)
+      - [
+          "@octokit/core",
+          "Fuzzy.Member[request].Argument[0]",
+          "request-forgery",
+        ]
+
+      # octokit.request(route, { url, baseUrl }) - options can override the target
+      - [
+          "@octokit/core",
+          "Fuzzy.Member[request].Argument[1].Member[url,baseUrl]",
+          "request-forgery",
+        ]
+
+      # new Octokit({ baseUrl }) - controls where all requests are sent
+      # Also matches Octokit.defaults({ baseUrl }) and chained variants
+      - [
+          "@octokit/core",
+          "Fuzzy.Argument[0].Member[baseUrl]",
+          "request-forgery",
+        ]
+
+      # ===== Credential sinks =====
+      # new Octokit({ auth }) - authentication token/credentials
+      # Also matches Octokit.defaults({ auth }) and chained variants
+      - [
+          "@octokit/core",
+          "Fuzzy.Argument[0].Member[auth]",
+          "credentials-key",
+        ]
+
+      # ===== Log injection =====
+      # octokit.log.debug/info/warn/error(message)
+      - [
+          "@octokit/core",
+          "Fuzzy.Member[log].Member[debug,info,warn,error].Argument[0]",
+          "log-injection",
+        ]

@@ -1,0 +1,73 @@
+extensions:
+  # =============================================================================
+  # remark (npm: "remark") — Markdown processor powered by plugins
+  # =============================================================================
+  #
+  # remark is a unified-ecosystem Markdown processor. It combines remark-parse
+  # (Markdown → AST) and remark-stringify (AST → Markdown), with plugins for
+  # transforming content — notably converting Markdown to HTML:
+  #
+  #   import { remark } from 'remark';
+  #   import remarkHtml from 'remark-html';
+  #   import remarkRehype from 'remark-rehype';
+  #   import rehypeStringify from 'rehype-stringify';
+  #
+  #   // Markdown to HTML via remark-html plugin
+  #   const result = await remark().use(remarkHtml).process(userInput);
+  #   res.send(String(result)); // HTML injection if userInput is untrusted
+  #
+  #   // Markdown to HTML via remark-rehype + rehype-stringify
+  #   const result = await remark()
+  #     .use(remarkRehype)
+  #     .use(rehypeStringify)
+  #     .process(userInput);
+  #
+  #   // Synchronous processing
+  #   const result = remark().use(remarkHtml).processSync(userInput);
+  #
+  # Security concerns:
+  # - HTML injection: when remark is configured with plugins that produce
+  #   HTML (remark-html, remark-rehype + rehype-stringify), taint flows
+  #   from the Markdown input through process()/processSync() to the
+  #   output. If the output is rendered in a browser without sanitization,
+  #   this enables XSS via crafted Markdown (e.g. inline HTML, javascript:
+  #   links). Sanitizer plugins like rehype-sanitize break this flow.
+  # - No sinks: remark itself does not perform security-sensitive
+  #   operations — the concern is taint propagation, not direct sinks.
+  # - No sources: remark does not provide access to untrusted data.
+  #
+  # Existing QLL coverage (Markdown.qll, Unified module):
+  # - UnifiedChain: models remark().use(...).process(input) chains as
+  #   taint steps from input to output (both callback and sync forms).
+  # - Sanitizer detection: excludes chains that use plugins with
+  #   "sanitize" in their name (e.g. rehype-sanitize).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow through process/processSync
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # remark().use(...).process(input) — async form
+      # Input markdown taints the returned vfile (promise resolves to vfile).
+      # The .use() calls return the same processor, so Fuzzy traces through
+      # the chained API to reach process/processSync.
+      - [
+          "remark",
+          "Fuzzy.Member[process]",
+          "Argument[0]",
+          "ReturnValue.Awaited",
+          "taint",
+        ]
+
+      # remark().use(...).processSync(input) — sync form
+      # Input markdown taints the returned vfile directly.
+      - [
+          "remark",
+          "Fuzzy.Member[processSync]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]

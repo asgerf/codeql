@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # promise (npm: "promise") - Promises/A+ polyfill with extensions
+  # =============================================================================
+  #
+  # The `promise` library (by Forbes Lindesay / then org) is a lightweight
+  # Promises/A+ implementation that serves as both a polyfill and a superset
+  # of ES6 Promises. It can be imported from several entry points:
+  #
+  #   var Promise = require('promise');
+  #   var Promise = require('promise/domains');
+  #   var Promise = require('promise/setimmediate');
+  #   var Promise = require('promise/lib/es6-extensions');
+  #
+  # Standard API (same as native Promise):
+  #   new Promise((resolve, reject) => { ... })
+  #   Promise.resolve(value)    Promise.reject(reason)
+  #   Promise.all(array)        Promise.race(array)
+  #   Promise.any(array)        Promise.allSettled(array)
+  #   promise.then(onFulfilled, onRejected)
+  #   promise.catch(onRejected)
+  #
+  # Non-standard extensions:
+  #   Promise.denodeify(fn) — promisifies a Node-style callback function
+  #   Promise.nodeify(fn) — wraps a promise-returning fn to accept callbacks
+  #   promise.done(onFulfilled, onRejected) — like .then but rethrows errors
+  #   promise.nodeify(callback) — converts promise result to callback style
+  #
+  # Security relevance:
+  # - No sources. The library does not provide access to untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations.
+  # - Promise flow: The standard promise methods (then, catch, resolve, etc.)
+  #   are already covered by the general promise modeling in QLL
+  #   (Promises.qll: getAPromiseObject() explicitly includes all `promise`
+  #   entry points). All taint flow through promise resolution, rejection,
+  #   and chaining is handled generically.
+  # - denodeify/nodeify: These are higher-order function wrappers (like pify)
+  #   whose flow patterns aren't expressible via simple summaryModel tuples.
+  #   denodeify is not currently modeled in QLL either.
+  #
+  # This file is intentionally empty of data extensions. It exists to
+  # document that the library has been reviewed and its security-relevant
+  # behavior (promise flow) is covered by QLL's general promise infrastructure.
+  # =============================================================================

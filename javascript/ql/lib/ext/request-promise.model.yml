@@ -1,0 +1,109 @@
+extensions:
+  # =============================================================================
+  # request-promise (npm: "request-promise") - Promise-based HTTP request client
+  # =============================================================================
+  #
+  # request-promise is a promise wrapper around the `request` library. Also
+  # covers the variants request-promise-any and request-promise-native.
+  #
+  #   const rp = require('request-promise');
+  #
+  #   // Direct call with URL string
+  #   const body = await rp('https://example.com');
+  #
+  #   // Direct call with options object
+  #   const body = await rp({ uri: 'https://example.com', json: true });
+  #
+  #   // HTTP method helpers
+  #   await rp.get(url);
+  #   await rp.post(url, { body: data });
+  #   await rp.put(url, { body: data });
+  #   await rp.delete(url);
+  #   await rp.head(url);
+  #   await rp.patch(url);
+  #
+  #   // Custom defaults
+  #   const custom = rp.defaults({ baseUrl: 'https://api.example.com' });
+  #   await custom.get('/endpoint');
+  #
+  #   // Callback style (inherited from request)
+  #   rp(url, (err, response, body) => { ... });
+  #
+  # Security concerns:
+  # - URL arguments and uri/url options control outbound request destinations
+  #   → request-forgery sinks.
+  # - The resolved promise value (or callback body parameter) contains the
+  #   HTTP response body → remote flow source.
+  # - No summaries needed beyond source/sink modeling.
+  #
+  # Existing QLL coverage (ClientRequests.qll):
+  # - RequestUrlRequest models request-promise, request-promise-any, and
+  #   request-promise-native as ClientRequest::Range, providing URL sink,
+  #   response data sources (promise-based and callback-based).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL arguments control request destinations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # rp(url) — first argument is the URL
+      - ["request-promise", "Argument[0]", "request-forgery"]
+      - ["request-promise-any", "Argument[0]", "request-forgery"]
+      - ["request-promise-native", "Argument[0]", "request-forgery"]
+
+      # rp({ uri: url }) or rp({ url: url }) — URL in options object
+      - ["request-promise", "Argument[0].Member[uri,url]", "request-forgery"]
+      - ["request-promise-any", "Argument[0].Member[uri,url]", "request-forgery"]
+      - ["request-promise-native", "Argument[0].Member[uri,url]", "request-forgery"]
+
+      # rp.get(url), rp.post(url), etc. — HTTP method helpers
+      - ["request-promise", "Member[get,post,put,delete,head,patch,options].Argument[0]", "request-forgery"]
+      - ["request-promise-any", "Member[get,post,put,delete,head,patch,options].Argument[0]", "request-forgery"]
+      - ["request-promise-native", "Member[get,post,put,delete,head,patch,options].Argument[0]", "request-forgery"]
+
+      # rp.defaults({...})(url) and rp.defaults({...}).get(url)
+      - ["request-promise", "Member[defaults].ReturnValue.Argument[0]", "request-forgery"]
+      - ["request-promise", "Member[defaults].ReturnValue.Member[get,post,put,delete,head,patch,options].Argument[0]", "request-forgery"]
+      - ["request-promise-any", "Member[defaults].ReturnValue.Argument[0]", "request-forgery"]
+      - ["request-promise-any", "Member[defaults].ReturnValue.Member[get,post,put,delete,head,patch,options].Argument[0]", "request-forgery"]
+      - ["request-promise-native", "Member[defaults].ReturnValue.Argument[0]", "request-forgery"]
+      - ["request-promise-native", "Member[defaults].ReturnValue.Member[get,post,put,delete,head,patch,options].Argument[0]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: HTTP response data is untrusted
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Awaited promise: const body = await rp(url)
+      - ["request-promise", "ReturnValue.Awaited", "remote"]
+      - ["request-promise-any", "ReturnValue.Awaited", "remote"]
+      - ["request-promise-native", "ReturnValue.Awaited", "remote"]
+
+      # Awaited promise from HTTP method helpers
+      - ["request-promise", "Member[get,post,put,delete,head,patch,options].ReturnValue.Awaited", "remote"]
+      - ["request-promise-any", "Member[get,post,put,delete,head,patch,options].ReturnValue.Awaited", "remote"]
+      - ["request-promise-native", "Member[get,post,put,delete,head,patch,options].ReturnValue.Awaited", "remote"]
+
+      # Awaited promise from defaults-created instances
+      - ["request-promise", "Member[defaults].ReturnValue.ReturnValue.Awaited", "remote"]
+      - ["request-promise", "Member[defaults].ReturnValue.Member[get,post,put,delete,head,patch,options].ReturnValue.Awaited", "remote"]
+      - ["request-promise-any", "Member[defaults].ReturnValue.ReturnValue.Awaited", "remote"]
+      - ["request-promise-any", "Member[defaults].ReturnValue.Member[get,post,put,delete,head,patch,options].ReturnValue.Awaited", "remote"]
+      - ["request-promise-native", "Member[defaults].ReturnValue.ReturnValue.Awaited", "remote"]
+      - ["request-promise-native", "Member[defaults].ReturnValue.Member[get,post,put,delete,head,patch,options].ReturnValue.Awaited", "remote"]
+
+      # Callback style: rp(url, (err, response, body) => {...})
+      # body parameter (index 2) is response data
+      - ["request-promise", "Argument[1,2].Parameter[2]", "remote"]
+      - ["request-promise-any", "Argument[1,2].Parameter[2]", "remote"]
+      - ["request-promise-native", "Argument[1,2].Parameter[2]", "remote"]
+
+      # Callback style: response.body
+      - ["request-promise", "Argument[1,2].Parameter[1].Member[body]", "remote"]
+      - ["request-promise-any", "Argument[1,2].Parameter[1].Member[body]", "remote"]
+      - ["request-promise-native", "Argument[1,2].Parameter[1].Member[body]", "remote"]

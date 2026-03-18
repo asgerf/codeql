@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # node-serialize (npm: "node-serialize") - Object serialization with function support
+  # =============================================================================
+  #
+  # Serializes/deserializes JavaScript objects including functions.
+  # The unserialize() function uses eval() internally, making it an unsafe
+  # deserialization sink (CVE-2017-5941).
+  #
+  #   const serialize = require('node-serialize');
+  #   const str = serialize.serialize(obj);
+  #   const obj = serialize.unserialize(str);  // calls eval() — code injection!
+  #
+  # API surface:
+  #   serialize.serialize(obj)      — object to string (safe)
+  #   serialize.unserialize(str)    — string to object (UNSAFE: eval-based)
+  #
+  # Existing QLL coverage (CodeInjectionCustomizations.qll):
+  #   unserialize arg 0 modeled as EvalJavaScriptSink (code injection)
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Unsafe deserialization via unserialize()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # serialize.unserialize(str) — calls eval() on embedded function strings
+      - ["node-serialize", "Member[unserialize].Argument[0]", "code-injection"]

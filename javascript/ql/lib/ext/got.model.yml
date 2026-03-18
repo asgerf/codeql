@@ -1,0 +1,107 @@
+extensions:
+  # =============================================================================
+  # got (npm: "got") - Human-friendly HTTP request library for Node.js
+  # =============================================================================
+  #
+  # By Sindre Sorhus. A full-featured HTTP client with retries, streams,
+  # pagination, hooks, and a chainable instance API.
+  #
+  #   import got from 'got';
+  #
+  #   // Basic requests
+  #   const response = await got('https://example.com');
+  #   console.log(response.body);
+  #
+  #   // HTTP methods
+  #   await got.get(url);
+  #   await got.post(url, { json: { key: 'value' } });
+  #   await got.put(url, { body: data });
+  #
+  #   // Streaming
+  #   got.stream(url).pipe(fs.createWriteStream('file'));
+  #
+  #   // Pagination
+  #   for await (const item of got.paginate(url)) { ... }
+  #   const all = await got.paginate.all(url);
+  #
+  #   // Custom instances
+  #   const client = got.extend({ prefixUrl: 'https://api.example.com' });
+  #   await client.get('/endpoint');
+  #
+  # Security concerns:
+  # - URL arguments and options control outbound request destinations →
+  #   request-forgery sinks.
+  # - Response data (body, headers, etc.) is untrusted → remote flow sources.
+  # - Options like headers, body, json, form, searchParams carry data into
+  #   the outbound request.
+  #
+  # Existing QLL coverage in ClientRequests.qll:
+  # - GotUrlRequest models got(), got.get/post/put/patch/head/delete/stream/
+  #   paginate as ClientRequest::Range, providing URL sink, host sink, data
+  #   nodes (headers/body/query), and response data sources automatically.
+  # - ExtendGotInstance tracks got.extend() chains and their cumulative options.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL arguments and options control request destinations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- Direct call: got(url) ---
+      - ["got", "Argument[0]", "request-forgery"]
+      # --- HTTP method calls: got.get(url), got.post(url), etc. ---
+      - ["got", "Member[get,post,put,patch,head,delete,stream,paginate].Argument[0]", "request-forgery"]
+      # --- URL in options object: got({ url: '...' }) or got(url, { url: '...' }) ---
+      - ["got", "Argument[0].Member[url]", "request-forgery"]
+      - ["got", "Member[get,post,put,patch,head,delete,stream,paginate].Argument[0].Member[url]", "request-forgery"]
+
+      # --- Extended instances: got.extend({...}).get(url), etc. ---
+      - ["got", "Member[extend].ReturnValue.Argument[0]", "request-forgery"]
+      - ["got", "Member[extend].ReturnValue.Member[get,post,put,patch,head,delete,stream,paginate].Argument[0]", "request-forgery"]
+
+      # --- URL/prefixUrl in extend() options ---
+      - ["got", "Member[extend].Argument[0].Member[url,prefixUrl]", "request-forgery"]
+      # --- Chained extends ---
+      - ["got", "Member[extend].ReturnValue.Member[extend].Argument[0].Member[url,prefixUrl]", "request-forgery"]
+
+      # --- Pagination sub-methods: got.paginate.all(url), got.paginate.each(url) ---
+      - ["got", "Member[paginate].Member[all,each].Argument[0]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: HTTP response data is untrusted
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- Awaited response from direct call: (await got(url)) ---
+      - ["got", "ReturnValue.Awaited", "response"]
+      # --- Awaited response from HTTP methods ---
+      - ["got", "Member[get,post,put,patch,head,delete].ReturnValue.Awaited", "response"]
+
+      # --- Stream responses: got.stream(url) is a readable stream ---
+      - ["got", "Member[stream].ReturnValue", "response"]
+      - ["got", "Member[stream].Member[get,post,put,patch,head,delete].ReturnValue", "response"]
+
+      # --- Pagination results ---
+      - ["got", "Member[paginate].Member[all].ReturnValue.Awaited", "response"]
+
+      # --- Extended instance responses ---
+      - ["got", "Member[extend].ReturnValue.ReturnValue.Awaited", "response"]
+      - ["got", "Member[extend].ReturnValue.Member[get,post,put,patch,head,delete].ReturnValue.Awaited", "response"]
+      - ["got", "Member[extend].ReturnValue.Member[stream].ReturnValue", "response"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through response methods and helpers
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- Response .json() / .text() / .buffer() convenience methods ---
+      # got(url).json() returns Promise<parsed JSON>
+      # got(url).text() returns Promise<string>
+      # got(url).buffer() returns Promise<Buffer>
+      - ["got", "Fuzzy.Member[json,text,buffer]", "Argument[this]", "ReturnValue.Awaited", "taint"]

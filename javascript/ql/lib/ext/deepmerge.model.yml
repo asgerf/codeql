@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # deepmerge (npm: "deepmerge") - Deep recursive merge of objects
+  # =============================================================================
+  #
+  # Merges enumerable properties of two or more objects deeply, returning
+  # a new merged object (non-mutating):
+  #
+  #   const merge = require('deepmerge');
+  #   merge(x, y, [options])                // merge two objects
+  #   merge.all([obj1, obj2, ...], [opts])  // merge array of objects
+  #
+  # Security concerns:
+  # - deepmerge is a deep-merge operation. Taint from source operands flows
+  #   into the return value.
+  # - Unlike many other deep-merge libraries, deepmerge is non-mutating
+  #   (returns a new object rather than modifying the first argument).
+  #
+  # Existing QLL coverage:
+  #   Extend.qll:  deepmerge modeled as ExtendCallDeep (value-preserving
+  #                flow from operands to return value).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # merge(x, y) — both operands flow into the return value
+      - ["deepmerge", "", "Argument[0..1]", "ReturnValue", "value"]
+
+      # merge.all([obj1, obj2, ...]) — array elements flow into the return value
+      - ["deepmerge", "Member[all]", "Argument[0].ArrayElement", "ReturnValue", "value"]

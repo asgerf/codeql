@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # is-path-inside (npm: "is-path-inside") - Check if a path is inside another
+  # =============================================================================
+  #
+  # is-path-inside is a small utility by Sindre Sorhus that checks whether one
+  # file system path is inside another:
+  #
+  #   import isPathInside from 'is-path-inside';
+  #
+  #   isPathInside('a/b/c', 'a/b');   // => true
+  #   isPathInside('a/b/c', 'x/y');   // => false
+  #   isPathInside('a/b/c', 'a/b/c'); // => false (not strictly inside)
+  #
+  # API: isPathInside(childPath, parentPath) → boolean
+  #
+  # Security relevance:
+  # - No sources. The library does not provide access to untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations.
+  # - No summaries needed. The function returns a boolean, not derived data.
+  # - SANITIZER: The existing QLL (TaintedPathCustomizations.qll) models
+  #   is-path-inside as a barrier guard for path-injection queries — when
+  #   the call returns true, the childPath argument is considered sanitized
+  #   for path traversal attacks. Barrier guards / sanitizers are not
+  #   expressible via data extension models (sourceModel/sinkModel/
+  #   summaryModel), so that coverage remains in QLL.
+  #
+  # This file is intentionally empty of data extensions. It exists to
+  # document that the library has been reviewed and its security-relevant
+  # behavior (sanitizer) is covered by QLL.
+  # =============================================================================

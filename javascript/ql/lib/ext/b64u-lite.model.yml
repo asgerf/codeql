@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # b64u-lite (npm: "b64u-lite") - Isomorphic base64url encoding/decoding
+  # =============================================================================
+  #
+  # The b64u-lite package exports { toBase64Url, fromBase64Url, toBinaryString,
+  # fromBinaryString, toBuffer } for base64url encoding and decoding.
+  #
+  #   const b64u = require('b64u-lite');
+  #   b64u.toBase64Url('hello 你好');          // encode to base64url
+  #   b64u.fromBase64Url('aGVsbG8g5L2g5aW9'); // decode base64url to unicode
+  #   b64u.toBinaryString('aGkgdGhlcmU=');    // decode base64url to byte string
+  #   b64u.fromBinaryString('hi there');       // encode byte string to base64url
+  #   b64u.toBuffer('5L2g5aW9');              // decode base64url to buffer
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Only decoding (fromBase64Url, toBinaryString, toBuffer) is modeled as
+  # taint-propagating, consistent with the existing CodeQL convention that base64
+  # encoding is not a taint step (to avoid false positives).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # b64u-lite.fromBase64Url(encoded) - decode base64url to unicode string
+      - ["b64u-lite", "Member[fromBase64Url]", "Argument[0]", "ReturnValue", "taint"]
+      # b64u-lite.toBinaryString(encoded) - decode base64url to byte string (like atob)
+      - ["b64u-lite", "Member[toBinaryString]", "Argument[0]", "ReturnValue", "taint"]
+      # b64u-lite.toBuffer(encoded) - decode base64url to buffer
+      - ["b64u-lite", "Member[toBuffer]", "Argument[0]", "ReturnValue", "taint"]

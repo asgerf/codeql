@@ -1,0 +1,22 @@
+extensions:
+  # =============================================================================
+  # bcrypt-nodejs (npm: "bcrypt-nodejs") - Pure JS bcrypt password hashing
+  # =============================================================================
+  #
+  # The bcrypt-nodejs package is a pure JavaScript implementation of bcrypt:
+  #
+  #   const bcrypt = require('bcrypt-nodejs');
+  #   bcrypt.hash('password', null, null, function(err, hash) { ... });
+  #   const hash = bcrypt.hashSync('password', bcrypt.genSaltSync(10));
+  #   bcrypt.compare('password', hash, function(err, res) { ... });
+  #   const match = bcrypt.compareSync('password', hash);
+  #   bcrypt.genSalt(10, function(err, salt) { ... });
+  #   const salt = bcrypt.genSaltSync(10);
+  #   const rounds = bcrypt.getRounds(hash);
+  #
+  # This library has no sources, sinks, or taint summaries. Bcrypt hashing is a
+  # one-way cryptographic operation — the hash output is not meaningfully
+  # controlled by an attacker even if they control the input. The compare
+  # functions return a boolean, and genSalt/getRounds produce non-tainted values.
+  # =============================================================================
+  []

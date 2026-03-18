@@ -1,0 +1,44 @@
+extensions:
+  # Sources: attacker-controlled data from GitHub Actions webhook context
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- Webhook payload sources (context.payload) ---
+
+      # Text content: issue/PR/discussion titles and bodies, review and comment bodies, workflow run display titles
+      - ["@actions/github", "Member[context].Member[payload].Fuzzy.Member[title,body,display_title]", "remote"]
+
+      # Commit messages (head_commit.message, commits[*].message)
+      - ["@actions/github", "Member[context].Member[payload].Fuzzy.Member[message]", "remote"]
+
+      # Repository, release, and other descriptions
+      - ["@actions/github", "Member[context].Member[payload].Fuzzy.Member[description]", "remote"]
+
+      # Branch and tag references (pull_request.head.ref, pull_request.head.label, workflow_run.head_branch, release tag names)
+      - ["@actions/github", "Member[context].Member[payload].Fuzzy.Member[ref,label,head_branch,tag_name]", "remote"]
+
+      # Author and committer identity (commits[*].author.name, commits[*].committer.email, etc.)
+      - ["@actions/github", "Member[context].Member[payload].Fuzzy.Member[name,email]", "remote"]
+
+      # Workflow dispatch inputs are directly user-controlled
+      - ["@actions/github", "Member[context].Member[payload].Member[inputs].AnyMember", "remote"]
+
+      # --- Octokit API response sources (getOctokit() return value) ---
+
+      # API responses (issues, PRs, comments, commits, releases, etc.) contain attacker-controlled content
+      - ["@actions/github", "Member[getOctokit].ReturnValue.Fuzzy.Member[title,body,display_title]", "remote"]
+      - ["@actions/github", "Member[getOctokit].ReturnValue.Fuzzy.Member[message,description]", "remote"]
+      - ["@actions/github", "Member[getOctokit].ReturnValue.Fuzzy.Member[ref,label,tag_name]", "remote"]
+      - ["@actions/github", "Member[getOctokit].ReturnValue.Fuzzy.Member[name,email]", "remote"]
+
+  # Sinks: security-sensitive methods on the Octokit instance
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # The graphql method accepts a query string; interpolating user input is query injection
+      - ["@actions/github", "Member[getOctokit].ReturnValue.Member[graphql].Argument[0]", "sql-injection"]
+
+      # The request method accepts a route/URL; user-controlled routes enable SSRF against the GitHub API
+      - ["@actions/github", "Member[getOctokit].ReturnValue.Member[request].Argument[0]", "request-forgery"]

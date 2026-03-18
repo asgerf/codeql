@@ -1,0 +1,47 @@
+extensions:
+  # =============================================================================
+  # apollo-boost (npm: "apollo-boost") - Zero-config Apollo GraphQL client
+  # =============================================================================
+  #
+  # apollo-boost is a convenience package that provides a pre-configured
+  # ApolloClient with sensible defaults for quickly setting up a GraphQL client.
+  # It is now retired in favor of @apollo/client, but still widely used.
+  #
+  #   import ApolloClient from "apollo-boost";
+  #   const client = new ApolloClient({ uri: "https://api.example.com/graphql" });
+  #   client.query({ query: gql`{ users { name } }` });
+  #
+  # Exports:
+  # - Default: ApolloClient class (pre-configured with InMemoryCache, HttpLink)
+  # - Named: gql (re-export from graphql-tag)
+  #
+  # Security concerns:
+  # - The `uri` constructor option controls the URL of outgoing HTTP requests,
+  #   making it a request-forgery vector if attacker-controlled.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: constructor URI option controls outbound request destination
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new ApolloClient({ uri: <tainted> }) - controls where requests are sent
+      - ["apollo-boost", "Member[ApolloClient].Argument[0].Member[uri]", "request-forgery"]
+      # Default import: import ApolloClient from "apollo-boost"; new ApolloClient({ uri })
+      - ["apollo-boost", "Argument[0].Member[uri]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through query/mutate responses
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # client.query({ query }) → Promise<{ data }> - response carries server data
+      - ["apollo-boost", "Fuzzy.Member[query]", "Argument[this]", "ReturnValue.Awaited.Member[data]", "taint"]
+      # client.mutate({ mutation }) → Promise<{ data }> - response carries server data
+      - ["apollo-boost", "Fuzzy.Member[mutate]", "Argument[this]", "ReturnValue.Awaited.Member[data]", "taint"]
+      # client.watchQuery({ query }).subscribe(observer) - observer receives server data
+      - ["apollo-boost", "Fuzzy.Member[watchQuery]", "Argument[this]", "ReturnValue", "taint"]

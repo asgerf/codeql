@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # arr-flatten (npm: "arr-flatten") - Recursively flatten arrays
+  # =============================================================================
+  #
+  # arr-flatten is a simple utility that recursively flattens nested arrays.
+  #
+  #   const flatten = require('arr-flatten');
+  #   flatten(['a', ['b', ['c']], 'd', ['e']]);
+  #   //=> ['a', 'b', 'c', 'd', 'e']
+  #
+  # Exports: a single function flatten(array) → flat array
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure data transformation.
+  # - Taint propagates from the input array to the returned flattened array.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through flatten
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # flatten(arr) → flattened array: taint flows from arguments to return
+      - ["arr-flatten", "", "Argument[0]", "ReturnValue", "taint"]

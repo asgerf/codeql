@@ -1,0 +1,57 @@
+extensions:
+  # =============================================================================
+  # serve-handler (npm: "serve-handler") — Static file serving handler by Vercel
+  # =============================================================================
+  #
+  # The core of the `serve` CLI. Plugs into any Node.js HTTP server to serve
+  # static files from the filesystem with support for rewrites, redirects,
+  # clean URLs, headers, directory listing, and more.
+  #
+  #   const handler = require('serve-handler');
+  #   const http = require('http');
+  #
+  #   http.createServer((req, res) => {
+  #     return handler(req, res, {
+  #       public: './dist',          // directory to serve
+  #       rewrites: [{ source: '**', destination: '/index.html' }],
+  #       redirects: [{ source: '/old', destination: '/new' }],
+  #       symlinks: true
+  #     });
+  #   });
+  #
+  # The handler signature is:
+  #   handler(request, response [, config [, methods]])
+  #
+  # Security concerns:
+  # - path-injection: The `public` config option controls which directory is
+  #   served. If attacker-controlled, it enables reading arbitrary files from
+  #   the filesystem.
+  # - path-injection: The custom `methods` object (4th argument) can override
+  #   filesystem operations (lstat, realpath, createReadStream, readdir); the
+  #   path arguments to these are derived from the request URL and `public`.
+  #
+  # No existing QLL coverage for this library.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path-injection via configuration
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # handler(req, res, { public: untrustedPath })
+      # Controls the root directory from which files are served.
+      - ["serve-handler", "Argument[2].Member[public]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through the handler
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # The request URL (Argument[0]) influences which file path is read from
+      # disk and served in the response (Argument[1]). This models the flow
+      # from request to response through the handler.
+      - ["serve-handler", "", "Argument[0]", "Argument[1]", "taint"]

@@ -1,0 +1,166 @@
+extensions:
+  # =============================================================================
+  # vue-router (npm: "vue-router") - The official Router for Vue.js
+  # =============================================================================
+  #
+  # Provides client-side routing for Vue applications. Exposes composables,
+  # navigation guards, and component options to access URL parameters, query
+  # strings, hashes, and navigation.
+  #
+  # Vue 3 Composition API:
+  #   import { useRoute, useRouter } from 'vue-router';
+  #   const route = useRoute();          // current route location
+  #   const router = useRouter();        // router instance
+  #   route.params                       // URL path parameters
+  #   route.query                        // parsed query string
+  #   route.hash                         // URL hash fragment
+  #   route.path                         // URL pathname
+  #   route.fullPath                     // full URL including query and hash
+  #   router.push(url)                   // programmatic navigation
+  #   router.replace(url)                // replace current history entry
+  #
+  # Vue 2 Options API:
+  #   this.$route.params / this.$route.query / this.$route.hash / ...
+  #   this.$router.push(url) / this.$router.replace(url)
+  #
+  # Router instance (from createRouter()):
+  #   router.currentRoute                // reactive current route reference
+  #   router.beforeEach((to, from) => {})
+  #   router.beforeResolve((to, from) => {})
+  #   router.afterEach((to, from) => {})
+  #
+  # Route config hooks:
+  #   { path: '...', beforeEnter: (to, from) => {} }
+  #   { path: '...', props: (route) => ({ id: route.params.id }) }
+  #
+  # Composition API guards:
+  #   onBeforeRouteUpdate((to, from) => {})
+  #   onBeforeRouteLeave((to, from) => {})
+  #
+  # scrollBehavior:
+  #   createRouter({ scrollBehavior(to, from, savedPosition) { ... } })
+  #
+  # Security concerns:
+  # - route.params, route.path, route.fullPath — attacker-controlled URL path
+  #   segments (client-side remote source).
+  # - route.query — attacker-controlled query string parameters.
+  # - route.hash — attacker-controlled URL fragment.
+  # - All navigation guard parameters (to, from) are Route objects with the
+  #   same attacker-controlled properties.
+  # - router.push(url) / router.replace(url) — URL redirection sinks.
+  # - router.resolve(url) — takes potentially tainted input but just returns
+  #   a resolved location; not a sink itself.
+  #
+  # Existing QLL coverage (Vue.qll):
+  #   VueRouterFlowSource models route.params, route.path, route.fullPath
+  #   as ClientSideRemoteFlowSource (path kind); route.query (query kind);
+  #   route.hash (fragment kind). Covers router instance guards,
+  #   scrollBehavior, route config beforeEnter/props, component $route,
+  #   component lifecycle hooks, and $route watchers.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Route properties via useRoute() (Vue 3 Composition API)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # useRoute().params / .path / .fullPath — URL path data
+      - ["vue-router", "Member[useRoute].ReturnValue.Member[params,path,fullPath]", "remote"]
+
+      # useRoute().query — query string parameters
+      - ["vue-router", "Member[useRoute].ReturnValue.Member[query]", "remote"]
+
+      # useRoute().hash — URL hash fragment
+      - ["vue-router", "Member[useRoute].ReturnValue.Member[hash]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: router.currentRoute (Vue 3 router instance)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # router.currentRoute is a ref; .value gives the route location.
+      # Fuzzy covers both router.currentRoute.params and
+      # router.currentRoute.value.params patterns.
+      - ["vue-router", "Fuzzy.Member[currentRoute].Member[params,path,fullPath]", "remote"]
+      - ["vue-router", "Fuzzy.Member[currentRoute].Member[query]", "remote"]
+      - ["vue-router", "Fuzzy.Member[currentRoute].Member[hash]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: Router-level navigation guards (beforeEach, beforeResolve, afterEach)
+  # The "to" and "from" parameters (indices 0 and 1) are Route objects.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # router.beforeEach((to, from) => { to.params ... })
+      - ["vue-router", "Fuzzy.Member[beforeEach,beforeResolve,afterEach].Argument[0].Parameter[0,1].Member[params,path,fullPath]", "remote"]
+      - ["vue-router", "Fuzzy.Member[beforeEach,beforeResolve,afterEach].Argument[0].Parameter[0,1].Member[query]", "remote"]
+      - ["vue-router", "Fuzzy.Member[beforeEach,beforeResolve,afterEach].Argument[0].Parameter[0,1].Member[hash]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: Composition API in-component guards
+  # onBeforeRouteUpdate((to, from) => {}) / onBeforeRouteLeave((to, from) => {})
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      - ["vue-router", "Member[onBeforeRouteUpdate,onBeforeRouteLeave].Argument[0].Parameter[0,1].Member[params,path,fullPath]", "remote"]
+      - ["vue-router", "Member[onBeforeRouteUpdate,onBeforeRouteLeave].Argument[0].Parameter[0,1].Member[query]", "remote"]
+      - ["vue-router", "Member[onBeforeRouteUpdate,onBeforeRouteLeave].Argument[0].Parameter[0,1].Member[hash]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: scrollBehavior(to, from, savedPosition) in createRouter options
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      - ["vue-router", "Member[createRouter].Argument[0].Member[scrollBehavior].Parameter[0,1].Member[params,path,fullPath]", "remote"]
+      - ["vue-router", "Member[createRouter].Argument[0].Member[scrollBehavior].Parameter[0,1].Member[query]", "remote"]
+      - ["vue-router", "Member[createRouter].Argument[0].Member[scrollBehavior].Parameter[0,1].Member[hash]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: Route config beforeEnter guard
+  # { path: '/foo', beforeEnter: (to, from) => { ... } }
+  # Uses Fuzzy to reach the route config objects within the routes array.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      - ["vue-router", "Fuzzy.Member[beforeEnter].Parameter[0,1].Member[params,path,fullPath]", "remote"]
+      - ["vue-router", "Fuzzy.Member[beforeEnter].Parameter[0,1].Member[query]", "remote"]
+      - ["vue-router", "Fuzzy.Member[beforeEnter].Parameter[0,1].Member[hash]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: Route config props function
+  # { path: '/foo', props: (route) => ({ id: route.params.id }) }
+  # Also covers per-view props: { props: { default: (route) => ... } }
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      - ["vue-router", "Fuzzy.Member[props].Parameter[0].Member[params,path,fullPath]", "remote"]
+      - ["vue-router", "Fuzzy.Member[props].Parameter[0].Member[query]", "remote"]
+      - ["vue-router", "Fuzzy.Member[props].Parameter[0].Member[hash]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Programmatic navigation — URL redirection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # useRouter().push(url) / useRouter().replace(url)
+      - ["vue-router", "Member[useRouter].ReturnValue.Member[push,replace].Argument[0]", "url-redirection"]
+
+      # Fuzzy covers router instances obtained via createRouter(), injection,
+      # or other means: router.push(url) / router.replace(url)
+      - ["vue-router", "Fuzzy.Member[push,replace].Argument[0]", "url-redirection"]

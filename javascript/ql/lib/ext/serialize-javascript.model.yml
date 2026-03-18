@@ -1,0 +1,51 @@
+extensions:
+  # =============================================================================
+  # serialize-javascript — Serialize JS to a superset of JSON
+  # =============================================================================
+  #
+  # Serializes JavaScript objects (including RegExp, Date, Function, Map, Set,
+  # BigInt, URL) into a string of literal JavaScript that can be embedded in
+  # an HTML <script> tag or saved to a .js file.
+  #
+  #   const serialize = require('serialize-javascript');
+  #   serialize({ re: /test/g, fn: function() {} });
+  #   //=> '{"re":new RegExp("test", "g"),"fn":function() {}}'
+  #
+  # The default export is the serialize function itself:
+  #   serialize(obj, options?)
+  #
+  # Options:
+  #   - space: number — indentation (like JSON.stringify)
+  #   - isJSON: boolean — fast path for pure JSON (no functions/regexps)
+  #   - unsafe: boolean — skip HTML escaping (DANGEROUS: disables XSS protection)
+  #   - ignoreFunction: boolean — omit functions from output
+  #
+  # Security notes:
+  #   - By default, serialize() escapes HTML characters (</script>, etc.) to
+  #     prevent XSS when the output is embedded in <script> tags.
+  #   - When options.unsafe is true, HTML escaping is disabled and the output
+  #     becomes an XSS vector if embedded in HTML with untrusted input.
+  #   - The output is valid JavaScript — if passed to eval() or new Function()
+  #     for deserialization, it is a code injection vector.
+  #   - Taint flows from the input object to the serialized string output.
+  #
+  # Existing QLL coverage:
+  #   - JsonStringifiers.qll: models serialize-javascript as a JsonStringifyCall
+  #     (taint from Argument[0] to return value)
+  #   - Xss.qll: models serialize-javascript as an XSS sanitizer (barrier)
+  #     unless options.unsafe === true
+  #   - DomBasedXssCustomizations.qll, ReflectedXssCustomizations.qll,
+  #     StoredXssCustomizations.qll: inherit the XSS sanitizer model
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through serialize()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # serialize(obj, options?) → string
+      # The input object is serialized into a JavaScript string; taint
+      # propagates from the object to the output string.
+      - ["serialize-javascript", "", "Argument[0]", "ReturnValue", "taint"]

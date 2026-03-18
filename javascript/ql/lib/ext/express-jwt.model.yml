@@ -1,0 +1,129 @@
+extensions:
+  # =============================================================================
+  # express-jwt (npm: "express-jwt") - JWT validation middleware for Express
+  # =============================================================================
+  #
+  # express-jwt validates JSON Web Tokens from incoming requests and makes the
+  # decoded payload available on the request object.
+  #
+  #   import { expressjwt } from 'express-jwt';
+  #   // or: const { expressjwt } = require('express-jwt');
+  #
+  #   app.use(expressjwt({
+  #     secret: 'shhh',
+  #     algorithms: ['HS256'],
+  #     requestProperty: 'auth',          // default: 'auth'
+  #     getToken: (req) => req.query.token,
+  #     isRevoked: async (req, token) => false,
+  #     onExpired: async (req, err) => { throw err; }
+  #   }));
+  #
+  #   app.get('/protected', (req, res) => {
+  #     req.auth;           // decoded JWT payload (untrusted claims)
+  #     req.auth.sub;       // subject claim
+  #     req.auth.admin;     // custom claim
+  #   });
+  #
+  # API summary:
+  # - expressjwt(options) → Express middleware
+  # - options.secret — JWT secret/key or async function (req, token) => secret
+  # - options.algorithms — required array of allowed algorithms
+  # - options.getToken — custom token extraction function (req) => string
+  # - options.isRevoked — async function (req, token) => boolean
+  # - options.onExpired — async function (req, err) => void
+  # - options.requestProperty — name of req property for decoded payload
+  # - options.credentialsRequired — whether token is required (default: true)
+  # - middleware.unless(options) — exclude paths from JWT validation
+  #
+  # Security analysis:
+  # - Sources: The decoded JWT payload at req.auth (or custom requestProperty)
+  #   contains claims from the token. While the JWT signature is validated,
+  #   the payload claims (sub, iss, custom claims, etc.) originate from the
+  #   client and should be treated as untrusted for data flow purposes.
+  #   An attacker with a valid token can control these values.
+  # - The user-provided callbacks (getToken, isRevoked, onExpired, secret
+  #   function) receive the Express req object — same untrusted request data.
+  # - No sinks: the library validates tokens but does not perform any
+  #   security-sensitive operations (no command execution, SQL, file I/O, etc.).
+  #
+  # Existing QLL coverage:
+  # - JWT.qll: ExpressJwt module models the `secret` option as a
+  #   CredentialsNode (jwt key) via expressjwt().secret.
+  # - CryptoLibraries.qll: ExpressJwt module models express-jwt.sign()
+  #   argument 1 as a CryptographicKey.
+  # Both should be retained — they model credential/key exposure, not
+  # source/sink patterns expressible via data extensions.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Decoded JWT payload on request object (untrusted claims)
+  # ---------------------------------------------------------------------------
+  #
+  # After express-jwt middleware runs, req.auth contains the decoded JWT
+  # payload. The claims originate from the token sent by the client.
+  # While the signature is verified, the claim values themselves are
+  # attacker-controlled (any valid token holder controls them).
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # req.auth — the decoded JWT payload set by express-jwt middleware.
+      # Using GuardedRouteHandler to match route handlers after the middleware.
+      # expressjwt({ ... }) returns middleware; GuardedRouteHandler selects
+      # downstream route handlers; Parameter[0] is the req object.
+      - [
+          "express-jwt",
+          "Member[expressjwt].ReturnValue.GuardedRouteHandler.Parameter[0].Member[auth]",
+          "remote",
+        ]
+
+      # --- User-provided callbacks receive the Express req object ---
+
+      # getToken: (req) => string — receives the Express request
+      - [
+          "express-jwt",
+          "Member[expressjwt].Argument[0].Member[getToken].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-jwt",
+          "Member[expressjwt].Argument[0].Member[getToken].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+
+      # isRevoked: (req, token) => boolean — req is Parameter[0]
+      - [
+          "express-jwt",
+          "Member[expressjwt].Argument[0].Member[isRevoked].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-jwt",
+          "Member[expressjwt].Argument[0].Member[isRevoked].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+
+      # onExpired: (req, err) => void — req is Parameter[0]
+      - [
+          "express-jwt",
+          "Member[expressjwt].Argument[0].Member[onExpired].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-jwt",
+          "Member[expressjwt].Argument[0].Member[onExpired].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+
+      # secret function: (req, token) => secret — req is Parameter[0]
+      - [
+          "express-jwt",
+          "Member[expressjwt].Argument[0].Member[secret].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-jwt",
+          "Member[expressjwt].Argument[0].Member[secret].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]

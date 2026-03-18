@@ -1,0 +1,87 @@
+extensions:
+  # =============================================================================
+  # request (npm: "request") — Simplified HTTP client for Node.js
+  # =============================================================================
+  #
+  # request is a widely-used (now deprecated) HTTP client library:
+  #
+  #   const request = require('request');
+  #
+  #   // Simple GET
+  #   request('https://example.com', (err, response, body) => { ... });
+  #
+  #   // With options
+  #   request({ url: targetUrl, method: 'POST', body: data }, callback);
+  #
+  #   // HTTP method shortcuts
+  #   request.get(url, callback);
+  #   request.post({ url, body }, callback);
+  #
+  #   // Defaults (creates a pre-configured wrapper)
+  #   const r = request.defaults({ headers: { 'x-api-key': key } });
+  #   r.get(url, callback);
+  #
+  #   // Piping response to a file
+  #   request(url).pipe(fs.createWriteStream(path));
+  #
+  #   // Auth
+  #   request.get(url).auth(user, pass, false, bearerToken);
+  #   request.get(url, { auth: { user, pass, bearer } });
+  #
+  # Also covers promise wrappers: request-promise, request-promise-native,
+  # request-promise-any.
+  #
+  # Security concerns:
+  # - Request forgery: the URL argument (first arg, or url/uri option)
+  #   controls which server is contacted. If attacker-controlled, this
+  #   enables SSRF.
+  # - Remote flow source: the response body is data from an external
+  #   server and should be treated as untrusted.
+  # - Path injection: piping to fs.createWriteStream(path) makes the
+  #   path argument a sink, but that's modeled on the fs side.
+  #
+  # Existing QLL coverage:
+  # - ClientRequests.qll: RequestUrlRequest models request() and method
+  #   shortcuts as ClientRequest::Range — URL as request-forgery sink,
+  #   response data as remote source, request body as data node.
+  # - Request.qll: Credentials for .auth() and auth option object.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: request-forgery — URL controls which server is contacted
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # request(url, ...) / request.get(url, ...) / request.post(url, ...) etc.
+      # The first argument is the URL (string or options object with url/uri).
+      - ["request", "Fuzzy.Argument[0]", "request-forgery"]
+
+      # request({ url: target }) / request({ uri: target })
+      - ["request", "Fuzzy.Argument[0].Member[url,uri]", "request-forgery"]
+
+      # Same for promise wrappers
+      - ["request-promise", "Fuzzy.Argument[0]", "request-forgery"]
+      - ["request-promise", "Fuzzy.Argument[0].Member[url,uri]", "request-forgery"]
+      - ["request-promise-native", "Fuzzy.Argument[0]", "request-forgery"]
+      - ["request-promise-native", "Fuzzy.Argument[0].Member[url,uri]", "request-forgery"]
+      - ["request-promise-any", "Fuzzy.Argument[0]", "request-forgery"]
+      - ["request-promise-any", "Fuzzy.Argument[0].Member[url,uri]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: remote — response data from external servers
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Callback form: request(url, (err, response, body) => { ... })
+      # Parameter 2 is the body, parameter 1 is the response object
+      - ["request", "Fuzzy.Argument[N-1].Parameter[2]", "remote"]
+      - ["request", "Fuzzy.Argument[N-1].Parameter[1].Member[body]", "remote"]
+
+      # Promise form (request-promise, etc.): the resolved value is the body
+      - ["request-promise", "Fuzzy.ReturnValue.Awaited", "remote"]
+      - ["request-promise-native", "Fuzzy.ReturnValue.Awaited", "remote"]
+      - ["request-promise-any", "Fuzzy.ReturnValue.Awaited", "remote"]

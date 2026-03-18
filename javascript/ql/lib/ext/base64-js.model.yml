@@ -1,0 +1,24 @@
+extensions:
+  # =============================================================================
+  # base64-js (npm: "base64-js") - Base64 encoding/decoding using byte arrays
+  # =============================================================================
+  #
+  # The base64-js package by Jameson Little exports three functions for working
+  # with base64 and Uint8Array byte arrays:
+  #
+  #   const base64js = require('base64-js');
+  #   base64js.toByteArray('aGVsbG8=');   // Uint8Array [104, 101, 108, 108, 111]
+  #   base64js.fromByteArray(bytes);       // "aGVsbG8="
+  #   base64js.byteLength('aGVsbG8=');     // 5
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Only decoding (toByteArray) is modeled as taint-propagating, consistent with
+  # the existing CodeQL convention that base64 encoding is not a taint step (to
+  # avoid false positives).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # base64-js.toByteArray(b64String) - decode base64 string to Uint8Array
+      - ["base64-js", "Member[toByteArray]", "Argument[0]", "ReturnValue", "taint"]

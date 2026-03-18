@@ -1,0 +1,34 @@
+extensions:
+  # =============================================================================
+  # lusca (npm: "lusca") - Express.js web application security middleware
+  # =============================================================================
+  #
+  # Security middleware for Express by PayPal/KrakenJS. Provides CSRF token
+  # validation, Content-Security-Policy, X-Frame-Options, HSTS, X-XSS-Protection,
+  # X-Content-Type-Options (nosniff), P3P, and Referrer-Policy headers.
+  #
+  #   const lusca = require('lusca');
+  #   app.use(lusca({ csrf: true, xframe: 'SAMEORIGIN', hsts: {...} }));
+  #   // or individually:
+  #   app.use(lusca.csrf());
+  #   app.use(lusca.csp({ policy: {...} }));
+  #   app.use(lusca.xframe('SAMEORIGIN'));
+  #   app.use(lusca.hsts({ maxAge: 31536000 }));
+  #   app.use(lusca.xssProtection(true));
+  #   app.use(lusca.nosniff());
+  #   app.use(lusca.referrerPolicy('same-origin'));
+  #   app.use(lusca.p3p('ABCDEF'));
+  #
+  # Security concerns:
+  # - No sources: the library does not expose untrusted data.
+  # - No sinks: it only sets HTTP response headers and validates CSRF tokens.
+  # - No taint propagation: all functions return Express middleware functions
+  #   (req, res, next) that do not transform user data.
+  #
+  # This is a purely protective library with no security-relevant data flow.
+  #
+  # Existing QLL coverage: None.
+  # =============================================================================
+  #
+  # No sources, sinks, or summaries to model.
+  []

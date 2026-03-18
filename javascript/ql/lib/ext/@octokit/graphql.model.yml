@@ -1,0 +1,87 @@
+extensions:
+  # =============================================================================
+  # Sources: GraphQL API responses can contain attacker-controlled content
+  # =============================================================================
+  #
+  # In contexts like GitHub Actions, data returned by the GitHub GraphQL API
+  # (PR titles, issue bodies, branch names, commit messages, etc.) is
+  # attacker-controlled and can be used to exploit injection vulnerabilities.
+  #
+  # Usage patterns:
+  #   import { graphql } from "@octokit/graphql";
+  #   const { repository } = await graphql(`query { ... }`, { headers: ... });
+  #
+  #   const gql = graphql.defaults({ headers: { authorization: "token ..." } });
+  #   const { viewer } = await gql(`{ viewer { login } }`);
+  #
+  #   import { withCustomRequest } from "@octokit/graphql";
+  #   const myGraphql = withCustomRequest(myRequest);
+  #   const data = await myGraphql(`query { ... }`);
+  #
+  # The graphql function returns response.data.data directly (unwrapped).
+  # On error, GraphqlResponseError has .data with partial response data.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # graphql(query, options) returns the data directly (unwrapped from response)
+      - ["@octokit/graphql", "Member[graphql].ReturnValue.Awaited", "remote"]
+
+      # graphql.defaults({...})(query) - preconfigured graphql function
+      - [
+          "@octokit/graphql",
+          "Member[graphql].Member[defaults].ReturnValue.ReturnValue.Awaited",
+          "remote",
+        ]
+
+      # withCustomRequest(request)(query) - custom request wrapper
+      - [
+          "@octokit/graphql",
+          "Member[withCustomRequest].ReturnValue.ReturnValue.Awaited",
+          "remote",
+        ]
+
+      # GraphqlResponseError.data - partial response data from errors
+      - [
+          "@octokit/graphql",
+          "Member[GraphqlResponseError].Instance.Member[data]",
+          "remote",
+        ]
+
+  # =============================================================================
+  # Sinks
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ===== Credential sinks =====
+      # graphql(query, { headers: { authorization: token } })
+      - [
+          "@octokit/graphql",
+          "Member[graphql].Argument[1].Member[headers].Member[authorization]",
+          "credentials-key",
+        ]
+
+      # graphql.defaults({ headers: { authorization: token } })
+      - [
+          "@octokit/graphql",
+          "Member[graphql].Member[defaults].Argument[0].Member[headers].Member[authorization]",
+          "credentials-key",
+        ]
+
+      # ===== Request forgery =====
+      # graphql(query, { baseUrl }) - controls which server receives the request
+      - [
+          "@octokit/graphql",
+          "Member[graphql].Argument[1].Member[baseUrl]",
+          "request-forgery",
+        ]
+
+      # graphql.defaults({ baseUrl }) - controls the default API endpoint
+      - [
+          "@octokit/graphql",
+          "Member[graphql].Member[defaults].Argument[0].Member[baseUrl]",
+          "request-forgery",
+        ]

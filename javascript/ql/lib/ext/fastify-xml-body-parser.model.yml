@@ -1,0 +1,43 @@
+# =============================================================================
+# fastify-xml-body-parser / @fastify/xml-body-parser — XML body parser for Fastify
+# =============================================================================
+#
+# A Fastify plugin that registers a content-type parser for XML request
+# bodies (text/xml, application/xml, application/rss+xml). After
+# registration the parsed XML is available on request.body as a
+# JavaScript object:
+#
+#   const fastify = require('fastify')();
+#   fastify.register(require('fastify-xml-body-parser'));
+#   // or: fastify.register(require('@fastify/xml-body-parser'));
+#
+#   fastify.post('/', (req, reply) => {
+#     req.body;   // attacker-controlled parsed XML object
+#     reply.send(req.body);
+#   });
+#
+# The plugin has no API surface of its own beyond registration. It
+# simply makes request.body available for XML POST bodies. Options
+# passed at registration time (validate, contentType, and any
+# fast-xml-parser option) are configuration only — they do not
+# introduce additional callable functions or properties.
+#
+# Security concerns:
+# - request.body is fully attacker-controlled after this plugin is
+#   registered — both property names and values originate from the
+#   client's XML request body.
+# - The underlying fast-xml-parser may be susceptible to XML-related
+#   attacks depending on its configuration (e.g., entity expansion).
+#
+# Why no additional models are needed:
+# - The request.body source is already modeled in fastify.model.yml
+#   (as a remote source via Fuzzy.Member[body] on the fastify package).
+# - The plugin exposes no distinct functions, classes, or methods
+#   beyond the plugin registration call itself.
+#
+# Existing QLL coverage (Fastify.qll):
+#   Referenced in RequestInputAccess.isUserControlledObject() to mark
+#   request.body as having attacker-controlled content when
+#   fastify-xml-body-parser is registered.
+# =============================================================================
+extensions: []

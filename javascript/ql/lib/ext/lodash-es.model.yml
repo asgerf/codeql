@@ -1,0 +1,98 @@
+extensions:
+  # =============================================================================
+  # lodash-es (npm: "lodash-es") - ES module build of Lodash
+  # =============================================================================
+  #
+  # lodash-es is the ES module build of Lodash, providing the same utility
+  # functions as lodash but as ES modules for tree-shaking:
+  #
+  #   import { template, merge, get, escape } from 'lodash-es';
+  #   import map from 'lodash-es/map';
+  #
+  # Security concerns:
+  # - Code injection: _.template(string) compiles a template string into a
+  #   function that evaluates embedded JavaScript expressions.
+  # - Prototype pollution: _.merge, _.mergeWith, _.defaultsDeep perform deep
+  #   recursive merging and are vulnerable to prototype pollution if an
+  #   attacker controls a source operand.
+  # - Taint propagation: Many utility functions propagate taint from input
+  #   arguments to return values (string manipulation, array operations, etc.)
+  #
+  # Existing QLL coverage (LodashUnderscore.qll, Extend.qll,
+  #   CodeInjectionCustomizations.qll):
+  #   lodash-es is treated as an alias for lodash throughout the QLL:
+  #   - LodashUnderscore::Member matches lodash-es imports
+  #   - underscoreTaintStep covers ~50 taint-propagating functions
+  #   - SummarizedCallable models for each, map, flatMap, reduce, etc.
+  #   - LodashUnderscoreTemplateSink: _.template(str) as code-injection
+  #   - ExtendCallDeep: _.merge, _.mergeWith, _.defaultsDeep
+  #   - ExtendCallShallow: _.extend, _.assign, _.defaults
+  #   - CloneCall: _.clone, _.cloneDeep
+  #   The QLL models are comprehensive and should be retained.
+  #   Data extensions below provide complementary coverage.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: code-injection via _.template
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # _.template(string) — compiles a template string containing embedded
+      # JS expressions (<%= %>, <%- %>, <% %>) into a function
+      - ["lodash-es", "Member[template].Argument[0]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through lodash-es functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =======================================================================
+      # String manipulation — input string flows to return value
+      # =======================================================================
+      - ["lodash-es", "Member[camelCase,capitalize,deburr,escape,escapeRegExp,kebabCase,lowerCase,lowerFirst,pad,padEnd,padStart,repeat,replace,snakeCase,split,startCase,toLower,toUpper,trim,trimEnd,trimStart,truncate,unescape,upperCase,upperFirst,words]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Collection/Array — first argument (collection) flows to return value
+      # =======================================================================
+      - ["lodash-es", "Member[find,filter,reject,compact,first,head,initial,last,rest,tail,flatten,flattenDeep,flattenDepth,without,difference,uniq,unique,unzip,shuffle,sample,sampleSize,toArray,partition,chunk,values,sortBy,take,takeRight,drop,dropRight,reverse,slice]", "Argument[0]", "ReturnValue", "taint"]
+
+      # union/zip — all arguments flow to return value
+      - ["lodash-es", "Member[union,zip,concat]", "Argument[0..9]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Object manipulation — first argument flows to return value
+      # =======================================================================
+      - ["lodash-es", "Member[pick,omit,clone,cloneDeep,defaults,mapKeys,mapValues,invert,toPairs,fromPairs,keys,keysIn,valuesIn,entries]", "Argument[0]", "ReturnValue", "taint"]
+
+      # _.get(object, path, [defaultValue]) → value at path
+      - ["lodash-es", "Member[get]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Merge/assign/extend — all operands flow to return value
+      # =======================================================================
+      - ["lodash-es", "Member[merge,mergeWith,assign,assignIn,assignWith,assignInWith,extend,extendWith,defaults,defaultsDeep]", "Argument[0..9]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Template — compiled function: data flows to rendered output
+      # =======================================================================
+      # _.template(str) returns a compiled function; calling it with data
+      # produces a string with tainted content
+      - ["lodash-es", "Member[template].ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Higher-order functions — input collection to callback parameter
+      # =======================================================================
+      # _.each/forEach(collection, callback) — collection elements to callback param 0
+      - ["lodash-es", "Member[each,forEach,forEachRight,eachRight]", "Argument[0]", "Argument[1].Parameter[0]", "value"]
+
+      # _.map(collection, callback) — collection elements to callback param 0, callback return to result
+      - ["lodash-es", "Member[map]", "Argument[0]", "Argument[1].Parameter[0]", "value"]
+      - ["lodash-es", "Member[map]", "Argument[1].ReturnValue", "ReturnValue", "value"]
+
+      # _.reduce(collection, callback, accumulator) — collection to callback param 1
+      - ["lodash-es", "Member[reduce,reduceRight]", "Argument[0]", "Argument[1].Parameter[1]", "value"]
+      - ["lodash-es", "Member[reduce,reduceRight]", "Argument[1].ReturnValue", "ReturnValue", "value"]

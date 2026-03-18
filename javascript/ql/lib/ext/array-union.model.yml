@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # array-union (npm: "array-union") - Create an array of unique values from
+  # the input arrays
+  # =============================================================================
+  #
+  # array-union creates an array of unique values, in order, from the input
+  # arrays. It accepts variadic array arguments.
+  #
+  #   const arrayUnion = require('array-union');
+  #   arrayUnion([1, 1, 2, 3], [2, 3]);
+  #   //=> [1, 2, 3]
+  #
+  # Exports: a single function arrayUnion(...arrays) → array
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure data transformation.
+  # - Taint propagates from the input arrays to the returned array.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through arrayUnion
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # arrayUnion(...arrays) → array of unique values: taint flows from any
+      # argument to the return value
+      - ["array-union", "", "Argument[0..]", "ReturnValue", "taint"]

@@ -1,0 +1,232 @@
+extensions:
+  # =============================================================================
+  # express-rate-limit (npm: "express-rate-limit") - Rate limiting middleware
+  # =============================================================================
+  #
+  # express-rate-limit is rate-limiting middleware for Express that limits
+  # repeated requests from the same client (by IP or custom key).
+  #
+  #   // Default import (CommonJS or ESM default)
+  #   const rateLimit = require('express-rate-limit');
+  #   const limiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 100 });
+  #
+  #   // Named import (ESM)
+  #   import { rateLimit } from 'express-rate-limit';
+  #   const limiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 100 });
+  #
+  #   app.use(limiter);
+  #
+  # Function-typed configuration options that receive the Express req object:
+  # - handler(req, res, next, options) — called when rate limit is exceeded
+  # - keyGenerator(req, res) — identifies clients (defaults to IP)
+  # - skip(req, res) — returns true to bypass the limiter
+  # - limit(req, res) — returns the max number of requests (alias: max)
+  # - message(req, res) — returns the response body when rate limited
+  # - requestWasSuccessful(req, res) — determines if a request was successful
+  # - identifier(req, res) — returns the quota policy identifier string
+  #
+  # Security analysis:
+  # - No injection sinks: the library only counts requests and sends
+  #   pre-configured responses. It does not execute commands, SQL, or
+  #   render templates.
+  # - Sources: User-defined callbacks receive the Express request object,
+  #   whose properties are untrusted. These are modeled below.
+  #
+  # Existing QLL coverage (MissingRateLimiting.qll):
+  # - ExpressRateLimit models require('express-rate-limit')() and
+  #   require('express-rate-limit').rateLimit() as RateLimitingMiddleware
+  #   for the MissingRateLimiting query. There is no extensible predicate
+  #   for rate-limiting middleware, so the QLL model should be retained.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Untrusted request data in user-defined callbacks
+  # ---------------------------------------------------------------------------
+  #
+  # The package is used via:
+  #   require('express-rate-limit')(options)          — default export
+  #   require('express-rate-limit').rateLimit(options) — named export
+  #   import { rateLimit } from 'express-rate-limit'; rateLimit(options)
+  #
+  # Using Fuzzy to cover both the default and named export patterns.
+  # Fuzzy selects all values derived from the package import, including
+  # both the default export function and the rateLimit named export.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- handler callback ---
+      # Called when the rate limit is exceeded.
+      # Signature: handler(req, res, next, options)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[handler].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[handler].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[handler].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[handler].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- keyGenerator callback ---
+      # Called to identify the client (defaults to IP address).
+      # Signature: keyGenerator(req, res)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[keyGenerator].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[keyGenerator].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[keyGenerator].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[keyGenerator].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- skip callback ---
+      # Called to determine whether to bypass the limiter for a request.
+      # Signature: skip(req, res)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[skip].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[skip].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[skip].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[skip].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- limit callback (also known as max in older versions) ---
+      # Called to determine the maximum number of requests.
+      # Signature: limit(req, res)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[limit,max].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[limit,max].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[limit,max].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[limit,max].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- message callback ---
+      # Called to determine the response body when rate limited.
+      # Signature: message(req, res)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[message].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[message].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[message].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[message].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- requestWasSuccessful callback ---
+      # Called to determine if a request was successful (for skip logic).
+      # Signature: requestWasSuccessful(req, res)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[requestWasSuccessful].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[requestWasSuccessful].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[requestWasSuccessful].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[requestWasSuccessful].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- identifier callback ---
+      # Called to determine the quota policy identifier string.
+      # Signature: identifier(req, res)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[identifier].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[identifier].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[identifier].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-rate-limit",
+          "Fuzzy.Argument[0].Member[identifier].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]

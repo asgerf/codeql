@@ -1,0 +1,56 @@
+extensions:
+  # =============================================================================
+  # live-server (npm: "live-server") - Development HTTP server with live reload
+  # =============================================================================
+  #
+  # live-server is a development HTTP server with live reload. It uses the
+  # `connect` library under the hood. Custom middleware can be added via the
+  # programmatic API:
+  #
+  #   const liveServer = require('live-server');
+  #   liveServer.start({
+  #     port: 8080,
+  #     root: './public',
+  #     middleware: [
+  #       (req, res, next) => {       // connect-style middleware
+  #         req.url;                  // user-controlled
+  #         req.headers;              // user-controlled
+  #         res.write(data);          // response sink
+  #         next();
+  #       }
+  #     ]
+  #   });
+  #
+  # Security concerns:
+  # - Sources: Middleware handlers receive connect-style (req, res, next)
+  #   parameters. Request properties (url, headers, body) are user-controlled.
+  # - Sinks: Response write/end methods are html-injection sinks.
+  #   The root option controls which directory is served (path-injection).
+  #
+  # Existing QLL coverage (LiveServer.qll):
+  #   - ServerDefinition: require("live-server") as a server
+  #   - RouteSetup: liveServer.start() extracts middleware from params
+  #   - RouteHandler: middleware functions modeled as Connect route handlers
+  #     with connect/express-shared parameter handling (req, res, next)
+  #   The QLL model should be retained; data extensions add complementary
+  #   coverage for the middleware request/response parameters.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: No additional sources needed. Middleware handlers use the
+  # connect-style (req, res, next) pattern, which is already modeled by the
+  # QLL Connect::RouteHandler infrastructure via ConnectExpressShared.
+  # ---------------------------------------------------------------------------
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path-injection via configuration options
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # liveServer.start({ root: untrustedPath }) — controls served directory
+      - ["live-server", "Member[start].Argument[0].Member[root]", "path-injection"]
+
+      # liveServer.start({ file: untrustedPath }) — fallback file path
+      - ["live-server", "Member[start].Argument[0].Member[file]", "path-injection"]

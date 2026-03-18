@@ -1,0 +1,99 @@
+extensions:
+  # =============================================================================
+  # firebase-admin (npm: "firebase-admin") — Firebase Admin SDK for Node.js
+  # =============================================================================
+  #
+  # Server-side SDK for Firebase services including Realtime Database,
+  # Firestore, Authentication, Cloud Storage, and Messaging. The Admin
+  # SDK bypasses all client-side security rules and has full access to
+  # Firebase project resources.
+  #
+  #   const admin = require('firebase-admin');
+  #   admin.initializeApp();
+  #
+  #   // Realtime Database
+  #   const db = admin.database();
+  #   const ref = db.ref('/users');
+  #   ref.once('value', (snapshot) => {
+  #     snapshot.val();              // attacker-controlled data
+  #   });
+  #   ref.transaction((current) => { // current is attacker-controlled
+  #     return current + 1;
+  #   });
+  #
+  #   // Firestore
+  #   const doc = await admin.firestore().collection('c').doc('d').get();
+  #   doc.data();                    // attacker-controlled data
+  #
+  #   // Auth — verifying client-supplied tokens
+  #   const decoded = await admin.auth().verifyIdToken(idToken);
+  #   decoded.uid;                   // from client token
+  #
+  # The modular API (v10+) uses sub-path imports:
+  #   const { getDatabase }  = require('firebase-admin/database');
+  #   const { getFirestore } = require('firebase-admin/firestore');
+  #   const { getAuth }      = require('firebase-admin/auth');
+  #
+  # Security concerns:
+  # - Realtime Database and Firestore store user-generated content;
+  #   values read from them are attacker-controlled.
+  # - Auth token verification decodes client-supplied JWTs; the
+  #   resulting claims (uid, email, custom claims, etc.) originate
+  #   from the client.
+  # - The Admin SDK has no sinks in the traditional sense (no SQL
+  #   queries, shell commands, file paths, or eval). Data flows FROM
+  #   Firebase into the application where it may reach other sinks.
+  #
+  # Existing QLL coverage (Firebase.qll):
+  #   - Realtime Database snapshot.val() / snapshot.exportVal() as
+  #     remote flow sources (FirebaseVal class).
+  #   - Callback parameters for on(), once(), and transaction().
+  #   - Cloud Functions HTTP triggers (firebase-functions, separate pkg).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: untrusted data read from Firebase services
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # -----------------------------------------------------------------------
+      # Realtime Database — DataSnapshot value accessors
+      # -----------------------------------------------------------------------
+
+      # snapshot.val() — returns the JavaScript value at this snapshot
+      - ["firebase-admin", "Fuzzy.Member[val].ReturnValue", "remote"]
+      - ["firebase-admin/database", "Fuzzy.Member[val].ReturnValue", "remote"]
+
+      # snapshot.exportVal() — returns value with priority information
+      - ["firebase-admin", "Fuzzy.Member[exportVal].ReturnValue", "remote"]
+      - ["firebase-admin/database", "Fuzzy.Member[exportVal].ReturnValue", "remote"]
+
+      # ref.transaction(updateFn) — updateFn receives current DB value
+      # as its first parameter, which is attacker-controlled
+      - ["firebase-admin", "Fuzzy.Member[transaction].Argument[0].Parameter[0]", "remote"]
+      - ["firebase-admin/database", "Fuzzy.Member[transaction].Argument[0].Parameter[0]", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Firestore — DocumentSnapshot data accessors
+      # -----------------------------------------------------------------------
+
+      # snapshot.data() — returns the document's fields as an object
+      - ["firebase-admin", "Fuzzy.Member[data].ReturnValue", "remote"]
+      - ["firebase-admin/firestore", "Fuzzy.Member[data].ReturnValue", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Auth — client-supplied token verification
+      # -----------------------------------------------------------------------
+
+      # auth.verifyIdToken(token) → Promise<DecodedIdToken>
+      # The decoded token contains uid, email, custom claims, etc.
+      # all originating from the client-supplied JWT.
+      - ["firebase-admin", "Fuzzy.Member[verifyIdToken].ReturnValue.Awaited", "remote"]
+      - ["firebase-admin/auth", "Fuzzy.Member[verifyIdToken].ReturnValue.Awaited", "remote"]
+
+      # auth.verifySessionCookie(cookie) → Promise<DecodedIdToken>
+      # Same as verifyIdToken but for session cookies.
+      - ["firebase-admin", "Fuzzy.Member[verifySessionCookie].ReturnValue.Awaited", "remote"]
+      - ["firebase-admin/auth", "Fuzzy.Member[verifySessionCookie].ReturnValue.Awaited", "remote"]

@@ -1,0 +1,138 @@
+extensions:
+  # =============================================================================
+  # d3 (npm: "d3") - Data-Driven Documents visualization library
+  # =============================================================================
+  #
+  # D3 is a JavaScript library for data visualization. Security-relevant APIs:
+  #
+  # 1. Data fetching (d3-fetch): fetch and parse remote data
+  #    const data = await d3.json('https://api.example.com/data');
+  #    const rows = await d3.csv('/data.csv');
+  #
+  # 2. DOM manipulation (d3-selection): modify page content
+  #    d3.select('#content').html('<b>Hello</b>');
+  #    d3.select('div').attr('class', 'active');
+  #
+  # Sub-module imports are also supported:
+  #    const { json, csv } = require('d3-fetch');
+  #    const { select } = require('d3-selection');
+  #
+  # Security concerns:
+  # - SOURCE: Data fetched via d3.json/csv/tsv/text/xml/html/svg is untrusted
+  #   remote data.
+  # - SINK (request-forgery): URL arguments to fetch methods control request
+  #   destinations.
+  # - SINK (html-injection): selection.html(content) sets innerHTML, allowing
+  #   XSS if the content is user-controlled.
+  #
+  # Existing QLL coverage:
+  # - D3.qll: Models selection.html() as DomBasedXss::Sink; selection.attr()
+  #   as DOM::AttributeDefinition; selection.text/attr/property reads as
+  #   XssThroughDom sources; selection.node/nodes/each as DOM value sources.
+  #   Does NOT model d3-fetch data loading methods.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: remote data from d3-fetch methods (via main "d3" package)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # d3.json(url) → Promise<Object>
+      # d3.csv(url) → Promise<Array>
+      # d3.tsv(url) → Promise<Array>
+      # d3.text(url) → Promise<string>
+      # d3.xml(url) → Promise<Document>
+      # d3.html(url) → Promise<Document>
+      # d3.svg(url) → Promise<Document>
+      # d3.blob(url) → Promise<Blob>
+      # d3.buffer(url) → Promise<ArrayBuffer>
+      # d3.image(url) → Promise<HTMLImageElement>
+      - ["d3", "Member[json,csv,tsv,text,xml,html,svg,blob,buffer,image].ReturnValue.Awaited", "remote"]
+
+      # d3.dsv(delimiter, url) → Promise<Array>
+      - ["d3", "Member[dsv].ReturnValue.Awaited", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: remote data from "d3-fetch" sub-module import
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      - ["d3-fetch", "Member[json,csv,tsv,text,xml,html,svg,blob,buffer,image].ReturnValue.Awaited", "remote"]
+      - ["d3-fetch", "Member[dsv].ReturnValue.Awaited", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: request-forgery — URL arguments to fetch methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # d3.json(url), d3.csv(url), etc. — URL is arg 0
+      - ["d3", "Member[json,csv,tsv,text,xml,html,svg,blob,buffer,image].Argument[0]", "request-forgery"]
+
+      # d3.dsv(delimiter, url) — URL is arg 1
+      - ["d3", "Member[dsv].Argument[1]", "request-forgery"]
+
+      # Same for d3-fetch sub-module
+      - ["d3-fetch", "Member[json,csv,tsv,text,xml,html,svg,blob,buffer,image].Argument[0]", "request-forgery"]
+      - ["d3-fetch", "Member[dsv].Argument[1]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: html-injection — selection.html(content) sets innerHTML
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # d3.select(...).html(content) — content is interpreted as HTML
+      # Uses Fuzzy to match .html() on any d3-derived selection object
+      - ["d3", "Fuzzy.Member[html].Argument[0]", "html-injection"]
+      - ["d3-selection", "Fuzzy.Member[html].Argument[0]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through d3-fetch response parsing
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # d3.csv and d3.tsv support a row accessor function as a second or
+      # third argument: d3.csv(url, row) or d3.csv(url, init, row).
+      # Each parsed row object is passed to the row function's first parameter.
+      # The accessor's return value flows into the resolved array.
+      - ["d3", "Member[csv,tsv].ReturnValue.Awaited.ArrayElement", "Argument[N-1].Parameter[0]", "ReturnValue", "taint"]
+      - ["d3-fetch", "Member[csv,tsv].ReturnValue.Awaited.ArrayElement", "Argument[N-1].Parameter[0]", "ReturnValue", "taint"]
+
+      # d3.dsv(delimiter, url, row) — same row accessor pattern, but url at arg 1
+      - ["d3", "Member[dsv].ReturnValue.Awaited.ArrayElement", "Argument[N-1].Parameter[0]", "ReturnValue", "taint"]
+      - ["d3-fetch", "Member[dsv].ReturnValue.Awaited.ArrayElement", "Argument[N-1].Parameter[0]", "ReturnValue", "taint"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through d3 selection methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # selection.data(data) — binds data to DOM elements; returns the
+      # update selection. Taint from data flows to enter/exit/join callbacks.
+      - ["d3", "Fuzzy.Member[data]", "Argument[0]", "ReturnValue", "taint"]
+      - ["d3-selection", "Fuzzy.Member[data]", "Argument[0]", "ReturnValue", "taint"]
+
+      # selection.datum(value) — sets bound datum; returns selection for chaining.
+      - ["d3", "Fuzzy.Member[datum]", "Argument[0]", "ReturnValue", "taint"]
+      - ["d3-selection", "Fuzzy.Member[datum]", "Argument[0]", "ReturnValue", "taint"]
+
+      # selection.join(enter, update, exit) — enter callback receives entering
+      # selection with bound data. Taint from the receiver flows through.
+      - ["d3", "Fuzzy.Member[join]", "Argument[this]", "ReturnValue", "taint"]
+      - ["d3-selection", "Fuzzy.Member[join]", "Argument[this]", "ReturnValue", "taint"]
+
+      # selection.each(function) — calls function with bound datum.
+      # Taint from the receiver flows to the callback.
+      - ["d3", "Fuzzy.Member[each]", "Argument[this]", "Argument[0].Parameter[0]", "taint"]
+      - ["d3-selection", "Fuzzy.Member[each]", "Argument[this]", "Argument[0].Parameter[0]", "taint"]

@@ -1,0 +1,82 @@
+extensions:
+  # =============================================================================
+  # pg-pool (npm: "pg-pool") — PostgreSQL connection pool for Node.js
+  # =============================================================================
+  #
+  # pg-pool provides a connection pool for PostgreSQL. It can be used directly
+  # or via require('pg').Pool (which re-exports pg-pool internally):
+  #
+  #   const Pool = require('pg-pool');
+  #   const pool = new Pool({ host, port, user, password, database });
+  #
+  #   // Direct query on pool (string form)
+  #   const res = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+  #
+  #   // Direct query on pool (config object form)
+  #   pool.query({ text: 'SELECT ...', values: [id] }, (err, result) => {});
+  #
+  #   // Acquire client from pool, then query
+  #   const client = await pool.connect();
+  #   const res = await client.query('SELECT ...');
+  #   client.release();
+  #
+  # Security concerns:
+  # - SQL injection: the first argument to query() is interpreted as SQL.
+  #   It can be a string or a config object with a `text` property. The
+  #   values array ($1, $2) is safely parameterized and is NOT a sink.
+  # - Request forgery: the connectionString and host constructor options
+  #   control which PostgreSQL server is contacted.
+  # - Database sources: query results (via callback or promise) contain
+  #   database-sourced data that may be untrusted.
+  #
+  # Note: require('pg').Pool re-exports pg-pool. That usage path is linked
+  # via type models in pg/model.yml. This file covers direct pg-pool imports.
+  #
+  # Existing QLL coverage (SQL.qll, Postgres module):
+  # - QueryCall: query()/execute() on Client/Pool/PoolClient as sinks
+  # - QueryString: query arg 0 and { text } property as SQL strings
+  # - Credentials: user/password in constructor options (no data-ext kind)
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: sql-injection — query text parameters
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # pool.query(sql, ...) or client.query(sql, ...) where client is from
+      # pool.connect(). Fuzzy traces through derived objects (pool instances,
+      # clients obtained via connect(), etc.)
+      - ["pg-pool", "Fuzzy.Member[query].Argument[0]", "sql-injection"]
+
+      # pool.query({ text: sql, values: [...] }) — config object form
+      - ["pg-pool", "Fuzzy.Member[query].Argument[0].Member[text]", "sql-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: request-forgery — connection configuration
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new Pool({ connectionString: uri }) — controls the target server
+      - ["pg-pool", "Argument[0].Member[connectionString]", "request-forgery"]
+
+      # new Pool({ host: hostname }) — controls the target host
+      - ["pg-pool", "Argument[0].Member[host]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: database — query results
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Promise form: const result = await pool.query(text)
+      # result.rows contains the returned data
+      - ["pg-pool", "Fuzzy.Member[query].ReturnValue.Awaited", "database"]
+
+      # Callback form: pool.query(text, [values,] (err, result) => { ... })
+      # The last argument is the callback; parameter 1 is the result object
+      - ["pg-pool", "Fuzzy.Member[query].Argument[N-1].Parameter[1]", "database"]

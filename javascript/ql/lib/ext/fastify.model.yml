@@ -1,0 +1,148 @@
+extensions:
+  # =============================================================================
+  # fastify (npm: "fastify") - Fast, low-overhead web framework for Node.js
+  # =============================================================================
+  #
+  # Fastify is a web framework built on a plugin architecture. A server is
+  # created by calling the factory function, then routes are registered:
+  #
+  #   const fastify = require('fastify')();
+  #
+  #   // Shorthand route registration
+  #   fastify.get('/user/:id', async (request, reply) => {
+  #     return { id: request.params.id, q: request.query.q };
+  #   });
+  #
+  #   // Full route configuration
+  #   fastify.route({
+  #     method: 'POST',
+  #     url: '/submit',
+  #     handler: async (request, reply) => {
+  #       reply.send({ ok: true });
+  #     }
+  #   });
+  #
+  #   // Hooks
+  #   fastify.addHook('preHandler', async (request, reply) => { ... });
+  #
+  #   // Plugins
+  #   fastify.register(require('./myPlugin'), { prefix: '/api' });
+  #
+  # Route handler signature: handler(request, reply)
+  #
+  # Request object properties (untrusted data):
+  #   request.body      — parsed request body
+  #   request.query     — parsed querystring
+  #   request.params    — URL path parameters
+  #   request.headers   — HTTP request headers object
+  #   request.url       — request URL string
+  #   request.originalUrl — original URL before internal re-routing
+  #   request.hostname  — hostname from Host header
+  #   request.host      — host from Host header (includes port)
+  #   request.ip        — client IP address
+  #   request.ips       — X-Forwarded-For IP list (when trustProxy enabled)
+  #
+  # Reply object methods (security-sensitive):
+  #   reply.send(data)           — sends response payload
+  #   reply.redirect(url, code?) — redirects client to URL
+  #   reply.header(name, value)  — sets a response header
+  #   reply.headers(obj)         — sets multiple response headers
+  #   reply.type(contentType)    — sets Content-Type header
+  #   reply.view(file, data, cb) — renders template (with point-of-view plugin)
+  #   reply.serialize(payload)   — serializes payload to JSON string
+  #
+  # Security concerns:
+  # - All request.* properties carry attacker-controlled data.
+  # - reply.redirect(url) is a url-redirection sink.
+  # - reply.view(file, data) is a path-injection sink for the template
+  #   file, and data propagates as taint into the rendered output.
+  # - addContentTypeParser callbacks receive the raw unparsed request body.
+  #
+  # Existing QLL coverage (Fastify.qll):
+  #   Server creation, route setup (get/post/put/delete/patch/head/options/
+  #   all/route/addHook), request sources (body, query, params, headers),
+  #   reply.send(), reply.redirect(), reply.header(), reply.headers(),
+  #   reply.view() (template), plugin registration, fastify-plugin
+  #   wrapping, cookie middleware (fastify-cookie, fastify-session,
+  #   fastify-secure-session).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: request properties carrying untrusted data
+  # ---------------------------------------------------------------------------
+  #
+  # Fuzzy finds all objects appearing to originate from the fastify package,
+  # including the request object (parameter 0 of route handler callbacks).
+  # Among fastify-derived objects, only the request object has these
+  # properties, so false positives are minimal.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Parsed request body (JSON, form data, etc.)
+      - ["fastify", "Fuzzy.Member[body]", "remote"]
+
+      # Parsed querystring object
+      - ["fastify", "Fuzzy.Member[query]", "remote"]
+
+      # URL path parameters (e.g., :id in /user/:id)
+      - ["fastify", "Fuzzy.Member[params]", "remote"]
+
+      # HTTP request headers object
+      - ["fastify", "Fuzzy.Member[headers]", "remote"]
+
+      # Request URL string
+      - ["fastify", "Fuzzy.Member[url]", "remote"]
+
+      # Original URL before internal re-routing
+      - ["fastify", "Fuzzy.Member[originalUrl]", "remote"]
+
+      # Hostname derived from Host header (attacker-controlled)
+      - ["fastify", "Fuzzy.Member[hostname]", "remote"]
+
+      # Host from Host / :authority header (attacker-controlled)
+      - ["fastify", "Fuzzy.Member[host]", "remote"]
+
+      # Client IP address
+      - ["fastify", "Fuzzy.Member[ip]", "remote"]
+
+      # X-Forwarded-For IP list (when trustProxy is enabled)
+      - ["fastify", "Fuzzy.Member[ips]", "remote"]
+
+      # addContentTypeParser(type, [opts], parser) — the parser callback's
+      # second parameter receives the raw unparsed request body
+      - ["fastify", "Fuzzy.Member[addContentTypeParser].Argument[N-1].Parameter[1]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # reply.redirect(url, [code]) — attacker-controlled URL enables
+      # open redirect attacks
+      - ["fastify", "Fuzzy.Member[redirect].Argument[0]", "url-redirection"]
+
+      # reply.view(file, data, [cb]) — template file path; attacker
+      # controlling the path can read arbitrary template files
+      # (requires point-of-view / @fastify/view plugin)
+      - ["fastify", "Fuzzy.Member[view].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through fastify APIs
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # reply.view(file, data, cb) — template data (arg 1) taints the
+      # rendered output passed to the callback (cb's parameter 1)
+      - ["fastify", "Fuzzy.Member[view]", "Argument[1]", "Argument[2].Parameter[1]", "taint"]
+
+      # reply.serialize(payload) → JSON string
+      - ["fastify", "Fuzzy.Member[serialize]", "Argument[0]", "ReturnValue", "taint"]
+
+      # reply.serializeInput(data, [schema], ...) → serialized string
+      - ["fastify", "Fuzzy.Member[serializeInput]", "Argument[0]", "ReturnValue", "taint"]

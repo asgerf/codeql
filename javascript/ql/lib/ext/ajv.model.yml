@@ -1,0 +1,57 @@
+extensions:
+  # =============================================================================
+  # ajv (npm: "ajv") - JSON Schema Validator
+  # =============================================================================
+  #
+  # Ajv is the most widely used JSON Schema validator for JavaScript/Node.js.
+  #
+  #   const Ajv = require("ajv");
+  #   const ajv = new Ajv();
+  #   const validate = ajv.compile(schema);
+  #   if (!validate(data)) console.log(validate.errors);
+  #   // or: if (!ajv.validate(schema, data)) console.log(ajv.errors);
+  #
+  # Security concerns:
+  # - Validation errors can contain user-controlled property names from the
+  #   validated input (e.g., with additionalProperties or patternProperties),
+  #   leading to XSS if error text is rendered as HTML.
+  #   Example payload: {"<img src=x onerror=alert(1)>": 45} produces error
+  #   "data/<img src=x onerror=alert(1)> should be string".
+  # - Validation results are used as sanitizers by other queries (e.g., NoSQL
+  #   injection). That guard/condition behavior is modeled in QLL
+  #   (JsonSchema.qll) and cannot be expressed as data extensions.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: validation errors may contain attacker-controlled content
+  # ---------------------------------------------------------------------------
+  #
+  # The .errors property and errorsText() method on both the Ajv instance and
+  # compiled validation functions can reflect user input into error messages.
+  # Uses Fuzzy to cover the instance, chained method returns (addSchema etc.
+  # return this), and compiled validation functions (compile/getSchema/
+  # compileAsync results).
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # .errors on the ajv instance or any compiled validation function
+      - ["ajv", "Fuzzy.Member[errors]", "remote"]
+      # .errorsText() on the ajv instance
+      - ["ajv", "Fuzzy.Member[errorsText].ReturnValue", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through ajv operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # ajv.errorsText(errors?) - converts error array to human-readable string.
+      # When called with an explicit errors argument, taint flows through.
+      - ["ajv", "Fuzzy.Member[errorsText]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Chaining: addSchema, addMetaSchema, removeSchema, addFormat,
+      # addKeyword, removeKeyword all return `this`.
+      - ["ajv", "Instance.Member[addSchema,addMetaSchema,removeSchema,addFormat,addKeyword,removeKeyword]", "Argument[this]", "ReturnValue", "value"]

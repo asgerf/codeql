@@ -1,0 +1,39 @@
+extensions:
+  # =============================================================================
+  # merge-options (npm: "merge-options") - Non-mutating deep merge of objects
+  # =============================================================================
+  #
+  # By Michael Mayer. Deeply merges multiple objects into a new object.
+  # Non-mutating: all inputs are cloned, the return value is a fresh object.
+  #
+  #   const mergeOptions = require('merge-options');
+  #   const result = mergeOptions(defaults, userConfig, overrides);
+  #
+  #   // With custom options via .call()
+  #   mergeOptions.call({ concatArrays: true }, obj1, obj2);
+  #
+  # API:
+  #   mergeOptions(obj1, obj2, ...) → new merged object
+  #     - Deep recursive merge of all arguments
+  #     - Only plain objects are merged; other values are cloned/replaced
+  #     - Does NOT mutate any input
+  #
+  # Security concerns:
+  # - No sources or sinks.
+  # - Taint propagation: properties from all input objects flow into the
+  #   returned merged object (value-preserving deep copy).
+  #
+  # Existing QLL coverage:
+  #   Extend.qll: merge-options modeled as ExtendCallDeep (value-preserving
+  #               flow from operands to return value).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: value-preserving flow from input objects to merged output
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # mergeOptions(obj1, obj2, ...) — all arguments flow into the return value
+      - ["merge-options", "", "Argument[0..N-1]", "ReturnValue", "value"]

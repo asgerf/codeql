@@ -1,0 +1,54 @@
+extensions:
+  # =============================================================================
+  # process (npm: "process" / Node.js global) - Process information and control
+  # =============================================================================
+  #
+  # The `process` object is a Node.js global providing information about and
+  # control over the current process. The npm package "process" is a browser
+  # shim that provides a compatible subset. In CodeQL, require("process") and
+  # the global `process` are unified.
+  #
+  #   const process = require('process');  // or just use the global
+  #
+  #   process.env.SECRET_KEY;     // environment variable (untrusted)
+  #   process.argv[2];            // command-line argument (untrusted)
+  #   process.stdin;              // readable stream (untrusted input)
+  #   process.cwd();              // current working directory
+  #   process.exit(code);         // terminate process
+  #
+  # Security concerns:
+  # - process.env: environment variables are untrusted in shared/containerized
+  #   environments. Threat model: "environment".
+  # - process.argv: command-line arguments from users. Threat model: "commandargs".
+  # - process.stdin: readable stream of user input (untrusted).
+  # - process.cwd(): returns working directory, influenced by environment.
+  #
+  # Existing QLL coverage (NodeJSLib.qll, CommandLineArguments.qll):
+  # - process.env as ThreatModelSource ("environment")
+  # - process.argv as CommandLineArguments ("commandargs")
+  # - process as EventEmitter
+  # - process.exit() as ProcessTermination / SensitiveAction
+  #
+  # Note: The global `process` is already recognized via NodeJSLib.process().
+  # These models use the "process" package import to cover require("process").
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: environment variables
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # process.env — environment variables object
+      - ["process", "Member[env]", "environment"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: command-line arguments
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # process.argv — command-line arguments array
+      - ["process", "Member[argv]", "commandargs"]

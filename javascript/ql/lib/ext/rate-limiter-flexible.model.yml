@@ -1,0 +1,40 @@
+extensions:
+  # =============================================================================
+  # rate-limiter-flexible (npm: "rate-limiter-flexible") — Rate limiting library
+  # =============================================================================
+  #
+  # A flexible rate limiting library supporting multiple backends:
+  #
+  #   const { RateLimiterMemory, RateLimiterRedis } = require('rate-limiter-flexible');
+  #   const limiter = new RateLimiterMemory({ points: 10, duration: 1 });
+  #   limiter.consume(req.ip)
+  #     .then(rateLimiterRes => { next(); })
+  #     .catch(rateLimiterRes => { res.status(429).send('Too Many Requests'); });
+  #
+  # Classes: RateLimiterMemory, RateLimiterRedis, RateLimiterMySQL,
+  #   RateLimiterPostgres, RateLimiterMongo, RateLimiterCluster, etc.
+  #
+  # Methods on instances:
+  #   consume(key, [points]) — consume points for key; rejects if over limit
+  #   get(key)               — get current limiter state for key
+  #   block(key, duration)   — manually block a key
+  #   delete(key)            — remove tracking data for a key
+  #   penalty(key, [points]) — add penalty points
+  #   reward(key, [points])  — subtract points (reward good behavior)
+  #
+  # Security concerns:
+  # - No sources. The library does not access external or untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations
+  #   like command execution, file I/O, or URL navigation.
+  # - No taint summaries needed. The library returns rate-limiter metadata
+  #   (remaining points, timestamps), not user-controlled data.
+  #
+  # Existing QLL coverage (MissingRateLimiting.qll):
+  # - Recognizes route handlers that call .consume() on RateLimiter* instances
+  #   as rate-limited handlers. This is a behavioral pattern used by the
+  #   "missing rate limiting" query and cannot be expressed as data extensions.
+  #
+  # Nothing to model here as data extensions. The library's security relevance
+  # is in its *presence* (or absence) as a rate limiter, which is already
+  # handled by the MissingRateLimiting query in QLL.
+  # =============================================================================

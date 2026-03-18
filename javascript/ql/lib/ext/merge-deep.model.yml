@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # merge-deep (npm: "merge-deep") - Recursive deep merge of objects
+  # =============================================================================
+  #
+  # Recursively merges the properties of one or more objects into the first
+  # object, returning a cloned merged result (non-mutating):
+  #
+  #   const merge = require('merge-deep');
+  #   merge({ a: { b: 1 } }, { a: { c: 2 } });
+  #   //=> { a: { b: 1, c: 2 } }
+  #
+  #   merge({}, obj1, obj2, obj3);  // variadic: any number of sources
+  #
+  # Arrays are combined via union; nested objects are merged recursively.
+  # Input objects are not mutated — the return value is a deep clone.
+  #
+  # Security concerns:
+  # - Versions before 3.0.1 are vulnerable to prototype pollution: an
+  #   attacker-controlled source object with __proto__ properties can pollute
+  #   Object.prototype. (The prototype-pollution query is handled by QLL in
+  #   PrototypePollutionCustomizations.qll, not expressible via data
+  #   extensions.)
+  # - Taint from all operands flows into the return value.
+  #
+  # Existing QLL coverage:
+  #   Extend.qll: merge-deep modeled as ExtendCallDeep (value-preserving
+  #               flow from operands to return value).
+  #   PrototypePollutionCustomizations.qll: merge-deep flagged as vulnerable
+  #               to prototype pollution in versions before 3.0.1.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # merge(orig, ...sources) — all operands flow into the return value
+      - ["merge-deep", "", "Argument[0..N-1]", "ReturnValue", "value"]

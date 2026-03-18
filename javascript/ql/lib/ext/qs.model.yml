@@ -1,0 +1,47 @@
+extensions:
+  # =============================================================================
+  # qs (npm: "qs") - Query string parsing and stringifying with nested support
+  # =============================================================================
+  #
+  # qs is a robust library for parsing and stringifying URL query strings,
+  # with support for nested objects and arrays:
+  #
+  #   const qs = require('qs');
+  #
+  #   // Parse: query string → object
+  #   qs.parse('foo[bar]=baz');
+  #   // => { foo: { bar: 'baz' } }
+  #
+  #   // Stringify: object → query string
+  #   qs.stringify({ foo: { bar: 'baz' } });
+  #   // => 'foo%5Bbar%5D=baz'
+  #
+  # API:
+  #   qs.parse(string, [options]) => object  — parse query string to object
+  #   qs.stringify(object, [options]) => string — stringify object to query string
+  #
+  # Security concerns:
+  # - No sources or sinks: qs is a pure transformation utility.
+  # - Taint flow: both parse and stringify propagate taint from input to
+  #   output. If the input query string or object contains attacker-
+  #   controlled data, the output will too.
+  # - For stringify, taint also flows from deep members of the input object
+  #   into the resulting query string.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through parse/stringify
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # qs.parse(str) => object — taint flows from query string to parsed object
+      - ["qs", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # qs.stringify(obj) => string — taint flows from object to query string
+      - ["qs", "Member[stringify]", "Argument[0]", "ReturnValue", "taint"]
+
+      # qs.stringify(obj) => string — taint flows from deep members of the
+      # input object into the resulting query string
+      - ["qs", "Member[stringify]", "Argument[0].AnyMemberDeep", "ReturnValue", "taint"]

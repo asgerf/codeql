@@ -1,0 +1,70 @@
+extensions:
+  # =============================================================================
+  # formik (npm: "formik") - React form state management library
+  # =============================================================================
+  #
+  # Formik manages form state, validation, and submission in React apps.
+  # Form values originate from user input and should be treated as untrusted.
+  #
+  # Key APIs that surface user-controlled form values:
+  #
+  #   // Hooks
+  #   const formik = useFormik({ onSubmit: (values) => { ... } });
+  #   formik.values;                           // user-controlled
+  #
+  #   const ctx = useFormikContext();
+  #   ctx.values;                              // user-controlled
+  #
+  #   const [field, meta] = useField('name');
+  #   field.value;                             // user-controlled
+  #
+  #   // Higher-order component
+  #   withFormik({ handleSubmit: (values) => { ... } })
+  #   withFormik({ validate: (values) => { ... } })
+  #
+  #   // JSX component (render prop & callback props)
+  #   <Formik onSubmit={(values) => ...} validate={(values) => ...}>
+  #     {(formik) => formik.values}
+  #   </Formik>
+  #
+  # Security concerns:
+  # - Form values are user-controlled input and are sources of taint.
+  # - No sinks. Formik does not perform any security-sensitive operations.
+  #
+  # Existing QLL coverage (XssThroughDomCustomizations.qll):
+  #   FormikSource models the following as XSS-through-DOM sources:
+  #   - <Formik validate/onSubmit={(values) => ...}> — JSX callback params
+  #   - withFormik({validate/handleSubmit: (values) => ...}) — HOC params
+  #   - useFormikContext().values
+  #   The JSX callback patterns cannot be expressed as data extensions;
+  #   the QLL model should be retained for those.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: user-controlled form values
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Fuzzy catch-all: .values on any formik-derived object.
+      # Covers useFormikContext().values, useFormik({...}).values,
+      # render prop pattern, connect() HOC, and any other path where
+      # .values is read from a formik-originating object.
+      - ["formik", "Fuzzy.Member[values]", "remote"]
+
+      # useField('name') returns [field, meta, helpers].
+      # field.value and meta.value contain the current user input.
+      - ["formik", "Member[useField].ReturnValue.ArrayElement.Member[value]", "remote"]
+
+      # withFormik({ handleSubmit: (values, formikBag) => ... })
+      - ["formik", "Member[withFormik].Argument[0].Member[handleSubmit].Parameter[0]", "remote"]
+
+      # withFormik({ validate: (values) => ... })
+      - ["formik", "Member[withFormik].Argument[0].Member[validate].Parameter[0]", "remote"]
+
+      # useFormik({ onSubmit: (values, formikHelpers) => ... })
+      - ["formik", "Member[useFormik].Argument[0].Member[onSubmit].Parameter[0]", "remote"]
+
+      # useFormik({ validate: (values) => ... })
+      - ["formik", "Member[useFormik].Argument[0].Member[validate].Parameter[0]", "remote"]

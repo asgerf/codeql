@@ -1,0 +1,42 @@
+extensions:
+  # =============================================================================
+  # merge (npm: "merge") — Merge multiple objects into one
+  # =============================================================================
+  #
+  # Merges enumerable properties of objects into a destination object:
+  #
+  #   const merge = require('merge');
+  #   merge(target, src1, src2, ...)             // shallow merge into target
+  #   merge(true, target, src1, src2, ...)       // deep/recursive merge
+  #   merge.recursive(target, src1, src2, ...)   // deep/recursive merge
+  #
+  # Security concerns:
+  # - No sources or sinks: merge does not fetch data or perform any
+  #   security-sensitive operations.
+  # - Taint propagation: properties from source operands flow into both the
+  #   return value and the destination object (value-preserving).
+  # - Prototype pollution: the recursive/deep merge variant was vulnerable
+  #   to prototype pollution before version 1.2.1. (Tracked separately by
+  #   the prototype-pollution query in QLL.)
+  #
+  # Existing QLL coverage (Extend.qll):
+  #   - merge() → ExtendCallShallow (shallow merge, dst = arg 0)
+  #   - merge.recursive() → ExtendCallDeep (deep merge, dst = arg 0)
+  #   Both have value-preserving flow from operands to return value and
+  #   destination via ExtendCallStep.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: value-preserving flow through merge operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # merge(target, src1, src2, ...) — shallow merge
+      # All operands flow into the return value
+      - ["merge", "", "Argument[0..]", "ReturnValue", "value"]
+
+      # merge.recursive(target, src1, src2, ...) — deep merge
+      # All operands flow into the return value
+      - ["merge", "Member[recursive]", "Argument[0..]", "ReturnValue", "value"]

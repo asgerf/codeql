@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # meow (npm: "meow") - CLI app helper
+  # =============================================================================
+  #
+  # meow is a CLI helper by Sindre Sorhus that parses process.argv into a
+  # structured result with input (positional args) and flags (options).
+  #
+  #   import meow from 'meow';
+  #   const cli = meow('Usage: $ foo <input>', {
+  #     importMeta: import.meta,
+  #     flags: { rainbow: { type: 'boolean', shortFlag: 'r' } }
+  #   });
+  #   cli.input;             // ['unicorns'] — positional arguments
+  #   cli.flags;             // { rainbow: true } — parsed flags
+  #   cli.flags.rainbow;     // true
+  #   cli.unnormalizedFlags;  // includes aliases
+  #   cli.pkg;               // parsed package.json
+  #   cli.help;              // help text string
+  #   cli.showHelp();        // print help and exit
+  #   cli.showVersion();     // print version and exit
+  #
+  # Security concerns:
+  # - The return value contains parsed command-line arguments (input, flags,
+  #   unnormalizedFlags), which are untrusted user input.
+  # - No sinks or summaries needed.
+  #
+  # Existing QLL coverage (CommandLineArguments.qll):
+  # - DefaultModels: models require('meow')(...) as a CommandLineArguments
+  #   source (commandargs threat model).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: parsed command-line arguments are untrusted input
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # meow(helpText, options) => cli object
+      # cli.input — positional arguments array
+      # cli.flags — parsed flag values object
+      # cli.unnormalizedFlags — flag values including aliases
+      - ["meow", "ReturnValue.Member[input,flags,unnormalizedFlags]", "commandargs"]

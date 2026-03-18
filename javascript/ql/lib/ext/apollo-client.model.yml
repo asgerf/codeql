@@ -1,0 +1,54 @@
+extensions:
+  # =============================================================================
+  # apollo-client (npm: "apollo-client") - Apollo GraphQL client core
+  # =============================================================================
+  #
+  # The apollo-client package is the core Apollo GraphQL client library (v2.x).
+  # It is now superseded by @apollo/client but remains widely used.
+  #
+  #   import ApolloClient from "apollo-client";
+  #   import { HttpLink } from "apollo-client";
+  #   const client = new ApolloClient({
+  #     link: new HttpLink({ uri: "https://api.example.com/graphql" }),
+  #     cache: new InMemoryCache(),
+  #   });
+  #   client.query({ query: gql`{ users { name } }` });
+  #
+  # Exports: ApolloClient (default), HttpLink, createNetworkInterface, and more.
+  #
+  # Security concerns:
+  # - The `uri` option on ApolloClient, HttpLink, and createNetworkInterface
+  #   controls outbound request URLs → request-forgery vector.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URI options control outbound request destinations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new ApolloClient({ uri: <tainted> })
+      - ["apollo-client", "Member[ApolloClient].Argument[0].Member[uri]", "request-forgery"]
+      # Default import: new ApolloClient({ uri })
+      - ["apollo-client", "Argument[0].Member[uri]", "request-forgery"]
+      # new HttpLink({ uri: <tainted> })
+      - ["apollo-client", "Member[HttpLink].Argument[0].Member[uri]", "request-forgery"]
+      # createNetworkInterface({ uri: <tainted> })
+      - ["apollo-client", "Member[createNetworkInterface].Argument[0].Member[uri]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through query/mutate responses
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # client.query({ query }) → Promise<{ data }>
+      - ["apollo-client", "Fuzzy.Member[query]", "Argument[this]", "ReturnValue.Awaited.Member[data]", "taint"]
+      # client.mutate({ mutation }) → Promise<{ data }>
+      - ["apollo-client", "Fuzzy.Member[mutate]", "Argument[this]", "ReturnValue.Awaited.Member[data]", "taint"]
+      # client.watchQuery({ query }) → ObservableQuery
+      - ["apollo-client", "Fuzzy.Member[watchQuery]", "Argument[this]", "ReturnValue", "taint"]
+      # client.subscribe({ query }) → Observable
+      - ["apollo-client", "Fuzzy.Member[subscribe]", "Argument[this]", "ReturnValue", "taint"]

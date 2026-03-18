@@ -1,0 +1,39 @@
+extensions:
+  # =============================================================================
+  # ansi-to-html (npm: "ansi-to-html") - ANSI escape code to HTML converter
+  # =============================================================================
+  #
+  # Converts strings containing ANSI escape codes into HTML with inline styles.
+  #
+  #   const Convert = require("ansi-to-html");
+  #   const convert = new Convert({ escapeXML: false }); // default
+  #   convert.toHtml("\x1b[31mRed\x1b[0m");
+  #   // → '<span style="color:#A00">Red</span>'
+  #
+  # Security concerns:
+  # - toHtml() produces raw HTML from string input. By default, escapeXML is
+  #   false, so HTML entities in the input are NOT escaped. If untrusted data
+  #   flows through toHtml() and is rendered in a browser, it is an HTML
+  #   injection / XSS vector.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: toHtml produces raw HTML from untrusted input
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # convert.toHtml(input) - converts ANSI string to HTML; input ends up in
+      # raw HTML output, which is an html-injection vector when rendered.
+      - ["ansi-to-html", "Instance.Member[toHtml].Argument[0]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # convert.toHtml(input) - taint flows from the ANSI string to the HTML output
+      - ["ansi-to-html", "Instance.Member[toHtml]", "Argument[0]", "ReturnValue", "taint"]

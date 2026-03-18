@@ -1,0 +1,23 @@
+extensions:
+  # =============================================================================
+  # call-limit (npm: "call-limit") - Concurrency limiter for functions
+  # =============================================================================
+  #
+  # Wraps a function to limit concurrent executions. The wrapped function
+  # behaves identically to the original, just with concurrency control.
+  #
+  #   const limit = require('call-limit');
+  #   const limited = limit(fn, 5);          // callback-based
+  #   const limited = limit.promise(fn, 5);  // promise-based
+  #
+  # No sources or sinks. The wrapped function preserves the behavior of the
+  # original, so taint flows through transparently.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # limit(fn, maxRunning) -> wrappedFn
+      - ["call-limit", "", "Argument[0]", "ReturnValue", "value"]
+      # limit.promise(fn, maxRunning) -> wrappedFn
+      - ["call-limit", "Member[promise]", "Argument[0]", "ReturnValue", "value"]

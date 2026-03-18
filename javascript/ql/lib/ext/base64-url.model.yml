@@ -1,0 +1,26 @@
+extensions:
+  # =============================================================================
+  # base64-url (npm: "base64-url") - Base64 encode/decode/escape for URLs
+  # =============================================================================
+  #
+  # The base64-url package by Joaquim Serafim exports four functions for working
+  # with URL-safe base64 strings:
+  #
+  #   const base64url = require('base64-url');
+  #   base64url.encode('Node.js is awesome.');  // "Tm9kZS5qcyBpcyBhd2Vzb21lLg"
+  #   base64url.decode('Tm9kZS5qcyBpcyBhd2Vzb21lLg');  // "Node.js is awesome."
+  #   base64url.escape('abc+def/ghi==');  // "abc-def_ghi"
+  #   base64url.unescape('abc-def_ghi');  // "abc+def/ghi=="
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Only decoding (decode) is modeled as taint-propagating, consistent with the
+  # existing CodeQL convention that base64 encoding is not a taint step (to
+  # avoid false positives). The escape/unescape functions perform trivial
+  # character substitution on base64 strings and are not modeled.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # base64-url.decode(b64urlString, encoding?) - decode base64url string
+      - ["base64-url", "Member[decode]", "Argument[0]", "ReturnValue", "taint"]

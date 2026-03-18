@@ -1,0 +1,25 @@
+extensions:
+  # =============================================================================
+  # react-native-base64 (npm: "react-native-base64") — Base64 encode/decode
+  # =============================================================================
+  #
+  # Lightweight Base64 encoding/decoding utility for React Native:
+  #
+  #   import base64 from 'react-native-base64';
+  #   base64.encode('hello')                      //=> 'aGVsbG8='
+  #   base64.decode('aGVsbG8=')                   //=> 'hello'
+  #   base64.encodeFromByteArray(new Uint8Array([72, 101])) //=> 'SGU='
+  #
+  # Security assessment:
+  # - No sources: does not read external data.
+  # - No sinks: does not execute code, make requests, or write files.
+  # - Pure data transformation: taint flows from input to output.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # base64.encode(string) → Base64 string
+      # base64.decode(base64String) → decoded string
+      # base64.encodeFromByteArray(Uint8Array) → Base64 string
+      - ["react-native-base64", "Member[encode,decode,encodeFromByteArray]", "Argument[0]", "ReturnValue", "taint"]

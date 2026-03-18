@@ -1,0 +1,54 @@
+extensions:
+  # Sources: URL-derived data accessible through Angular router types
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- ParamMap: values read from URL parameters ---
+      # ParamMap.get() and ParamMap.getAll() return URL parameter values.
+      - ["@angular/router.ParamMap", "Member[get,getAll].ReturnValue", "remote"]
+
+      # --- Params: URL parameter dictionary objects ---
+      # Params objects are { [key: string]: any } dictionaries populated from the URL.
+      # The object itself is a source (any property read from it is tainted).
+      - ["@angular/router.Params", "", "remote"]
+
+      # --- ActivatedRouteSnapshot: URL fragment ---
+      - ["@angular/router.ActivatedRouteSnapshot", "Member[fragment]", "remote"]
+
+      # --- ActivatedRouteSnapshot: URL path segments ---
+      # snapshot.url is UrlSegment[]; each segment's .path is user-controlled.
+      - ["@angular/router.ActivatedRouteSnapshot", "Member[url].ArrayElement.Member[path]", "remote"]
+
+      # --- UrlSegment: path and parameters ---
+      - ["@angular/router.UrlSegment", "Member[path]", "remote"]
+      - ["@angular/router.UrlSegment", "Member[parameters]", "remote"]
+      - ["@angular/router.UrlSegment", "Member[parameterMap].Member[get,getAll].ReturnValue", "remote"]
+
+      # --- Router.url: the full current URL string ---
+      - ["@angular/router.Router", "Member[url]", "remote"]
+
+      # --- RouterStateSnapshot.url: the full URL string ---
+      - ["@angular/router.RouterStateSnapshot", "Member[url]", "remote"]
+
+  # Sinks: navigation methods that can redirect the user
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Router.navigateByUrl(url) takes a full URL string and navigates to it.
+      - ["@angular/router.Router", "Member[navigateByUrl].Argument[0]", "url-redirection"]
+
+  # Summaries: taint-propagating utility functions
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # convertToParamMap(params) converts a Params dict to a ParamMap, preserving taint.
+      - ["@angular/router", "Member[convertToParamMap]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Router.parseUrl(url) parses a URL string into a UrlTree, preserving taint.
+      - ["@angular/router.Router", "Member[parseUrl]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Router.serializeUrl(urlTree) serializes a UrlTree back to a string, preserving taint.
+      - ["@angular/router.Router", "Member[serializeUrl]", "Argument[0]", "ReturnValue", "taint"]

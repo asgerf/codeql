@@ -1,0 +1,32 @@
+extensions:
+  # =============================================================================
+  # md5 (npm: "md5") — MD5 hashing for strings, buffers, and arrays
+  # =============================================================================
+  #
+  # Exports a single function that computes the MD5 hash of a message:
+  #
+  #   const md5 = require('md5');
+  #   md5('message');  //=> "78e731027d8fd50ed642340b7c9a63b3"
+  #
+  # API:
+  #   md5(message) → string (hex digest)
+  #
+  # Security concerns:
+  # - No sources or sinks. This is a pure hash computation with no I/O.
+  # - Taint propagation: the input message taints the returned hash string.
+  #   An attacker who controls the input controls the hash output.
+  #
+  # Existing QLL coverage (CryptoLibraries.qll):
+  # - Models require("md5")(...) as a CryptographicOperation using the MD5
+  #   algorithm, with Argument[0] as the input.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through md5 hashing
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # md5(message) → hex string
+      - ["md5", "", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # prettyjson (npm: "prettyjson") - Format JSON as coloured YAML-style output
+  # =============================================================================
+  #
+  # prettyjson renders JavaScript objects/arrays as coloured, human-readable
+  # YAML-style strings, primarily for CLI output:
+  #
+  #   var prettyjson = require('prettyjson');
+  #   var output = prettyjson.render(data, options);
+  #   console.log(output);
+  #
+  #   prettyjson.renderString(jsonString, options);
+  #
+  # API:
+  #   prettyjson.render(data, options?, indentation?) → string
+  #     Renders a JS object/array as a formatted, coloured string.
+  #
+  #   prettyjson.renderString(jsonString, options?, indentation?) → string
+  #     Parses a JSON string then renders it as a formatted, coloured string.
+  #
+  # Security relevance:
+  # - No sources. prettyjson does not provide access to untrusted data.
+  # - No sinks. prettyjson does not perform security-sensitive operations.
+  # - Summaries: render() and renderString() produce strings derived from
+  #   their input. Tainted data flows through: Argument[0] → ReturnValue.
+  #
+  # Existing QLL coverage (JsonStringifiers.qll):
+  # - PrettyJsonTaintStep: models prettyjson.render(data) as a taint step
+  #   from Argument[0] to the call result.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Taint flow through rendering functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # prettyjson.render(data, options?, indentation?) → string
+      # The output string is derived from the input data (taint-preserving).
+      - ["prettyjson", "Member[render]", "Argument[0]", "ReturnValue", "taint"]
+
+      # prettyjson.renderString(jsonString, options?, indentation?) → string
+      # Parses a JSON string and renders it; taint flows through.
+      - ["prettyjson", "Member[renderString]", "Argument[0]", "ReturnValue", "taint"]

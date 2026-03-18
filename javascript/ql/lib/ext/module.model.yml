@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # module (Node.js built-in: "module" / "node:module") - Module system utilities
+  # =============================================================================
+  #
+  # The `module` built-in exposes the internal Module constructor and utilities
+  # for working with the Node.js module system.
+  #
+  #   const Module = require('module');
+  #   // or: import { createRequire } from 'node:module';
+  #
+  # Key API:
+  #   Module.prototype._compile(code, filename) — compile and execute code
+  #   Module.createRequire(filename)            — create a require function
+  #   Module.builtinModules                     — list of built-in module names
+  #   Module.wrap(code)                         — wrap code in module wrapper
+  #
+  # Security concerns:
+  # - Code injection: Module.prototype._compile(code, filename) compiles and
+  #   executes arbitrary JavaScript code. The first argument is a code string.
+  #   If attacker-controlled input reaches this argument, it leads to arbitrary
+  #   code execution.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: code injection via _compile
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new Module()._compile(code, filename)
+      # Module instances can be obtained in many ways (new Module(), the module
+      # variable in CommonJS, module.constructor, etc.), so use Fuzzy to match
+      # any _compile call on an object derived from the module package.
+      - ["module", "Fuzzy.Member[_compile].Argument[0]", "code-injection"]

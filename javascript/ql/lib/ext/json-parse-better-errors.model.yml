@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # json-parse-better-errors (npm: "json-parse-better-errors")
+  # =============================================================================
+  #
+  # A drop-in wrapper around JSON.parse that provides more informative error
+  # messages when parsing fails:
+  #
+  #   const parseJson = require('json-parse-better-errors');
+  #   const obj = parseJson(jsonString);
+  #
+  # API:
+  #   parseJson(txt, reviver?, context?) → parsed value
+  #
+  # Security concerns:
+  # - No sources or sinks: the library does not fetch data or perform any
+  #   security-sensitive operations.
+  # - Taint propagation: the parsed output is derived from the input JSON
+  #   string. If the input is tainted, the result is also tainted
+  #   (deserialization step).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through JSON parsing
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # parseJson(jsonString) => parsed object
+      - ["json-parse-better-errors", "", "Argument[0]", "ReturnValue", "taint"]

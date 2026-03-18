@@ -1,0 +1,96 @@
+extensions:
+  # =============================================================================
+  # react-router-dom (npm: "react-router-dom") - DOM bindings for React Router
+  # =============================================================================
+  #
+  # Provides routing for React web applications. Exposes hooks and components
+  # to access URL parameters, location, navigation, and search params.
+  #
+  #   import { useParams, useLocation, useSearchParams,
+  #            useNavigate, matchPath } from 'react-router-dom';
+  #
+  #   const params = useParams();          // route params from URL path
+  #   const location = useLocation();      // location object (pathname, search, hash)
+  #   const [searchParams] = useSearchParams(); // URLSearchParams from query string
+  #   const match = useRouteMatch('/path/:id'); // match object
+  #   const match = matchPath('/path/:id', location.pathname);
+  #   const navigate = useNavigate();
+  #   navigate(url);                       // client-side navigation
+  #
+  # Security concerns:
+  # - useParams() returns URL path parameters — client-side remote source.
+  # - useLocation() returns location object (search, hash, pathname, href) —
+  #   client-side remote source.
+  # - useSearchParams() returns URLSearchParams from query string — remote source.
+  # - useRouteMatch() / matchPath() return match objects with params and url.
+  # - navigate(url) / history.push(url) — URL redirection sinks.
+  # - props.match.params, props.location — injected by withRouter() HOC.
+  #
+  # Existing QLL coverage (React.qll):
+  # - useParams() as ClientSideRemoteFlowSource (path kind)
+  # - useRouteMatch()/matchPath() .params (path kind), .url (url kind)
+  # - useLocation() as DOM::LocationSource (gives search, hash, pathname, href)
+  # - props.match/props.location for components in react-router-dom dep tree
+  # - withRouter() as higher-order component builder
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: URL path parameters (client-side remote input)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # useParams() — returns object with URL path parameters
+      - ["react-router-dom", "Member[useParams].ReturnValue", "remote"]
+
+      # useRouteMatch().params / matchPath().params — matched path parameters
+      - ["react-router-dom", "Member[useRouteMatch,matchPath].ReturnValue.Member[params]", "remote"]
+
+      # useRouteMatch().url / matchPath().url — matched URL
+      - ["react-router-dom", "Member[useRouteMatch,matchPath].ReturnValue.Member[url]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: Location-based data (query string, hash, pathname)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # useLocation() returns a location object; its properties carry
+      # attacker-controlled data from the URL.
+      # location.search — query string (?key=value)
+      # location.hash — URL fragment (#fragment)
+      # location.pathname — URL path
+      - [
+          "react-router-dom",
+          "Member[useLocation].ReturnValue.Member[search,hash,pathname]",
+          "remote",
+        ]
+
+      # useSearchParams() — returns [URLSearchParams, setSearchParams]
+      # The first element (index 0) is the URLSearchParams object.
+      # .get(), .getAll(), .toString(), .entries(), .values(), .keys()
+      # all return attacker-controlled query string data.
+      - [
+          "react-router-dom",
+          "Member[useSearchParams].ReturnValue.ArrayElement",
+          "remote",
+        ]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Client-side URL redirection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # useNavigate() returns a navigate function; navigate(url) redirects.
+      - ["react-router-dom", "Member[useNavigate].ReturnValue.Argument[0]", "url-redirection"]
+
+      # useHistory().push(url) / useHistory().replace(url) — v5 API
+      - [
+          "react-router-dom",
+          "Member[useHistory].ReturnValue.Member[push,replace].Argument[0]",
+          "url-redirection",
+        ]

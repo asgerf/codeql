@@ -1,0 +1,32 @@
+extensions:
+  # =============================================================================
+  # markdown-it-sanitizer (npm: "markdown-it-sanitizer") - HTML sanitizer plugin
+  # =============================================================================
+  #
+  # A plugin for the markdown-it Markdown parser that sanitizes rendered HTML
+  # output by whitelisting safe tags and escaping/removing everything else.
+  #
+  #   const md = require('markdown-it')({ html: true })
+  #                .use(require('markdown-it-sanitizer'));
+  #   md.render('<b>bold</b><script>xss</script>');
+  #   // → <p><b>bold</b>&lt;script&gt;xss&lt;/script&gt;</p>
+  #
+  # This library has no standalone API — it is used exclusively as a plugin
+  # passed to markdown-it's .use() method. It acts as a sanitizer/guard:
+  # when applied, the markdown-it output is considered safe from HTML injection.
+  #
+  # No sources, sinks, or summaries are needed:
+  # - It does not expose any callable functions that accept or return data.
+  # - Its security role (as a sanitizer that makes markdown-it output safe)
+  #   is already modeled in Markdown.qll, which excludes markdown-it instances
+  #   using this plugin from the HTML injection taint model.
+  #
+  # Existing QLL coverage (Markdown.qll):
+  # - MarkdownIt.markdownIt() explicitly checks for markdown-it-sanitizer:
+  #   when .use(require('markdown-it-sanitizer')) is detected, the parser
+  #   instance is excluded from the MarkdownItStep taint propagation,
+  #   meaning its render/renderInline output is not treated as tainted HTML.
+  # =============================================================================
+
+  # No data extensions needed — this library is a sanitizer plugin with no
+  # standalone API. Its security effect is modeled in Markdown.qll.

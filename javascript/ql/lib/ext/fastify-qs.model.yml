@@ -1,0 +1,38 @@
+# =============================================================================
+# fastify-qs (npm: "fastify-qs") — qs-based querystring parser for Fastify
+# =============================================================================
+#
+# A Fastify plugin that replaces the default querystring parser with the
+# `qs` library, enabling support for nested objects and arrays:
+#
+#   const fastify = require('fastify')();
+#   fastify.register(require('fastify-qs'));
+#
+#   fastify.get('/', (req, reply) => {
+#     // GET /?a[b]=1&c[]=2&c[]=3
+#     req.query;  // → { a: { b: '1' }, c: ['2', '3'] }
+#   });
+#
+# The plugin has no API surface of its own beyond registration. It simply
+# configures Fastify to use qs.parse() for querystring parsing. An options
+# object can be passed to control qs behavior.
+#
+# Security concerns:
+# - When this plugin is registered, request.query property names become
+#   attacker-controlled (nested objects). Without this plugin, Fastify's
+#   default parser produces only flat key-value pairs.
+# - The untrusted data (request.query) is already covered by the
+#   fastify.model.yml source model for Fuzzy.Member[query].
+#
+# Existing QLL coverage (Fastify.qll):
+#   Referenced in RequestInputAccess.isUserControlledObject() to mark
+#   request.query as having attacker-controlled property names when
+#   fastify-qs is registered.
+#
+# No additional models needed beyond documenting the package.
+# fastify-qs is a pure configuration plugin: it registers a custom
+# querystring parser so that Fastify populates request.query with
+# nested objects. It does not expose any functions, classes, or
+# methods beyond the plugin registration call.
+# =============================================================================
+extensions: []

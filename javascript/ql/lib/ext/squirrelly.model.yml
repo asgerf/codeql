@@ -1,0 +1,74 @@
+extensions:
+  # =============================================================================
+  # squirrelly (npm: "squirrelly") - Lightweight JS template engine
+  # =============================================================================
+  #
+  # Squirrelly is a template engine for Node.js and the browser.
+  # Templates use {{...}} syntax and are compiled into JavaScript functions.
+  #
+  #   const Sqrl = require('squirrelly');
+  #   Sqrl.render('Hello {{it.name}}', { name: 'World' });
+  #   const fn = Sqrl.compile('Hello {{it.name}}');
+  #   fn({ name: 'World' }, Sqrl.defaultConfig);
+  #   Sqrl.renderFile('./template.sqrl', data, options, callback);
+  #
+  # Exported API:
+  #   render(template, data, options?) → string
+  #   compile(template, options?) → function(data, options?) → string
+  #   compileToString(template, options?) → string (JS source code)
+  #   renderFile(path, data, options?, callback?)
+  #   loadFile(path, options?)
+  #   parse(template, options?) → AST
+  #
+  # Security concerns:
+  # - Template strings (arg 0 of render, compile, compileToString, parse)
+  #   are compiled into JavaScript — code-injection sinks.
+  # - renderFile / loadFile take a file path — path-injection sinks.
+  # - Data (arg 1 of render) flows into rendered output as taint.
+  #
+  # Existing QLL coverage:
+  # - CodeInjectionCustomizations.qll: Sqrl.render() arg 0 as TemplateSink
+  # - TemplateObjectInjectionCustomizations.qll: squirrelly listed as a
+  #   vulnerable template engine for Express view-engine object injection
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # render(template, data?, opts?) — template string compiled as JS
+      - ["squirrelly", "Member[render].Argument[0]", "code-injection"]
+
+      # compile(template, opts?) — template string compiled into JS function
+      - ["squirrelly", "Member[compile].Argument[0]", "code-injection"]
+
+      # compileToString(template, opts?) — template compiled to JS source string
+      - ["squirrelly", "Member[compileToString].Argument[0]", "code-injection"]
+
+      # parse(template, opts?) — parses template into AST (still evaluates syntax)
+      - ["squirrelly", "Member[parse].Argument[0]", "code-injection"]
+
+      # renderFile(path, data, opts?, cb?) — path controls which file is rendered
+      - ["squirrelly", "Member[renderFile].Argument[0]", "path-injection"]
+
+      # loadFile(path, opts?) — reads a template file from disk
+      - ["squirrelly", "Member[loadFile].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from data into rendered output
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # render(template, data, opts?) → rendered string
+      - ["squirrelly", "Member[render]", "Argument[1]", "ReturnValue", "taint"]
+
+      # compile(template, opts?) → function(data, opts?) → string
+      - ["squirrelly", "Member[compile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+
+      # renderFile(path, data, opts?, callback?) — data flows to callback result
+      - ["squirrelly", "Member[renderFile]", "Argument[1]", "Argument[3].Parameter[1]", "taint"]

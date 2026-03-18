@@ -1,0 +1,53 @@
+extensions:
+  # =============================================================================
+  # globule (npm: "globule") - Easy-to-use wildcard globbing library
+  # =============================================================================
+  #
+  # globule provides methods for matching file paths against glob patterns
+  # and producing file listings.
+  #
+  # API:
+  #   const globule = require('globule');
+  #
+  #   globule.find(patterns, options?)         — find files matching patterns
+  #   globule.match(patterns, filepaths, options?) — match patterns against paths
+  #   globule.isMatch(patterns, filepaths, options?) — boolean match test
+  #   globule.mapping(filepaths, options?)     — produce src-dest mappings
+  #   globule.findMapping(patterns, options?)  — find + mapping combined
+  #
+  # Security concerns:
+  # - SINK (path-injection): globule.find() glob patterns control which file
+  #   system paths are accessed (arg 0).
+  # - SINK (path-injection): globule.match() and globule.isMatch() receive
+  #   file paths as arg 1.
+  # - SINK (path-injection): globule.mapping() receives file paths as arguments.
+  # - SINK (path-injection): globule.findMapping() glob patterns control which
+  #   file system paths are accessed (arg 0).
+  #
+  # Existing QLL coverage:
+  # - Files.qll Globule class: Models find, match, isMatch, mapping,
+  #   findMapping as FileSystemAccess. getAPathArgument() returns arg 1 for
+  #   match/isMatch, and all args (or src property) for mapping.
+  #   Also a FileNameProducer: return values of find, match, mapping,
+  #   findMapping are file name sources.
+  # =============================================================================
+
+  # Sinks: glob patterns and file paths are path-injection vectors.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # globule.find(patterns, options?) — patterns control FS access
+      - ["globule", "Member[find].Argument[0]", "path-injection"]
+
+      # globule.match(patterns, filepaths, options?) — filepaths arg
+      - ["globule", "Member[match].Argument[1]", "path-injection"]
+
+      # globule.isMatch(patterns, filepaths, options?) — filepaths arg
+      - ["globule", "Member[isMatch].Argument[1]", "path-injection"]
+
+      # globule.mapping(filepaths..., options?) — filepath arguments
+      - ["globule", "Member[mapping].Argument[0]", "path-injection"]
+
+      # globule.findMapping(patterns, options?) — patterns control FS access
+      - ["globule", "Member[findMapping].Argument[0]", "path-injection"]

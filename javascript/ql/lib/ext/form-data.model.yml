@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # form-data (npm: "form-data") - Multipart form data streams
+  # =============================================================================
+  #
+  # form-data creates readable "multipart/form-data" streams for submitting
+  # forms and file uploads to other web applications.
+  #
+  # API:
+  #   const FormData = require('form-data');
+  #   const form = new FormData();
+  #   form.append(field, value, options?)
+  #   form.submit(url, callback)         // url is string or options object
+  #   form.submit({ host, path, ... }, callback)
+  #   form.pipe(httpRequest)
+  #
+  # Security concerns:
+  # - SINK (request-forgery): form.submit(url) — the first argument controls
+  #   the target URL of the HTTP request. Can be a string URL or an options
+  #   object with host/path/protocol properties.
+  # - No sources defined here. Response data from submit() callback is handled
+  #   generically by the ClientRequest infrastructure.
+  #
+  # Existing QLL coverage:
+  # - ClientRequests.qll: FormDataRequest models form.submit() as a
+  #   ClientRequest with getUrl()=arg0, getHost()=arg0.host, and
+  #   getADataNode()=form.append() arg1.
+  # =============================================================================
+
+  # Sinks: URL/host in submit() is a request-forgery vector.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # form.submit(url, callback) — url string or options object
+      - ["form-data", "Fuzzy.Member[submit].Argument[0]", "request-forgery"]

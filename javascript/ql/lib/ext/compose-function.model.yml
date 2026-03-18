@@ -1,0 +1,33 @@
+extensions:
+  # =============================================================================
+  # compose-function (npm: "compose-function") - Function composition utility
+  # =============================================================================
+  #
+  # Composes functions right-to-left: compose(f, g, h)(x) === f(g(h(x))).
+  #
+  #   const compose = require('compose-function');
+  #   const add2 = x => x + 2;
+  #   const sqr = x => x * x;
+  #   compose(sqr, add2)(2);  // => 16  (sqr(add2(2)))
+  #
+  # Also accepts an array of functions:
+  #   compose([sqr, add2])(2);  // => 16
+  #
+  # Exports: a single function that takes functions and returns their composition.
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure function composition utility.
+  # - Taint propagates from the arguments of the composed function through the
+  #   chain of functions to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through the composed function
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # compose(f, g, h)(x) — taint flows from arguments of the composed call
+      # through the function chain to its return value.
+      - ["compose-function", "ReturnValue", "Argument[0..9]", "ReturnValue", "taint"]

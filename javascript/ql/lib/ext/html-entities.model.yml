@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # html-entities (npm: "html-entities") - HTML entity encoder/decoder
+  # =============================================================================
+  #
+  # html-entities is a fast HTML entity encoder/decoder supporting HTML5,
+  # HTML4, and XML standards.
+  #
+  # API:
+  #   import { encode, decode, decodeEntity } from 'html-entities';
+  #
+  #   encode(text, options?)          — encode HTML special chars / entities
+  #   decode(html, options?)          — decode HTML entities back to text
+  #   decodeEntity(entity, options?)  — decode a single HTML entity
+  #
+  #   // Legacy API (v1.x class-based):
+  #   const { Html5Entities, Html4Entities, XmlEntities, AllHtmlEntities } = require('html-entities');
+  #   new Html5Entities().encode(text)
+  #   new Html5Entities().decode(html)
+  #
+  # Security assessment:
+  # - No sources: The library does not fetch or provide access to untrusted data.
+  # - No sinks: The library only transforms strings; it does not perform
+  #   any dangerous operations like command execution, file access, etc.
+  # - encode and encodeNonUTF are HTML sanitizers — they make data safe for
+  #   HTML contexts. The existing QLL in HtmlSanitizers.qll models these as
+  #   sanitizer functions (taint barriers), which is an internal CodeQL
+  #   concept not expressible via data extension sink/source kinds.
+  #
+  # No data extensions are needed for this library.
+  # =============================================================================

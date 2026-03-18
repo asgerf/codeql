@@ -1,0 +1,32 @@
+extensions:
+  # =============================================================================
+  # promise/domains (npm: "promise", subpath "promise/domains")
+  # Promise/A+ polyfill with Node.js domain support
+  # =============================================================================
+  #
+  # The "promise" package (then/promise) is a Promises/A+ implementation.
+  # The "promise/domains" entry point integrates with Node.js domains so
+  # that errors in promise callbacks are forwarded to the active domain's
+  # error handler.
+  #
+  #   const Promise = require('promise/domains');
+  #   new Promise((resolve, reject) => { resolve(value); });
+  #   Promise.resolve(value).then(v => ...);
+  #   Promise.all([p1, p2]).then(results => ...);
+  #
+  # The API is identical to the standard ES6 Promise:
+  #   new Promise(executor), .then(), .catch(), .done(),
+  #   Promise.resolve(), .reject(), .all(), .race(),
+  #   Promise.denodeify(), promise.nodeify()
+  #
+  # Security assessment:
+  # - No sources: The library does not fetch or provide access to untrusted
+  #   data. It is a pure control-flow / async utility.
+  # - No sinks: The library does not perform any security-sensitive
+  #   operations (no exec, no file I/O, no network, no eval, no HTML).
+  # - Promise data flow (.then, .catch, .all, .resolve, .reject, .race)
+  #   is already modeled generically in CodeQL's Promises.qll, which
+  #   explicitly recognizes "promise/domains" as a promise constructor.
+  #
+  # No data extensions are needed for this library.
+  # =============================================================================

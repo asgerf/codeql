@@ -1,0 +1,125 @@
+extensions:
+  # =============================================================================
+  # express-session (npm: "express-session") - Server-side session middleware
+  # =============================================================================
+  #
+  # express-session creates server-side sessions for Express. Unlike
+  # cookie-session, only the session ID is stored in the cookie; actual session
+  # data is stored server-side in a session store (MemoryStore by default).
+  #
+  #   const session = require('express-session');
+  #   app.use(session({
+  #     secret: 'keyboard cat',
+  #     resave: false,
+  #     saveUninitialized: true,
+  #     cookie: { secure: true },
+  #     genid: function(req) { return genuuid(); },
+  #     store: new RedisStore({ ... })
+  #   }));
+  #
+  #   app.get('/', (req, res) => {
+  #     req.session;           // server-side session data (NOT directly untrusted)
+  #     req.session.views;     // application-populated session properties
+  #     req.session.cookie;    // session cookie settings
+  #     req.session.id;        // session ID
+  #     req.session.regenerate(cb);
+  #     req.session.destroy(cb);
+  #     req.session.reload(cb);
+  #     req.session.save(cb);
+  #     req.session.touch();
+  #     req.sessionID;         // session ID
+  #   });
+  #
+  # Configuration options:
+  # - secret: String|Array — secret for signing the session ID cookie (required)
+  # - cookie: Object|Function — cookie settings (or function receiving req)
+  # - genid: Function(req) — generates session IDs
+  # - name: String — cookie name (default: 'connect.sid')
+  # - proxy: Boolean — trust reverse proxy for secure cookies
+  # - resave: Boolean — force save even if unmodified
+  # - rolling: Boolean — reset cookie expiration on every response
+  # - saveUninitialized: Boolean — save uninitialized sessions
+  # - store: Store — session store instance
+  # - unset: String — behavior when req.session is unset ('keep'|'destroy')
+  #
+  # Security analysis:
+  # - req.session is NOT a remote source. Session data is stored server-side and
+  #   populated by application code. The client only holds the signed session ID
+  #   cookie, not the session data itself. (Compare with cookie-session where the
+  #   full session is in the cookie and IS untrusted.)
+  # - No injection sinks: the library does not execute commands, SQL, or render
+  #   templates.
+  # - Callbacks (genid, cookie-as-function) receive the Express request object,
+  #   whose properties are untrusted.
+  #
+  # Existing QLL coverage:
+  # - ExpressModules.qll: Models ExpressSession.MiddlewareInstance as
+  #   Http::CookieMiddlewareInstance with secret key extraction from
+  #   options.secret (including array of secrets).
+  # - CookieLibraries.qll: Models InsecureExpressSessionCookie for cookie
+  #   security flag checking (secure, httpOnly, sameSite) on the cookie option.
+  # Both use specialized QLL types (CookieMiddlewareInstance, CookieWrite) that
+  # cannot be expressed as data extensions. The QLL models should be retained.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Untrusted request data in user-defined callbacks
+  # ---------------------------------------------------------------------------
+  #
+  # express-session invokes user-provided callbacks with the Express request
+  # object. These are options passed to session(options).
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- genid callback ---
+      # Called to generate a new session ID.
+      # Signature: genid(req)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-session",
+          "Argument[0].Member[genid].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-session",
+          "Argument[0].Member[genid].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-session",
+          "Argument[0].Member[genid].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-session",
+          "Argument[0].Member[genid].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- cookie callback ---
+      # When cookie is a function, it is called with (req) to dynamically
+      # generate cookie options for each request.
+      # Signature: cookie(req)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-session",
+          "Argument[0].Member[cookie].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-session",
+          "Argument[0].Member[cookie].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-session",
+          "Argument[0].Member[cookie].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-session",
+          "Argument[0].Member[cookie].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]

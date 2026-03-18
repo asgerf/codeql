@@ -1,0 +1,122 @@
+extensions:
+  # =============================================================================
+  # koa (npm: "koa") — Expressive HTTP middleware framework for Node.js
+  # =============================================================================
+  #
+  # Koa is a web framework that uses a context object (`ctx`) combining
+  # request and response into a single object passed to middleware:
+  #
+  #   const Koa = require('koa');
+  #   const app = new Koa();
+  #
+  #   app.use(async (ctx, next) => {
+  #     ctx.query;               // parsed query string (untrusted)
+  #     ctx.params;              // route parameters (untrusted, via router)
+  #     ctx.request.body;        // parsed body (untrusted, via bodyparser)
+  #     ctx.headers;             // request headers (untrusted)
+  #     ctx.url;                 // request URL (untrusted)
+  #     ctx.cookies.get('name'); // cookie value (untrusted)
+  #     ctx.get('X-Header');     // specific header (untrusted)
+  #
+  #     ctx.body = '<html>...';  // response body (html-injection sink)
+  #     ctx.redirect(url);       // redirect (url-redirection sink)
+  #     ctx.render('tpl', data); // template (path-injection + html-injection)
+  #   });
+  #
+  # The context object delegates many properties from the request:
+  #   query, querystring, search, url, originalUrl, href, path, host,
+  #   hostname, headers, header, ip, ips, origin, subdomains
+  #
+  # Security concerns:
+  # - Sources: all request-derived properties on ctx and ctx.request
+  # - Sinks:
+  #   - ctx.body / ctx.response.body assignment → html-injection
+  #     (property write; handled by Koa.qll, not expressible as data extension)
+  #   - ctx.redirect(url) → url-redirection
+  #   - ctx.render(file, data) → path-injection (file), html-injection (data)
+  #   - ctx.set(name, value) → header setting
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: untrusted request data on the context object
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # ===== Properties delegated from request onto ctx =====
+      # These are accessible directly on the context object (first parameter
+      # of middleware registered via app.use()).
+
+      # URL-related properties
+      - ["koa", "Fuzzy.Member[url,originalUrl,href,path,search,querystring]", "remote"]
+
+      # Query string
+      - ["koa", "Fuzzy.Member[query]", "remote"]
+
+      # Host and hostname (from Host header)
+      - ["koa", "Fuzzy.Member[host,hostname]", "remote"]
+
+      # IP addresses (may be spoofed via X-Forwarded-For)
+      - ["koa", "Fuzzy.Member[ip,ips]", "remote"]
+
+      # Request headers object
+      - ["koa", "Fuzzy.Member[headers,header]", "remote"]
+
+      # Other delegated properties
+      - ["koa", "Fuzzy.Member[origin,subdomains]", "remote"]
+
+      # Route parameters (populated by koa-router or similar)
+      - ["koa", "Fuzzy.Member[params]", "remote"]
+
+      # ===== Properties on ctx.request =====
+
+      # ctx.request.body — parsed request body (via koa-bodyparser or similar)
+      - ["koa", "Fuzzy.Member[request].Member[body]", "remote"]
+
+      # ctx.request URL-related and header properties
+      - ["koa", "Fuzzy.Member[request].Member[query,url,originalUrl,href,path,search,querystring,host,hostname,headers,header,origin,subdomains,ip,ips,params]", "remote"]
+
+      # ===== Method-based access =====
+
+      # ctx.get(headerName) — returns a specific request header value
+      - ["koa", "Fuzzy.Member[get].ReturnValue", "remote"]
+
+      # ctx.request.get(headerName)
+      - ["koa", "Fuzzy.Member[request].Member[get].ReturnValue", "remote"]
+
+      # ctx.cookies.get(name) — returns a cookie value
+      - ["koa", "Fuzzy.Member[cookies].Member[get].ReturnValue", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: url-redirection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ctx.redirect(url)
+      - ["koa", "Fuzzy.Member[redirect].Argument[0]", "url-redirection"]
+
+      # ctx.response.redirect(url)
+      - ["koa", "Fuzzy.Member[response].Member[redirect].Argument[0]", "url-redirection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: html-injection — template rendering
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ctx.render(view, locals) — locals object properties flow into template
+      - ["koa", "Fuzzy.Member[render].Argument[1]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path-injection — template file path
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ctx.render(view, ...) — first argument is the template file path
+      - ["koa", "Fuzzy.Member[render].Argument[0]", "path-injection"]

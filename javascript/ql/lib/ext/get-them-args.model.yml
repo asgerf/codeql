@@ -1,0 +1,26 @@
+extensions:
+  # =============================================================================
+  # get-them-args (npm: "get-them-args") — simple CLI argument parser
+  # =============================================================================
+  #
+  # get-them-args parses command-line arguments into an object, similar to
+  # minimist. It supports --key=value, --key value, --no-key, and short flags.
+  #
+  #   const parse = require('get-them-args');
+  #   const args = parse(process.argv.slice(2));
+  #   // => { unknown: [], hello: 'world', parse: 'all', ... }
+  #
+  # Security concerns:
+  # - Source: the returned object contains user-controlled command-line input.
+  # - No sinks: get-them-args does not perform security-sensitive operations.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: the return value of get-them-args contains parsed CLI arguments
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # require('get-them-args')(...) => parsed args object
+      - ["get-them-args", "ReturnValue", "commandargs"]

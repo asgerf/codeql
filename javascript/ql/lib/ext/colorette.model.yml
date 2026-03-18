@@ -1,0 +1,41 @@
+extensions:
+  # =============================================================================
+  # colorette (npm: "colorette") - Terminal text color and styles
+  # =============================================================================
+  #
+  # By Jorge Bucaran. Provides named-export color/style functions for terminal
+  # output, with automatic color support detection.
+  #
+  #   import { blue, bold, underline } from "colorette";
+  #   blue("text");                    // wraps in ANSI blue
+  #   bold(blue("text"));              // nested styles
+  #   const { red } = createColors({ useColor: false });
+  #
+  # Exports:
+  #   Color/style functions (named exports): black, red, green, yellow, blue,
+  #     magenta, cyan, white, gray, blackBright, redBright, greenBright,
+  #     yellowBright, blueBright, magentaBright, cyanBright, whiteBright,
+  #     bgBlack, bgRed, bgGreen, bgYellow, bgBlue, bgMagenta, bgCyan, bgWhite,
+  #     bgBlackBright, bgRedBright, bgGreenBright, bgYellowBright, bgBlueBright,
+  #     bgMagentaBright, bgCyanBright, bgWhiteBright,
+  #     dim, bold, hidden, italic, underline, strikethrough, reset
+  #   createColors({ useColor }) — returns object with all the above functions
+  #   isColorSupported — boolean (no taint relevance)
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure string decoration for terminal output.
+  # - Taint propagates from the string argument through to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through color/style functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Named exports: blue(str), bold(str), etc.
+      # Using Member + Fuzzy to cover all named color/style exports.
+      - ["colorette", "Member[black,red,green,yellow,blue,magenta,cyan,white,gray,blackBright,redBright,greenBright,yellowBright,blueBright,magentaBright,cyanBright,whiteBright,bgBlack,bgRed,bgGreen,bgYellow,bgBlue,bgMagenta,bgCyan,bgWhite,bgBlackBright,bgRedBright,bgGreenBright,bgYellowBright,bgBlueBright,bgMagentaBright,bgCyanBright,bgWhiteBright,dim,bold,hidden,italic,underline,strikethrough,reset]", "Argument[0]", "ReturnValue", "taint"]
+      # createColors({ useColor }) returns an object with the same functions
+      - ["colorette", "Member[createColors].ReturnValue.Fuzzy", "Argument[0]", "ReturnValue", "taint"]

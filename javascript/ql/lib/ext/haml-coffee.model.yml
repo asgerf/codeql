@@ -1,0 +1,53 @@
+extensions:
+  # =============================================================================
+  # haml-coffee (npm: "haml-coffee") — Haml templates with inline CoffeeScript
+  # =============================================================================
+  #
+  # haml-coffee compiles Haml markup (with embedded CoffeeScript) into
+  # JavaScript template functions that produce HTML.
+  #
+  #   const hamlc = require('haml-coffee');
+  #   const tmpl = hamlc.compile('%h1= @title');
+  #   tmpl({ title: 'Hello' }); // => '<h1>Hello</h1>'
+  #
+  #   // Or render directly:
+  #   hamlc.render('%h1= @title', { title: 'Hello' });
+  #
+  # Security concerns:
+  # - compile(templateStr): the template string is compiled into executable
+  #   JavaScript containing the embedded CoffeeScript — code-injection sink.
+  # - render(templateStr, data): the template string is likewise compiled
+  #   and executed — code-injection sink.
+  # - Data (locals) flows into the rendered HTML output as taint.
+  #
+  # Existing QLL coverage:
+  # - TemplateObjectInjectionCustomizations.qll: haml-coffee listed as a
+  #   vulnerable template engine for Express view-engine template-object
+  #   injection.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # hamlc.compile(templateStr) — template compiled into JS
+      - ["haml-coffee", "Member[compile].Argument[0]", "code-injection"]
+
+      # hamlc.render(templateStr, data?) — template compiled and executed
+      - ["haml-coffee", "Member[render].Argument[0]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from data into rendered output
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # hamlc.render(template, data) → rendered HTML string
+      - ["haml-coffee", "Member[render]", "Argument[1]", "ReturnValue", "taint"]
+
+      # hamlc.compile(template) → function(data) → HTML string
+      - ["haml-coffee", "Member[compile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]

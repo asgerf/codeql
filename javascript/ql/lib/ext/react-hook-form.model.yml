@@ -1,0 +1,68 @@
+extensions:
+  # =============================================================================
+  # react-hook-form (npm: "react-hook-form") — React form management library
+  # =============================================================================
+  #
+  # react-hook-form provides performant, flexible form validation and state
+  # management for React. Form values originate from user input and should
+  # be treated as untrusted.
+  #
+  # Key APIs that surface user-controlled form values:
+  #
+  #   const { register, handleSubmit, watch, getValues, control } = useForm();
+  #
+  #   // handleSubmit callback receives all form values
+  #   handleSubmit((data) => { ... });          // data is user-controlled
+  #
+  #   // getValues returns current form values
+  #   const values = getValues();               // user-controlled
+  #   const name = getValues('name');            // user-controlled
+  #
+  #   // watch returns reactive form values
+  #   const allFields = watch();                // user-controlled
+  #   const name = watch('name');               // user-controlled
+  #
+  #   // useWatch hook returns watched field values
+  #   const value = useWatch({ name: 'name' }); // user-controlled
+  #
+  #   // useFormContext provides form methods in nested components
+  #   const { getValues, watch } = useFormContext();
+  #
+  #   // useController for controlled inputs
+  #   const { field } = useController({ name: 'name' });
+  #   field.value;                              // user-controlled
+  #
+  # Security concerns:
+  # - Form values are user-controlled input and are sources of taint.
+  # - No sinks. The library does not perform security-sensitive operations.
+  #
+  # Existing QLL coverage (XssThroughDomCustomizations.qll):
+  #   ReactHookFormSource models:
+  #   - useForm().handleSubmit(onSubmit) — onSubmit's first parameter
+  #   - useForm().getValues() — return value
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: user-controlled form values
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # handleSubmit((data) => { ... }) — data contains all form values
+      - ["react-hook-form", "Fuzzy.Member[handleSubmit].Argument[0].Parameter[0]", "remote"]
+
+      # getValues() / getValues('fieldName') — returns current form values
+      - ["react-hook-form", "Fuzzy.Member[getValues].ReturnValue", "remote"]
+
+      # watch() / watch('fieldName') — returns reactive form values
+      - ["react-hook-form", "Fuzzy.Member[watch].ReturnValue", "remote"]
+
+      # useWatch({ name }) — hook that returns watched field values
+      - ["react-hook-form", "Member[useWatch].ReturnValue", "remote"]
+
+      # useController({ name }).field.value — controlled input value
+      - ["react-hook-form", "Member[useController].ReturnValue.Member[field].Member[value]", "remote"]
+
+      # useFieldArray({ name }).fields — array of user-controlled field values
+      - ["react-hook-form", "Member[useFieldArray].ReturnValue.Member[fields]", "remote"]

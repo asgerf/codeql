@@ -1,0 +1,57 @@
+extensions:
+  # =============================================================================
+  # query-string — Parse and stringify URL query strings
+  # =============================================================================
+  #
+  # API:
+  #   queryString.parse(string, options?)        → object
+  #   queryString.stringify(object, options?)     → string
+  #   queryString.extract(url)                   → string (query portion)
+  #   queryString.parseUrl(url, options?)         → {url, query, fragmentIdentifier?}
+  #   queryString.stringifyUrl(object, options?)  → string
+  #   queryString.pick(url, keys, options?)       → string
+  #   queryString.exclude(url, keys, options?)    → string
+  #
+  # All functions propagate taint from their first argument to the return
+  # value.  The library does not introduce remote sources or security-
+  # sensitive sinks on its own — it only transforms data.
+  #
+  # Existing QLL coverage (UriLibraries.qll, TaintedUrlSuffixCustomizations.qll):
+  #   - Taint step for parse, extract, parseUrl, stringify
+  #   - URL-suffix stripping for parse and extract
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through query-string functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # parse(string, options?) → object with parsed query parameters
+      # e.g. queryString.parse('?foo=bar&baz=qux') → {foo: 'bar', baz: 'qux'}
+      - ["query-string", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # stringify(object, options?) → query string
+      # e.g. queryString.stringify({foo: 'bar'}) → 'foo=bar'
+      - ["query-string", "Member[stringify]", "Argument[0]", "ReturnValue", "taint"]
+
+      # extract(url) → query string portion of a URL
+      # e.g. queryString.extract('https://example.com?foo=bar') → 'foo=bar'
+      - ["query-string", "Member[extract]", "Argument[0]", "ReturnValue", "taint"]
+
+      # parseUrl(url, options?) → {url, query, fragmentIdentifier?}
+      # e.g. queryString.parseUrl('https://foo.bar?a=1') → {url: 'https://foo.bar', query: {a: '1'}}
+      - ["query-string", "Member[parseUrl]", "Argument[0]", "ReturnValue", "taint"]
+
+      # stringifyUrl({url, query, fragmentIdentifier?}, options?) → full URL string
+      # e.g. queryString.stringifyUrl({url: 'https://foo.bar', query: {a: '1'}}) → 'https://foo.bar?a=1'
+      - ["query-string", "Member[stringifyUrl]", "Argument[0]", "ReturnValue", "taint"]
+
+      # pick(url, keys|filter, options?) → URL with only specified query params
+      # e.g. queryString.pick('https://foo.bar?a=1&b=2', ['a']) → 'https://foo.bar?a=1'
+      - ["query-string", "Member[pick]", "Argument[0]", "ReturnValue", "taint"]
+
+      # exclude(url, keys|filter, options?) → URL without specified query params
+      # e.g. queryString.exclude('https://foo.bar?a=1&b=2', ['a']) → 'https://foo.bar?b=2'
+      - ["query-string", "Member[exclude]", "Argument[0]", "ReturnValue", "taint"]

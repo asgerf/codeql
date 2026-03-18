@@ -1,0 +1,76 @@
+extensions:
+  # =============================================================================
+  # consolidate (npm: "consolidate") - Template engine consolidation library
+  # =============================================================================
+  #
+  # Consolidate.js wraps dozens of template engines behind a uniform API.
+  # Each engine is accessed as a member of the consolidate object:
+  #
+  #   const cons = require('consolidate');
+  #
+  #   // File-based rendering: cons.<engine>(path, locals, callback)
+  #   cons.swig('views/page.html', { user: 'tobi' }, function(err, html) { ... });
+  #
+  #   // String-based rendering: cons.<engine>.render(str, locals, callback)
+  #   cons.ejs.render('<%= user %>', { user: 'tobi' }, function(err, html) { ... });
+  #
+  #   // Promise-based (no callback):
+  #   const html = await cons.pug('views/page.html', { user: 'tobi' });
+  #
+  #   // With Express:
+  #   app.engine('html', cons.swig);
+  #
+  # Security concerns:
+  # - Argument[0] (the file path or template string) controls which file is
+  #   read from the filesystem — a path-injection sink.
+  # - The rendered HTML output may be served to browsers. If locals contain
+  #   untrusted data and the template doesn't escape it, this is an
+  #   html-injection vector. However, the injection point is the template
+  #   locals, which are typically under the developer's control. The output
+  #   HTML (callback parameter or promise value) carries taint from those
+  #   locals.
+  #
+  # Existing QLL coverage:
+  # - Templating.qll: ConsolidateCall models cons.<engine>() as a
+  #   TemplateInstantiation (template file + params).
+  # - TemplateObjectInjectionCustomizations.qll: cons.<engine> used with a
+  #   vulnerable engine (ejs, eta, squirrelly, etc.) is a template-object
+  #   injection sink for the locals argument.
+  # =============================================================================
+
+  # Sinks: The file path argument controls filesystem reads.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # cons.<engine>(path, ...) — Argument[0] is a file path read by fs.readFile.
+      # AnyMember covers all template engines (swig, ejs, pug, handlebars, etc.)
+      - ["consolidate", "AnyMember.Argument[0]", "path-injection"]
+
+      # cons.<engine>.render(str, ...) — Argument[0] is a template string.
+      # Template strings from untrusted sources enable code injection via
+      # template directives (e.g. EJS <% %>, Pug unescaped interpolation).
+      - ["consolidate", "AnyMember.Member[render].Argument[0]", "code-injection"]
+
+  # Summaries: Taint flows from template locals to rendered output.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # cons.<engine>(path, locals, callback) — locals (Arg[1]) taint the
+      # rendered HTML in callback parameter 1: callback(err, html)
+      - ["consolidate", "AnyMember", "Argument[1]", "Argument[2].Parameter[1]", "taint"]
+
+      # cons.<engine>(path, locals) — promise variant: locals taint the
+      # resolved string
+      - ["consolidate", "AnyMember", "Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # cons.<engine>.render(str, locals, callback) — same for string render
+      - ["consolidate", "AnyMember.Member[render]", "Argument[1]", "Argument[2].Parameter[1]", "taint"]
+
+      # cons.<engine>.render(str, locals) — promise variant
+      - ["consolidate", "AnyMember.Member[render]", "Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # Template string itself taints output
+      - ["consolidate", "AnyMember.Member[render]", "Argument[0]", "Argument[2].Parameter[1]", "taint"]
+      - ["consolidate", "AnyMember.Member[render]", "Argument[0]", "ReturnValue.Awaited", "taint"]

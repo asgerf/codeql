@@ -1,0 +1,41 @@
+extensions:
+  # =============================================================================
+  # chalk (npm: "chalk") - Terminal string styling
+  # =============================================================================
+  #
+  # By Sindre Sorhus. Styles terminal strings with ANSI escape codes via a
+  # chainable API. Accessing color/modifier properties returns the same instance,
+  # and calling it as a function wraps the input in ANSI codes.
+  #
+  #   import chalk from 'chalk';
+  #   chalk.red('error');
+  #   chalk.bold.underline.red('important');
+  #   chalk.rgb(255, 136, 0).bold('warning');
+  #   const error = new chalk.Chalk({level: 2});
+  #
+  # Exports:
+  #   default chalk instance (ChalkInstance) — chainable style methods
+  #   Chalk constructor — new Chalk(options?) returns a ChalkInstance
+  #   chalkStderr — a separate chalk instance for stderr
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure string decoration for terminal output.
+  # - Taint propagates from all string arguments through to the return value,
+  #   since the styled output contains the original text.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through chalk styling calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # chalk.red("text"), chalk.bold.underline("text"), chalk.rgb(r,g,b)("text"), etc.
+      # Any chain of member accesses on chalk ending in a call propagates taint
+      # from all arguments to the return value.
+      - ["chalk", "Fuzzy", "Argument[0]", "ReturnValue", "taint"]
+      # chalkStderr has the same API
+      - ["chalk", "Member[chalkStderr].Fuzzy", "Argument[0]", "ReturnValue", "taint"]
+      # new Chalk(options) instances have the same API
+      - ["chalk", "Member[Chalk].Instance.Fuzzy", "Argument[0]", "ReturnValue", "taint"]

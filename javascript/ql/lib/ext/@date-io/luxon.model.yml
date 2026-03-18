@@ -1,0 +1,7 @@
+extensions:
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # formatByString(date, formatStr) and formatNumber(str, formatStr): the format string can embed arbitrary text, so it taints the result
+      - ["@date-io/luxon", "Fuzzy.Member[formatByString,formatNumber]", "Argument[1]", "ReturnValue", "taint"]

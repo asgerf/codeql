@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # normalize-url — Normalize a URL
+  # =============================================================================
+  #
+  # Single-function library that normalizes URLs by removing redundant
+  # components (default ports, trailing slashes, query sorting, etc.).
+  #
+  #   import normalizeUrl from 'normalize-url';
+  #   normalizeUrl('HTTP://example.com:80/foo?b=2&a=1');
+  #   //=> 'http://example.com/foo?a=1&b=2'
+  #
+  # Security note: The output URL is tainted by the input URL.
+  # An attacker-controlled URL remains attacker-controlled after
+  # normalization.
+  #
+  # Existing QLL coverage (UriLibraries.qll):
+  #   - Taint step (uriStep): Argument[0] → ReturnValue
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # normalizeUrl(url, options?) → normalized URL string
+      # The default export is the function itself.
+      - ["normalize-url", "", "Argument[0]", "ReturnValue", "taint"]

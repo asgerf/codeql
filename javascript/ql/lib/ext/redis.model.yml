@@ -1,0 +1,284 @@
+extensions:
+  # =============================================================================
+  # redis (npm: "redis") — Official Node Redis client for Node.js
+  # =============================================================================
+  #
+  # Node Redis is the official Redis client for Node.js providing access to all
+  # Redis commands. Two major API versions are in wide use:
+  #
+  # - v4+ (current): promise-based; createClient(); commands return Promises
+  # - v3 (legacy): callback-based; createClient(); commands accept (err, reply)
+  #
+  #   const { createClient } = require('redis');
+  #   const client = createClient();
+  #   await client.connect();
+  #
+  #   await client.set('key', 'value');
+  #   const val = await client.get('key');         // val is untrusted
+  #
+  #   // Pub/Sub (v4)
+  #   const sub = client.duplicate();
+  #   await sub.subscribe('ch', (msg) => { ... }); // msg is untrusted
+  #
+  #   // Transactions
+  #   const res = await client.multi().get('k1').set('k2','v2').exec();
+  #
+  #   // Lua scripting
+  #   await client.eval('return redis.call("GET",KEYS[1])', { keys: ['k'] });
+  #
+  # Security concerns:
+  # - Data read from Redis may originate from untrusted users; all read
+  #   commands return potentially attacker-controlled values (sources).
+  # - eval() / EVAL accept Lua source code executed on the Redis server —
+  #   code-injection sinks.
+  # - scriptLoad() uploads Lua source to the server — code-injection sink.
+  # - functionLoad() (Redis 7+) uploads Redis Functions — code-injection.
+  # - sendCommand() can issue arbitrary commands; return values are untrusted.
+  # - createClient() URL/host/port controls which server is contacted —
+  #   request-forgery sink if attacker-controlled.
+  # - Pub/Sub messages originate from other Redis clients and are untrusted.
+  # - In v3, passing an array instead of a string causes argument flattening,
+  #   enabling type-confusion attacks similar to NoSQL injection.
+  #
+  # Existing QLL coverage (NoSQL.qll, Redis module):
+  # - RedisKeyArgument: nosql-injection sinks for key arguments on setter
+  #   methods (v3 array-flattening type confusion).
+  # - RedisDatabaseAccess: all method calls modeled as DatabaseAccess;
+  #   return values tracked as database results via PromiseFlow.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: untrusted data read from Redis (v4 promise-based)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # -----------------------------------------------------------------------
+      # String commands — return stored string values
+      #   v4 camelCase: get, mGet, getRange, getDel, getEx, getSet
+      #   v3 lowercase: get, mget, getrange, getdel, getex, getset
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[get,mGet,mget,getRange,getrange,getDel,getdel,getEx,getex,getSet,getset].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Hash commands — return stored hash fields/values
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[hGet,hget,hMGet,hmget,hGetAll,hgetall,hKeys,hkeys,hVals,hvals,hRandField,hrandfield].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # List commands — return stored list elements
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[lIndex,lindex,lRange,lrange,lPop,lpop,rPop,rpop,blPop,blpop,brPop,brpop,lMove,lmove,blMove,blmove,lMPop,lmpop,blMPop,blmpop,lPos,lpos,brPopLPush,brpoplpush,rPopLPush,rpoplpush].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Set commands — return stored set members
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[sMembers,smembers,sRandMember,srandmember,sPop,spop,sInter,sinter,sUnion,sunion,sDiff,sdiff].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Sorted set commands — return stored members/scores
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[zRange,zrange,zRangeByScore,zrangebyscore,zRevRange,zrevrange,zRevRangeByScore,zrevrangebyscore,zPopMin,zpopmin,zPopMax,zpopmax,bzPopMin,bzpopmin,bzPopMax,bzpopmax,zMPop,zmpop,bzMPop,bzmpop,zRandMember,zrandmember,zScore,zscore,zMScore,zmscore,zDiff,zdiff,zUnion,zunion,zInter,zinter,zRangeByLex,zrangebylex,zRevRangeByLex,zrevrangebylex].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Stream commands — return stream entries
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[xRead,xread,xReadGroup,xreadgroup,xRange,xrange,xRevRange,xrevrange,xClaim,xclaim,xAutoClaim,xautoclaim,xPending,xpending,xInfo,xinfo].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Scan commands — return keys and/or values from the keyspace
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[scan,hScan,hscan,sScan,sscan,zScan,zscan].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Scan iterators (v4) — async iterables over keys/values
+      #   for await (const key of client.scanIterator()) { ... }
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[scanIterator,hScanIterator,sScanIterator,zScanIterator].ReturnValue", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Key and generic commands — return stored data or key names
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[dump,keys,randomKey,randomkey,sort,sortRo,sort_ro,object,objectEncoding,objectFreq,objectHelp,objectIdleTime,objectRefCount,type].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Geo commands — return stored geospatial data
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[geoPos,geopos,geoDist,geodist,geoHash,geohash,geoSearch,geosearch,geoRadius,georadius,geoRadiusByMember,georadiusbymember].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # sendCommand — return value of arbitrary Redis commands
+      #   client.sendCommand(['GET', 'key'])
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[sendCommand,send_command].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Transaction / pipeline exec — return collected results
+      #   client.multi().get('k1').hGetAll('k2').exec()
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[exec,execAsPipeline].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Lua eval / evalSha — return values from script execution
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[eval,evalSha,evalsha,EVAL,EVALSHA,evalRo,evalShaRo].ReturnValue.Awaited", "remote"]
+
+      # -----------------------------------------------------------------------
+      # v3 callback-based sources — the callback's second parameter is the
+      # result (first is err):
+      #   client.get('key', (err, reply) => { ... })
+      #
+      # These complement the promise-based sources above and cover legacy v3
+      # code that passes callbacks as the last argument.
+      # -----------------------------------------------------------------------
+
+      # String commands (v3 callbacks)
+      - ["redis", "Fuzzy.Member[get,mget,getrange,getdel,getex,getset].Argument[N-1].Parameter[1]", "remote"]
+
+      # Hash commands (v3 callbacks)
+      - ["redis", "Fuzzy.Member[hget,hmget,hgetall,hkeys,hvals].Argument[N-1].Parameter[1]", "remote"]
+
+      # List commands (v3 callbacks)
+      - ["redis", "Fuzzy.Member[lindex,lrange,lpop,rpop,blpop,brpop,brpoplpush,rpoplpush].Argument[N-1].Parameter[1]", "remote"]
+
+      # Set commands (v3 callbacks)
+      - ["redis", "Fuzzy.Member[smembers,srandmember,spop,sinter,sunion,sdiff].Argument[N-1].Parameter[1]", "remote"]
+
+      # Sorted set commands (v3 callbacks)
+      - ["redis", "Fuzzy.Member[zrange,zrangebyscore,zrevrange,zrevrangebyscore,zpopmin,zpopmax,bzpopmin,bzpopmax,zrandmember,zscore,zrangebylex,zrevrangebylex].Argument[N-1].Parameter[1]", "remote"]
+
+      # Stream commands (v3 callbacks)
+      - ["redis", "Fuzzy.Member[xread,xreadgroup,xrange,xrevrange,xclaim,xpending,xinfo].Argument[N-1].Parameter[1]", "remote"]
+
+      # Scan commands (v3 callbacks)
+      - ["redis", "Fuzzy.Member[scan,hscan,sscan,zscan].Argument[N-1].Parameter[1]", "remote"]
+
+      # Key/generic/geo commands (v3 callbacks)
+      - ["redis", "Fuzzy.Member[dump,keys,randomkey,sort,object,geopos,geodist,geohash,georadius,georadiusbymember].Argument[N-1].Parameter[1]", "remote"]
+
+      # Raw command and eval (v3 callbacks)
+      - ["redis", "Fuzzy.Member[send_command,eval,evalsha].Argument[N-1].Parameter[1]", "remote"]
+
+      # exec (v3 callbacks)
+      - ["redis", "Fuzzy.Member[exec].Argument[N-1].Parameter[1]", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Pub/Sub — messages from other Redis clients (v4 API)
+      #
+      #   await subscriber.subscribe('channel', (message) => { ... });
+      #   await subscriber.pSubscribe('pattern', (message, channel) => { ... });
+      #   await subscriber.sSubscribe('channel', (message) => { ... });
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[subscribe].Argument[1].Parameter[0]", "remote"]
+      - ["redis", "Fuzzy.Member[pSubscribe].Argument[1].Parameter[0..1]", "remote"]
+      - ["redis", "Fuzzy.Member[sSubscribe].Argument[1].Parameter[0]", "remote"]
+
+      # -----------------------------------------------------------------------
+      # Pub/Sub — event-based (v3 API)
+      #
+      #   client.on('message', (channel, message) => { ... })
+      #   client.on('pmessage', (pattern, channel, message) => { ... })
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=message].Argument[1].Parameter[0..1]", "remote"]
+      - ["redis", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=message_buffer].Argument[1].Parameter[0..1]", "remote"]
+      - ["redis", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=pmessage].Argument[1].Parameter[1..2]", "remote"]
+      - ["redis", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=pmessage_buffer].Argument[1].Parameter[1..2]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: nosql-injection — v3 array-based type confusion on key arguments
+  # ---------------------------------------------------------------------------
+  #
+  # In node-redis v3, passing an array instead of a string causes the array
+  # elements to be flattened into the Redis command arguments. This enables an
+  # attacker to inject additional arguments:
+  #
+  #   client.set("key", "value")           →  SET key value
+  #   client.set(["key", "value"])          →  SET key value   (same result!)
+  #   client.set(userInput, "safe")         →  if userInput is ["key","evil","extra"]
+  #                                            then: SET key evil extra
+  #
+  # This is analogous to NoSQL injection via type confusion. Only setter-like
+  # methods are included (getters at worst return extra data).
+  #
+  # Note: v4 removed array-flattening so this only affects v3-style code, but
+  # we include the sinks because v3 code is still widely deployed.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Methods where Argument[0] is a key vulnerable to type confusion
+      - [
+          "redis",
+          "Fuzzy.Member[set,publish,append,bitfield,decrby,getset,hincrby,hincrbyfloat,hset,hsetnx,incrby,incrbyfloat,linsert,lpush,lpushx,lset,ltrim,rename,renamenx,rpushx,setbit,setex,smove,zincrby,zinterstore,hdel,pfadd,rpush,sadd,sdiffstore,srem].Argument[0]",
+          "nosql-injection",
+        ]
+
+      # Methods where all arguments can be key/value pairs (variadic)
+      - [
+          "redis",
+          "Fuzzy.Member[bitop,hmset,mset,msetnx,geoadd].Argument[0..10]",
+          "nosql-injection",
+        ]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: code-injection — Lua scripting / Redis Functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # -----------------------------------------------------------------------
+      # eval(script, ...) — first argument is Lua source code
+      #
+      #   // v4:
+      #   client.eval('return redis.call("GET",KEYS[1])', { keys: ['k1'] });
+      #   // v3:
+      #   client.eval('return redis.call("GET",KEYS[1])', 1, 'k1', cb);
+      #
+      # An attacker controlling the script text can run arbitrary Lua code
+      # on the Redis server (e.g. redis.call('FLUSHALL')).
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[eval,EVAL,evalRo,EVAL_RO].Argument[0]", "code-injection"]
+
+      # -----------------------------------------------------------------------
+      # scriptLoad(script) / SCRIPT_LOAD(script) — uploads Lua script to server
+      #
+      #   const sha = await client.scriptLoad('return redis.call("GET",KEYS[1])');
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[scriptLoad,SCRIPT_LOAD].Argument[0]", "code-injection"]
+
+      # -----------------------------------------------------------------------
+      # v3: client.script('load', scriptText, callback)
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[script].WithStringArgument[0=load,0=LOAD].Argument[1]", "code-injection"]
+
+      # -----------------------------------------------------------------------
+      # functionLoad(code) — uploads a Redis Function (Redis 7.0+)
+      #
+      #   await client.functionLoad('#!lua name=mylib\nredis.register_function(...)');
+      # -----------------------------------------------------------------------
+      - ["redis", "Fuzzy.Member[functionLoad,FUNCTION_LOAD].Argument[0]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: request-forgery — connection target
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # -----------------------------------------------------------------------
+      # createClient(options) — controls which Redis server to connect to
+      #
+      #   // v4: URL in options object
+      #   createClient({ url: 'redis://attacker.com:6379' });
+      #   createClient({ socket: { host: 'attacker.com', port: 6379 } });
+      #
+      #   // v3: positional arguments
+      #   createClient(6379, 'attacker.com');
+      #   createClient('redis://attacker.com:6379');
+      #   createClient({ host: 'attacker.com', port: 6379 });
+      # -----------------------------------------------------------------------
+      - ["redis", "Member[createClient].Argument[0]", "request-forgery"]
+      - ["redis", "Member[createClient].Argument[1]", "request-forgery"]

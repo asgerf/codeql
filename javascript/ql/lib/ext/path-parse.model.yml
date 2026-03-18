@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # path-parse (npm: "path-parse") — ponyfill for Node.js path.parse()
+  # =============================================================================
+  #
+  # Parses a file path string into an object with its components (root, dir,
+  # base, name, ext). A standalone implementation of Node's path.parse().
+  #
+  #   const pathParse = require('path-parse');
+  #   pathParse('/home/user/file.txt');
+  #   // => { root: '/', dir: '/home/user', base: 'file.txt', ext: '.txt', name: 'file' }
+  #
+  # API:
+  #   pathParse(pathString)       → { root, dir, base, name, ext }
+  #   pathParse.posix(pathString) → { root, dir, base, name, ext }
+  #   pathParse.win32(pathString) → { root, dir, base, name, ext }
+  #
+  # Security concerns:
+  # - No sources or sinks: path-parse only performs string parsing, with no
+  #   file system access or other security-sensitive operations.
+  # - Taint propagation: the input path string is decomposed into the
+  #   returned object's properties; taint flows from input to output.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through path parsing
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # pathParse(pathString) => { root, dir, base, name, ext }
+      - ["path-parse", "", "Argument[0]", "ReturnValue", "taint"]
+      # pathParse.posix(pathString) => { root, dir, base, name, ext }
+      - ["path-parse", "Member[posix]", "Argument[0]", "ReturnValue", "taint"]
+      # pathParse.win32(pathString) => { root, dir, base, name, ext }
+      - ["path-parse", "Member[win32]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,94 @@
+extensions:
+  # =============================================================================
+  # recompose — A React utility belt for function components and HOCs
+  # =============================================================================
+  #
+  # Recompose provides higher-order components (HOCs) and utility functions
+  # for composing and enhancing React components:
+  #
+  #   import { compose, withProps, mapProps } from 'recompose';
+  #   const enhance = compose(
+  #     withProps({ extra: 'value' }),
+  #     mapProps(props => ({ ...props, derived: props.input }))
+  #   );
+  #   const Enhanced = enhance(BaseComponent);
+  #
+  # Higher-order components:
+  #   mapProps(fn), withProps(fn|obj), withPropsOnChange(keys, fn),
+  #   withHandlers(handlers), defaultProps(obj), renameProp(old, new),
+  #   renameProps(map), flattenProp(name), withState(name, updater, init),
+  #   withStateHandlers(init, handlers), withReducer(name, dispatch, reducer, init),
+  #   branch(test, left, right?), renderComponent(Comp), renderNothing,
+  #   shouldUpdate(test), pure, onlyUpdateForKeys(keys), onlyUpdateForPropTypes,
+  #   withContext(types, fn), getContext(types), lifecycle(spec), toClass,
+  #   toRenderProps(hoc), fromRenderProps(Comp, mapper, name?)
+  #
+  # Utilities:
+  #   compose(...fns), setStatic(key, val), setPropTypes(types),
+  #   setDisplayName(name), getDisplayName(Comp), wrapDisplayName(Comp, name),
+  #   shallowEqual(a, b), isClassComponent(Comp), createSink(fn),
+  #   componentFromProp(name), nest(...Comps), hoistStatics(hoc)
+  #
+  # Observable utilities:
+  #   componentFromStream(fn), mapPropsStream(fn), createEventHandler()
+  #
+  # Security notes:
+  #   - No remote sources: recompose does not access external/untrusted data.
+  #   - No security-sensitive sinks: no eval, SQL, file I/O, HTTP, or HTML
+  #     injection surfaces.
+  #   - The primary security concern is taint propagation through compose(),
+  #     which chains functions so that tainted input flows through the
+  #     composition pipeline.
+  #   - Individual HOC factories (mapProps, withProps, etc.) transform React
+  #     props at render time. Prop flow through HOCs is handled by the
+  #     general React HOC framework analysis (React.qll) which recognises
+  #     all recompose members as HOC builders.
+  #
+  # Existing QLL coverage:
+  #   - ComposedFunctions.qll: models compose() with full compositional
+  #     taint stepping (input → rightmost function → … → leftmost → output)
+  #   - React.qll: recognises all recompose members as higher-order
+  #     component builders for React prop-flow analysis
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through compose()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # -----------------------------------------------------------------------
+      # compose(f, g, h) returns a composed function.
+      # Calling that function: compose(f, g, h)(x) ≡ f(g(h(x)))
+      # -----------------------------------------------------------------------
+
+      # --- End-to-end flow through the composed function ---
+      # compose(f, g, h)(x) → result: taint from x flows to the result.
+      - ["recompose", "Member[compose].ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- Flow into the composition ---
+      # The argument to the composed call flows to the last (first-invoked)
+      # function's first parameter: x → h.param[0]
+      - ["recompose", "Member[compose]", "ReturnValue.Argument[0]", "Argument[N-1].Parameter[0]", "taint"]
+
+      # --- Flow out of the composition ---
+      # The leftmost (last-invoked) function's return value IS the composed
+      # result: f.return → composed result
+      - ["recompose", "Member[compose]", "Argument[0].ReturnValue", "ReturnValue.ReturnValue", "taint"]
+
+      # --- Flow between composed functions (overapproximation) ---
+      # Each function's return flows to each function's first parameter.
+      # This is an overapproximation of the precise chain
+      # (h.return → g.param[0], g.return → f.param[0]) but ensures taint
+      # propagates through the full composition pipeline.
+      - ["recompose", "Member[compose]", "Argument[0..9].ReturnValue", "Argument[0..9].Parameter[0]", "taint"]
+
+      # -----------------------------------------------------------------------
+      # Same models for the sub-module import: import compose from
+      # 'recompose/compose'. The default export is compose itself.
+      # -----------------------------------------------------------------------
+      - ["recompose/compose", "ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+      - ["recompose/compose", "", "ReturnValue.Argument[0]", "Argument[N-1].Parameter[0]", "taint"]
+      - ["recompose/compose", "", "Argument[0].ReturnValue", "ReturnValue.ReturnValue", "taint"]
+      - ["recompose/compose", "", "Argument[0..9].ReturnValue", "Argument[0..9].Parameter[0]", "taint"]

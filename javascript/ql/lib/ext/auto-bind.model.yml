@@ -1,0 +1,33 @@
+extensions:
+  # =============================================================================
+  # auto-bind (npm: "auto-bind") - Automatically bind methods to their instance
+  # =============================================================================
+  #
+  # The auto-bind package binds all methods of an object to the object itself,
+  # returning the same object. Commonly used in class constructors to preserve
+  # `this` context when methods are passed as callbacks.
+  #
+  #   import autoBind from 'auto-bind';
+  #   class Foo {
+  #     constructor() { autoBind(this); }
+  #   }
+  #
+  # A React-specific variant is also exported:
+  #
+  #   import autoBindReact from 'auto-bind/react';
+  #   class MyComponent extends React.Component {
+  #     constructor(props) { super(props); autoBindReact(this); }
+  #   }
+  #
+  # This library has no sources or sinks. It only mutates method bindings on
+  # the object passed in and returns the same object, so it is modeled as
+  # value-preserving flow from input to output.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # autoBind(self, options?) - returns the same object with methods bound
+      - ["auto-bind", "", "Argument[0]", "ReturnValue", "value"]
+      # autoBindReact(self, options?) - React variant (auto-bind/react)
+      - ["auto-bind/react", "", "Argument[0]", "ReturnValue", "value"]

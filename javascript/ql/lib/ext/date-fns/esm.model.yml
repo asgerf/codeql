@@ -1,0 +1,49 @@
+extensions:
+  # =============================================================================
+  # date-fns/esm (sub-path of npm: "date-fns") - ESM build of date-fns
+  # =============================================================================
+  #
+  # date-fns/esm is the ECMAScript module build of date-fns. The API is
+  # identical to the main date-fns entry point.
+  #
+  #   import { format, lightFormat } from 'date-fns/esm';
+  #   format(new Date(), "yyyy-MM-dd 'at' HH:mm");
+  #
+  # Sub-path imports:
+  #   import format from 'date-fns/esm/format'
+  #   import lightFormat from 'date-fns/esm/lightFormat'
+  #
+  # FP (curried) variants:
+  #   import { format } from 'date-fns/esm/fp'
+  #   import format from 'date-fns/esm/fp/format'
+  #   format("yyyy-MM-dd")(new Date())
+  #
+  # Security concerns:
+  # - format(date, formatStr) and lightFormat(date, formatStr) allow the
+  #   format string to embed arbitrary text via single-quote escaping.
+  #   If the format string is attacker-controlled, arbitrary content
+  #   appears in the output.
+  #
+  # No sources or sinks — only taint summaries through format functions.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint from format string to return value
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Standard: format(date, formatStr) / lightFormat(date, formatStr)
+      - ["date-fns/esm", "Member[format,lightFormat]", "Argument[1]", "ReturnValue", "taint"]
+
+      # NOTE: date-fns/esm/format is covered in date-fns/esm/format.model.yml
+      # NOTE: date-fns/esm/lightFormat is a single-function sub-path, covered below
+      - ["date-fns/esm/lightFormat", "", "Argument[1]", "ReturnValue", "taint"]
+
+      # FP (curried): format(formatStr)(date)
+      - ["date-fns/esm/fp", "Member[format,lightFormat]", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+
+      # FP direct sub-path imports
+      - ["date-fns/esm/fp/format", "", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+      - ["date-fns/esm/fp/lightFormat", "", "Argument[0]", "ReturnValue.ReturnValue", "taint"]

@@ -1,0 +1,41 @@
+extensions:
+  # =============================================================================
+  # parseqs (npm: "parseqs") - Lightweight query string parser/encoder
+  # =============================================================================
+  #
+  # parseqs provides two methods for converting between query strings and
+  # objects:
+  #
+  #   const parseqs = require('parseqs');
+  #
+  #   // Decode: query string → object
+  #   parseqs.decode('foo=bar&baz=qux');
+  #   // => { foo: 'bar', baz: 'qux' }
+  #
+  #   // Encode: object → query string
+  #   parseqs.encode({ foo: 'bar', baz: 'qux' });
+  #   // => 'foo=bar&baz=qux'
+  #
+  # API:
+  #   parseqs.decode(str) => object   — parse query string to object
+  #   parseqs.encode(obj) => string   — stringify object to query string
+  #
+  # Security concerns:
+  # - No sources or sinks: parseqs is a pure transformation utility.
+  # - Taint flow: both encode and decode propagate taint from input to
+  #   output. If the input query string or object contains attacker-
+  #   controlled data, the output will too.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through encode/decode
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # parseqs.decode(str) => object — taint flows from query string to parsed object
+      - ["parseqs", "Member[decode]", "Argument[0]", "ReturnValue", "taint"]
+
+      # parseqs.encode(obj) => string — taint flows from object to query string
+      - ["parseqs", "Member[encode]", "Argument[0]", "ReturnValue", "taint"]

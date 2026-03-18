@@ -1,0 +1,84 @@
+extensions:
+  # =============================================================================
+  # reverse (npm: "reverse") — URL router DSL with reverse URL generation
+  # =============================================================================
+  #
+  # reverse is a URL router that provides a tagged template literal DSL for
+  # defining routes, matching incoming URLs, and reversing route names back
+  # to URL strings.
+  #
+  # Core API:
+  #   const routes = require('reverse');
+  #   const slug = routes.param('slug', /^[\w\-]+$/);
+  #
+  #   const router = routes`
+  #     GET  /blog/${slug}  showPost
+  #     GET  /              listPosts
+  #   `({ showPost() {}, listPosts() {} });
+  #
+  #   router.match('GET', '/blog/hello-world')
+  #     → Match { name, controller, context: Map { slug → 'hello-world' }, next }
+  #
+  #   router.reverse('showPost', { slug: 'hello' })
+  #     → '/blog/hello'
+  #
+  #   router.concat(otherRouter) → Router
+  #
+  # API surface:
+  #   reverse`<language>`(controller) → Router
+  #   reverse.param(name, validator[, consume]) → Parameter
+  #   Router#match(method, route) → Match | null
+  #   Router#reverse(name[, args]) → String | null
+  #   Router#concat(rhs) → Router
+  #   Match { controller, name, context: Map, next: Match | null }
+  #
+  # Security analysis:
+  #
+  # - No sources. The library is a standalone router that does not set up
+  #   HTTP servers or access external data. The URL string passed to
+  #   router.match() would already carry taint from the HTTP framework
+  #   (Express, http, etc.) that provides it.
+  #
+  # - No sinks. The library performs URL pattern matching and URL string
+  #   generation. It does not render HTML, execute code, make network
+  #   requests, write to the DOM, or perform any other security-sensitive
+  #   operation.
+  #
+  # - Summaries: router.match(method, route) parses URL path parameters
+  #   from the route string and returns them in a Match object's context
+  #   Map. Taint flows from the route argument into the context values.
+  #   router.reverse(name, args) builds a URL from the provided argument
+  #   values, so taint flows from args to the returned string.
+  #
+  # Existing QLL coverage: None.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through route matching and URL generation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- router.match(method, route) → Match ---
+      # The route string (argument 1) is parsed; path segments matching
+      # parameter slots are extracted into Match.context (a Map).
+      # Taint flows from the route to the context values.
+      - [
+          "reverse",
+          "Fuzzy.Member[match]",
+          "Argument[1]",
+          "ReturnValue.Member[context].MapValue",
+          "taint",
+        ]
+
+      # --- router.reverse(name, args) → String ---
+      # The args object's values (argument 1) are interpolated into the URL
+      # template to produce the returned URL string.
+      - [
+          "reverse",
+          "Fuzzy.Member[reverse]",
+          "Argument[1].MapValue",
+          "ReturnValue",
+          "taint",
+        ]

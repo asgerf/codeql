@@ -1,0 +1,80 @@
+extensions:
+  # =============================================================================
+  # fastify-cookie / @fastify/cookie — Cookie parsing and setting for Fastify
+  # =============================================================================
+  #
+  # A Fastify plugin that adds cookie support via request/reply decorators:
+  #
+  #   const fastify = require('fastify')();
+  #   fastify.register(require('@fastify/cookie'), { secret: 'my-secret' });
+  #   // or: fastify.register(require('fastify-cookie'), { secret: 's' });
+  #
+  #   fastify.get('/', (req, reply) => {
+  #     req.cookies.foo;                    // read cookie value
+  #     req.unsignCookie(req.cookies.sig);  // unsign a signed cookie
+  #
+  #     reply
+  #       .setCookie('name', 'value', { path: '/', httpOnly: true })
+  #       .cookie('alias', 'value', opts)   // alias for setCookie
+  #       .clearCookie('old', { path: '/' })
+  #       .send({ ok: true });
+  #   });
+  #
+  #   // Low-level helpers
+  #   fastify.parseCookie('foo=bar');                      // parse raw header
+  #   const { serialize, parse } = require('@fastify/cookie');
+  #
+  # Security concerns:
+  # - request.cookies is an object of attacker-controlled cookie values.
+  # - req.unsignCookie() / reply.unsignCookie() return objects whose
+  #   .value property carries the original (untrusted) cookie value.
+  # - fastify.parseCookie(header) parses a raw Cookie header string and
+  #   returns untrusted key-value pairs.
+  # - The static parse() export does the same.
+  #
+  # Existing QLL coverage (Fastify.qll):
+  #   FastifyCookieMiddleware models fastify-cookie as a
+  #   CookieMiddlewareInstance, tracking the `secret` option. No source
+  #   or taint models for cookie values exist in the QLL.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: cookie values are attacker-controlled
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # request.cookies — object of parsed cookie name/value pairs.
+      # The plugin decorates the Fastify request object; Fuzzy on the
+      # fastify-cookie package finds request objects that have been
+      # decorated by the plugin (the request parameter of guarded
+      # route handlers).
+      - ["fastify-cookie", "Fuzzy.Member[cookies]", "remote"]
+      - ["@fastify/cookie", "Fuzzy.Member[cookies]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # req.unsignCookie(value) → { valid, renew, value }
+      # Taint flows from the signed cookie string to the returned object
+      # (specifically its .value property, but we model the whole return).
+      - ["fastify-cookie", "Fuzzy.Member[unsignCookie]", "Argument[0]", "ReturnValue", "taint"]
+      - ["@fastify/cookie", "Fuzzy.Member[unsignCookie]", "Argument[0]", "ReturnValue", "taint"]
+
+      # fastify.parseCookie(cookieHeader) → { name: value, ... }
+      # Parses a raw Cookie header string into an object.
+      - ["fastify-cookie", "Fuzzy.Member[parseCookie]", "Argument[0]", "ReturnValue", "taint"]
+      - ["@fastify/cookie", "Fuzzy.Member[parseCookie]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Static exports: parse(cookieHeader) → { name: value, ... }
+      - ["fastify-cookie", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+      - ["@fastify/cookie", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Static exports: serialize(name, value, opts) → Set-Cookie string
+      - ["fastify-cookie", "Member[serialize]", "Argument[1]", "ReturnValue", "taint"]
+      - ["@fastify/cookie", "Member[serialize]", "Argument[1]", "ReturnValue", "taint"]
