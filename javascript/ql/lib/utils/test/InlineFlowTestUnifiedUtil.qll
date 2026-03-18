@@ -8,14 +8,14 @@
 private import semmle.javascript.internal.unified.minimal.minimal
 private import semmle.javascript.internal.unified.JSUnified
 
-predicate defaultSource(DataFlow2::Node src) {
+predicate defaultSource(DataFlow::Node src) {
   exists(InvokeExpr call |
     call.getCalleeName() = "source" and
     src.isValueOf(call)
   )
 }
 
-predicate defaultSink(DataFlow2::Node sink) {
+predicate defaultSink(DataFlow::Node sink) {
   exists(InvokeExpr call |
     call.getCalleeName() = "sink" and
     sink.isValueOf(call.getAnArgument())
@@ -23,6 +23,6 @@ predicate defaultSink(DataFlow2::Node sink) {
 }
 
 bindingset[src]
-string getSourceArgString(DataFlow2::Node src) {
+string getSourceArgString(DataFlow::Node src) {
   result = src.asAstNode().(InvokeExpr).getAnArgument().getStringValue()
 }
