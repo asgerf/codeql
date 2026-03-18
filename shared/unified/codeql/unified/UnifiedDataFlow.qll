@@ -13,6 +13,7 @@ private import codeql.ssa.Ssa as Ssa
 private import codeql.dataflow.VariableCapture as VariableCapture
 private import codeql.dataflow.DataFlow as DataFlow
 private import codeql.dataflow.TaintTracking as TaintTracking
+private import codeql.mad.dynamic.DataExtensionSignatures
 
 module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
   private class BasicBlock = Cfg::BasicBlock;
@@ -2477,13 +2478,11 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
           private import D4
 
-          signature module DataExtensionsSig {
-            predicate typeModel(string type1, string type2, string accessPath);
-          }
-
           private signature predicate dataflowStepSig(
             Node node1, DataFlowBuilder::Step step, Node node2
           );
+
+          import codeql.mad.dynamic.DataExtensionSignatures // re-export the signature so it's easier to reference at the instantiation site
 
           module MakeModelsAsData<DataExtensionsSig DataExtensions> {
             private import DataExtensions

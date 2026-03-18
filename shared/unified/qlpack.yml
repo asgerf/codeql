@@ -8,4 +8,5 @@ dependencies:
   codeql/ssa: ${workspace}
   codeql/typetracking: ${workspace}
   codeql/util: ${workspace}
+  codeql/mad: ${workspace}
 warnOnImplicitThis: true
