@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # safe-json-parse (npm: "safe-json-parse") — Parse JSON without throwing
+  # =============================================================================
+  #
+  # Wraps JSON.parse in error-safe patterns via three sub-modules:
+  #
+  #   // Callback style
+  #   const safeParse = require('safe-json-parse/callback');
+  #   safeParse(str, (err, json) => { ... });
+  #
+  #   // Tuple style
+  #   const safeParse = require('safe-json-parse/tuple');
+  #   const [err, json] = safeParse(str);
+  #
+  #   // Result style (rust-result)
+  #   const safeParse = require('safe-json-parse/result');
+  #   const result = safeParse(str); // result.v is the parsed value
+  #
+  # Security concerns:
+  # - No sources. The library does not access external or untrusted data.
+  # - No sinks. The library only wraps JSON.parse; no command execution,
+  #   file I/O, URL navigation, or HTML rendering.
+  # - Taint propagation: all three sub-modules parse a JSON string
+  #   (Argument[0]) and return the parsed object through different output
+  #   channels.
+  #
+  # Existing QLL coverage (JsonParsers.qll):
+  # - safe-json-parse/callback: Argument[0] → callback Parameter[1]
+  # - safe-json-parse/tuple: Argument[0] → ReturnValue.Member[1]
+  # - safe-json-parse/result: Argument[0] → ReturnValue.Member[v]
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # callback: safeParse(str, (err, json) => { ... })
+      - ["safe-json-parse/callback", "", "Argument[0]", "Argument[1].Parameter[1]", "taint"]
+      # tuple: const [err, json] = safeParse(str)
+      - ["safe-json-parse/tuple", "", "Argument[0]", "ReturnValue.Member[1]", "taint"]
+      # result: const result = safeParse(str); result.v
+      - ["safe-json-parse/result", "", "Argument[0]", "ReturnValue.Member[v]", "taint"]

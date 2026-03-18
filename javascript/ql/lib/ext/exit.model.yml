@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # exit (npm: "exit") - Drop-in replacement for process.exit()
+  # =============================================================================
+  #
+  # The exit package provides a single function that wraps process.exit(), with
+  # the added behaviour of flushing stdout and stderr before actually
+  # terminating the process. This avoids truncated output on Windows and in
+  # some CI environments.
+  #
+  #   var exit = require('exit');
+  #   exit(0);   // flush I/O, then process.exit(0)
+  #   exit(1);   // flush I/O, then process.exit(1)
+  #
+  # The module exports a single function: exit(code)
+  #   - code: numeric exit code (0 for success, non-zero for failure)
+  #
+  # Security concerns:
+  # - No sources. The library does not access any external or untrusted data.
+  # - No sinks. The sole argument is a numeric exit code, which is not an
+  #   injection vector and is not sensitive to untrusted data.
+  # - No summaries. The function terminates the process and has no meaningful
+  #   return value or data-flow-relevant output.
+  #
+  # Existing QLL coverage (NodeJSLib.qll):
+  #   The call API::moduleImport("exit").getAnInvocation() is modeled as a
+  #   ProcessTermination, which is a SensitiveAction. This feeds into the
+  #   ConditionalBypass query (js/bypass-sensitive-action), detecting cases
+  #   where a tainted value controls a conditional that guards the exit call.
+  #   The SensitiveAction concept does not have a corresponding data-extension
+  #   sink kind, so it cannot be expressed here.
+  #
+  # Nothing to model. The library exposes no sources, no injection sinks, and
+  # no taint-propagating functions.
+  # =============================================================================
+  []

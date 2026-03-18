@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # utils-merge (npm: "utils-merge") — Shallow object merge utility
+  # =============================================================================
+  #
+  # A minimal merge utility used internally by Express.js. Copies own
+  # enumerable properties from a source object onto a destination object:
+  #
+  #   const merge = require('utils-merge');
+  #   merge(dst, src);  // copies src properties onto dst, returns dst
+  #
+  # API:
+  #   merge(a, b) → a (modified in place)
+  #   - Copies own enumerable properties from b onto a (shallow)
+  #   - Returns the modified a
+  #
+  # Security concerns:
+  # - No sources: pure utility, does not access external data.
+  # - No sinks: does not execute commands, SQL, or render templates.
+  # - Taint propagation: properties from the source operand flow into both
+  #   the destination and the return value.
+  #
+  # Existing QLL coverage (Extend.qll):
+  # - utils-merge is modeled as ExtendCallShallow with dst = arg 0,
+  #   src = arg 1. Value-preserving flow from operands to return value
+  #   and destination via ExtendCallStep.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: value-preserving flow through merge
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # merge(dst, src) — both operands contribute to the return value
+      - ["utils-merge", "", "Argument[0..1]", "ReturnValue", "value"]

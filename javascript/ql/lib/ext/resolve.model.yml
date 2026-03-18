@@ -1,0 +1,47 @@
+extensions:
+  # =============================================================================
+  # resolve (npm: "resolve") — Node.js require.resolve() algorithm
+  # =============================================================================
+  #
+  # The resolve package implements the Node.js module resolution algorithm,
+  # resolving a module identifier to an absolute filesystem path:
+  #
+  #   const resolve = require('resolve');
+  #
+  #   // Async
+  #   resolve('some-module', { basedir: __dirname }, (err, res) => {
+  #     console.log(res); // /path/to/node_modules/some-module/index.js
+  #   });
+  #
+  #   // Sync
+  #   const path = resolve.sync('some-module', { basedir: __dirname });
+  #
+  # Security concerns:
+  # - Path injection: the first argument (module ID) controls which file
+  #   is resolved on the filesystem. If an attacker controls this value,
+  #   they can resolve and potentially cause loading of arbitrary modules.
+  #   The basedir option further influences the resolution base directory.
+  # - No sources: the return value is a filesystem path, not untrusted data.
+  # - No summaries needed.
+  #
+  # Existing QLL coverage (TaintedPathCustomizations.qll):
+  # - ResolveModuleSink: models the first argument to resolve() and
+  #   resolve.sync() as a TaintedPath sink.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path-injection — module identifier controls filesystem access
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # resolve(id, opts, cb) — first argument is the module to resolve
+      - ["resolve", "Argument[0]", "path-injection"]
+
+      # resolve.sync(id, opts) — first argument is the module to resolve
+      - ["resolve", "Member[sync].Argument[0]", "path-injection"]
+
+      # basedir option controls the resolution base directory
+      - ["resolve", "Argument[1].Member[basedir]", "path-injection"]
+      - ["resolve", "Member[sync].Argument[1].Member[basedir]", "path-injection"]

@@ -1,0 +1,64 @@
+extensions:
+  # =============================================================================
+  # isomorphic-fetch (npm: "isomorphic-fetch") - Universal WHATWG Fetch polyfill
+  # =============================================================================
+  #
+  # isomorphic-fetch provides a universal implementation of the WHATWG fetch
+  # API that works in both Node.js and browser environments. It delegates to
+  # node-fetch on Node.js and whatwg-fetch in browsers. Unlike cross-fetch,
+  # it adds fetch as a global rather than exporting it, but it can also be
+  # imported directly.
+  #
+  #   require('isomorphic-fetch');
+  #   // or
+  #   const fetch = require('isomorphic-fetch');
+  #
+  #   const res = await fetch('https://api.example.com/data');
+  #   const json = await res.json();
+  #
+  #   const res = await fetch('https://api.example.com/submit', {
+  #     method: 'POST',
+  #     headers: { 'Content-Type': 'application/json' },
+  #     body: JSON.stringify({ key: 'value' })
+  #   });
+  #
+  # API: Standard fetch(url, init?) returning Promise<Response>.
+  # Response provides: .json(), .text(), .blob(), .arrayBuffer(),
+  # .body (ReadableStream), .headers, .status, .url, etc.
+  #
+  # Security concerns:
+  # - Request forgery (SSRF): The first argument (URL) controls the
+  #   request destination.
+  # - Response data (.json(), .text(), etc.) is untrusted when the
+  #   response comes from an external source.
+  #
+  # Existing QLL coverage (ClientRequests.qll):
+  #   FetchUrlRequest models isomorphic-fetch alongside node-fetch and
+  #   cross-fetch as a ClientRequest with getUrl() = argument 0. This
+  #   feeds into RequestForgery and other queries.
+  # =============================================================================
+
+  # Sinks: The URL argument controls the request destination.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # fetch(url, init?) — first argument is the request URL
+      - ["isomorphic-fetch", "Argument[0]", "request-forgery"]
+
+  # Sources: Response data from fetch calls is untrusted.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # await fetch(url) → Response object
+      - ["isomorphic-fetch", "ReturnValue.Awaited", "response"]
+
+  # Summaries: Taint propagation through Response methods.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # res.json() / res.text() / etc. — parse response body
+      # Taint flows from the Response to the awaited result.
+      - ["isomorphic-fetch", "ReturnValue.Awaited.Member[json,text,arrayBuffer,blob,formData]", "Argument[this]", "ReturnValue.Awaited", "taint"]

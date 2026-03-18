@@ -1,0 +1,75 @@
+extensions:
+  # =============================================================================
+  # mongoose (npm: "mongoose") - MongoDB object modeling for Node.js
+  # =============================================================================
+  #
+  # By Automattic. An ODM (Object Document Mapper) providing schema-based
+  # modeling, validation, type casting, query building, and middleware for
+  # MongoDB.
+  #
+  #   const mongoose = require('mongoose');
+  #   await mongoose.connect('mongodb://localhost/mydb');
+  #
+  #   const User = mongoose.model('User', new mongoose.Schema({
+  #     name: String, email: String
+  #   }));
+  #
+  #   // Query methods (NoSQL injection sinks if filter is user-controlled)
+  #   await User.find({ email: req.body.email });
+  #   await User.findOne({ _id: req.params.id });
+  #   await User.findOneAndUpdate({ email }, { $set: update });
+  #   await User.deleteMany({ status: req.query.status });
+  #   await User.aggregate([{ $match: filter }]);
+  #
+  # Security concerns:
+  # - Query filter/update arguments are NoSQL injection sinks. If untrusted
+  #   data is passed as a filter object (not a plain string), an attacker
+  #   can inject MongoDB operators like $gt, $ne, $regex to alter query
+  #   semantics.
+  # - mongoose.connect(uri) and createConnection(uri): the connection URI
+  #   is a request-forgery sink if user-controlled.
+  # - Query results are database-sourced data (covered as DatabaseAccess
+  #   in NoSQL.qll, which feeds the "database" threat model).
+  #
+  # Existing QLL/MaD coverage:
+  # - mongodb/model.yml: 31 sink entries covering Model, Query, Document,
+  #   Connection, and CollectionBase methods with `mongodb.sink` kind,
+  #   plus 424 typeModel entries for the full mongoose type hierarchy.
+  # - NoSQL.qll: Mongoose-specific QueryCall, QueryWithCallback, QueryAwait,
+  #   and Insertion classes for database access tracking.
+  # - TaintedObject.qll: mongoose.Types.ObjectId.isValid() as a sanitizer
+  #   guard for NoSQL injection.
+  #
+  # This catalog adds fuzzy models that can catch query methods on mongoose
+  # objects even without full type information, and models the connection
+  # URI as a request-forgery sink.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: NoSQL injection via query filter/update arguments
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- Query methods with filter as first argument ---
+      # Fuzzy matching catches calls on Model instances, Query objects, and
+      # Document instances regardless of whether types are resolved.
+      - ["mongoose", "Fuzzy.Member[find,findOne,findById,findOneAndDelete,findOneAndRemove,findByIdAndDelete,findByIdAndRemove,findOneAndReplace].Argument[0]", "nosql-injection"]
+      - ["mongoose", "Fuzzy.Member[$where,aggregate,exists,geoSearch,remove,replaceOne,watch].Argument[0]", "nosql-injection"]
+      - ["mongoose", "Fuzzy.Member[count,countDocuments,where].Argument[0]", "nosql-injection"]
+      - ["mongoose", "Fuzzy.Member[deleteOne,deleteMany].Argument[0]", "nosql-injection"]
+
+      # --- Query methods with filter AND update arguments ---
+      - ["mongoose", "Fuzzy.Member[findOneAndUpdate,findByIdAndUpdate,update,updateOne,updateMany].Argument[0]", "nosql-injection"]
+      - ["mongoose", "Fuzzy.Member[findOneAndUpdate,findByIdAndUpdate,update,updateOne,updateMany].Argument[1]", "nosql-injection"]
+
+      # --- distinct(field, filter) — filter is second argument ---
+      - ["mongoose", "Fuzzy.Member[distinct].Argument[1]", "nosql-injection"]
+
+      # --- Query chain methods: .and(), .or(), .nor() ---
+      - ["mongoose", "Fuzzy.Member[and,or,nor,setUpdate].Argument[0]", "nosql-injection"]
+
+      # --- Connection URI ---
+      # mongoose.connect(uri) and mongoose.createConnection(uri)
+      - ["mongoose", "Member[connect,createConnection].Argument[0]", "request-forgery"]

@@ -1,0 +1,29 @@
+extensions:
+  # =============================================================================
+  # reduce-reducers (npm: "reduce-reducers") - Redux reducer composition utility
+  # =============================================================================
+  #
+  # reduce-reducers composes multiple Redux reducer functions into one by
+  # chaining them sequentially:
+  #
+  #   const reduceReducers = require('reduce-reducers');
+  #
+  #   const combined = reduceReducers(initialState, reducer1, reducer2);
+  #   // combined(state, action) calls reducer1(state, action),
+  #   // then reducer2(result1, action), returning the final result.
+  #
+  #   // Also supports an array form:
+  #   const combined = reduceReducers([reducer1, reducer2]);
+  #
+  # API:
+  #   reduceReducers([initialState], ...reducers) => reducer
+  #   reduceReducers([initialState], reducerArray) => reducer
+  #
+  # Security concerns:
+  # - No sources: does not introduce untrusted data.
+  # - No sinks: does not perform security-sensitive operations.
+  # - Reducer composition data flow (how tainted state propagates through
+  #   chained reducers) is modeled by the existing DelegatingReducer
+  #   abstraction in Redux.qll. This higher-order function composition
+  #   pattern cannot be expressed as data extension summaries.
+  # =============================================================================

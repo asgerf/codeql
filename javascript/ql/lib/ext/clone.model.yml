@@ -1,0 +1,35 @@
+extensions:
+  # =============================================================================
+  # clone (npm: "clone") - Deep cloning of objects, arrays, dates, regexps, etc.
+  # =============================================================================
+  #
+  # By Paul Vorbach. Provides deep cloning of arbitrary JavaScript values
+  # including objects, arrays, dates, regexps, maps, sets, and promises.
+  # Handles circular references.
+  #
+  #   var clone = require("clone");
+  #   var b = clone(a);                    // deep clone of a
+  #   var p = clone.clonePrototype(obj);   // prototype-only clone
+  #
+  # API:
+  #   clone(value[, circular[, depth[, prototype[, includeNonEnumerable]]]])
+  #   clone(value, opts)
+  #   clone.clonePrototype(obj)
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure value cloning utility.
+  # - The cloned output preserves all properties of the input, so value flow
+  #   propagates from the first argument to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: value-preserving flow through clone operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # clone(value, ...) — deep clone preserves all properties
+      - ["clone", "", "Argument[0]", "ReturnValue", "value"]
+      # clone.clonePrototype(obj) — prototype clone
+      - ["clone", "Member[clonePrototype]", "Argument[0]", "ReturnValue", "value"]

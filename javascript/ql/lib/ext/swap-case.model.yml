@@ -1,0 +1,29 @@
+extensions:
+  # =============================================================================
+  # swap-case (npm: "swap-case") - Swap the case of a string
+  # =============================================================================
+  #
+  # Part of the change-case family by Blake Embrey. Transforms a string
+  # by swapping the case of each character (upper → lower, lower → upper).
+  #
+  #   import { swapCase } from 'swap-case';
+  #   swapCase('Hello World');  //=> 'hELLO wORLD'
+  #
+  # API:
+  #   swapCase(input) → string
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: pure string transformation, no I/O or eval.
+  # - Taint propagation: the output is derived from the input string.
+  #
+  # Existing QLL coverage (StringFormatters.qll):
+  #   Modeled as a CaseChangingStep: Argument[0] → ReturnValue.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # swapCase(input) → string with swapped case
+      - ["swap-case", "Member[swapCase]", "Argument[0]", "ReturnValue", "taint"]

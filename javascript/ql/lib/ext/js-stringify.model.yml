@@ -1,0 +1,41 @@
+extensions:
+  # =============================================================================
+  # js-stringify (npm: "js-stringify") - Stringify for safe JS inlining
+  # =============================================================================
+  #
+  # js-stringify converts a JavaScript value into a string representation
+  # that can be safely inlined in JavaScript code (e.g., inside <script>
+  # tags). It escapes HTML-significant characters (<, >, /) and JS line
+  # terminators (U+2028, U+2029).
+  #
+  #   const stringify = require('js-stringify');
+  #
+  #   stringify('foo');           // '"foo"'
+  #   stringify({ foo: 'bar' }); // '{"foo":"bar"}'
+  #   stringify(undefined);      // 'undefined'
+  #   stringify(new Date(...));  // 'new Date("...")'
+  #
+  # API: stringify(value) → string
+  #   Single default export function, no options.
+  #
+  # Security concerns:
+  # - No sources. The library does not access untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations.
+  # - SUMMARY (taint): The input value flows to the output string.
+  #   The existing QLL (JsonStringifiers.qll) models this as a
+  #   JsonStringifyCall, which provides taint steps (input→output)
+  #   and acts as a sanitizer for code-injection and log-injection.
+  #   The sanitizer role is not expressible via data extensions and
+  #   remains in QLL.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flows through stringify
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # stringify(value) → string
+      # The input value is serialized into the output string
+      - ["js-stringify", "", "Argument[0]", "ReturnValue", "taint"]

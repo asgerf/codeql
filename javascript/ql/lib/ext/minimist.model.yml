@@ -1,0 +1,53 @@
+extensions:
+  # =============================================================================
+  # minimist (npm: "minimist") - Lightweight command-line argument parser
+  # =============================================================================
+  #
+  # minimist parses an array of command-line arguments and returns an object
+  # mapping argument names to their values.
+  #
+  #   const minimist = require('minimist');
+  #   const argv = minimist(process.argv.slice(2));
+  #   // argv._ = ['file1', 'file2']   (positional arguments)
+  #   // argv.foo = 'bar'              (--foo=bar or --foo bar)
+  #   // argv.v = true                 (short flags like -v)
+  #
+  #   // With options:
+  #   const argv = minimist(args, {
+  #     string: ['lang'],
+  #     boolean: ['help'],
+  #     alias: { h: 'help' },
+  #     default: { lang: 'en' }
+  #   });
+  #
+  # The module exports a single function:
+  #   minimist(args, opts?) => object of parsed values
+  #     - args: array of strings (usually process.argv.slice(2))
+  #     - opts: optional configuration (string, boolean, alias, default, etc.)
+  #
+  # Security concerns:
+  # - The return value contains parsed command-line arguments, which are
+  #   untrusted user input (commandargs threat model).
+  # - When a custom argv array is passed, taint propagates from that array
+  #   to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: parsed command-line arguments are untrusted input
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # minimist(args) => { _: [], foo: 'bar', ... }
+      - ["minimist", "ReturnValue", "commandargs"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from input argv to parsed result
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # minimist(taintedArgs) => tainted result
+      - ["minimist", "", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,110 @@
+extensions:
+  # =============================================================================
+  # Sources: GitHub API responses can contain attacker-controlled content
+  # =============================================================================
+  #
+  # In contexts like GitHub Actions, data returned by the GitHub API (PR titles,
+  # issue bodies, branch names, commit messages, usernames, etc.) is
+  # attacker-controlled and can be used to exploit injection vulnerabilities.
+  #
+  # @octokit/rest extends @octokit/core with:
+  #   - REST endpoint methods: octokit.rest.<namespace>.<method>(params)
+  #     Namespaces: actions, activity, apps, billing, campaigns, checks,
+  #     codeScanning, codeSecurity, codesOfConduct, codespaces, copilot,
+  #     credentials, dependabot, dependencyGraph, emojis, enterpriseTeams,
+  #     gists, git, gitignore, hostedCompute, interactions, issues, licenses,
+  #     markdown, meta, migrations, oidc, orgs, packages, privateRegistries,
+  #     projects, pulls, rateLimit, reactions, repos, search, secretScanning,
+  #     securityAdvisories, teams, users
+  #   - Legacy endpoint methods: octokit.<namespace>.<method>(params)
+  #   - Pagination: octokit.paginate(route|method, params)
+  #   - Plus inherited: octokit.request(route, params), octokit.graphql(query)
+  #
+  # All REST/request methods return Promise<{ data, status, headers, url }>.
+  # graphql() returns the data directly (unwrapped).
+  # paginate() returns a flattened array of data items.
+  #
+  # Fuzzy is used because Octokit instances are commonly created through
+  # chained plugin()/defaults() calls:
+  #   const MyOctokit = Octokit.plugin(plugin1).defaults({ baseUrl: "..." });
+  #   const octokit = new MyOctokit();
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # All REST endpoint methods and request() return { data, status, headers, url }.
+      # The .data property contains the API response body which may include
+      # attacker-controlled content such as issue titles, PR bodies, branch names,
+      # commit messages, usernames, gist content, comment bodies, etc.
+      #
+      # Covers: octokit.rest.<ns>.<method>(), octokit.<ns>.<method>() (legacy),
+      # octokit.request(), and paginate.iterator() yielded pages.
+      - ["@octokit/rest", "Fuzzy.ReturnValue.Awaited.Member[data]", "remote"]
+
+      # octokit.graphql(query, variables) returns the data directly (unwrapped
+      # from the response envelope). The entire return value is attacker-controlled.
+      - [
+          "@octokit/rest",
+          "Fuzzy.Member[graphql].ReturnValue.Awaited",
+          "remote",
+        ]
+
+      # octokit.paginate(route, params) returns the data items directly as a
+      # flat array, concatenating response.data from each page.
+      - [
+          "@octokit/rest",
+          "Fuzzy.Member[paginate].ReturnValue.Awaited",
+          "remote",
+        ]
+
+  # =============================================================================
+  # Sinks
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ===== Request forgery =====
+
+      # octokit.request(route) - first argument is the route/URL template.
+      # E.g. octokit.request("GET /repos/{owner}/{repo}")
+      - [
+          "@octokit/rest",
+          "Fuzzy.Member[request].Argument[0]",
+          "request-forgery",
+        ]
+
+      # octokit.request(route, { url, baseUrl }) - options can override the target
+      - [
+          "@octokit/rest",
+          "Fuzzy.Member[request].Argument[1].Member[url,baseUrl]",
+          "request-forgery",
+        ]
+
+      # new Octokit({ baseUrl }) - controls where all requests are sent.
+      # Also matches Octokit.defaults({ baseUrl }) and chained variants.
+      - [
+          "@octokit/rest",
+          "Fuzzy.Argument[0].Member[baseUrl]",
+          "request-forgery",
+        ]
+
+      # ===== Credential sinks =====
+
+      # new Octokit({ auth }) - authentication token/credentials.
+      # Also matches Octokit.defaults({ auth }) and chained variants.
+      - [
+          "@octokit/rest",
+          "Fuzzy.Argument[0].Member[auth]",
+          "credentials-key",
+        ]
+
+      # ===== Log injection =====
+
+      # octokit.log.debug/info/warn/error(message)
+      - [
+          "@octokit/rest",
+          "Fuzzy.Member[log].Member[debug,info,warn,error].Argument[0]",
+          "log-injection",
+        ]

@@ -1,0 +1,48 @@
+extensions:
+  # =============================================================================
+  # q (npm: "q") - Promise library by Kris Kowal
+  # =============================================================================
+  #
+  # Q is a Promises/A+ compliant promise library with a rich API:
+  #
+  #   var Q = require('q');
+  #
+  # Promise creation:
+  #   Q(value)                          — wrap a value or thenable
+  #   Q.Promise(executor)               — new promise with (resolve, reject) executor
+  #   Q.resolve(value) / Q.reject(err)  — create resolved/rejected promise
+  #   Q.defer()                         — create a deferred with .resolve/.reject/.promise
+  #
+  # Aggregation:
+  #   Q.all(promises)       Q.allSettled(promises)
+  #   Q.any(promises)       Q.race(promises)
+  #
+  # Instance methods:
+  #   .then(onFulfilled, onRejected)    .catch(onRejected)
+  #   .spread(onFulfilled)              .fin(onFinally) / .finally(onFinally)
+  #   .done(onFulfilled, onRejected)    .get(key)
+  #   .set(key, value)                  .invoke(method, ...args)
+  #   .timeout(ms)                      .delay(ms)
+  #   .tap(onFulfilled)                 .progress(handler)
+  #
+  # Utility:
+  #   Q.denodeify(fn) / Q.nfbind(fn)   — promisify Node-style callback fn
+  #   Q.nfcall(fn, ...args)             — call Node-style fn, return promise
+  #   Q.nbind(fn, thisArg)              — like nfbind with bound this
+  #   Q.ninvoke(obj, method, ...args)   — call method on obj, return promise
+  #
+  # Security relevance:
+  # - No sources. Q does not provide access to untrusted data.
+  # - No sinks. Q does not perform security-sensitive operations.
+  # - Promise flow: The Q.Promise constructor is explicitly modeled in QLL
+  #   (Promises.qll: Q.QPromiseDefinition) and in the flow summaries
+  #   (internal/flow_summaries/Promises.qll: promiseConstructorRef).
+  #   All taint flow through promise resolution, rejection, and chaining
+  #   is handled by the general promise infrastructure.
+  # - denodeify/nfbind/nfcall: These are higher-order function wrappers
+  #   whose flow patterns aren't expressible via simple summaryModel tuples.
+  #
+  # This file is intentionally empty of data extensions. It exists to
+  # document that the library has been reviewed and its security-relevant
+  # behavior (promise flow) is covered by QLL's general promise infrastructure.
+  # =============================================================================

@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # clsx (npm: "clsx") — tiny utility for constructing className strings
+  # =============================================================================
+  #
+  # By Luke Edwards. A faster, smaller drop-in replacement for classnames.
+  # Accepts strings, objects, arrays, and booleans as variadic arguments and
+  # returns a space-delimited class name string.
+  #
+  #   import clsx from 'clsx';
+  #   clsx('foo', true && 'bar', 'baz');           // => 'foo bar baz'
+  #   clsx({ foo: true, bar: false });              // => 'foo'
+  #   clsx(['foo', 0, false, 'bar']);               // => 'foo bar'
+  #
+  # Variants:
+  #   clsx/lite — accepts ONLY string arguments (non-strings ignored)
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure string concatenation utility.
+  # - Taint propagates from any argument to the return value, since string
+  #   arguments are concatenated into the result.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through clsx calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # clsx('foo', tainted, ...) => tainted result
+      # Both default and named export: import clsx from 'clsx' / import { clsx } from 'clsx'
+      - ["clsx", "", "Argument[0..]", "ReturnValue", "taint"]
+      - ["clsx", "Member[clsx]", "Argument[0..]", "ReturnValue", "taint"]
+      # clsx/lite has the same API (strings only)
+      - ["clsx/lite", "", "Argument[0..]", "ReturnValue", "taint"]
+      - ["clsx/lite", "Member[clsx]", "Argument[0..]", "ReturnValue", "taint"]

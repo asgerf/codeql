@@ -1,0 +1,84 @@
+extensions:
+  # =============================================================================
+  # puppeteer-core (npm: "puppeteer-core") - Headless Chrome/Chromium automation
+  # =============================================================================
+  #
+  # puppeteer-core is the library-only version of puppeteer (no bundled browser).
+  # It provides a high-level API to control Chrome/Chromium via DevTools Protocol.
+  #
+  #   const puppeteer = require('puppeteer-core');
+  #   const browser = await puppeteer.launch({executablePath: '...'});
+  #   const page = await browser.newPage();
+  #   await page.goto(url);
+  #   await page.evaluate(code);
+  #   await page.pdf({path: '/tmp/out.pdf'});
+  #
+  # Security concerns:
+  # - page.goto(url): navigates to a URL — request-forgery / SSRF sink.
+  # - page.evaluate(code): executes JS in browser context — code-injection sink.
+  # - page.setContent(html): sets page HTML — html-injection sink.
+  # - page.addScriptTag({url}): loads a remote script — request-forgery sink.
+  # - page.addScriptTag({content}): injects inline JS — code-injection sink.
+  # - page.pdf({path}), page.screenshot({path}): file write — path-injection sink.
+  #
+  # Existing QLL coverage (Puppeteer.qll, TaintedPathCustomizations.qll):
+  # - page.goto(url) as ClientRequest (covers request-forgery)
+  # - page.addStyleTag/addScriptTag({url}) as ClientRequest
+  # - page.pdf/screenshot({path}) as TaintedPath sink
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Request forgery / SSRF — URL navigation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # page.goto(url) — navigates to a URL (SSRF risk)
+      - ["puppeteer-core", "Fuzzy.Member[goto].Argument[0]", "request-forgery"]
+
+      # page.addScriptTag({url}) / page.addStyleTag({url}) — loads remote resource
+      - ["puppeteer-core", "Fuzzy.Member[addScriptTag,addStyleTag].Argument[0].Member[url]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Code injection — evaluate and inline scripts
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # page.evaluate(code, ...args) — executes JS string in browser context
+      # page.evaluateHandle(code, ...args) — same, returns a JSHandle
+      # page.evaluateOnNewDocument(code, ...args) — runs on every navigation
+      # page.$eval(selector, code) — runs code on a selected element
+      # page.$$eval(selector, code) — runs code on all matching elements
+      - [
+          "puppeteer-core",
+          "Fuzzy.Member[evaluate,evaluateHandle,evaluateOnNewDocument].Argument[0]",
+          "code-injection",
+        ]
+      - ["puppeteer-core", "Fuzzy.Member[$eval,$$eval].Argument[1]", "code-injection"]
+
+      # page.addScriptTag({content}) — injects inline JavaScript
+      - ["puppeteer-core", "Fuzzy.Member[addScriptTag].Argument[0].Member[content]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: HTML injection — setContent
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # page.setContent(html) — sets full page HTML
+      - ["puppeteer-core", "Fuzzy.Member[setContent].Argument[0]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Path injection — file output paths
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # page.pdf({path}) — writes PDF to file path
+      # page.screenshot({path}) — writes screenshot to file path
+      - ["puppeteer-core", "Fuzzy.Member[pdf,screenshot].Argument[0].Member[path]", "path-injection"]

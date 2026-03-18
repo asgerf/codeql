@@ -1,0 +1,57 @@
+extensions:
+  # =============================================================================
+  # synchronous-promise (npm: "synchronous-promise") — synchronous Promise impl
+  # =============================================================================
+  #
+  # A Promise implementation that resolves synchronously, primarily used in
+  # testing. Exports a single class:
+  #
+  #   const { SynchronousPromise } = require('synchronous-promise');
+  #   SynchronousPromise.resolve(42).then(v => console.log(v)); // logs 42
+  #
+  # Standard Promise-like API:
+  #   new SynchronousPromise((resolve, reject) => { ... })
+  #   SynchronousPromise.resolve(value)
+  #   SynchronousPromise.reject(reason)
+  #   SynchronousPromise.all(promises)
+  #   SynchronousPromise.any(promises)
+  #   SynchronousPromise.allSettled(promises)
+  #   promise.then(onFulfilled, onRejected)
+  #   promise.catch(onRejected)
+  #   promise.finally(callback)
+  #
+  # Non-standard extensions:
+  #   SynchronousPromise.unresolved() — returns promise with exposed .resolve/.reject
+  #   promise.pause() / promise.resume() — pause/resume resolution chain
+  #   SynchronousPromise.installGlobally() / .uninstallGlobally()
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: the library does not perform security-sensitive operations.
+  # - Promise data flow (.then, .catch, .resolve, .reject, etc.) is largely
+  #   handled by CodeQL's Promises.qll, which recognizes SynchronousPromise
+  #   as a promise constructor. The summaries below provide explicit coverage
+  #   for static factory methods.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through promise factory methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # SynchronousPromise.resolve(value) => resolved promise carrying value
+      - ["synchronous-promise", "Member[SynchronousPromise,resolve]", "Argument[0]", "ReturnValue.Awaited", "value"]
+
+      # SynchronousPromise.reject(reason) => rejected promise carrying reason
+      - ["synchronous-promise", "Member[SynchronousPromise,reject]", "Argument[0]", "ReturnValue.Awaited", "value"]
+
+      # SynchronousPromise.all(promises) => array of resolved values
+      - ["synchronous-promise", "Member[SynchronousPromise,all]", "Argument[0].ArrayElement.Awaited", "ReturnValue.Awaited.ArrayElement", "value"]
+
+      # SynchronousPromise.any(promises) => first fulfilled value
+      - ["synchronous-promise", "Member[SynchronousPromise,any]", "Argument[0].ArrayElement.Awaited", "ReturnValue.Awaited", "value"]
+
+      # SynchronousPromise.allSettled(promises) => array of {status, value/reason}
+      - ["synchronous-promise", "Member[SynchronousPromise,allSettled]", "Argument[0].ArrayElement.Awaited", "ReturnValue.Awaited.ArrayElement.Member[value]", "value"]

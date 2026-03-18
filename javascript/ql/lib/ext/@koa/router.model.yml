@@ -1,0 +1,149 @@
+extensions:
+  # Treat koa-router as an alias for @koa/router
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: typeModel
+    data:
+      - ["@koa/router", "koa-router", ""]
+
+  # Remote flow sources accessible through route handler ctx parameters
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # ===== Sources on ctx (first parameter of route handlers) =====
+      # Covers: router.get/post/put/delete/del/patch/head/options/all/use/link/unlink(path, (ctx, next) => { ... })
+      #
+      # ctx.params      - URL route parameters (e.g. :id)
+      # ctx.query       - parsed query string object
+      # ctx.url         - request URL
+      # ctx.originalUrl - original request URL before rewriting
+      # ctx.href        - full request URL including protocol and host
+      # ctx.path        - request pathname
+      # ctx.search      - query string including ?
+      # ctx.querystring  - query string excluding ?
+      # ctx.host        - host header (may include port)
+      # ctx.hostname    - hostname from host header
+      # ctx.ip          - remote IP address
+      # ctx.ips         - proxy IP chain (X-Forwarded-For)
+      # ctx.headers     - request headers object
+      # ctx.header      - alias for ctx.headers
+      # ctx.origin      - URL origin (protocol + host)
+      # ctx.subdomains  - array of subdomains
+      # ctx.captures    - regex capture groups (router-specific)
+      - [
+          "@koa/router",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all,use,link,unlink].Argument[0..N-1].Parameter[0].Member[params,query,url,originalUrl,href,path,search,querystring,host,hostname,ip,ips,headers,header,origin,subdomains,captures]",
+          "remote",
+        ]
+
+      # ===== Sources on ctx.request =====
+      # ctx.request.body        - parsed request body (from bodyparser middleware)
+      # ctx.request.query       - parsed query string object
+      # ctx.request.params      - alias for ctx.params
+      # ctx.request.url         - request URL
+      # ctx.request.originalUrl - original request URL
+      # ctx.request.href        - full request URL
+      # ctx.request.path        - request pathname
+      # ctx.request.search      - query string including ?
+      # ctx.request.querystring  - query string excluding ?
+      # ctx.request.host        - host header
+      # ctx.request.hostname    - hostname from host header
+      # ctx.request.headers     - request headers object
+      # ctx.request.header      - alias for ctx.request.headers
+      # ctx.request.origin      - URL origin
+      # ctx.request.subdomains  - subdomains array
+      # ctx.request.ip          - remote IP address
+      # ctx.request.ips         - proxy IP chain
+      - [
+          "@koa/router",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all,use,link,unlink].Argument[0..N-1].Parameter[0].Member[request].Member[body,query,params,url,originalUrl,href,path,search,querystring,host,hostname,headers,header,origin,subdomains,ip,ips]",
+          "remote",
+        ]
+
+      # ctx.get(headerName) - returns a request header value
+      - [
+          "@koa/router",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all,use,link,unlink].Argument[0..N-1].Parameter[0].Member[get].ReturnValue",
+          "remote",
+        ]
+
+      # ctx.request.get(headerName) - returns a request header value
+      - [
+          "@koa/router",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all,use,link,unlink].Argument[0..N-1].Parameter[0].Member[request].Member[get].ReturnValue",
+          "remote",
+        ]
+
+      # ctx.cookies.get(name) - returns a cookie value
+      - [
+          "@koa/router",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all,use,link,unlink].Argument[0..N-1].Parameter[0].Member[cookies].Member[get].ReturnValue",
+          "remote",
+        ]
+
+      # ===== Sources from router.param() middleware =====
+      # router.param('id', (id, ctx, next) => { ... })
+      # Parameter[0] is the URL parameter value itself
+      - ["@koa/router", "Fuzzy.Member[param].Argument[1].Parameter[0]", "remote"]
+
+      # ctx properties in param middleware (Parameter[1] is ctx)
+      - [
+          "@koa/router",
+          "Fuzzy.Member[param].Argument[1].Parameter[1].Member[params,query,url,originalUrl,href,path,search,querystring,host,hostname,ip,ips,headers,header,origin,subdomains,captures]",
+          "remote",
+        ]
+      - [
+          "@koa/router",
+          "Fuzzy.Member[param].Argument[1].Parameter[1].Member[request].Member[body,query,params,url,originalUrl,href,path,search,querystring,host,hostname,headers,header,origin,subdomains,ip,ips]",
+          "remote",
+        ]
+      - [
+          "@koa/router",
+          "Fuzzy.Member[param].Argument[1].Parameter[1].Member[get].ReturnValue",
+          "remote",
+        ]
+      - [
+          "@koa/router",
+          "Fuzzy.Member[param].Argument[1].Parameter[1].Member[request].Member[get].ReturnValue",
+          "remote",
+        ]
+      - [
+          "@koa/router",
+          "Fuzzy.Member[param].Argument[1].Parameter[1].Member[cookies].Member[get].ReturnValue",
+          "remote",
+        ]
+
+  # Sinks for security-sensitive operations
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ctx.redirect(url) - open redirect sink
+      - [
+          "@koa/router",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all,use,link,unlink].Argument[0..N-1].Parameter[0].Member[redirect].Argument[0]",
+          "url-redirection",
+        ]
+
+      # ctx.response.redirect(url) - open redirect sink via response object
+      - [
+          "@koa/router",
+          "Fuzzy.Member[get,post,put,delete,del,patch,head,options,all,use,link,unlink].Argument[0..N-1].Parameter[0].Member[response].Member[redirect].Argument[0]",
+          "url-redirection",
+        ]
+
+      # router.redirect(source, destination) - static redirect registration
+      # Argument[1] is the destination URL
+      - ["@koa/router", "Fuzzy.Member[redirect].Argument[1]", "url-redirection"]
+
+  # Summaries for taint flow through utility functions
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # router.url(name, params) - generates URL from named route and params
+      - ["@koa/router", "Fuzzy.Member[url]", "Argument[0..1]", "ReturnValue", "taint"]
+
+      # Router.url(path, params) - static URL generation
+      - ["@koa/router", "Member[url]", "Argument[0..1]", "ReturnValue", "taint"]

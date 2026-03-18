@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # pg (npm: "pg") - PostgreSQL client for Node.js
+  # =============================================================================
+  #
+  # pg (node-postgres) provides Client and Pool objects for querying PostgreSQL:
+  #
+  #   const { Client, Pool } = require('pg');
+  #
+  #   const client = new Client({ host, user, password, database });
+  #   await client.connect();
+  #   const res = await client.query('SELECT * FROM users WHERE id = $1', [id]);
+  #
+  #   const pool = new Pool({ host, user, password, database });
+  #   const res = await pool.query(sql);
+  #   const poolClient = await pool.connect();
+  #   const res = await poolClient.query(sql);
+  #
+  #   // Reusable query object
+  #   const q = new pg.Query('SELECT ...');
+  #
+  # Security concerns:
+  # - SQL injection: the first argument to query() and execute() is
+  #   interpreted as SQL. It can be a string or an object with a `text`
+  #   property. If an attacker controls the SQL string, they can inject
+  #   arbitrary queries. The values array ($1, $2, etc.) is safely
+  #   parameterized and is NOT a sink.
+  # - SQL injection via pg.Query: the constructor argument is SQL.
+  # - Credentials: user and password in Client/Pool constructor options.
+  # - No sources: pg does not provide access to untrusted data.
+  #
+  # Existing QLL coverage:
+  # - SQL.qll: Postgres module models query/execute on Client/Pool/
+  #   PoolClient as SQL injection sinks (both string arg and .text
+  #   property). Also models pg.Query constructor and credentials.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # client.query(sql, ...) / pool.query(sql, ...) — first arg is SQL
+      # Also covers execute() method and the { text: sql } object form
+      - ["pg", "Fuzzy.Member[query,execute].Argument[0]", "sql-injection"]
+
+      # new pg.Query(sql) — constructor argument is SQL
+      - ["pg", "Member[Query].Argument[0]", "sql-injection"]

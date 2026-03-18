@@ -1,0 +1,35 @@
+extensions:
+  # =============================================================================
+  # safe-json-parse/tuple (npm: "safe-json-parse", subpath "tuple")
+  # Parse JSON without throwing — returns [err, json] tuple
+  # =============================================================================
+  #
+  #   const safeParse = require('safe-json-parse/tuple');
+  #   const [err, json] = safeParse(jsonString);
+  #   if (err) { /* handle error */ }
+  #   else { /* use json */ }
+  #
+  # API:
+  #   safeParse(string) → [err, json]
+  #     - err:  SyntaxError if parsing failed, otherwise null
+  #     - json: the parsed value if successful, otherwise undefined
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: the library only wraps JSON.parse; no command execution,
+  #   file I/O, URL navigation, or HTML rendering.
+  # - Taint propagation: the parsed output at index 1 of the returned
+  #   tuple is derived from the input JSON string. If the input is
+  #   tainted, the parsed value is tainted.
+  #
+  # Existing QLL coverage (JsonParsers.qll):
+  #   Recognizes safe-json-parse/tuple as a JsonParserCall with input at
+  #   Argument[0] and output at ReturnValue property "1".
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # safeParse(str) → [err, json]: taint flows from input to tuple[1]
+      - ["safe-json-parse/tuple", "", "Argument[0]", "ReturnValue.Member[1]", "taint"]

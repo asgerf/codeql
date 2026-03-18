@@ -1,0 +1,53 @@
+extensions:
+  # =============================================================================
+  # handlebars (npm: "handlebars") - Semantic templating engine
+  # =============================================================================
+  #
+  # Handlebars compiles template strings into functions. Templates can contain
+  # executable expressions via helpers and built-in block constructs.
+  #
+  # API:
+  #   const Handlebars = require('handlebars');
+  #
+  #   // Compile a template string into a rendering function
+  #   const template = Handlebars.compile(templateString, options?)
+  #   const result = template(data)
+  #
+  #   // Precompile a template (returns a string of JS code)
+  #   const spec = Handlebars.precompile(templateString, options?)
+  #
+  #   // Register a helper
+  #   Handlebars.registerHelper(name, helperFn)
+  #
+  #   // Register a partial
+  #   Handlebars.registerPartial(name, partial)
+  #
+  #   // Mark a string as safe (no escaping)
+  #   new Handlebars.SafeString(htmlString)
+  #
+  # Security concerns:
+  # - SINK (code-injection): Handlebars.compile(template) — the template
+  #   string (arg 0) is parsed and can execute arbitrary expressions via
+  #   helpers. An attacker controlling the template can achieve code execution.
+  # - SINK (code-injection): Handlebars.precompile(template) — same risk;
+  #   the template string is compiled into executable JS code.
+  #
+  # Existing QLL coverage:
+  # - Handlebars.qll: Models the Handlebars library reference (import and
+  #   global), SafeString, and taint steps through compile→template→helper.
+  # - CodeInjectionCustomizations.qll: HandlebarsTemplateSink models
+  #   Handlebars.compile(arg0) as a TemplateSink (code injection).
+  # - Templating.qll: Lists "handlebars" as a package using mustache-style
+  #   template syntax for HTML interpolation analysis.
+  # =============================================================================
+
+  # Sinks: template strings passed to compile/precompile are code-injection vectors.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Handlebars.compile(template, options?) — template string is arg 0
+      - ["handlebars", "Member[compile].Argument[0]", "code-injection"]
+
+      # Handlebars.precompile(template, options?) — template string is arg 0
+      - ["handlebars", "Member[precompile].Argument[0]", "code-injection"]

@@ -1,0 +1,24 @@
+extensions:
+  # =============================================================================
+  # promise/setimmediate/es6-extensions
+  #   (npm: "promise", subpath: "setimmediate/es6-extensions")
+  # =============================================================================
+  #
+  # This is an alternative entry point for the `promise` library that uses
+  # setImmediate scheduling and only exposes ES6-standard Promise methods:
+  #
+  #   var Promise = require('promise/setimmediate/es6-extensions');
+  #
+  # It provides the same Promise constructor and static/prototype methods as
+  # native ES6 Promises (resolve, reject, all, race, then, catch) but without
+  # the non-standard extensions (denodeify, nodeify, done).
+  #
+  # Security relevance:
+  # - No sources, sinks, or summaries needed as data extensions.
+  # - The QLL (Promises.qll: getAPromiseObject()) explicitly lists
+  #   "promise/setimmediate/es6-extensions" as a Promise polyfill entry
+  #   point. All taint flow through promise resolution, rejection, and
+  #   chaining is handled by the general promise infrastructure.
+  #
+  # See promise.model.yml for the full analysis of the `promise` package.
+  # =============================================================================

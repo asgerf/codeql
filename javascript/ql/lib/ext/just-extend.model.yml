@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # just-extend (npm: "just-extend") - Deep/shallow object extend
+  # =============================================================================
+  #
+  # just-extend copies properties from source objects into a target object,
+  # optionally performing a deep (recursive) copy when a boolean flag is passed:
+  #
+  #   const extend = require('just-extend');
+  #
+  #   // Shallow copy
+  #   extend(target, src1, src2);
+  #
+  #   // Deep copy (first argument is boolean true)
+  #   extend(true, target, src1, src2);
+  #
+  # Security concerns:
+  # - No sources: pure utility, does not access external data.
+  # - No sinks: does not execute commands, SQL, or render templates.
+  # - Prototype pollution: vulnerable in deep mode in versions < 4.0.1.
+  #   This is modeled in QLL (PrototypePollutionCustomizations.qll) and
+  #   cannot be expressed as a data extension.
+  # - Taint/value propagation: source operands flow into the destination
+  #   object and the return value.
+  #
+  # Existing QLL coverage:
+  # - Extend.qll: ExtendCallWithFlag models just-extend([deep], target, ...)
+  #   with value-preserving flow from source operands to destination and
+  #   return value.
+  # - PrototypePollutionCustomizations.qll: flagged as vulnerable to
+  #   prototype pollution in versions before 4.0.1.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # extend([deep], target, src1, ...) — source operands flow into the
+      # destination. In the no-flag case, Argument[1..N-1] are sources and
+      # Argument[0] is the target. In the flag case, the flow into the
+      # boolean flag at Argument[0] is harmless.
+      - ["just-extend", "", "Argument[1..N-1]", "Argument[0]", "value"]
+
+      # All object operands flow into the return value.
+      - ["just-extend", "", "Argument[0..N-1]", "ReturnValue", "value"]

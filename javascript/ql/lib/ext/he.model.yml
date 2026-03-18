@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # he (npm: "he") - HTML entity encoder/decoder
+  # =============================================================================
+  #
+  # he is a robust HTML entity encoder/decoder. It supports all standardized
+  # named character references.
+  #
+  # API:
+  #   const he = require('he');
+  #
+  #   he.encode(text, options?)    — encode to HTML entities
+  #   he.escape(text)              — escape HTML-special characters
+  #   he.decode(html, options?)    — decode HTML entities
+  #   he.unescape(html, options?)  — alias for decode
+  #
+  # Security assessment:
+  # - No sources: The library does not fetch or provide access to untrusted data.
+  # - No sinks: The library only transforms strings; it does not perform
+  #   any dangerous operations like command execution, file access, etc.
+  # - he.encode and he.escape are HTML sanitizers — they make data safe for
+  #   HTML contexts. The existing QLL in HtmlSanitizers.qll models these as
+  #   sanitizer functions (taint barriers), which is an internal CodeQL
+  #   concept not expressible via data extension sink/source kinds.
+  # - he.decode/he.unescape reverse the encoding but are taint-propagating
+  #   (output derived from input). Taint flows through them by default in
+  #   CodeQL's standard taint tracking.
+  #
+  # No data extensions are needed for this library.
+  # =============================================================================

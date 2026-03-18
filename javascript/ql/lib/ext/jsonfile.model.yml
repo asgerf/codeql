@@ -1,0 +1,66 @@
+extensions:
+  # =============================================================================
+  # jsonfile (npm: "jsonfile") - Read/write JSON files in Node.js
+  # =============================================================================
+  #
+  # Provides simple async and sync methods for reading and writing JSON files:
+  #
+  #   const jsonfile = require('jsonfile');
+  #
+  #   // Async (callback)
+  #   jsonfile.readFile('/tmp/data.json', (err, obj) => { ... });
+  #   jsonfile.writeFile('/tmp/data.json', obj, (err) => { ... });
+  #
+  #   // Async (promise)
+  #   const obj = await jsonfile.readFile('/tmp/data.json');
+  #   await jsonfile.writeFile('/tmp/data.json', obj);
+  #
+  #   // Sync
+  #   const obj = jsonfile.readFileSync('/tmp/data.json');
+  #   jsonfile.writeFileSync('/tmp/data.json', obj);
+  #
+  # Security concerns:
+  # - SINK (path-injection): The file path argument to all four methods is a
+  #   path injection sink.
+  # - No sources. The library reads from the local filesystem, not from
+  #   untrusted network input.
+  # - Taint propagation: the file path flows into the file system access,
+  #   and the file contents flow to the parsed result (readFile/readFileSync)
+  #   or from the data argument to the file (writeFile/writeFileSync).
+  #
+  # Existing QLL coverage:
+  # - Files.qll: Models readFile/readFileSync as FileSystemReadAccess and
+  #   writeFile/writeFileSync as FileSystemWriteAccess, covering path args
+  #   and data flow nodes.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: file path arguments are path-injection sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # jsonfile.readFile(path, ...) / jsonfile.readFileSync(path, ...)
+      - ["jsonfile", "Member[readFile,readFileSync].Argument[0]", "path-injection"]
+
+      # jsonfile.writeFile(path, ...) / jsonfile.writeFileSync(path, ...)
+      - ["jsonfile", "Member[writeFile,writeFileSync].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through read operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # jsonfile.readFile(path, [opts,] callback) — parsed JSON object is
+      # passed as the second argument to the callback.
+      - ["jsonfile", "Member[readFile]", "Argument[0]", "Argument[1..2].Parameter[1]", "taint"]
+
+      # jsonfile.readFile(path, [opts]) — when no callback is provided,
+      # returns a Promise that resolves to the parsed JSON object.
+      - ["jsonfile", "Member[readFile]", "Argument[0]", "ReturnValue.Awaited", "taint"]
+
+      # jsonfile.readFileSync(path, [opts]) — returns the parsed JSON object.
+      - ["jsonfile", "Member[readFileSync]", "Argument[0]", "ReturnValue", "taint"]

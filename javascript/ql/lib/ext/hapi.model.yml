@@ -1,0 +1,155 @@
+extensions:
+  # =============================================================================
+  # hapi / @hapi/hapi (npm: "hapi", "@hapi/hapi") - The Simple, Secure Framework
+  # =============================================================================
+  #
+  # Hapi is a rich framework for building web applications and services.
+  # The package was originally published as "hapi" and later moved to "@hapi/hapi".
+  #
+  #   const Hapi = require('@hapi/hapi');
+  #   const server = Hapi.server({ port: 3000 });
+  #   // or: const server = new Hapi.Server({ port: 3000 });
+  #
+  #   server.route({
+  #     method: 'GET',
+  #     path: '/user/{id}',
+  #     handler: (request, h) => {
+  #       request.params.id;       // route parameter (untrusted)
+  #       request.query.search;    // query string parameter (untrusted)
+  #       request.payload;         // parsed request body (untrusted)
+  #       request.payload.name;    // body field (untrusted)
+  #       request.rawPayload;      // raw body buffer (untrusted)
+  #       request.headers;         // all headers (untrusted)
+  #       request.state;           // cookies (untrusted)
+  #       request.url;             // parsed URL object (untrusted)
+  #       request.path;            // URL path (untrusted)
+  #       request.info.host;       // host from header (untrusted)
+  #       request.info.remoteAddress; // client IP
+  #
+  #       return 'response';       // handler return is the response body
+  #       return h.response(data); // explicit response
+  #       return h.redirect(url);  // redirect
+  #       return h.file(path);     // serve file (@hapi/inert)
+  #       return h.view(tpl, ctx); // render template (@hapi/vision)
+  #       request.response.header('X-Foo', val); // set header
+  #     }
+  #   });
+  #
+  # Server creation:
+  #   - new Hapi.Server() / Hapi.server() from "hapi" or "@hapi/hapi"
+  #   - Glue.compose() from "@hapi/glue"
+  #   - Plugin register(server, options) pattern
+  #
+  # Existing QLL coverage (Hapi.qll):
+  # - Sources (RequestInputAccess):
+  #   - request.rawPayload (body)
+  #   - request.payload.<name> (body, property-level)
+  #   - request.query.<name>, request.params.<name> (parameter, property-level)
+  #   - request.url.path, request.url.origin (url)
+  #   - request.state.<name> (cookie)
+  #   - request.headers.<name> (header)
+  # - Sinks:
+  #   - HandlerReturn: return value from route handler (ResponseSendArgument)
+  #   - HeaderDefinition: request.response.header(name, value)
+  #   - ViewCall: h.view(template, context) as TemplateInstantiation
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Untrusted request data in Hapi route handlers
+  # ---------------------------------------------------------------------------
+  #
+  # Route handlers: server.route({ handler: (request, h) => {...} })
+  # Extension handlers: server.ext('onRequest', (request, h) => {...})
+  #
+  # Using Fuzzy to trace through Hapi.server()/new Hapi.Server(), server
+  # references, route config objects, etc.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- Request body ---
+      # request.payload — parsed body (POST/PUT/PATCH)
+      - ["hapi", "Fuzzy.Member[payload]", "remote"]
+      - ["@hapi/hapi", "Fuzzy.Member[payload]", "remote"]
+
+      # request.rawPayload — raw body buffer
+      - ["hapi", "Fuzzy.Member[rawPayload]", "remote"]
+      - ["@hapi/hapi", "Fuzzy.Member[rawPayload]", "remote"]
+
+      # --- Query and path parameters ---
+      # request.query — parsed query string object
+      - ["hapi", "Fuzzy.Member[query]", "remote"]
+      - ["@hapi/hapi", "Fuzzy.Member[query]", "remote"]
+
+      # request.params — route path parameters
+      - ["hapi", "Fuzzy.Member[params]", "remote"]
+      - ["@hapi/hapi", "Fuzzy.Member[params]", "remote"]
+
+      # --- Cookies ---
+      # request.state — parsed cookies
+      - ["hapi", "Fuzzy.Member[state]", "remote"]
+      - ["@hapi/hapi", "Fuzzy.Member[state]", "remote"]
+
+      # --- Headers ---
+      # request.headers — all request headers
+      - ["hapi", "Fuzzy.Member[headers]", "remote"]
+      - ["@hapi/hapi", "Fuzzy.Member[headers]", "remote"]
+
+      # --- URL-related properties ---
+      # request.url — parsed URL object (contains path, search, etc.)
+      - ["hapi", "Fuzzy.Member[url]", "remote"]
+      - ["@hapi/hapi", "Fuzzy.Member[url]", "remote"]
+
+      # request.path — URL path portion
+      - ["hapi", "Fuzzy.Member[path]", "remote"]
+      - ["@hapi/hapi", "Fuzzy.Member[path]", "remote"]
+
+      # --- Connection info ---
+      # request.info.host — from Host header (untrusted)
+      - ["hapi", "Fuzzy.Member[info].Member[host,hostname]", "remote"]
+      - ["@hapi/hapi", "Fuzzy.Member[info].Member[host,hostname]", "remote"]
+
+      # --- @hapi/glue server creation ---
+      - ["@hapi/glue", "Fuzzy.Member[payload,rawPayload,query,params,state,headers,url,path]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: XSS / HTML injection — response body
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # h.response(value) — creates response object with given body
+      - ["hapi", "Fuzzy.Member[response].Argument[0]", "html-injection"]
+      - ["@hapi/hapi", "Fuzzy.Member[response].Argument[0]", "html-injection"]
+
+      # h.view(template, context) — renders template; context values are XSS risk
+      - ["hapi", "Fuzzy.Member[view].Argument[1]", "html-injection"]
+      - ["@hapi/hapi", "Fuzzy.Member[view].Argument[1]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL redirection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # h.redirect(uri) — HTTP redirect
+      - ["hapi", "Fuzzy.Member[redirect].Argument[0]", "url-redirection"]
+      - ["@hapi/hapi", "Fuzzy.Member[redirect].Argument[0]", "url-redirection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Path injection (file system access)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # h.file(path) — serve file (from @hapi/inert plugin, called on toolkit)
+      - ["hapi", "Fuzzy.Member[file].Argument[0]", "path-injection"]
+      - ["@hapi/hapi", "Fuzzy.Member[file].Argument[0]", "path-injection"]
+
+      # h.view(template, ...) — first argument is template file path
+      - ["hapi", "Fuzzy.Member[view].Argument[0]", "path-injection"]
+      - ["@hapi/hapi", "Fuzzy.Member[view].Argument[0]", "path-injection"]

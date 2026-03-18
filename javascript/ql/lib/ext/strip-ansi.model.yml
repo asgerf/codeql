@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # strip-ansi (npm: "strip-ansi") — Strip ANSI escape codes from a string
+  # =============================================================================
+  #
+  # A single-function utility that removes ANSI escape codes from strings:
+  #
+  #   import stripAnsi from 'strip-ansi';
+  #   stripAnsi('\u001B[4mUnicorn\u001B[0m'); // => 'Unicorn'
+  #
+  # Security relevance:
+  # - No sources or sinks.
+  # - Summary: taint flows from the input string (Argument[0]) to the return
+  #   value. Stripping ANSI codes is a string manipulation that preserves
+  #   attacker-controlled content.
+  #
+  # Existing QLL coverage (Logging.qll: StripAnsiStep):
+  # - Taint step from Argument[0] to ReturnValue of strip-ansi calls.
+  #   Replicated below as a data extension.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # stripAnsi(input) => cleaned string — taint propagates through
+      - ["strip-ansi", "", "Argument[0]", "ReturnValue", "taint"]

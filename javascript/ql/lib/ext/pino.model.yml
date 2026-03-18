@@ -1,0 +1,49 @@
+extensions:
+  # =============================================================================
+  # pino (npm: "pino") — fast Node.js JSON logger
+  # =============================================================================
+  #
+  # Pino is a very low-overhead JSON logging library for Node.js.
+  #
+  #   const pino = require('pino');
+  #   const logger = pino();
+  #   logger.info('hello');
+  #   logger.info({ requestId: '123' }, 'handled request');
+  #   logger.child({ module: 'auth' }).warn('session expired');
+  #
+  # Logging methods (on logger instances):
+  #   logger.trace(obj?, msg, ...args)
+  #   logger.debug(obj?, msg, ...args)
+  #   logger.info(obj?, msg, ...args)
+  #   logger.warn(obj?, msg, ...args)
+  #   logger.error(obj?, msg, ...args)
+  #   logger.fatal(obj?, msg, ...args)
+  #
+  # Child loggers:
+  #   logger.child(bindings) → child logger with same methods
+  #
+  # Security concerns:
+  # - All logging methods are log-injection sinks. Attacker-controlled data
+  #   in log messages can forge log entries, inject newlines, or exploit
+  #   log viewers that interpret special characters.
+  # - No sources or summaries needed.
+  #
+  # Existing QLL coverage (Logging.qll):
+  #   PinoCall models pino().{trace,debug,info,warn,error,fatal}(args) as
+  #   LoggerCall, making all arguments log-injection sinks. Also covers
+  #   child loggers and pino installed on HTTP request objects (req.log,
+  #   req.logger). The req.log/req.logger path is framework-specific and
+  #   handled via Http::RequestNode in the QLL.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: log injection via pino logging methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # pino().trace/debug/info/warn/error/fatal(...args)
+      # Fuzzy covers logger instances from pino(), pino().child(), and
+      # deeper child logger chains.
+      - ["pino", "Fuzzy.Member[trace,debug,info,warn,error,fatal].Argument[0..N-1]", "log-injection"]

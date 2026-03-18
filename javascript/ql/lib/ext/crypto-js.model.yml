@@ -1,0 +1,188 @@
+extensions:
+  # =============================================================================
+  # crypto-js (npm: "crypto-js") - JavaScript cryptographic library
+  # =============================================================================
+  #
+  # CryptoJS provides hashing, HMAC, symmetric encryption, and key derivation.
+  # It supports two import styles:
+  #
+  #   // Main import
+  #   const CryptoJS = require('crypto-js');
+  #   CryptoJS.SHA256('message').toString();
+  #   CryptoJS.AES.encrypt('message', 'key').toString();
+  #   CryptoJS.HmacSHA256('message', 'key').toString();
+  #
+  #   // Sub-module imports
+  #   const SHA256 = require('crypto-js/sha256');
+  #   const AES = require('crypto-js/aes');
+  #
+  # Also supports an incremental (streaming) API:
+  #   const hasher = CryptoJS.algo.SHA256.create();
+  #   hasher.update('part1');
+  #   hasher.update('part2');
+  #   const hash = hasher.finalize();
+  #
+  # Encoding utilities convert between strings and WordArrays:
+  #   CryptoJS.enc.Utf8.parse('string')    → WordArray
+  #   CryptoJS.enc.Hex.stringify(wordArray) → string
+  #
+  # Security concerns:
+  # - No traditional injection sinks. Crypto-specific concerns (weak
+  #   algorithms, block modes) are handled by the CryptographicOperation
+  #   concept framework in CryptoLibraries.qll.
+  # - No sources. The library does not provide HTTP or untrusted data access.
+  # - Taint propagation through crypto operations is the key concern.
+  #
+  # Existing QLL coverage:
+  # - CryptoLibraries.qll (CryptoJS module): Models algorithm name tracking,
+  #   block mode detection, key identification, and CryptographicOperation
+  #   inputs via encrypt, direct-call (hash/HMAC), and update patterns.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation via main "crypto-js" import
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =======================================================================
+      # Direct hash calls: CryptoJS.SHA256(msg) → WordArray
+      # =======================================================================
+      - ["crypto-js", "Member[MD5,SHA1,SHA224,SHA256,SHA384,SHA512,SHA3,RIPEMD160]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Direct HMAC calls: CryptoJS.HmacSHA256(msg, key) → WordArray
+      # =======================================================================
+      - ["crypto-js", "Member[HmacMD5,HmacSHA1,HmacSHA224,HmacSHA256,HmacSHA384,HmacSHA512,HmacSHA3,HmacRIPEMD160]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Cipher encrypt/decrypt (fuzzy across all cipher algorithm members)
+      # Matches CryptoJS.AES.encrypt(msg, key), CryptoJS.DES.decrypt(...), etc.
+      # =======================================================================
+      - ["crypto-js", "Fuzzy.Member[encrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js", "Fuzzy.Member[decrypt]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Key derivation: CryptoJS.PBKDF2(password, salt, opts) → WordArray
+      #                 CryptoJS.EvpKDF(password, salt, opts) → WordArray
+      # =======================================================================
+      - ["crypto-js", "Member[PBKDF2]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js", "Member[EvpKDF]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Incremental (streaming) API:
+      #   hasher = CryptoJS.algo.SHA256.create();
+      #   hasher.update(data);   // taint to receiver + return (for chaining)
+      #   result = hasher.finalize();
+      # =======================================================================
+      - ["crypto-js", "Fuzzy.Member[update]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js", "Fuzzy.Member[update]", "Argument[0]", "Argument[this]", "taint"]
+      - ["crypto-js", "Fuzzy.Member[finalize]", "Argument[this]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # WordArray / CipherParams serialization:
+      #   wordArray.toString(CryptoJS.enc.Hex)
+      # =======================================================================
+      - ["crypto-js", "Fuzzy.Member[toString]", "Argument[this]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Encoding utilities:
+      #   CryptoJS.enc.Utf8.parse('string')    → WordArray
+      #   CryptoJS.enc.Base64.stringify(wa)     → string
+      # =======================================================================
+      - ["crypto-js", "Fuzzy.Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js", "Fuzzy.Member[stringify]", "Argument[0]", "ReturnValue", "taint"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation via cipher sub-module imports
+  #   e.g. require('crypto-js/aes').encrypt(msg, key)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # AES
+      - ["crypto-js/aes", "Member[encrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/aes", "Member[decrypt]", "Argument[0]", "ReturnValue", "taint"]
+
+      # TripleDES (also includes DES internally)
+      - ["crypto-js/tripledes", "Member[encrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/tripledes", "Member[decrypt]", "Argument[0]", "ReturnValue", "taint"]
+
+      # RC4
+      - ["crypto-js/rc4", "Member[encrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/rc4", "Member[decrypt]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Rabbit
+      - ["crypto-js/rabbit", "Member[encrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/rabbit", "Member[decrypt]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Rabbit (legacy)
+      - ["crypto-js/rabbit-legacy", "Member[encrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/rabbit-legacy", "Member[decrypt]", "Argument[0]", "ReturnValue", "taint"]
+
+      # RC4Drop
+      - ["crypto-js/rc4drop", "Member[encrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/rc4drop", "Member[decrypt]", "Argument[0]", "ReturnValue", "taint"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation via hash sub-module imports
+  #   e.g. require('crypto-js/sha256')(msg)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      - ["crypto-js/md5", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/sha1", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/sha224", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/sha256", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/sha384", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/sha512", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/sha3", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/ripemd160", "", "Argument[0]", "ReturnValue", "taint"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation via HMAC sub-module imports
+  #   e.g. require('crypto-js/hmac-sha256')(msg, key)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      - ["crypto-js/hmac-md5", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/hmac-sha1", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/hmac-sha224", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/hmac-sha256", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/hmac-sha384", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/hmac-sha512", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/hmac-sha3", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/hmac-ripemd160", "", "Argument[0]", "ReturnValue", "taint"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation via key derivation sub-module imports
+  #   e.g. require('crypto-js/pbkdf2')(password, salt, opts)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      - ["crypto-js/pbkdf2", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/evpkdf", "", "Argument[0]", "ReturnValue", "taint"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation via encoding sub-module imports
+  #   e.g. require('crypto-js/enc-utf8').parse(str) → WordArray
+  #        require('crypto-js/enc-base64').stringify(wa) → string
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      - ["crypto-js/enc-utf8", "Member[parse,stringify]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/enc-base64", "Member[parse,stringify]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/enc-base64url", "Member[parse,stringify]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/enc-hex", "Member[parse,stringify]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/enc-latin1", "Member[parse,stringify]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto-js/enc-utf16", "Member[parse,stringify]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # luxon (npm: "luxon") — Date/time library for JavaScript
+  # =============================================================================
+  #
+  # Luxon provides immutable DateTime, Duration, and Interval types with a
+  # fluent API for creation, parsing, transformation, and formatting.
+  #
+  #   import { DateTime } from "luxon";
+  #   DateTime.now().toFormat("yyyy-MM-dd");
+  #   DateTime.fromISO("2023-01-01").toFormat(userInput);
+  #
+  # Security concerns:
+  # - No sources or sinks. Luxon is a pure date/time computation library with
+  #   no file system or network I/O.
+  # - Taint propagation: the format string argument to toFormat() flows into the
+  #   returned string. An attacker who controls the format string controls the
+  #   output.
+  #
+  # Existing QLL coverage (DateFunctions.qll):
+  # - Tracks DateTime objects through the fluent API and factory methods.
+  # - Models toFormat(fmt) as a string-manipulation taint step from the format
+  #   string to the call result.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through formatting
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # DateTime.toFormat(fmt) / Duration.toFormat(fmt)
+      # The format string controls the output, so taint flows from it to the
+      # result. Fuzzy covers all DateTime/Duration instances obtained through
+      # factory methods and the fluent API.
+      - ["luxon", "Fuzzy.Member[toFormat]", "Argument[0]", "ReturnValue", "taint"]

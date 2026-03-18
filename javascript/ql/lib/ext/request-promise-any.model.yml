@@ -1,0 +1,78 @@
+extensions:
+  # =============================================================================
+  # request-promise-any (npm: "request-promise-any") — Promise wrapper for
+  # the request library using any-promise
+  # =============================================================================
+  #
+  # request-promise-any wraps the `request` HTTP client with promise support
+  # via the `any-promise` library, which adapts to whichever promise
+  # implementation is available (Bluebird, native, Q, etc.). The API is
+  # identical to request-promise and request-promise-native.
+  #
+  #   const rp = require('request-promise-any');
+  #
+  #   // Direct call with URL string
+  #   const body = await rp('https://example.com');
+  #
+  #   // Direct call with options object
+  #   const body = await rp({ uri: 'https://example.com', json: true });
+  #
+  #   // HTTP method helpers
+  #   await rp.get(url);
+  #   await rp.post(url, { body: data });
+  #   await rp.put(url, { body: data });
+  #   await rp.delete(url);
+  #   await rp.head(url);
+  #   await rp.patch(url);
+  #   await rp.options(url);
+  #
+  #   // Custom defaults
+  #   const custom = rp.defaults({ baseUrl: 'https://api.example.com' });
+  #   await custom.get('/endpoint');
+  #
+  #   // Callback style (inherited from request)
+  #   rp(url, (err, response, body) => { ... });
+  #
+  # Security concerns:
+  # - URL arguments and uri/url options control outbound request destinations
+  #   → request-forgery sinks.
+  # - The resolved promise value (or callback body parameter) contains the
+  #   HTTP response body → remote flow source.
+  #
+  # Existing QLL coverage (ClientRequests.qll):
+  #   RequestUrlRequest models request-promise-any (alongside
+  #   request-promise and request-promise-native) as ClientRequest::Range,
+  #   providing URL sink and response data sources.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: request-forgery — URL controls which server is contacted
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # rp(url), rp.get(url), rp.defaults({...}).get(url), etc.
+      # Fuzzy absorbs intermediate member accesses (method helpers, defaults).
+      - ["request-promise-any", "Fuzzy.Argument[0]", "request-forgery"]
+
+      # rp({ uri: url }), rp.get({ url: target }), etc.
+      - ["request-promise-any", "Fuzzy.Argument[0].Member[url,uri]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: remote — response data from external servers
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Promise form: await rp(url), await rp.get(url),
+      # await rp.defaults({...}).get(url), etc.
+      - ["request-promise-any", "Fuzzy.ReturnValue.Awaited", "remote"]
+
+      # Callback form: rp(url, (err, response, body) => {...})
+      # Parameter[2] is the body.
+      - ["request-promise-any", "Fuzzy.Argument[N-1].Parameter[2]", "remote"]
+
+      # Callback form: response.body on the response parameter.
+      - ["request-promise-any", "Fuzzy.Argument[N-1].Parameter[1].Member[body]", "remote"]

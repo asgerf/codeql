@@ -1,0 +1,55 @@
+extensions:
+  # =============================================================================
+  # https (Node.js built-in) - HTTPS client and server
+  # =============================================================================
+  #
+  # The https module provides an HTTP client and server with TLS/SSL.
+  # Its API mirrors the http module.
+  #
+  # Server API:
+  #   https.createServer([options], requestListener)
+  #     - requestListener(req, res): req.url, req.headers, req.body are
+  #       attacker-controlled. This is modeled via the HTTP framework
+  #       classes in NodeJSLib.qll (ServerDefinition, RouteHandler,
+  #       RequestInputAccess) and cannot be expressed as data extensions.
+  #
+  # Client API:
+  #   https.request(url, [options], [callback])  — make an HTTPS request
+  #   https.request(options, [callback])         — options.hostname, .path, etc.
+  #   https.get(url, [options], [callback])      — convenience for GET
+  #   https.get(options, [callback])
+  #
+  # Security concerns:
+  # - Request forgery (SSRF): The URL/options argument to request() and get()
+  #   controls where the outgoing request is sent. If attacker-controlled,
+  #   this is a server-side request forgery vulnerability.
+  # - The response callback receives server-controlled data, but this is
+  #   modeled as a ClientRequest response in NodeJSLib.qll.
+  # - Credentials: options.auth passes credentials and is modeled as a
+  #   CredentialsNode in NodeJSLib.qll.
+  #
+  # Existing QLL coverage (NodeJSLib.qll):
+  # - ServerDefinition: https.createServer() as an HTTP server with full
+  #   request source modeling (req.url, req.headers, req.body, cookies).
+  # - NodeHttpUrlRequest: https.request(url)/https.get(url) as ClientRequest
+  #   with getUrl() feeding into RequestForgery and other queries.
+  # - Credentials: https.request({ auth }) as CredentialsNode.
+  # - ClientRequestHandler: response callbacks for data flow.
+  #
+  # The server-side modeling (createServer, route handlers, request sources)
+  # relies on the HTTP framework class hierarchy and cannot be expressed as
+  # data extensions. The data extensions below cover the client-side
+  # request-forgery sinks.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Server-side request forgery (SSRF)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # https.request(url, ...) — first argument is the target URL
+      - ["https", "Member[request].Argument[0]", "request-forgery"]
+      # https.get(url, ...) — first argument is the target URL
+      - ["https", "Member[get].Argument[0]", "request-forgery"]

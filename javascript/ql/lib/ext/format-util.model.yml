@@ -1,0 +1,32 @@
+extensions:
+  # =============================================================================
+  # format-util (npm: "format-util") — lightweight printf-style string formatter
+  # =============================================================================
+  #
+  # format-util is a browser-compatible reimplementation of Node.js util.format().
+  # It accepts a format string with printf-style specifiers (%s, %d, %j, %%)
+  # followed by values to interpolate.
+  #
+  #   const format = require('format-util');
+  #   format('%s has %d items', name, count); // => 'Alice has 3 items'
+  #
+  # Extra arguments beyond the format specifiers are concatenated with spaces.
+  #
+  # Security concerns:
+  # - No sources: format-util does not fetch external data.
+  # - No sinks expressible via data extensions. (The format-string argument is
+  #   a tainted-format-string sink when format arguments are present, but that
+  #   query uses a custom sink class, not the extensible sinkModel predicate.)
+  # - Taint propagation: the format string and all format arguments flow into
+  #   the returned string.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through format-util calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # format('%s is %d', tainted, ...) => tainted result
+      - ["format-util", "", "Argument[0..]", "ReturnValue", "taint"]

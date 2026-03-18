@@ -1,0 +1,41 @@
+extensions:
+  # =============================================================================
+  # escape-goat (npm: "escape-goat") - HTML escape/unescape utility
+  # =============================================================================
+  #
+  # Tiny utility for escaping and unescaping HTML entities.
+  #
+  #   import { htmlEscape, htmlUnescape } from 'escape-goat';
+  #
+  #   htmlEscape('Hello <em>World</em>');
+  #   //=> 'Hello &lt;em&gt;World&lt;/em&gt;'
+  #
+  #   htmlUnescape('🦄 &amp; 🐐');
+  #   //=> '🦄 & 🐐'
+  #
+  # Both functions also work as tagged template literals, escaping/unescaping
+  # only the interpolated values.
+  #
+  # Security concerns:
+  # - No sources or sinks. The library performs pure string transformations.
+  # - htmlEscape is an HTML sanitizer: it replaces &, <, >, ", ' with entities.
+  # - htmlUnescape reverses that, so taint propagates through both functions.
+  # - The older API names (escape, unescape) are aliases for the same functions.
+  #
+  # Existing QLL coverage:
+  # - HtmlSanitizers.qll: Recognizes escape-goat's "escape" export as an
+  #   HtmlSanitizerCall (but not "htmlEscape", the current API name).
+  # =============================================================================
+
+  # Summaries: Taint propagation through escape/unescape functions.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # htmlEscape(str) / escape(str) → escaped string
+      # The output is derived from the input (with HTML meta-characters replaced).
+      - ["escape-goat", "Member[htmlEscape,escape]", "Argument[0]", "ReturnValue", "taint"]
+
+      # htmlUnescape(str) / unescape(str) → unescaped string
+      # The output is derived from the input (with HTML entities decoded).
+      - ["escape-goat", "Member[htmlUnescape,unescape]", "Argument[0]", "ReturnValue", "taint"]

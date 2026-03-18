@@ -1,0 +1,55 @@
+extensions:
+  # =============================================================================
+  # safe-stable-stringify (npm: "safe-stable-stringify") — Safe, deterministic
+  # and fast JSON serializer
+  # =============================================================================
+  #
+  # A drop-in replacement for JSON.stringify that handles circular references
+  # (replacing with "[Circular]"), BigInt values, and guarantees deterministic
+  # (sorted) key ordering:
+  #
+  #   const stringify = require('safe-stable-stringify');
+  #   // or: import { stringify, configure } from 'safe-stable-stringify';
+  #
+  #   stringify({ b: 2, a: 1 });          // '{"a":1,"b":2}'
+  #   stringify(circular);                 // handles circular refs safely
+  #
+  #   // configure() returns a customized stringify function
+  #   const custom = stringify.configure({
+  #     circularValue: '[Circular]',
+  #     deterministic: true,
+  #     maximumDepth: 10,
+  #     maximumBreadth: 100
+  #   });
+  #   custom(obj);
+  #
+  # API:
+  #   stringify(value, replacer?, space?) → string
+  #   stringify.configure(options) → customStringify function
+  #   customStringify(value, replacer?, space?) → string
+  #
+  # Security concerns:
+  # - No sources or sinks: purely a serializer, does not generate code,
+  #   execute eval, fetch data, or access the filesystem.
+  # - Taint propagation: the input value and its nested properties flow
+  #   into the returned JSON string.
+  #
+  # Existing QLL coverage:
+  #   JsonStringifiers.qll: safe-stable-stringify is listed as a module
+  #   import in JsonStringifyCall (taint from arg 0 to return value).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through serialization
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # stringify(value, replacer?, space?) → JSON string
+      # The default export is the stringify function itself.
+      - ["safe-stable-stringify", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # stringify.configure(options) returns a new stringify function.
+      # custom = stringify.configure({...}); custom(value) → JSON string
+      - ["safe-stable-stringify", "Member[configure].ReturnValue", "Argument[0]", "ReturnValue", "taint"]

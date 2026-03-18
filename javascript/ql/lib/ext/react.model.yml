@@ -1,6 +1,225 @@
 extensions:
+  # =============================================================================
+  # react (npm: "react") - A JavaScript library for building user interfaces
+  # =============================================================================
+  #
+  # React is the dominant UI library for JavaScript. Its security-relevant
+  # surface includes XSS sinks (dangerouslySetInnerHTML), URL injection via
+  # JSX attributes, and taint flow through hooks and component state/props.
+  #
+  # Key APIs:
+  #   React.createElement(type, props, ...children)
+  #   React.createFactory(type)(props, ...children)
+  #   <Component prop={value} />              — JSX syntax
+  #   <div dangerouslySetInnerHTML={{__html: html}} />
+  #   <script>{code}</script>                 — code injection
+  #   <a href={url} />                        — URL attributes
+  #
+  # Hooks:
+  #   const [state, setState] = useState(init)
+  #   const ref = useRef(init)        — ref.current
+  #   const value = useMemo(() => v, deps)
+  #   const ctx = useContext(Context)
+  #
+  # IMPORTANT: Most React security modeling is deeply AST-based (JSX attribute
+  # analysis, component class hierarchy, props/state flow across component
+  # boundaries). These patterns are NOT expressible as data extension models
+  # and remain in QLL:
+  #
+  # Existing QLL coverage (React.qll, DomBasedXssCustomizations.qll,
+  #   ClientSideUrlRedirectCustomizations.qll, CodeInjectionCustomizations.qll):
+  # - Sinks:
+  #   - DangerouslySetInnerHtmlSink: <div dangerouslySetInnerHTML={{__html: x}}/>
+  #     and createElement('div', {dangerouslySetInnerHTML: {__html: x}})
+  #   - ReactAttributeWriteUrlSink: JSX href/src/etc. on HTML elements
+  #   - ReactScriptTag: <script>{code}</script> body elements
+  #   - TooltipSink: data-tip when data-html="true"
+  # - Sources:
+  #   - ServerFunctionRemoteFlowSource: 'use server' function parameters
+  #   - ReactPropAsViewComponentInput: component props
+  #   - ReactRouterSource (react-router-dom): useParams, useRouteMatch, etc.
+  # - Flow summaries (QLL):
+  #   - UseStateStep: useState initial/setter → state variable
+  #   - UseRefStep: useRef initial → ref.current
+  #   - UseMemoStep: useMemo callback return → result
+  #   - UseContextStep: createContext/Provider value → useContext result
+  #   - PropsFlowStep: component prop values → prop reads
+  #   - StateTaintStep: setState/state assignment → state reads
+  #   - HigherOrderComponentStep: memo, forwardRef, lazy, connect, etc.
+  #
+  # Data extensions below cover hook flow summaries that can be expressed
+  # as summaryModel tuples. These complement (and partially overlap with)
+  # the QLL PreCallGraphStep modeling.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Taint flow through React hooks
+  # ---------------------------------------------------------------------------
   - addsTo:
       pack: codeql/javascript-all
       extensible: summaryModel
     data:
-      - ["react", "Member[use]", "Argument[0].Awaited", "ReturnValue", "value"]
+      # --- useState ---
+      # const [state, setState] = useState(initialValue);
+      # Initial value flows to the state (index 0 of returned array).
+      - [
+          "react",
+          "Member[useState]",
+          "Argument[0]",
+          "ReturnValue.Member[0]",
+          "value",
+        ]
+      # Lazy initial state: useState(() => value)
+      - [
+          "react",
+          "Member[useState]",
+          "Argument[0].ReturnValue",
+          "ReturnValue.Member[0]",
+          "value",
+        ]
+      # setState(newValue) flows to state.
+      - [
+          "react",
+          "Member[useState]",
+          "ReturnValue.Member[1].Argument[0]",
+          "ReturnValue.Member[0]",
+          "value",
+        ]
+      # setState(prev => newValue): callback return flows to state.
+      - [
+          "react",
+          "Member[useState]",
+          "ReturnValue.Member[1].Argument[0].ReturnValue",
+          "ReturnValue.Member[0]",
+          "value",
+        ]
+      # setState(prev => ...): current state flows to callback parameter.
+      - [
+          "react",
+          "Member[useState]",
+          "ReturnValue.Member[0]",
+          "ReturnValue.Member[1].Argument[0].Parameter[0]",
+          "value",
+        ]
+
+      # --- useRef ---
+      # const ref = useRef(initialValue); ref.current === initialValue
+      - [
+          "react",
+          "Member[useRef]",
+          "Argument[0]",
+          "ReturnValue.Member[current]",
+          "value",
+        ]
+
+      # --- useMemo ---
+      # const value = useMemo(() => computedValue, deps);
+      - [
+          "react",
+          "Member[useMemo]",
+          "Argument[0].ReturnValue",
+          "ReturnValue",
+          "value",
+        ]
+
+      # --- useCallback ---
+      # const fn = useCallback(callback, deps); fn === callback
+      - [
+          "react",
+          "Member[useCallback]",
+          "Argument[0]",
+          "ReturnValue",
+          "value",
+        ]
+
+      # --- useReducer ---
+      # const [state, dispatch] = useReducer(reducer, initialState);
+      # Initial state flows to state.
+      - [
+          "react",
+          "Member[useReducer]",
+          "Argument[1]",
+          "ReturnValue.Member[0]",
+          "value",
+        ]
+      # Lazy initializer: useReducer(reducer, initArg, init)
+      # init(initArg) return flows to state.
+      - [
+          "react",
+          "Member[useReducer]",
+          "Argument[2].ReturnValue",
+          "ReturnValue.Member[0]",
+          "value",
+        ]
+      # reducer(state, action) return flows to state.
+      - [
+          "react",
+          "Member[useReducer]",
+          "Argument[0].ReturnValue",
+          "ReturnValue.Member[0]",
+          "value",
+        ]
+      # dispatch(action): action flows to reducer's second parameter.
+      - [
+          "react",
+          "Member[useReducer]",
+          "ReturnValue.Member[1].Argument[0]",
+          "Argument[0].Parameter[1]",
+          "value",
+        ]
+      # Current state flows to reducer's first parameter.
+      - [
+          "react",
+          "Member[useReducer]",
+          "ReturnValue.Member[0]",
+          "Argument[0].Parameter[0]",
+          "value",
+        ]
+
+      # --- React.Children.map ---
+      # React.Children.map(children, (child) => ...): children elements
+      # flow to callback parameter.
+      - [
+          "react",
+          "Member[Children].Member[map]",
+          "Argument[0]",
+          "Argument[1].Parameter[0]",
+          "value",
+        ]
+      # Callback return flows to the result array.
+      - [
+          "react",
+          "Member[Children].Member[map]",
+          "Argument[1].ReturnValue",
+          "ReturnValue",
+          "value",
+        ]
+
+      # --- React.Children.forEach ---
+      # React.Children.forEach(children, (child) => ...): children elements
+      # flow to callback parameter.
+      - [
+          "react",
+          "Member[Children].Member[forEach]",
+          "Argument[0]",
+          "Argument[1].Parameter[0]",
+          "value",
+        ]
+
+      # --- React.cloneElement ---
+      # React.cloneElement(element, props?, ...children)
+      # The original element and new props flow to the result.
+      - [
+          "react",
+          "Member[cloneElement]",
+          "Argument[0]",
+          "ReturnValue",
+          "value",
+        ]
+      - [
+          "react",
+          "Member[cloneElement]",
+          "Argument[1]",
+          "ReturnValue",
+          "taint",
+        ]

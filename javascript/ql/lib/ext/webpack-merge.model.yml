@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # webpack-merge (npm: "webpack-merge")
+  # =============================================================================
+  #
+  # A merge utility designed for webpack configuration objects. Deeply merges
+  # multiple config objects, concatenating arrays and recursively merging
+  # nested objects.
+  #
+  #   const { merge } = require('webpack-merge');
+  #   const merged = merge(baseConfig, devConfig);
+  #
+  #   const { mergeWithCustomize } = require('webpack-merge');
+  #   const customMerge = mergeWithCustomize({ ... });
+  #   const merged = customMerge(baseConfig, devConfig);
+  #
+  #   const { mergeWithRules } = require('webpack-merge');
+  #   const ruleMerge = mergeWithRules({ ... });
+  #   const merged = ruleMerge(baseConfig, devConfig);
+  #
+  # Security concerns:
+  # - No sources: does not access external or untrusted data.
+  # - No sinks: no command execution, file I/O, URL navigation, or HTML
+  #   rendering.
+  # - Taint propagation: the merged output is derived from all input
+  #   config objects. If any input is tainted, the output is tainted.
+  #
+  # Existing QLL coverage (Extend.qll):
+  #   WebpackMergeDeep models merge, mergeWithCustomize, and mergeWithRules
+  #   as ExtendCall instances with value-preserving flow from all arguments
+  #   to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow through merge operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # merge(config1, config2, ...) → merged config
+      - ["webpack-merge", "Member[merge]", "Argument[0..10]", "ReturnValue", "taint"]
+      # mergeWithCustomize({...})(config1, config2, ...) → merged config
+      - ["webpack-merge", "Member[mergeWithCustomize].ReturnValue", "Argument[0..10]", "ReturnValue", "taint"]
+      # mergeWithRules({...})(config1, config2, ...) → merged config
+      - ["webpack-merge", "Member[mergeWithRules].ReturnValue", "Argument[0..10]", "ReturnValue", "taint"]

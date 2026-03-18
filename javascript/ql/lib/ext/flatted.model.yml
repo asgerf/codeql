@@ -1,0 +1,63 @@
+extensions:
+  # =============================================================================
+  # flatted (npm: "flatted") - Fast and minimal circular JSON parser
+  # =============================================================================
+  #
+  # flatted provides JSON-like serialization/deserialization with support for
+  # circular references. It exposes four functions:
+  #
+  #   import { parse, stringify, toJSON, fromJSON } from 'flatted';
+  #
+  #   const str = stringify(circularObj);    // serialize
+  #   const obj = parse(str);               // deserialize
+  #   const json = toJSON(data);            // prepare for JSON.stringify
+  #   const restored = fromJSON(json);      // restore from JSON.parse output
+  #
+  # API:
+  #   parse(text, reviver?) → object
+  #   stringify(value, replacer?, space?) → string
+  #   toJSON(data) → JSON-safe value (for use inside custom toJSON methods)
+  #   fromJSON(data) → reconstructed value (for use inside custom fromJSON)
+  #
+  # Security notes:
+  # - All four functions propagate taint from their input to their output.
+  # - flatted uses JSON.parse internally, so parse() is NOT an
+  #   unsafe-deserialization sink (no code execution risk).
+  # - The reviver (parse) and replacer (stringify) callbacks receive
+  #   tainted key/value pairs derived from the primary input.
+  #
+  # Existing QLL coverage (superseded by this model):
+  #   JsonParsers.qll:     flatted.parse as JsonParserCall
+  #   JsonStringifiers.qll: flatted.stringify as JsonStringifyCall
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through serialization/deserialization
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # -- parse(text, reviver?) → object --
+      # Taint flows from the input string to the parsed object.
+      - ["flatted", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+      # Taint from input string flows into reviver callback parameters (key, value).
+      - ["flatted", "Member[parse]", "Argument[0]", "Argument[1].Parameter[0,1]", "taint"]
+      # Reviver return value flows into the overall parse result.
+      - ["flatted", "Member[parse]", "Argument[1].ReturnValue", "ReturnValue", "taint"]
+
+      # -- stringify(value, replacer?, space?) → string --
+      # Taint flows from the input value to the JSON string.
+      - ["flatted", "Member[stringify]", "Argument[0]", "ReturnValue", "taint"]
+      # Taint from input value flows into replacer callback parameters (key, value).
+      - ["flatted", "Member[stringify]", "Argument[0]", "Argument[1].Parameter[0,1]", "taint"]
+      # Replacer return value flows into the overall stringify result.
+      - ["flatted", "Member[stringify]", "Argument[1].ReturnValue", "ReturnValue", "taint"]
+
+      # -- toJSON(data) → JSON-safe value --
+      # Taint flows from input data to the serializable output.
+      - ["flatted", "Member[toJSON]", "Argument[0]", "ReturnValue", "taint"]
+
+      # -- fromJSON(data) → reconstructed value --
+      # Taint flows from serialized input to the reconstructed output.
+      - ["flatted", "Member[fromJSON]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,222 @@
+extensions:
+  # =============================================================================
+  # nacl-fast (npm: "nacl-fast") — TweetNaCl fast implementation
+  # =============================================================================
+  #
+  # nacl-fast is a fast implementation of the TweetNaCl cryptographic library,
+  # providing public-key authenticated encryption, secret-key authenticated
+  # encryption, digital signatures, hashing, and random byte generation.
+  # The API is identical to TweetNaCl.js (npm: "tweetnacl").
+  #
+  #   const nacl = require('nacl-fast');
+  #   const encrypted = nacl.box(message, nonce, theirPubKey, mySecKey);
+  #   const decrypted = nacl.box.open(encrypted, nonce, theirPubKey, mySecKey);
+  #   const signed = nacl.sign(message, secretKey);
+  #   const hash = nacl.hash(message);
+  #
+  # Security concerns:
+  # - No sources or sinks. This is a pure cryptographic utility library.
+  # - Taint propagates through encryption, decryption, signing, verification,
+  #   and hashing operations: the message/data input taints the output.
+  #
+  # Existing QLL coverage (CryptoLibraries.qll):
+  # - TweetNaCl module models nacl.hash() as SHA512 and nacl.sign() as ed25519
+  #   CryptographicOperation for both "nacl" and "nacl-fast" imports.
+  #
+  # The summaries below cover taint flow through all nacl-fast API functions.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: public-key authenticated encryption (box)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # nacl.box(message, nonce, theirPublicKey, mySecretKey) → encrypted
+      # Message flows to encrypted output.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[box]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.box.open(box, nonce, theirPublicKey, mySecretKey) → message|null
+      # Encrypted box flows to decrypted output.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[box].Member[open]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.box.before(theirPublicKey, mySecretKey) → sharedKey
+      # Key material derivation (taint from inputs to shared key).
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[box].Member[before]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+      - - "nacl-fast"
+        - "Member[box].Member[before]"
+        - "Argument[1]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.box.after(message, nonce, sharedKey) → encrypted
+      # Like box() but with precomputed shared key.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[box].Member[after]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.box.open.after(box, nonce, sharedKey) → message|null
+      # Like box.open() but with precomputed shared key.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[box].Member[open].Member[after]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.box.keyPair() → { publicKey, secretKey }
+      # nacl.box.keyPair.fromSecretKey(secretKey) → { publicKey, secretKey }
+      # Key generation — secretKey input flows to output key pair.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[box].Member[keyPair].Member[fromSecretKey]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+  # ---------------------------------------------------------------------------
+  # Summaries: secret-key authenticated encryption (secretbox)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # nacl.secretbox(message, nonce, key) → encrypted
+      # Message flows to encrypted output.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[secretbox]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.secretbox.open(box, nonce, key) → message|null
+      # Encrypted box flows to decrypted output.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[secretbox].Member[open]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+  # ---------------------------------------------------------------------------
+  # Summaries: signatures (sign)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # nacl.sign(message, secretKey) → signedMessage
+      # Message flows to signed output (message is embedded in output).
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[sign]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.sign.open(signedMessage, publicKey) → message|null
+      # Signed message flows to extracted original message.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[sign].Member[open]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.sign.detached(message, secretKey) → signature
+      # Message flows to detached signature output.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[sign].Member[detached]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.sign.keyPair.fromSecretKey(secretKey) → { publicKey, secretKey }
+      # nacl.sign.keyPair.fromSeed(seed) → { publicKey, secretKey }
+      # Key derivation — input flows to output key pair.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[sign].Member[keyPair].Member[fromSecretKey]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+      - - "nacl-fast"
+        - "Member[sign].Member[keyPair].Member[fromSeed]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+  # ---------------------------------------------------------------------------
+  # Summaries: hashing and scalar multiplication
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # nacl.hash(message) → hash (SHA-512)
+      # Message flows to hash output.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[hash]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.scalarMult(n, p) → groupElement
+      # Both scalar and point inputs flow to output.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[scalarMult]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"
+      - - "nacl-fast"
+        - "Member[scalarMult]"
+        - "Argument[1]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # nacl.scalarMult.base(n) → groupElement
+      # Scalar input flows to output.
+      # =====================================================================
+      - - "nacl-fast"
+        - "Member[scalarMult].Member[base]"
+        - "Argument[0]"
+        - "ReturnValue"
+        - "taint"

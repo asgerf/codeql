@@ -1,0 +1,22 @@
+extensions:
+  # =============================================================================
+  # decamelize (npm: "decamelize") - Convert camelCase to lower_case with separator
+  # =============================================================================
+  #
+  # Pure string transformation:
+  #
+  #   import decamelize from 'decamelize';
+  #   decamelize('unicornRainbow');                 //=> 'unicorn_rainbow'
+  #   decamelize('unicornRainbow', {separator: '-'});//=> 'unicorn-rainbow'
+  #
+  # No sources or sinks. Taint propagates from the input string to the output.
+  #
+  # Existing QLL coverage (StringFormatters.qll):
+  #   Modeled as a string manipulation taint step (Argument[0] → return value).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # decamelize(input, options?) → string
+      - ["decamelize", "", "Argument[0]", "ReturnValue", "taint"]

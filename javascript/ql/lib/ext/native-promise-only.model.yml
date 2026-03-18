@@ -1,0 +1,40 @@
+extensions:
+  # =============================================================================
+  # native-promise-only (npm: "native-promise-only") — ES6 Promise polyfill
+  # =============================================================================
+  #
+  # A strict polyfill for ES6 native Promises. Provides only the standard
+  # Promise API — no extensions:
+  #
+  #   const Promise = require('native-promise-only');
+  #   new Promise((resolve, reject) => { resolve(value); });
+  #   Promise.resolve(value).then(v => ...);
+  #   Promise.all([p1, p2]).then(results => ...);
+  #
+  # Security concerns:
+  # - No sources or sinks: the library does not fetch data or perform any
+  #   security-sensitive operations.
+  # - Taint propagation: values flow through the standard promise chain
+  #   (resolve → then → return). This is already handled generically by
+  #   CodeQL's Promises.qll, which recognizes native-promise-only as a
+  #   promise library.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through promise construction and chaining
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Promise.resolve(value) => resolved promise carrying value
+      - ["native-promise-only", "Member[resolve]", "Argument[0]", "ReturnValue.Awaited", "value"]
+
+      # Promise.reject(reason) => rejected promise carrying reason
+      - ["native-promise-only", "Member[reject]", "Argument[0]", "ReturnValue.Awaited", "value"]
+
+      # Promise.all(promises) => array of resolved values
+      - ["native-promise-only", "Member[all]", "Argument[0].ArrayElement.Awaited", "ReturnValue.Awaited.ArrayElement", "value"]
+
+      # Promise.race(promises) => first resolved value
+      - ["native-promise-only", "Member[race]", "Argument[0].ArrayElement.Awaited", "ReturnValue.Awaited", "value"]

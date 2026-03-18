@@ -1,0 +1,54 @@
+extensions:
+  # =============================================================================
+  # cross-spawn (npm: "cross-spawn") - Cross-platform child_process.spawn
+  # =============================================================================
+  #
+  # cross-spawn is a drop-in replacement for Node.js child_process.spawn and
+  # spawnSync that handles cross-platform issues (shebangs, quoting, PATH on
+  # Windows, etc.).
+  #
+  #   const spawn = require('cross-spawn');
+  #
+  #   // Async: spawn(command, args?, options?)
+  #   const child = spawn('npm', ['list', '-g'], { stdio: 'inherit' });
+  #
+  #   // Sync: spawn.sync(command, args?, options?)
+  #   const result = spawn.sync('ls', ['-la']);
+  #   // result.stdout, result.stderr, result.status, result.error
+  #
+  # The API mirrors child_process.spawn / spawnSync:
+  # - command (string): The command to run.
+  # - args (array, optional): Arguments to the command.
+  # - options (object, optional): Same options as child_process.spawn.
+  #
+  # Security concerns:
+  # - SINK: The command argument (arg 0) is executed as an OS command →
+  #   command-injection risk.
+  # - SINK: The args array (arg 1) contains command-line arguments that are
+  #   passed directly to the spawned process → command-injection risk.
+  # - No shell interpretation by default (unlike child_process.exec), but
+  #   still executes arbitrary commands.
+  # - No sources. The library does not provide HTTP or untrusted data access.
+  #
+  # Existing QLL coverage:
+  # - SystemCommandExecutors.qll: Models both spawn(cmd, args) and
+  #   spawn.sync(cmd, args) as SystemCommandExecution with cmdArg=0,
+  #   shell=false, argumentList at arg 1.
+  # =============================================================================
+
+  # Sinks: Command and arguments are command-injection vectors.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # spawn(command, args?, options?) — command is arg 0
+      - ["cross-spawn", "Argument[0]", "command-injection"]
+
+      # spawn(command, args, options?) — args array elements
+      - ["cross-spawn", "Argument[1]", "command-injection"]
+
+      # spawn.sync(command, args?, options?) — command is arg 0
+      - ["cross-spawn", "Member[sync].Argument[0]", "command-injection"]
+
+      # spawn.sync(command, args, options?) — args array elements
+      - ["cross-spawn", "Member[sync].Argument[1]", "command-injection"]

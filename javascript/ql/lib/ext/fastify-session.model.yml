@@ -1,0 +1,64 @@
+extensions:
+  # =============================================================================
+  # fastify-session / @fastify/session
+  # — Server-side session plugin for Fastify
+  # =============================================================================
+  #
+  # Provides server-side sessions backed by a configurable store (in-memory
+  # by default, or Redis/MongoDB/etc. via express-session–compatible stores).
+  # Only the session ID is sent to the client in a signed cookie; all session
+  # data lives server-side.
+  #
+  # Requires @fastify/cookie.
+  #
+  #   const fastify = require('fastify')();
+  #   fastify.register(require('@fastify/cookie'));
+  #   fastify.register(require('@fastify/session'), {
+  #     secret: 'a secret with minimum length of 32 characters'
+  #   });
+  #
+  #   fastify.addHook('preHandler', (req, reply, next) => {
+  #     req.session.user = { name: 'max' };       // property access
+  #     req.session.set('data', value);            // set method
+  #     const d = req.session.get('data');         // get method
+  #     req.session.destroy(next);                 // destroy session
+  #     req.session.regenerate(cb);                // new session ID
+  #     req.session.reload(cb);                    // reload from store
+  #     req.session.save(cb);                      // persist to store
+  #     req.session.touch();                       // refresh expiry
+  #     req.session.options({ maxAge: 3600 });     // cookie options
+  #   });
+  #
+  # Server decorator:
+  #   fastify.decryptSession(sessionId, request, [cookieOpts], next)
+  #     — decrypts a session ID and populates request.session
+  #
+  # Security concerns:
+  # - Session data is stored server-side and is NOT attacker-controlled.
+  #   Only the session ID travels in the cookie; the ID is signed and
+  #   cannot be forged without the secret. Therefore request.session
+  #   properties are NOT remote sources.
+  # - decryptSession takes a session ID (from a cookie) and populates
+  #   request.session by loading data from the server-side store. The
+  #   session ID itself is validated by the store lookup.
+  #
+  # Existing QLL coverage (Fastify.qll):
+  #   FastifyCookieMiddleware models fastify-session as a
+  #   CookieMiddlewareInstance, tracking the `secret` option.
+  # =============================================================================
+
+  # No source, sink, or summary models are needed.
+  #
+  # Session data is server-side and server-authored. The session.get(key)
+  # method returns data previously stored with set() — the return value
+  # depends on what was stored, not on the key argument. There is no
+  # meaningful taint propagation to model here.
+  #
+  # decryptSession(sessionId, request, ...) loads server-side data into
+  # request.session by looking up the session ID in the store. The data
+  # comes from the store, not from the session ID string, so there is no
+  # taint propagation from the ID to session properties.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data: []

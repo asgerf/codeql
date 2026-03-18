@@ -1,0 +1,96 @@
+extensions:
+  # =============================================================================
+  # xss (npm: "xss") — Whitelist-based HTML sanitizer to prevent XSS
+  # =============================================================================
+  #
+  # The xss module filters untrusted HTML input using a configurable whitelist
+  # of allowed tags and attributes:
+  #
+  #   const xss = require("xss");
+  #   const clean = xss(dirty);
+  #   const clean = xss(dirty, { whiteList: { a: ["href"] } });
+  #
+  #   const myxss = new xss.FilterXSS(options);
+  #   const clean = myxss.process(dirty);
+  #
+  # Exported API:
+  #   - xss(html, options?)              — main sanitizer (default export)
+  #   - xss.FilterXSS                    — reusable sanitizer class
+  #   - xss.FilterXSS.prototype.process  — instance sanitizer method
+  #   - xss.escapeHtml(str)              — escape < and > to entities
+  #   - xss.escapeAttrValue(str)         — escape quotes and < > in attr values
+  #   - xss.escapeQuote(str)             — escape double quotes
+  #   - xss.escapeHtmlEntities(str)      — decode &#...; entities to chars
+  #   - xss.friendlyAttrValue(str)       — decode entities in attr values
+  #   - xss.safeAttrValue(tag,name,val)  — sanitize an attribute value
+  #   - xss.stripCommentTag(html)        — remove HTML comments
+  #   - xss.stripBlankChar(html)         — remove invisible characters
+  #   - xss.clearNonPrintableCharacter(str) — replace non-printable chars
+  #   - xss.unescapeQuote(str)           — unescape &quot; to "
+  #   - xss.escapeDangerHtml5Entities(str) — replace &colon; &newline;
+  #   - xss.getDefaultWhiteList()        — returns default whitelist object
+  #   - xss.whiteList                    — default whitelist object
+  #   - xss.StripTagBody(tags, next)     — helper for stripping tag bodies
+  #
+  # Security analysis:
+  # - No sources: the library does not provide access to untrusted data.
+  # - No sinks: the library does not perform security-sensitive operations
+  #   (no command execution, file access, etc.).
+  # - Sanitizer: xss() and FilterXSS.process() are HTML sanitizers. The
+  #   existing QLL (HtmlSanitizers.qll) recognizes the xss default import
+  #   as an htmlSanitizerFunction(), which acts as a taint barrier for
+  #   XSS/html-injection queries.
+  # - Taint summaries: input taints output for all string-transforming
+  #   functions. This preserves taint for non-HTML queries (e.g., log
+  #   injection) while the sanitizer barrier handles the HTML case.
+  #
+  # Existing QLL coverage (HtmlSanitizers.qll):
+  # - DataFlow::moduleImport("xss") recognized as htmlSanitizerFunction().
+  # - Calls modeled as HtmlSanitizerCall with argument 0 as input.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow through sanitizer and helper functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # xss(html, options?) — default export, main sanitizer function
+      - ["xss", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # new xss.FilterXSS(options).process(html)
+      - ["xss", "Fuzzy.Member[process]", "Argument[0]", "ReturnValue", "taint"]
+
+      # xss.escapeHtml(html) — escapes < and > to &lt; &gt;
+      - ["xss", "Member[escapeHtml]", "Argument[0]", "ReturnValue", "taint"]
+
+      # xss.escapeAttrValue(str) — escapes quotes and < > in attribute values
+      - ["xss", "Member[escapeAttrValue]", "Argument[0]", "ReturnValue", "taint"]
+
+      # xss.escapeQuote(str) — escapes double quotes to &quot;
+      - ["xss", "Member[escapeQuote]", "Argument[0]", "ReturnValue", "taint"]
+
+      # xss.safeAttrValue(tag, name, value, cssFilter) — sanitizes attr value
+      - ["xss", "Member[safeAttrValue]", "Argument[2]", "ReturnValue", "taint"]
+
+      # xss.friendlyAttrValue(str) — decodes entities in attribute values
+      - ["xss", "Member[friendlyAttrValue]", "Argument[0]", "ReturnValue", "taint"]
+
+      # xss.escapeHtmlEntities(str) — decodes &#...; to characters
+      - ["xss", "Member[escapeHtmlEntities]", "Argument[0]", "ReturnValue", "taint"]
+
+      # xss.escapeDangerHtml5Entities(str) — replaces &colon; and &newline;
+      - ["xss", "Member[escapeDangerHtml5Entities]", "Argument[0]", "ReturnValue", "taint"]
+
+      # xss.clearNonPrintableCharacter(str) — replaces non-printable chars
+      - ["xss", "Member[clearNonPrintableCharacter]", "Argument[0]", "ReturnValue", "taint"]
+
+      # xss.unescapeQuote(str) — unescapes &quot; to "
+      - ["xss", "Member[unescapeQuote]", "Argument[0]", "ReturnValue", "taint"]
+
+      # xss.stripCommentTag(html) — removes HTML comments
+      - ["xss", "Member[stripCommentTag]", "Argument[0]", "ReturnValue", "taint"]
+
+      # xss.stripBlankChar(html) — removes invisible characters
+      - ["xss", "Member[stripBlankChar]", "Argument[0]", "ReturnValue", "taint"]

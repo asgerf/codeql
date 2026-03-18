@@ -1,0 +1,82 @@
+extensions:
+  # =============================================================================
+  # chance (npm: "chance") - Random data generator
+  # =============================================================================
+  #
+  # Chance is a utility library for generating random data of all kinds:
+  #
+  #   const Chance = require('chance');
+  #   const chance = new Chance();       // or new Chance(seed)
+  #   chance.bool();
+  #   chance.integer({ min: 0, max: 100 });
+  #   chance.string({ length: 10 });
+  #   chance.name();
+  #   chance.email();
+  #   chance.url();
+  #   chance.guid();
+  #   chance.hash();
+  #
+  # All methods on a Chance instance produce pseudo-random data that is NOT
+  # cryptographically secure (backed by Math.random or a Mersenne Twister).
+  #
+  # Categories of generators: basics (bool, character, floating, integer,
+  # natural, prime, string), text (paragraph, sentence, syllable, word),
+  # person (age, birthday, cpf, cf, first, last, name, prefix, suffix,
+  # gender, ssn), web/IT (avatar, color, company, domain, email, fbid,
+  # google_analytics, hashtag, ip, ipv6, klout, profession, tld, twitter,
+  # url), location (address, altitude, areacode, city, coordinates, country,
+  # depth, geohash, latitude, longitude, locale, phone, postal, postcode,
+  # province, state, street, zip), time (ampm, date, hammertime, hour,
+  # minute, second, millisecond, month, timestamp, timezone, weekday, year),
+  # finance (cc, cc_type, currency, currency_pair, dollar, euro, exp,
+  # exp_month, exp_year), mobile (android_id, apple_token, bb_pin,
+  # wp7_anid, wp8_anid2), misc (animal, coin, d4..d100, guid, hash,
+  # normal, radio, rpg, tv, unique, weighted).
+  #
+  # Utility/helper methods that propagate taint from their inputs:
+  #   chance.pickone(arr)          - picks one random element
+  #   chance.pickset(arr, count)   - picks N random elements
+  #   chance.pick(arr, count)      - alias for pickset
+  #   chance.shuffle(arr)          - returns a shuffled copy
+  #   chance.weighted(arr, weights)- picks one element based on weights
+  #   chance.capitalize(word)      - capitalizes first letter
+  #   chance.pad(num, width, pad)  - pads number/string to width
+  #
+  # Security concerns:
+  # - All generator methods return values derived from a non-cryptographic
+  #   PRNG → insecure-randomness source.
+  # - Utility methods (pick, pickone, pickset, shuffle, weighted) propagate
+  #   taint from their array argument to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: all method calls on Chance instances produce insecure random data
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # new Chance().<method>() — any method call on a Chance instance
+      - ["chance", "Fuzzy.AnyMember.ReturnValue", "insecure-randomness"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: utility methods that propagate taint from inputs to outputs
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # chance.pickone(arr) → returns one element from arr
+      - ["chance", "Fuzzy.Member[pickone]", "Argument[0].ArrayElement", "ReturnValue", "value"]
+      # chance.pickset(arr, count) → returns array of elements from arr
+      - ["chance", "Fuzzy.Member[pickset]", "Argument[0].ArrayElement", "ReturnValue.ArrayElement", "value"]
+      # chance.pick(arr, count) → alias for pickset
+      - ["chance", "Fuzzy.Member[pick]", "Argument[0].ArrayElement", "ReturnValue.ArrayElement", "value"]
+      # chance.shuffle(arr) → returns shuffled copy of arr
+      - ["chance", "Fuzzy.Member[shuffle]", "Argument[0].ArrayElement", "ReturnValue.ArrayElement", "value"]
+      # chance.weighted(arr, weights) → returns one element from arr
+      - ["chance", "Fuzzy.Member[weighted]", "Argument[0].ArrayElement", "ReturnValue", "value"]
+      # chance.capitalize(word) → returns word with first letter capitalized
+      - ["chance", "Fuzzy.Member[capitalize]", "Argument[0]", "ReturnValue", "taint"]
+      # chance.pad(number, width, pad) → returns padded string
+      - ["chance", "Fuzzy.Member[pad]", "Argument[0]", "ReturnValue", "taint"]

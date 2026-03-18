@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # bloodhound-js (npm: "bloodhound-js") - Typeahead suggestion engine
+  # =============================================================================
+  #
+  # Bloodhound is a suggestion engine for the typeahead.js autocomplete library.
+  # It supports local, prefetch, and remote data sources:
+  #
+  #   const Bloodhound = require('bloodhound-js');
+  #   const engine = new Bloodhound({
+  #     remote: { url: 'http://example.com/api?q=%QUERY', wildcard: '%QUERY' },
+  #     prefetch: 'http://example.com/data.json',
+  #     datumTokenizer: Bloodhound.tokenizers.whitespace,
+  #     queryTokenizer: Bloodhound.tokenizers.whitespace
+  #   });
+  #   engine.initialize().then(() => {
+  #     engine.search('query', syncResults => { ... }, asyncResults => { ... });
+  #   });
+  #
+  # Security considerations:
+  # - The `remote` and `prefetch` options control the URL of an HTTP request
+  #   (request-forgery sink). They accept either a string URL or an object with
+  #   a `url` property.
+  # - The search callback parameters contain data fetched from the remote server
+  #   (remote flow source).
+  # =============================================================================
+
+  # Sinks: URLs in the constructor options control where HTTP requests are sent.
+  # new Bloodhound({ remote: url }) or new Bloodhound({ prefetch: url })
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      - ["bloodhound-js", "Argument[0].Member[remote,prefetch]", "request-forgery"]
+      - ["bloodhound-js", "Argument[0].Member[remote,prefetch].Member[url]", "request-forgery"]
+
+  # Sources: search callback parameters receive data fetched from the remote server.
+  # engine.search(query, syncCallback, asyncCallback)
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      - ["bloodhound-js", "Fuzzy.Member[search].Argument[1,2].Parameter[0]", "remote"]

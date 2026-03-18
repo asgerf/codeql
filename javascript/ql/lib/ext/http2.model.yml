@@ -1,0 +1,62 @@
+extensions:
+  # =============================================================================
+  # http2 (Node.js built-in: "http2") — HTTP/2 server and client
+  # =============================================================================
+  #
+  # The http2 module provides two APIs:
+  #
+  # 1. Compatibility API (like http/https):
+  #      const server = http2.createServer((req, res) => { ... });
+  #      const server = http2.createSecureServer(opts, (req, res) => { ... });
+  #    These are already modeled in NodeJSLib.qll via isCreateServer().
+  #
+  # 2. Native stream API:
+  #      server.on('stream', (stream, headers) => {
+  #        // headers contains request headers (remote input)
+  #        // stream is a Duplex — readable side is request body,
+  #        // writable side (stream.respond(), stream.end()) is the response
+  #      });
+  #
+  # 3. Client API:
+  #      const session = http2.connect('https://example.com');
+  #      const req = session.request({ ':path': '/' });
+  #      req.on('data', (chunk) => { ... });
+  #
+  # Security concerns:
+  # - Server 'stream' event: the headers object and stream data are remote input.
+  # - Client: http2.connect(url) — the URL is a request-forgery sink.
+  # - Client response data is a remote flow source.
+  # - Response methods (stream.respond, stream.write, stream.end) are sinks
+  #   for the data written back to the client (html-injection if serving HTML).
+  #
+  # Existing QLL coverage:
+  # - NodeJSLib.qll: http2.createServer / createSecureServer recognized as
+  #   server definitions; compatibility API request/response fully modeled.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: remote input from the native stream API
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # server.on('stream', (stream, headers) => { ... })
+      # The headers parameter contains request headers — remote input
+      - ["http2", "Member[createServer].ReturnValue.Member[on,addListener].WithStringArgument[0=stream].Argument[1].Parameter[1]", "remote"]
+      - ["http2", "Member[createSecureServer].ReturnValue.Member[on,addListener].WithStringArgument[0=stream].Argument[1].Parameter[1]", "remote"]
+
+      # The stream parameter is a Duplex readable (request body) — remote input
+      - ["http2", "Member[createServer].ReturnValue.Member[on,addListener].WithStringArgument[0=stream].Argument[1].Parameter[0]", "remote"]
+      - ["http2", "Member[createSecureServer].ReturnValue.Member[on,addListener].WithStringArgument[0=stream].Argument[1].Parameter[0]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # http2.connect(authority) — the URL/authority controls where the
+      # request is sent — request-forgery sink
+      - ["http2", "Member[connect].Argument[0]", "request-forgery"]

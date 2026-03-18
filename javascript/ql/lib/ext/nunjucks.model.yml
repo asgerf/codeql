@@ -1,0 +1,51 @@
+extensions:
+  # =============================================================================
+  # nunjucks — Powerful templating engine by Mozilla
+  # =============================================================================
+  #
+  # A rich Jinja2-inspired templating engine for JavaScript.
+  #
+  # Simple API:
+  #   const nunjucks = require('nunjucks');
+  #   nunjucks.render('template.html', { name: 'World' });
+  #   nunjucks.renderString('Hello {{ name }}', { name: 'World' });
+  #   const tmpl = nunjucks.compile('Hello {{ name }}');
+  #   tmpl.render({ name: 'World' });
+  #
+  # Environment API:
+  #   const env = new nunjucks.Environment(loader, opts);
+  #   env.render('template.html', context);
+  #   env.renderString(str, context);
+  #   env.addFilter('name', func);
+  #   env.addGlobal('name', value);
+  #
+  # Security concerns:
+  #   - renderString() and compile() accept template strings that can
+  #     execute arbitrary code via template expressions — code injection.
+  #   - render() loads templates by filename; if attacker-controlled,
+  #     this could lead to reading unintended template files.
+  #
+  # Existing QLL coverage:
+  #   - renderString Argument[0] as TemplateSink (code injection)
+  #   - nunjucks recognized as mustache-style template syntax
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks — code injection via template strings
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # nunjucks.renderString(str, context) — template string is Argument[0]
+      - ["nunjucks", "Member[renderString].Argument[0]", "code-injection"]
+
+      # nunjucks.compile(str, env?, path?) — template string is Argument[0]
+      - ["nunjucks", "Member[compile].Argument[0]", "code-injection"]
+
+      # Environment.renderString(str, context) — same sink via env instance
+      - ["nunjucks", "Fuzzy.Member[renderString].Argument[0]", "code-injection"]
+
+      # Environment.compile(str) — same via env instance (not commonly used directly)
+      # Covered by the fuzzy renderString above; compile on env is rare but
+      # the direct nunjucks.compile is covered by the Member[compile] entry.

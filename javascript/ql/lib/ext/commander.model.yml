@@ -1,0 +1,74 @@
+extensions:
+  # =============================================================================
+  # commander (npm: "commander") - Complete CLI framework for Node.js
+  # =============================================================================
+  #
+  # By TJ Holowaychuk. Provides option parsing, commands/subcommands,
+  # auto-generated help, and a chainable API for building CLI applications.
+  #
+  #   const { program } = require('commander');
+  #   program
+  #     .option('-d, --debug', 'enable debug mode')
+  #     .option('-n, --number <value>', 'a number')
+  #     .parse();
+  #   const opts = program.opts();   // { debug: true, number: '42' }
+  #   program.debug;                 // true  (direct property access)
+  #
+  #   // Subcommands with action handlers:
+  #   program
+  #     .command('split <string>')
+  #     .option('-s, --separator <char>', 'separator', ',')
+  #     .action((str, options, command) => { ... });
+  #
+  #   // Constructor form:
+  #   const { Command } = require('commander');
+  #   const prog = new Command();
+  #
+  # Key API:
+  #   require('commander')         — default Command instance (also .program)
+  #   new Command(name?)           — create a new command instance
+  #   .option(flags, desc, ...)    — register an option (chainable)
+  #   .argument(name, desc, ...)   — register a positional argument (chainable)
+  #   .command(name, desc?, opts?) — register a subcommand (chainable)
+  #   .action(fn)                  — register action callback (chainable)
+  #   .parse(argv?)                — parse argv (defaults to process.argv)
+  #   .parseAsync(argv?)           — async version of parse
+  #   .opts()                      — returns object of parsed option values
+  #   .args                        — array of remaining positional arguments
+  #
+  # Security concerns:
+  # - Parsed options (via .opts() or direct property reads) and positional
+  #   arguments contain user-controlled command-line input (commandargs).
+  # - Action callback parameters receive parsed arguments and options.
+  # - When a custom argv array is passed to parse/parseAsync, taint propagates
+  #   from that array to the parsed results.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: parsed command-line arguments are untrusted input
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # program.opts() => { debug: true, number: '42', ... }
+      # Fuzzy handles chaining and new Command() instances.
+      - ["commander", "Fuzzy.Member[opts].ReturnValue", "commandargs"]
+      # program.debug, program.number, program.args, etc.
+      # Direct property reads on a command instance contain parsed values.
+      - ["commander", "Fuzzy.AnyMember", "commandargs"]
+      # Action callback parameters: .action((arg1, arg2, options, cmd) => {})
+      # All parameters can contain parsed command-line input.
+      - ["commander", "Fuzzy.Member[action].Argument[0].Parameter[0..5]", "commandargs"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from custom argv through parsing
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # program.parse(argv) / program.parseAsync(argv) return the command
+      # instance (this) for chaining. Taint flows from the custom argv array
+      # to the returned instance, enabling: program.parse(argv).opts()
+      - ["commander", "Fuzzy.Member[parse,parseAsync]", "Argument[0]", "ReturnValue", "taint"]

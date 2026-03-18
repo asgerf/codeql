@@ -1,0 +1,53 @@
+extensions:
+  # =============================================================================
+  # marked (npm: "marked") - Markdown to HTML parser
+  # =============================================================================
+  #
+  # Fast, extensible Markdown parser that converts Markdown strings to HTML.
+  #
+  #   import { marked } from 'marked';
+  #   // or: const marked = require('marked');
+  #
+  #   marked.parse('# Hello');          // => '<h1>Hello</h1>\n'
+  #   marked('# Hello');                // v0.x legacy API (default export is callable)
+  #   marked.lexer('# Hello');          // => token array
+  #   marked.parser(tokens);            // => HTML string from tokens
+  #
+  # Security concerns:
+  # - TAINT: Markdown input is converted to raw HTML output. If the HTML is
+  #   then inserted into the DOM without sanitization, it is an XSS vector.
+  #   marked does NOT sanitize its output (the old `sanitize` option was
+  #   removed). The taint summary from Argument[0] → ReturnValue is critical.
+  # - No sources or sinks of its own.
+  #
+  # Existing QLL coverage:
+  # - Markdown.qll: MarkedStep models taint from Argument[0] → ReturnValue
+  #   for marked(string) (v0.x call as function) and moduleImport("marked").
+  #   Also feeds into UnsafeHtmlConstructionCustomizations via preservesHtml().
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through markdown-to-HTML conversion
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # marked(mdString) — v0.x legacy API: default export called as function.
+      # Taint flows from the markdown string to the HTML output.
+      - ["marked", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # marked.parse(mdString, [options]) — primary API in v1+.
+      # Taint flows from the markdown string to the HTML output.
+      - ["marked", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # marked.parseInline(mdString, [options]) — parses inline markdown only.
+      - ["marked", "Member[parseInline]", "Argument[0]", "ReturnValue", "taint"]
+
+      # marked.lexer(mdString, [options]) → token array
+      # Taint flows from the markdown string to the token objects.
+      - ["marked", "Member[lexer]", "Argument[0]", "ReturnValue", "taint"]
+
+      # marked.parser(tokens, [options]) → HTML string
+      # Taint flows from tokens to the HTML output.
+      - ["marked", "Member[parser]", "Argument[0]", "ReturnValue", "taint"]

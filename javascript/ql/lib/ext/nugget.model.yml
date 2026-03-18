@@ -1,0 +1,49 @@
+extensions:
+  # =============================================================================
+  # nugget (npm: "nugget") - Minimalist HTTP file downloader
+  # =============================================================================
+  #
+  # nugget downloads files from URLs to the local filesystem:
+  #
+  #   const nugget = require('nugget');
+  #
+  #   // Download a file (callback-based)
+  #   nugget(url, opts, callback);
+  #   nugget('https://example.com/file.zip', { target: 'out.zip', dir: './dl' }, (err) => {});
+  #
+  #   // Download multiple files
+  #   nugget(['https://a.com/1.zip', 'https://b.com/2.zip'], opts, callback);
+  #
+  # Options:
+  #   target  — output filename
+  #   dir     — output directory
+  #   force   — overwrite existing files
+  #   sockets — concurrency limit
+  #   proxy   — HTTP proxy URL
+  #
+  # Security concerns:
+  # - nugget(url, ...): The URL controls which remote resource is fetched —
+  #   a request-forgery sink.
+  # - opts.target / opts.dir: These control where files are written on the
+  #   local filesystem — path-injection sinks.
+  #
+  # Existing QLL coverage:
+  #   ClientRequests.qll: nugget() modeled as ClientRequest (Nugget class)
+  #     with getUrl() → arg 0, getASavePath() → opts.target.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # nugget(url, opts?, cb) — URL controls outbound HTTP request
+      - ["nugget", "Argument[0]", "request-forgery"]
+
+      # opts.target — controls the output filename on the filesystem
+      - ["nugget", "Argument[1].Member[target]", "path-injection"]
+
+      # opts.dir — controls the output directory on the filesystem
+      - ["nugget", "Argument[1].Member[dir]", "path-injection"]

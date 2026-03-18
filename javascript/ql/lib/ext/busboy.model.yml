@@ -1,0 +1,35 @@
+extensions:
+  # =============================================================================
+  # busboy (npm: "busboy") - Streaming parser for multipart/form-data
+  # =============================================================================
+  #
+  # Busboy parses incoming multipart HTML form data (file uploads and fields).
+  # All data emitted through event callbacks originates from the HTTP request
+  # and is therefore untrusted.
+  #
+  # Usage:
+  #   const busboy = require('busboy');
+  #   const bb = busboy({ headers: req.headers });
+  #   bb.on('file', (name, file, info) => { ... });
+  #   bb.on('field', (name, val, info) => { ... });
+  #   req.pipe(bb);
+  #
+  # Events:
+  #   'file'  -> callback(fieldname, fileStream, info)
+  #     - fieldname: the form field name (untrusted)
+  #     - fileStream: a Readable stream of the file contents (untrusted)
+  #     - info: { filename, encoding, mimeType } (all untrusted)
+  #
+  #   'field' -> callback(fieldname, value, info)
+  #     - fieldname: the form field name (untrusted)
+  #     - value: the field value (untrusted)
+  #     - info: { ... } (untrusted)
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # All parameters of event callbacks are remote sources.
+      # bb.on('file', (name, file, info) => { ... })
+      # bb.on('field', (name, val, info) => { ... })
+      - ["busboy", "Fuzzy.Member[on].Argument[1].Parameter[0..2]", "remote"]

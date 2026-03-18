@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # ansi-colors (npm: "ansi-colors") - ANSI terminal color/style formatting
+  # =============================================================================
+  #
+  # The ansi-colors package wraps strings in ANSI escape codes for terminal
+  # coloring and styling.
+  #
+  #   const c = require("ansi-colors");
+  #   c.red("Error!");          // "\u001b[31mError!\u001b[39m"
+  #   c.bold.underline("Hi");   // chained styles
+  #   c.unstyle(styled);        // strip ANSI codes
+  #
+  # All color/style methods (red, green, bold, italic, bgBlue, etc.) take a
+  # string argument and return a new string with ANSI escape sequences.
+  # Utility methods like unstyle/strip also transform strings.
+  # Methods can be chained: c.bold.red("text") applies both styles.
+  #
+  # Security concerns: None. This library only performs string decoration for
+  # terminal output. It has no sources or sinks.
+  #
+  # API surface covered by the Fuzzy summary below:
+  # - Colors: black, red, green, yellow, blue, magenta, cyan, white, gray, grey
+  # - Bright colors: blackBright, redBright, greenBright, yellowBright,
+  #   blueBright, magentaBright, cyanBright, whiteBright
+  # - Background: bgBlack, bgRed, bgGreen, bgYellow, bgBlue, bgMagenta,
+  #   bgCyan, bgWhite, and their bright variants
+  # - Styles: reset, bold, dim, italic, underline, inverse, hidden,
+  #   strikethrough, visible
+  # - Utilities: unstyle, strip, stripColor, noop
+  # - Chained usage: any combination of the above, e.g. c.bold.red(str)
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through all color/style/utility methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # All methods propagate taint from the input string (first argument) to
+      # the return value. Using Fuzzy to match all methods on the module and
+      # any derived objects (including chained style accessors).
+      - ["ansi-colors", "Fuzzy", "Argument[0]", "ReturnValue", "taint"]

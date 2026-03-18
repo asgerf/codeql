@@ -1,0 +1,33 @@
+extensions:
+  # =============================================================================
+  # apollo-link-ws (npm: "apollo-link-ws") - WebSocket transport for Apollo Client
+  # =============================================================================
+  #
+  # apollo-link-ws provides a WebSocket transport layer for Apollo Client,
+  # enabling GraphQL subscriptions over WebSocket connections. It wraps
+  # subscriptions-transport-ws under the hood.
+  #
+  #   import { WebSocketLink } from "apollo-link-ws";
+  #   const link = new WebSocketLink({
+  #     uri: "ws://api.example.com/graphql",
+  #     options: { reconnect: true },
+  #   });
+  #
+  # Exports:
+  #   - WebSocketLink — class extending ApolloLink; constructor takes either
+  #     a SubscriptionClient instance or an options object with a `uri` property
+  #
+  # Security concerns:
+  # - The `uri` option on WebSocketLink controls the destination of outbound
+  #   WebSocket connections → request-forgery vector.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URI option controls outbound WebSocket destination
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new WebSocketLink({ uri: <tainted> })
+      - ["apollo-link-ws", "Member[WebSocketLink].Argument[0].Member[uri]", "request-forgery"]

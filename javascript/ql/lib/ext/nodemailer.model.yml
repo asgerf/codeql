@@ -1,0 +1,40 @@
+extensions:
+  # =============================================================================
+  # nodemailer (npm: "nodemailer") - Email sending for Node.js
+  # =============================================================================
+  #
+  # nodemailer is the de-facto standard for sending emails from Node.js:
+  #
+  #   const nodemailer = require('nodemailer');
+  #   const transporter = nodemailer.createTransport({
+  #     host: 'smtp.example.com',
+  #     auth: { user: 'user', pass: 'pass' }
+  #   });
+  #   transporter.sendMail({
+  #     from: 'a@example.com',
+  #     to: 'b@example.com',
+  #     subject: 'Hello',
+  #     text: 'plain text body',
+  #     html: '<b>HTML body</b>'
+  #   });
+  #
+  # Security concerns:
+  # - HTML injection / XSS: the `html` property of the mail options object
+  #   is rendered as HTML in the recipient's email client. If an attacker
+  #   controls this value, they can inject arbitrary HTML.
+  # - Credentials: the auth.user and auth.pass fields in createTransport
+  #   options contain SMTP credentials.
+  # - No sources: nodemailer does not provide access to untrusted data.
+  #
+  # Existing QLL coverage:
+  # - EmailClients.qll: NodemailerEmailSender models sendMail() with
+  #   getHtmlBody(), getPlainTextBody(), getTo(), getFrom(), getSubject().
+  # - DomBasedXssCustomizations.qll: getHtmlBody() is an html-injection
+  #   (XSS) sink.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # transporter.sendMail({ html: ... }) — HTML body is an html-injection sink
+      - ["nodemailer", "Fuzzy.Member[sendMail].Argument[0].Member[html]", "html-injection"]

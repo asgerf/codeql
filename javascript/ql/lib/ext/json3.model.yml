@@ -1,0 +1,28 @@
+extensions:
+  # =============================================================================
+  # json3 (npm: "json3") - JSON polyfill (deprecated)
+  # =============================================================================
+  #
+  # A polyfill providing JSON.parse and JSON.stringify for legacy environments.
+  # The API mirrors the native JSON object:
+  #
+  #   const JSON3 = require('json3');
+  #   JSON3.parse(text [, reviver])        → parsed value
+  #   JSON3.stringify(value [, replacer [, space]]) → JSON string
+  #   JSON3.noConflict()                   → JSON3 reference
+  #   JSON3.runInContext(context, exports)  → initializes in context
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  #
+  # Existing QLL coverage:
+  # - JsonParsers.qll: PlainJsonParserCall models json3.parse
+  # - JsonStringifiers.qll: JsonStringifyCall models json3.stringify
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # JSON3.parse(text) → parsed value
+      - ["json3", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+      # JSON3.stringify(value) → JSON string
+      - ["json3", "Member[stringify]", "Argument[0]", "ReturnValue", "taint"]

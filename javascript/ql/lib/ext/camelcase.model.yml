@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # camelcase (npm: "camelcase") - Convert a string to camelCase
+  # =============================================================================
+  #
+  # By Sindre Sorhus. Converts dash/dot/underscore/space separated strings to
+  # camelCase or PascalCase. Accepts a string or array of strings.
+  #
+  #   import camelCase from 'camelcase';
+  #   camelCase('foo-bar');            //=> 'fooBar'
+  #   camelCase(['foo', 'bar']);       //=> 'fooBar'
+  #   camelCase('Foo-Bar', {pascalCase: true}); //=> 'FooBar'
+  #
+  # Exports: default function camelcase(input, options?) → string
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure string transformation.
+  # - Taint propagates from the input string (or array of strings) to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through camelcase
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # camelcase(input, options?) → string — input is a string
+      - ["camelcase", "", "Argument[0]", "ReturnValue", "taint"]
+      # camelcase(input, options?) → string — input is an array of strings
+      - ["camelcase", "", "Argument[0].ArrayElement", "ReturnValue", "taint"]

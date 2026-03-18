@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # no-case (npm: "no-case") - Convert a string to lower case with spaces
+  # =============================================================================
+  #
+  # Part of the change-case family of packages. Converts strings from any
+  # case format into lower-cased words separated by spaces:
+  #
+  #   import { noCase } from "no-case";
+  #   noCase("PascalCase");       // "pascal case"
+  #   noCase("dot.case");         // "dot case"
+  #   noCase("camelCase");        // "camel case"
+  #
+  # Security concerns:
+  # - No sources or sinks. noCase is a pure string transformation.
+  # - Taint propagates from the input string to the returned string.
+  #
+  # Existing QLL coverage:
+  # - StringFormatters.qll: models noCase as a taint-preserving step
+  #   from argument to return value.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # noCase(input, options?) → string
+      - ["no-case", "Member[noCase]", "Argument[0]", "ReturnValue", "taint"]

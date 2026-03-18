@@ -1,0 +1,74 @@
+extensions:
+  # =============================================================================
+  # smart-extend — Merge/extend objects with shallow and deep modes
+  # =============================================================================
+  #
+  # smart-extend merges properties from source objects into a target object,
+  # supporting both shallow and deep (recursive) copying, with chainable
+  # options for filtering, key selection, array concatenation, and cloning.
+  #
+  #   const extend = require('smart-extend');
+  #
+  #   // Shallow merge: extend(target, src1, src2, ...)
+  #   extend({}, objA, objB);
+  #
+  #   // Deep merge: extend.deep(target, src1, src2, ...)
+  #   extend.deep({}, objA, objB);
+  #
+  #   // Clone: extend.clone(obj)
+  #   extend.clone(objA);
+  #
+  #   // Deep clone: extend.clone.deep(obj)
+  #   extend.clone.deep(objA);
+  #
+  # Chainable option modifiers (return a new extend function):
+  #   .deep          — recursive merge of nested objects
+  #   .own           — copy only own (non-inherited) properties
+  #   .clone         — clone instead of merge onto a target
+  #   .concat        — concatenate arrays instead of overwriting
+  #   .keys(arr)     — copy only specified keys
+  #   .notKeys(arr)  — copy all keys except specified
+  #   .filter(fn)    — copy only properties matching a predicate
+  #   .transform(fn) — transform values before copying
+  #
+  # Security notes:
+  #   - No sources: pure utility, does not access user input.
+  #   - No sinks: does not execute code, SQL, or render HTML.
+  #   - Taint flow: source object properties flow to the target and
+  #     return value.
+  #   - Prototype pollution: deep mode is vulnerable to prototype
+  #     pollution in all versions (already modeled in QLL).
+  #
+  # Existing QLL coverage:
+  #   - Extend.qll: models smart-extend (default import) as a shallow
+  #     ExtendCall, and smart-extend.deep as a deep ExtendCall.
+  #     Provides source/destination operand tracking and deep detection.
+  #   - PrototypePollutionCustomizations.qll: flags smart-extend deep
+  #     calls as prototype-pollution vulnerable in all versions.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow through smart-extend operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # extend(target, src1, src2, ...) — shallow merge
+      # All arguments contribute properties to the returned object.
+      - ["smart-extend", "", "Argument[0..9]", "ReturnValue", "taint"]
+
+      # extend.deep(target, src1, src2, ...) — deep merge
+      - ["smart-extend", "Member[deep]", "Argument[0..9]", "ReturnValue", "taint"]
+
+      # extend.clone(obj) — shallow clone
+      - ["smart-extend", "Member[clone]", "Argument[0]", "ReturnValue", "taint"]
+
+      # extend.clone.deep(obj) — deep clone
+      - ["smart-extend", "Member[clone].Member[deep]", "Argument[0]", "ReturnValue", "taint"]
+      - ["smart-extend", "Member[deep].Member[clone]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Chained modifiers (.own, .concat, .keys, .notKeys, .filter, .transform)
+      # can be chained in any order, producing a new extend-like function.
+      # We use Fuzzy to catch all chained variants.
+      - ["smart-extend", "Fuzzy", "Argument[0..9]", "ReturnValue", "taint"]

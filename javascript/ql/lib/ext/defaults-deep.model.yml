@@ -1,0 +1,32 @@
+extensions:
+  # =============================================================================
+  # defaults-deep (npm: "defaults-deep") - Deep recursive merge with defaults
+  # =============================================================================
+  #
+  # Recursively copies only the missing properties/values to the target object:
+  #
+  #   const defaultsDeep = require('defaults-deep');
+  #   defaultsDeep(target, src1, src2, ...)   // recursive merge into target
+  #
+  # Security concerns:
+  # - defaultsDeep() is a deep-merge operation. In versions before 0.2.4, it
+  #   was vulnerable to prototype pollution. If an attacker controls a source
+  #   operand, they can inject __proto__ properties. (The prototype-pollution
+  #   query is handled by QLL, not expressible via data extensions.)
+  # - Taint from source operands flows into the destination and return value.
+  #
+  # Existing QLL coverage:
+  #   Extend.qll:  defaults-deep modeled as ExtendCallDeep (value-preserving
+  #                flow from operands to destination and return value).
+  #   PrototypePollutionCustomizations.qll: defaults-deep flagged as vulnerable
+  #                to prototype pollution in versions before 0.2.4.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # defaultsDeep(target, src1, src2, ...) — source operands flow into the destination
+      - ["defaults-deep", "", "Argument[1..N-1]", "Argument[0]", "value"]
+
+      # defaultsDeep(target, src1, src2, ...) — all operands flow into the return value
+      - ["defaults-deep", "", "Argument[0..N-1]", "ReturnValue", "value"]

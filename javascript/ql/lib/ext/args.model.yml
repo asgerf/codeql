@@ -1,0 +1,58 @@
+extensions:
+  # =============================================================================
+  # args (npm: "args") - Command-line interface toolkit
+  # =============================================================================
+  #
+  # args is a CLI toolkit by Leo Lamprecht that provides option/command
+  # registration and argument parsing using mri under the hood.
+  #
+  #   const args = require('args')
+  #   args
+  #     .option('port', 'The port on which the app will be running', 3000)
+  #     .option('reload', 'Enable/disable livereloading')
+  #     .command('serve', 'Serve your static site', ['s'])
+  #   const flags = args.parse(process.argv)
+  #   // flags.port, flags.reload, etc.
+  #
+  # Key API:
+  #   .option(name, description, default, init) - register option (chainable)
+  #   .options(list) - register multiple options (chainable)
+  #   .command(name, description, init, aliases) - register sub command (chainable)
+  #   .parse(argv, options) - parse argv, returns object of option values
+  #   .sub - property exposing parsed sub/positional arguments
+  #
+  # Security concerns:
+  # - The return value of .parse() contains parsed command-line arguments,
+  #   which are untrusted user input (commandargs threat model).
+  # - The .sub property contains positional arguments from the command line.
+  # - The init callback of .command() receives (name, sub, options) where
+  #   sub and options contain user-controlled input.
+  # - When a custom argv array is passed to .parse(), taint propagates from
+  #   that array to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: parsed command-line arguments are untrusted input
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # args.parse(process.argv) => { port: value, reload: value, ... }
+      # Fuzzy handles chaining: args.option(...).parse(...)
+      - ["args", "Fuzzy.Member[parse].ReturnValue", "commandargs"]
+      # args.sub => [subarg1, subarg2, ...]
+      - ["args", "Fuzzy.Member[sub]", "commandargs"]
+      # args.command('name', 'desc', (name, sub, options) => { ... })
+      # Parameters: sub (index 1) and options (index 2) contain user input
+      - ["args", "Fuzzy.Member[command].Argument[2].Parameter[1,2]", "commandargs"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from custom argv to parsed result
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # args.parse(argv) — taint flows from argv to return value
+      - ["args", "Fuzzy.Member[parse]", "Argument[0]", "ReturnValue", "taint"]

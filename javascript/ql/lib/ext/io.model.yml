@@ -1,0 +1,72 @@
+extensions:
+  # =============================================================================
+  # io (npm: "io") — Simple HTTP API wrapper for Node.js
+  # =============================================================================
+  #
+  # A lightweight HTTP client by Keith Horwood (Standard Library / Polybit Inc.)
+  # for making API calls. Returns Promises for all methods.
+  #
+  #   const io = require('io');
+  #
+  #   // JSON methods (auto-parse JSON, send application/json)
+  #   let result = await io.get(url, authorization, headers, queryParams);
+  #   let result = await io.post(url, authorization, headers, params);
+  #   let result = await io.put(url, authorization, headers, params);
+  #   let result = await io.del(url, authorization, headers, queryParams);
+  #
+  #   // Raw request (returns binary body buffer)
+  #   let result = await io.request(method, url, queryParams, headers, body);
+  #
+  #   // Multipart form submission
+  #   let result = await io.submit(method, url, queryParams, headers, formData);
+  #   let result = await io.upload(url, authorization, headers, params);
+  #
+  # All JSON methods return: { statusCode, headers, data }
+  # Raw/submit methods return: { statusCode, headers, body }
+  # All methods accept an optional streamListener callback and options object.
+  #
+  # Security concerns:
+  # - Sinks: URL arguments control outbound request destinations →
+  #   request-forgery sinks.
+  # - Sources: Response data (body, data, headers) is untrusted remote data.
+  #
+  # Note: The package name "io" is also referenced in SocketIO.qll as an
+  # alias for socket.io-client (for `io(url)` invocations). The models here
+  # cover the HTTP client API (io.get(), io.post(), etc.) which targets
+  # distinct member accesses and does not overlap with the socket.io pattern.
+  #
+  # Existing QLL coverage: None for the HTTP client "io" package.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL arguments control request destinations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # JSON methods: io.get(url), io.del(url), io.post(url), io.put(url)
+      - ["io", "Member[get,del,post,put].Argument[0]", "request-forgery"]
+      # Upload (multipart POST): io.upload(url)
+      - ["io", "Member[upload].Argument[0]", "request-forgery"]
+      # Raw request: io.request(method, url, ...)
+      - ["io", "Member[request].Argument[1]", "request-forgery"]
+      # Multipart form submit: io.submit(method, url, ...)
+      - ["io", "Member[submit].Argument[1]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: HTTP response data is untrusted
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # JSON methods return Promise<{ statusCode, headers, data }>
+      - ["io", "Member[get,del,post,put,upload].ReturnValue.Awaited", "remote"]
+      # Raw/submit methods return Promise<{ statusCode, headers, body }>
+      - ["io", "Member[request,submit].ReturnValue.Awaited", "remote"]
+      # Stream listener callbacks receive response chunks
+      # io.get/del/post/put/upload(url, auth, headers, params, streamListener)
+      - ["io", "Member[get,del,post,put,upload].Argument[4].Parameter[0]", "remote"]
+      # io.request/submit(method, url, queryParams, headers, body, streamListener)
+      - ["io", "Member[request,submit].Argument[5].Parameter[0]", "remote"]

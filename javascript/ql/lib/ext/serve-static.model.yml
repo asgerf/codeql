@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # serve-static (npm: "serve-static") — Static file serving middleware
+  # =============================================================================
+  #
+  # Creates Express/Connect middleware that serves static files from a
+  # given root directory:
+  #
+  #   const serveStatic = require('serve-static');
+  #   app.use(serveStatic('public'));
+  #   app.use(serveStatic(root, { index: ['index.html'] }));
+  #
+  # The middleware resolves files by combining req.url with the root path.
+  #
+  # Exports: serveStatic(root, options) function
+  #
+  # Security concerns:
+  # - The root argument (Argument[0]) is a filesystem path that controls
+  #   which directory is exposed. If untrusted data flows into it, an
+  #   attacker could serve files from arbitrary directories.
+  # - No sources. The library does not introduce untrusted data.
+  # - No existing QLL coverage.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # serveStatic(root) — root directory path
+      - ["serve-static", "Argument[0]", "path-injection"]

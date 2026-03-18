@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # node-dir — Recursive async file and directory operations
+  # =============================================================================
+  #
+  # A module for listing files, subdirectories, and reading file contents
+  # recursively in a given directory.
+  #
+  #   const dir = require('node-dir');
+  #   dir.readFiles('/path', (err, content, next) => { ... });
+  #   dir.files('/path', (err, files) => { ... });
+  #   dir.subdirs('/path', (err, subdirs) => { ... });
+  #   dir.paths('/path', (err, paths) => { ... });
+  #   dir.promiseFiles('/path').then(files => { ... });
+  #
+  # Security concerns:
+  #   - All methods take a directory path as their first argument. If
+  #     attacker-controlled, this is a path injection sink allowing
+  #     reading arbitrary directories/files.
+  #   - readFiles provides file contents via callbacks, which carry
+  #     taint from the file system.
+  #
+  # Existing QLL coverage (Files.qll):
+  #   - readFiles, readFilesStream, files, promiseFiles, subdirs, paths
+  #     as FileSystemAccess with getAPathArgument() → Argument[0],
+  #     which makes them path-injection sinks via FsPathSink.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks — path injection via directory argument
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # All methods accept a directory path as Argument[0]
+      - ["node-dir", "Member[readFiles,readFilesStream,files,promiseFiles,subdirs,paths].Argument[0]", "path-injection"]

@@ -1,0 +1,121 @@
+extensions:
+  # =============================================================================
+  # chrome-remote-interface (npm: "chrome-remote-interface")
+  # Chrome Debugging Protocol (CDP) client for Node.js
+  # =============================================================================
+  #
+  # chrome-remote-interface connects to Chrome/Chromium via the Chrome DevTools
+  # Protocol. It provides a programmatic API to control browser behavior through
+  # domain-scoped commands and events.
+  #
+  #   const CDP = require('chrome-remote-interface');
+  #   const client = await CDP();
+  #   const { Page, Runtime } = client;
+  #   await Page.navigate({url: 'https://example.com'});
+  #   await Runtime.evaluate({expression: 'document.title'});
+  #   client.send('Page.navigate', {url: 'https://example.com'});
+  #
+  # API patterns:
+  #   client.<Domain>.<command>(params)       — domain-scoped command
+  #   client.send('Domain.command', params)   — raw command dispatch
+  #   CDP.New({url})                          — create new browser tab
+  #
+  # Security concerns:
+  # - Navigation commands control where the browser navigates → request-forgery.
+  # - Script evaluation commands execute arbitrary JavaScript in the browser
+  #   context → code-injection.
+  # - DOM/page content commands inject HTML into the page → html-injection.
+  # - Download path commands control file write locations → path-injection.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL / navigation parameters → request-forgery
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- Page.navigate({url}) ---
+      # client.Page.navigate({url: 'https://...'})
+      - ["chrome-remote-interface", "Fuzzy.Member[navigate].Argument[0].Member[url]", "request-forgery"]
+      # client.send('Page.navigate', {url: '...'})
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Page.navigate].Argument[1].Member[url]", "request-forgery"]
+
+      # --- CDP.New({url}) — opens a new browser tab at the given URL ---
+      - ["chrome-remote-interface", "Member[New].Argument[0].Member[url]", "request-forgery"]
+
+      # --- Target.createTarget({url}) ---
+      - ["chrome-remote-interface", "Fuzzy.Member[createTarget].Argument[0].Member[url]", "request-forgery"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Target.createTarget].Argument[1].Member[url]", "request-forgery"]
+
+      # --- Fetch.continueRequest({url}) — redirect an intercepted request ---
+      - ["chrome-remote-interface", "Fuzzy.Member[continueRequest].Argument[0].Member[url]", "request-forgery"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Fetch.continueRequest].Argument[1].Member[url]", "request-forgery"]
+
+      # --- Network.continueInterceptedRequest({url}) — legacy request interception ---
+      - ["chrome-remote-interface", "Fuzzy.Member[continueInterceptedRequest].Argument[0].Member[url]", "request-forgery"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Network.continueInterceptedRequest].Argument[1].Member[url]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: JavaScript execution → code-injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- Runtime.evaluate({expression}) — execute JS in page context ---
+      - ["chrome-remote-interface", "Fuzzy.Member[evaluate].Argument[0].Member[expression]", "code-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Runtime.evaluate].Argument[1].Member[expression]", "code-injection"]
+
+      # --- Runtime.compileScript({expression}) — compile JS source ---
+      - ["chrome-remote-interface", "Fuzzy.Member[compileScript].Argument[0].Member[expression]", "code-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Runtime.compileScript].Argument[1].Member[expression]", "code-injection"]
+
+      # --- Runtime.callFunctionOn({functionDeclaration}) — call function on object ---
+      - ["chrome-remote-interface", "Fuzzy.Member[callFunctionOn].Argument[0].Member[functionDeclaration]", "code-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Runtime.callFunctionOn].Argument[1].Member[functionDeclaration]", "code-injection"]
+
+      # --- Debugger.evaluateOnCallFrame({expression}) — eval in paused frame ---
+      - ["chrome-remote-interface", "Fuzzy.Member[evaluateOnCallFrame].Argument[0].Member[expression]", "code-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Debugger.evaluateOnCallFrame].Argument[1].Member[expression]", "code-injection"]
+
+      # --- Debugger.setScriptSource({scriptSource}) — hot-swap script source ---
+      - ["chrome-remote-interface", "Fuzzy.Member[setScriptSource].Argument[0].Member[scriptSource]", "code-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Debugger.setScriptSource].Argument[1].Member[scriptSource]", "code-injection"]
+
+      # --- Page.addScriptToEvaluateOnLoad({scriptSource}) — inject on every load ---
+      - ["chrome-remote-interface", "Fuzzy.Member[addScriptToEvaluateOnLoad].Argument[0].Member[scriptSource]", "code-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Page.addScriptToEvaluateOnLoad].Argument[1].Member[scriptSource]", "code-injection"]
+
+      # --- Page.addScriptToEvaluateOnNewDocument({source}) — inject on new docs ---
+      - ["chrome-remote-interface", "Fuzzy.Member[addScriptToEvaluateOnNewDocument].Argument[0].Member[source]", "code-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Page.addScriptToEvaluateOnNewDocument].Argument[1].Member[source]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: HTML content injection → html-injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- DOM.setOuterHTML({outerHTML}) — replace node with raw HTML ---
+      - ["chrome-remote-interface", "Fuzzy.Member[setOuterHTML].Argument[0].Member[outerHTML]", "html-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=DOM.setOuterHTML].Argument[1].Member[outerHTML]", "html-injection"]
+
+      # --- Page.setDocumentContent({html}) — set entire page HTML ---
+      - ["chrome-remote-interface", "Fuzzy.Member[setDocumentContent].Argument[0].Member[html]", "html-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Page.setDocumentContent].Argument[1].Member[html]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: File download paths → path-injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- Page.setDownloadBehavior({downloadPath}) ---
+      # --- Browser.setDownloadBehavior({downloadPath}) ---
+      # Both domains share the same method name; Fuzzy covers both.
+      - ["chrome-remote-interface", "Fuzzy.Member[setDownloadBehavior].Argument[0].Member[downloadPath]", "path-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Page.setDownloadBehavior].Argument[1].Member[downloadPath]", "path-injection"]
+      - ["chrome-remote-interface", "Fuzzy.Member[send].WithStringArgument[0=Browser.setDownloadBehavior].Argument[1].Member[downloadPath]", "path-injection"]

@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # classnames/dedupe (npm: "classnames", subpath "dedupe")
+  # =============================================================================
+  #
+  # classnames/dedupe is a variant of the classnames utility that deduplicates
+  # CSS class names. It accepts strings, objects (keys included when values are
+  # truthy), and arrays (flattened recursively), returning a single
+  # space-delimited string with duplicate class names removed.
+  #
+  #   const classNames = require('classnames/dedupe');
+  #   classNames('foo', 'bar', 'foo'); // => 'foo bar'
+  #   classNames('a', { a: false });   // => ''  (dedupe removes 'a')
+  #
+  # Security concerns:
+  # - No sources or sinks: classnames/dedupe does not fetch data or perform
+  #   security-sensitive operations.
+  # - Taint propagation: arguments flow to the return value via string
+  #   concatenation. If a tainted value is passed as a class name, the
+  #   result is also tainted.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through classnames/dedupe calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # classnames/dedupe('foo', tainted, ...) => tainted result
+      - ["classnames/dedupe", "", "Argument[0..]", "ReturnValue", "taint"]

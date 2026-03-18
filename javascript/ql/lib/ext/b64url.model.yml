@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # b64url (npm: "b64url") - URL-safe base64 encoding/decoding
+  # =============================================================================
+  #
+  # The b64url package provides URL-safe base64 encoding and decoding with
+  # exports { encode, decode, toBase64, fromBase64 }.
+  #
+  #   const b64url = require('b64url');
+  #   b64url.encode('hello');            // encode to base64url
+  #   b64url.decode('aGVsbG8');          // decode base64url to string
+  #   b64url.toBase64('aGVsbG8');        // base64url -> base64
+  #   b64url.fromBase64('aGVsbG8=');     // base64 -> base64url
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Only decoding (decode, fromBase64) is modeled as taint-propagating,
+  # consistent with the existing CodeQL convention that base64 encoding is not a
+  # taint step (to avoid false positives).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # b64url.decode(encoded) - decode base64url to string
+      - ["b64url", "Member[decode]", "Argument[0]", "ReturnValue", "taint"]
+      # b64url.fromBase64(encoded) - convert base64 string to base64url string
+      - ["b64url", "Member[fromBase64]", "Argument[0]", "ReturnValue", "taint"]

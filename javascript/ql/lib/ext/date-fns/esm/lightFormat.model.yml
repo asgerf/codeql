@@ -1,0 +1,24 @@
+extensions:
+  # =============================================================================
+  # date-fns/esm/lightFormat (sub-path of npm: "date-fns") - ESM lightFormat
+  # =============================================================================
+  #
+  # Exports the `lightFormat` function as a default ESM import:
+  #
+  #   import lightFormat from 'date-fns/esm/lightFormat';
+  #   lightFormat(new Date(), "yyyy-MM-dd 'some text'");
+  #   //=> "2024-01-15 some text"
+  #
+  # lightFormat is a lighter alternative to format with fewer tokens but the
+  # same single-quote escaping mechanism. An attacker-controlled format string
+  # results in attacker-controlled output.
+  #
+  # Standard (non-curried) calling convention: lightFormat(date, formatStr) → string
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # lightFormat(date, formatStr) — taint from formatStr to return value
+      - ["date-fns/esm/lightFormat", "", "Argument[1]", "ReturnValue", "taint"]

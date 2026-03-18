@@ -1,0 +1,98 @@
+extensions:
+  # =============================================================================
+  # mongodb (npm: "mongodb") — Official MongoDB driver for Node.js
+  # =============================================================================
+  #
+  # The MongoDB Node.js driver provides an API for connecting to MongoDB and
+  # performing CRUD operations:
+  #
+  #   const { MongoClient } = require('mongodb');
+  #   const client = new MongoClient(uri);
+  #   const db = client.db('mydb');
+  #   const collection = db.collection('users');
+  #
+  #   collection.find({ name: userInput });           // nosql-injection
+  #   collection.findOne({ _id: userInput });          // nosql-injection
+  #   collection.updateOne(filter, update);            // nosql-injection (both args)
+  #   collection.aggregate([{ $match: userInput }]);   // nosql-injection
+  #
+  # Security concerns:
+  # - NoSQL injection: query/filter objects, update documents, and aggregation
+  #   pipelines passed to collection methods are nosql-injection sinks. An
+  #   attacker who controls the query object can use MongoDB operators like
+  #   $gt, $ne, $regex, or $where to bypass authentication or extract data.
+  # - $where operator: accepts arbitrary JavaScript code for server-side
+  #   execution — effectively a code-injection vector within a query.
+  # - Connection string: the URI passed to MongoClient is a request-forgery
+  #   sink (server-side request to attacker-controlled host).
+  #
+  # Existing QLL coverage:
+  #   mongodb/model.yml — comprehensive type-based model with mongodb.sink kind
+  #   NoSQL.qll — MongoDB.Query (picks up mongodb.sink), QueryFromModel
+  #               (picks up nosql-injection), QueryCall (DatabaseAccess)
+  #   NosqlInjectionCustomizations.qll — source/sink/sanitizer definitions
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: nosql-injection — query/filter and update parameters
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- Collection methods: filter/query at Argument[0] ---
+      #
+      # find(filter), findOne(filter), deleteOne(filter), deleteMany(filter),
+      # count(filter), countDocuments(filter), aggregate(pipeline),
+      # remove(filter), replaceOne(filter, replacement),
+      # findOneAndDelete(filter), findOneAndReplace(filter, replacement),
+      # watch(pipeline)
+      - [
+          "mongodb",
+          "Fuzzy.Member[find,findOne,deleteOne,deleteMany,count,countDocuments,aggregate,remove,replaceOne,findOneAndDelete,findOneAndReplace,watch].Argument[0]",
+          "nosql-injection",
+        ]
+
+      # --- Collection methods: both filter (arg 0) and update (arg 1) ---
+      #
+      # updateOne(filter, update), updateMany(filter, update),
+      # update(filter, update), findOneAndUpdate(filter, update)
+      - [
+          "mongodb",
+          "Fuzzy.Member[updateOne,updateMany,update,findOneAndUpdate].Argument[0..1]",
+          "nosql-injection",
+        ]
+
+      # --- distinct(key, filter) — filter is at Argument[1] ---
+      - ["mongodb", "Fuzzy.Member[distinct].Argument[1]", "nosql-injection"]
+
+      # --- Bulk write operations: filter and update in operation objects ---
+      # collection.bulkWrite([{ updateOne: { filter: ..., update: ... } }, ...])
+      - [
+          "mongodb",
+          "Fuzzy.Member[bulkWrite].Argument[0].ArrayElement.Member[filter,update]",
+          "nosql-injection",
+        ]
+
+      # --- findAndModify (low-level, used by some wrappers) ---
+      - ["mongodb", "Fuzzy.Member[findAndModify].Argument[0]", "nosql-injection"]
+
+      # --- Db-level aggregation and watch ---
+      - ["mongodb", "Member[db].ReturnValue.Member[aggregate,watch].Argument[0]", "nosql-injection"]
+
+      # --- Client-level watch ---
+      - ["mongodb", "Instance.Member[watch].Argument[0]", "nosql-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: request-forgery — connection URI
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new MongoClient(uri) — connection URI controls which server is contacted
+      - ["mongodb", "Member[MongoClient].Argument[0]", "request-forgery"]
+      # MongoClient.connect(uri) — static connect method
+      - ["mongodb", "Member[MongoClient].Member[connect].Argument[0]", "request-forgery"]
+      # Shorthand: require('mongodb').connect(uri) (older API)
+      - ["mongodb", "Member[connect].Argument[0]", "request-forgery"]

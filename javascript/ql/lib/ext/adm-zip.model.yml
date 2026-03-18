@@ -1,0 +1,78 @@
+extensions:
+  # =============================================================================
+  # adm-zip (npm: "adm-zip") - ZIP archive manipulation
+  # =============================================================================
+  #
+  # The adm-zip package provides a pure-JavaScript implementation for creating,
+  # reading, and extracting ZIP archives.
+  #
+  #   const AdmZip = require("adm-zip");
+  #   const zip = new AdmZip("archive.zip");
+  #   zip.getEntries().forEach(entry => {
+  #     console.log(entry.entryName);
+  #     console.log(entry.getData().toString("utf8"));
+  #   });
+  #   zip.extractAllTo("/tmp/output", true);
+  #
+  # Security concerns:
+  # - Path injection: extractAllTo, extractEntryTo, writeZip, addLocalFile,
+  #   addLocalFolder, and the constructor all accept filesystem paths.
+  # - Zip Slip: entry.entryName can contain path traversal sequences like
+  #   "../../etc/passwd". This is modeled via taint summaries so that taint
+  #   from the archive data reaches entry names.
+  # - Decompression bombs: reading/extracting untrusted archives can produce
+  #   unexpectedly large output. Modeled via taint summaries.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: filesystem path arguments
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new AdmZip(filePath) - reads archive from filesystem
+      - ["adm-zip", "Argument[0]", "path-injection"]
+      # zip.extractAllTo(targetPath, overwrite?) - extracts all entries to a directory
+      - ["adm-zip", "Instance.Member[extractAllTo].Argument[0]", "path-injection"]
+      # zip.extractEntryTo(entry, targetPath, ...) - extracts a single entry
+      - ["adm-zip", "Instance.Member[extractEntryTo].Argument[1]", "path-injection"]
+      # zip.writeZip(targetFileName) - writes archive to disk
+      - ["adm-zip", "Instance.Member[writeZip].Argument[0]", "path-injection"]
+      # zip.addLocalFile(localPath, zipPath?) - adds a local file to the archive
+      - ["adm-zip", "Instance.Member[addLocalFile].Argument[0]", "path-injection"]
+      # zip.addLocalFolder(localPath, zipPath?, filter?) - adds a local folder
+      - ["adm-zip", "Instance.Member[addLocalFolder].Argument[0]", "path-injection"]
+      # zip.addLocalFolderAsync(localPath, ...) - async variant
+      - ["adm-zip", "Instance.Member[addLocalFolderAsync].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through archive operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # new AdmZip(input) → zip instance: archive data taints the instance
+      - ["adm-zip", "", "Argument[0]", "Instance", "taint"]
+
+      # zip.getEntries() → ZipEntry[]: taint flows from instance to entries
+      - ["adm-zip", "Instance.Member[getEntries]", "Argument[this]", "ReturnValue", "taint"]
+      # zip.getEntry(name) → ZipEntry: taint flows from instance to entry
+      - ["adm-zip", "Instance.Member[getEntry]", "Argument[this]", "ReturnValue", "taint"]
+
+      # zip.readFile(entry) → Buffer: taint flows from instance to content
+      - ["adm-zip", "Instance.Member[readFile]", "Argument[this]", "ReturnValue", "taint"]
+      # zip.readAsText(entry, encoding?) → string
+      - ["adm-zip", "Instance.Member[readAsText]", "Argument[this]", "ReturnValue", "taint"]
+      # zip.readFileAsync(entry, callback) → callback(data): taint flows to callback param
+      - ["adm-zip", "Instance.Member[readFileAsync]", "Argument[this]", "Argument[1].Parameter[0]", "taint"]
+      # zip.readAsTextAsync(entry, callback, encoding?) → callback(data)
+      - ["adm-zip", "Instance.Member[readAsTextAsync]", "Argument[this]", "Argument[1].Parameter[0]", "taint"]
+
+      # zip.toBuffer() → Buffer: taint flows from instance to buffer
+      - ["adm-zip", "Instance.Member[toBuffer]", "Argument[this]", "ReturnValue", "taint"]
+
+      # entry.getData() → Buffer: taint flows from entry to content
+      # Uses Fuzzy to reach ZipEntry objects obtained via getEntries/getEntry
+      - ["adm-zip", "Fuzzy.Member[getData]", "Argument[this]", "ReturnValue", "taint"]

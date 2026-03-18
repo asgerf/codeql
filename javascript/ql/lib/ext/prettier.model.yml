@@ -1,0 +1,76 @@
+extensions:
+  # =============================================================================
+  # prettier (npm: "prettier") - Opinionated code formatter
+  # =============================================================================
+  #
+  # prettier formats source code strings according to style rules:
+  #
+  #   const prettier = require('prettier');
+  #
+  #   // Format code (returns promise)
+  #   const output = await prettier.format(source, { parser: 'babel' });
+  #
+  #   // Format with cursor tracking (for editor integration)
+  #   const { formatted, cursorOffset } =
+  #     await prettier.formatWithCursor(source, { cursorOffset: 5, parser: 'babel' });
+  #
+  #   // Check if code is already formatted
+  #   const isFormatted = await prettier.check(source, { parser: 'babel' });
+  #
+  #   // Resolve configuration from filesystem
+  #   const config = await prettier.resolveConfig(filePath);
+  #   const configPath = await prettier.resolveConfigFile(filePath);
+  #   const config2 = await prettier.resolveConfig(filePath, { config: '/path/to/.prettierrc' });
+  #
+  #   // Get file info (parser, ignored status)
+  #   const info = await prettier.getFileInfo(filePath);
+  #
+  # Security concerns:
+  # - prettier.resolveConfig(path), resolveConfigFile(path), getFileInfo(path):
+  #   The file path argument controls which file is read from the filesystem —
+  #   a path-injection sink.
+  # - prettier.resolveConfig(path, { config: configPath }): The config option
+  #   also controls a filesystem read — a path-injection sink.
+  # - prettier.format(source) / formatWithCursor(source): Taint from the input
+  #   source propagates to the formatted output (pure string transformation).
+  #
+  # Existing QLL coverage:
+  #   Prettier.qll: taint steps for format() and formatWithCursor().
+  #   TaintedPathCustomizations.qll: resolveConfig/resolveConfigFile/getFileInfo
+  #     arg 0 and resolveConfig options.config modeled as TaintedPath sinks.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # prettier.resolveConfig(filePath, opts?) — filePath controls filesystem read
+      - ["prettier", "Member[resolveConfig].Argument[0]", "path-injection"]
+
+      # prettier.resolveConfig(filePath, { config: configPath }) — config path
+      - ["prettier", "Member[resolveConfig].Argument[1].Member[config]", "path-injection"]
+
+      # prettier.resolveConfigFile(filePath) — filePath controls filesystem read
+      - ["prettier", "Member[resolveConfigFile].Argument[0]", "path-injection"]
+
+      # prettier.getFileInfo(filePath) — filePath controls filesystem read
+      - ["prettier", "Member[getFileInfo].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through formatting
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # prettier.format(source, opts?) → formatted string
+      - ["prettier", "Member[format]", "Argument[0]", "ReturnValue.Awaited", "taint"]
+
+      # prettier.formatWithCursor(source, opts?) → { formatted, cursorOffset }
+      - ["prettier", "Member[formatWithCursor]", "Argument[0]", "ReturnValue.Awaited.Member[formatted]", "taint"]
+
+      # prettier.check(source, opts?) → boolean (taint doesn't really matter
+      # for a boolean, but the input is parsed the same way as format)

@@ -1,0 +1,224 @@
+extensions:
+  # =============================================================================
+  # Sources: Parameter decorators that extract untrusted request data
+  # =============================================================================
+  #
+  # NestJS uses TypeScript decorators on handler method parameters to inject
+  # request data. For example:
+  #   @Get(':id')
+  #   getUser(@Param('id') id: string, @Query() query: any, @Body() body: any) {}
+  #
+  # The DecoratedParameter access path component selects parameters that have
+  # a given decorator applied.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # @Body() / @Body('property') - parsed request body or a named property of it
+      - ["@nestjs/common", "Member[Body].ReturnValue.DecoratedParameter", "remote"]
+
+      # @Param() / @Param('name') - URL route parameters (e.g. :id)
+      - ["@nestjs/common", "Member[Param].ReturnValue.DecoratedParameter", "remote"]
+
+      # @Query() / @Query('name') - query string parameters
+      - ["@nestjs/common", "Member[Query].ReturnValue.DecoratedParameter", "remote"]
+
+      # @Headers() / @Headers('name') - HTTP request headers
+      - ["@nestjs/common", "Member[Headers].ReturnValue.DecoratedParameter", "remote"]
+
+      # @HostParam() / @HostParam('name') - host/subdomain parameters
+      - ["@nestjs/common", "Member[HostParam].ReturnValue.DecoratedParameter", "remote"]
+
+      # @UploadedFile() - single uploaded file object
+      - ["@nestjs/common", "Member[UploadedFile].ReturnValue.DecoratedParameter", "remote"]
+
+      # @UploadedFiles() - array of uploaded file objects
+      - ["@nestjs/common", "Member[UploadedFiles].ReturnValue.DecoratedParameter", "remote"]
+
+      # @Ip() - client IP address (can be spoofed via X-Forwarded-For)
+      - ["@nestjs/common", "Member[Ip].ReturnValue.DecoratedParameter", "remote"]
+
+      # @Session() - session data (may contain previously-stored user input)
+      - ["@nestjs/common", "Member[Session].ReturnValue.DecoratedParameter", "remote"]
+
+      # @RawBody() - raw request body as Buffer
+      - ["@nestjs/common", "Member[RawBody].ReturnValue.DecoratedParameter", "remote"]
+
+      # ===================================================================
+      # @Req() / @Request() - injects the underlying Express request object
+      # ===================================================================
+      # Untrusted properties on the Express request object
+      - [
+          "@nestjs/common",
+          "Member[Req,Request].ReturnValue.DecoratedParameter.Member[body,params,query,headers,url,originalUrl,path,hostname,ip,ips,cookies,signedCookies,subdomains,baseUrl]",
+          "remote",
+        ]
+
+      # req.get(headerName) / req.header(headerName) - header access methods
+      - [
+          "@nestjs/common",
+          "Member[Req,Request].ReturnValue.DecoratedParameter.Member[get,header].ReturnValue",
+          "remote",
+        ]
+
+      # req.param(name) - gets a route/query/body parameter by name
+      - [
+          "@nestjs/common",
+          "Member[Req,Request].ReturnValue.DecoratedParameter.Member[param].ReturnValue",
+          "remote",
+        ]
+
+      # ===================================================================
+      # createParamDecorator - custom parameter decorator factory
+      # ===================================================================
+      # The callback's second parameter is an ExecutionContext.
+      # ctx.switchToHttp().getRequest() returns the Express request object.
+      - [
+          "@nestjs/common",
+          "Member[createParamDecorator].Argument[0].Parameter[1].Member[switchToHttp].ReturnValue.Member[getRequest].ReturnValue.Member[body,params,query,headers,url,originalUrl,path,hostname,ip,ips,cookies,signedCookies,subdomains]",
+          "remote",
+        ]
+      - [
+          "@nestjs/common",
+          "Member[createParamDecorator].Argument[0].Parameter[1].Member[switchToHttp].ReturnValue.Member[getRequest].ReturnValue.Member[get,header].ReturnValue",
+          "remote",
+        ]
+
+      # ===================================================================
+      # ExecutionContext (used in guards and interceptors)
+      # ===================================================================
+      # e.g. context.switchToHttp().getRequest().body
+      - [
+          "@nestjs/common.ExecutionContext",
+          "Member[switchToHttp].ReturnValue.Member[getRequest].ReturnValue.Member[body,params,query,headers,url,originalUrl,path,hostname,ip,ips,cookies,signedCookies,subdomains]",
+          "remote",
+        ]
+      - [
+          "@nestjs/common.ExecutionContext",
+          "Member[switchToHttp].ReturnValue.Member[getRequest].ReturnValue.Member[get,header].ReturnValue",
+          "remote",
+        ]
+
+      # ===================================================================
+      # ArgumentsHost (used in exception filters)
+      # ===================================================================
+      # e.g. host.switchToHttp().getRequest().body
+      - [
+          "@nestjs/common.ArgumentsHost",
+          "Member[switchToHttp].ReturnValue.Member[getRequest].ReturnValue.Member[body,params,query,headers,url,originalUrl,path,hostname,ip,ips,cookies,signedCookies,subdomains]",
+          "remote",
+        ]
+      - [
+          "@nestjs/common.ArgumentsHost",
+          "Member[switchToHttp].ReturnValue.Member[getRequest].ReturnValue.Member[get,header].ReturnValue",
+          "remote",
+        ]
+
+      # ===================================================================
+      # NestMiddleware - the use(req, res, next) method
+      # ===================================================================
+      # Parameter[0] (req) is the Express request object
+      - [
+          "@nestjs/common.NestMiddleware",
+          "Member[use].Parameter[0].Member[body,params,query,headers,url,originalUrl,path,hostname,ip,ips,cookies,signedCookies,subdomains]",
+          "remote",
+        ]
+      - [
+          "@nestjs/common.NestMiddleware",
+          "Member[use].Parameter[0].Member[get,header].ReturnValue",
+          "remote",
+        ]
+
+      # ===================================================================
+      # PipeTransform - custom pipe input is untrusted
+      # ===================================================================
+      # The transform(value, metadata) method receives request data as its first parameter
+      - [
+          "@nestjs/common.PipeTransform",
+          "Member[transform].Parameter[0]",
+          "remote",
+        ]
+
+  # =============================================================================
+  # Sinks
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # @Redirect(url) - the first argument is the default redirect URL
+      - ["@nestjs/common", "Member[Redirect].Argument[0]", "url-redirection"]
+
+      # When a handler decorated with @Redirect() returns { url: '...' },
+      # the url property overrides the redirect destination
+      - [
+          "@nestjs/common",
+          "Member[Redirect].ReturnValue.DecoratedMember.ReturnValue.Member[url]",
+          "url-redirection",
+        ]
+
+      # @Res() / @Response() - res.redirect(url)
+      - [
+          "@nestjs/common",
+          "Member[Res,Response].ReturnValue.DecoratedParameter.Member[redirect].Argument[0]",
+          "url-redirection",
+        ]
+
+      # @Res() / @Response() - res.send(body) sends response content
+      - [
+          "@nestjs/common",
+          "Member[Res,Response].ReturnValue.DecoratedParameter.Member[send].Argument[0]",
+          "html-injection",
+        ]
+
+      # NestMiddleware - res.redirect(url) on the response parameter
+      - [
+          "@nestjs/common.NestMiddleware",
+          "Member[use].Parameter[1].Member[redirect].Argument[0]",
+          "url-redirection",
+        ]
+
+      # NestMiddleware - res.send(body) on the response parameter
+      - [
+          "@nestjs/common.NestMiddleware",
+          "Member[use].Parameter[1].Member[send].Argument[0]",
+          "html-injection",
+        ]
+
+      # ExecutionContext - getResponse().redirect(url)
+      - [
+          "@nestjs/common.ExecutionContext",
+          "Member[switchToHttp].ReturnValue.Member[getResponse].ReturnValue.Member[redirect].Argument[0]",
+          "url-redirection",
+        ]
+
+  # =============================================================================
+  # Summaries: taint flow through functions
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # createParamDecorator(factory): the factory callback's return value flows
+      # to the parameter decorated by the resulting decorator.
+      # createParamDecorator(fn) returns a decorator factory;
+      # calling the factory returns a ParameterDecorator;
+      # DecoratedParameter selects the parameter it decorates.
+      - [
+          "@nestjs/common",
+          "Member[createParamDecorator]",
+          "Argument[0].ReturnValue",
+          "ReturnValue.ReturnValue.DecoratedParameter",
+          "taint",
+        ]
+
+      # PipeTransform.transform(value) return value flows through the pipe.
+      # The output of transform() flows to the parameter that the pipe is applied to.
+      - [
+          "@nestjs/common.PipeTransform",
+          "Member[transform]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]

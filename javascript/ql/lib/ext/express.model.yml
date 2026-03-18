@@ -1,0 +1,184 @@
+extensions:
+  # =============================================================================
+  # express (npm: "express") - Fast, unopinionated web framework for Node.js
+  # =============================================================================
+  #
+  # Express is the most popular Node.js web framework. It provides routing,
+  # middleware, request/response handling, and template rendering.
+  #
+  #   const express = require('express');
+  #   const app = express();
+  #
+  #   app.get('/user/:id', (req, res) => {
+  #     req.params.id;         // route parameter (untrusted)
+  #     req.query.search;      // query string parameter (untrusted)
+  #     req.body;              // parsed request body (untrusted)
+  #     req.cookies;           // cookies (untrusted)
+  #     req.get('Host');       // request header (untrusted)
+  #     req.headers;           // all headers (untrusted)
+  #     req.path;              // URL path (untrusted)
+  #     req.originalUrl;       // original URL (untrusted)
+  #     req.hostname;          // hostname from Host header (untrusted)
+  #
+  #     res.send(data);        // send response body (XSS sink)
+  #     res.json(data);        // send JSON response
+  #     res.jsonp(data);       // send JSONP response
+  #     res.render('view', obj); // render template (XSS + path-injection)
+  #     res.redirect(url);     // redirect (url-redirection sink)
+  #     res.sendFile(path);    // serve file (path-injection sink)
+  #     res.download(path);    // serve file as download (path-injection sink)
+  #     res.cookie(n, v);      // set cookie
+  #     res.set(name, value);  // set response header
+  #   });
+  #
+  #   app.use(express.static('public')); // serve static files
+  #
+  # Existing QLL coverage (Express.qll, ExpressModules.qll):
+  # - Sources: RequestInputAccess (req.query, req.params, req.body, req.cookies,
+  #   req.path, req.originalUrl, req.files, req.file, req._parsedUrl,
+  #   req.param(), req.get/header(), req.headers.*, req.host, req.hostname)
+  # - Sinks: ResponseSendArgument (res.send), ResponseJsonCallArgument
+  #   (res.json, res.jsonp), TemplateInput (res.render arg 1 properties),
+  #   RedirectInvocation (res.redirect), ResponseSendFileAsFileSystemAccess
+  #   (res.sendFile), ResponseDownloadAsFileSystemAccess (res.download),
+  #   SetOneHeader/AppendHeader (res.set, res.header, res.append),
+  #   SetCookie (res.cookie), ExpressRenderSink (res.render arg 0 for path)
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Untrusted request data in Express route handlers
+  # ---------------------------------------------------------------------------
+  #
+  # Express route handlers are registered via app.get/post/put/delete/all/use/
+  # param etc. The request object is typically Parameter[0] (or Parameter[1]
+  # in error handlers with signature (err, req, res, next)).
+  #
+  # Using Fuzzy to trace through express() app creation, router creation,
+  # and chained route registration.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- Request parameters: req.query, req.params ---
+      # req.query.x — query string parameters
+      - [
+          "express",
+          "Fuzzy.Member[query]",
+          "remote",
+        ]
+      # req.params.x — route parameters (e.g. /user/:id)
+      - [
+          "express",
+          "Fuzzy.Member[params]",
+          "remote",
+        ]
+
+      # --- req.param(name) — reads from params, body, or query ---
+      - [
+          "express",
+          "Fuzzy.Member[param].ReturnValue",
+          "remote",
+        ]
+
+      # --- Request body: req.body ---
+      - [
+          "express",
+          "Fuzzy.Member[body]",
+          "remote",
+        ]
+
+      # --- Request files: req.files, req.file ---
+      # Populated by multer, express-fileupload, etc.
+      - [
+          "express",
+          "Fuzzy.Member[files,file]",
+          "remote",
+        ]
+
+      # --- Cookies: req.cookies ---
+      - [
+          "express",
+          "Fuzzy.Member[cookies]",
+          "remote",
+        ]
+
+      # --- URL-related properties ---
+      # req.originalUrl — full original URL before rewriting
+      # req.path — URL path portion
+      # req._parsedUrl — internal parsed URL object
+      - [
+          "express",
+          "Fuzzy.Member[originalUrl,path,_parsedUrl]",
+          "remote",
+        ]
+
+      # --- Request headers ---
+      # req.headers — all headers object
+      - [
+          "express",
+          "Fuzzy.Member[headers]",
+          "remote",
+        ]
+      # req.hostname / req.host — from Host header
+      - [
+          "express",
+          "Fuzzy.Member[hostname,host]",
+          "remote",
+        ]
+      # req.get(name) / req.header(name) — read a specific header
+      - [
+          "express",
+          "Fuzzy.Member[get,header].ReturnValue",
+          "remote",
+        ]
+
+      # --- Typed request sources (express.Request) ---
+      # For TypeScript codebases with typed parameters
+      - ["express.Request", "Member[query,params,body,cookies,files,file]", "remote"]
+      - ["express.Request", "Member[originalUrl,path,_parsedUrl,hostname,host,headers]", "remote"]
+      - ["express.Request", "Member[get,header].ReturnValue", "remote"]
+      - ["express.Request", "Member[param].ReturnValue", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: XSS / HTML injection — response body
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # res.send(body) — sends response body, may be HTML
+      - ["express", "Fuzzy.Member[send].Argument[0]", "html-injection"]
+
+      # res.render(view, locals) — template rendering: property values in
+      # the locals object flow into the rendered template (XSS risk)
+      - ["express", "Fuzzy.Member[render].Argument[1]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL redirection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # res.redirect([status,] url) — last argument is the redirect URL
+      - ["express", "Fuzzy.Member[redirect].Argument[0..1]", "url-redirection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Path injection (file system access)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # res.sendFile(path, options?) / res.sendfile(path, options?)
+      - ["express", "Fuzzy.Member[sendFile,sendfile].Argument[0]", "path-injection"]
+
+      # res.download(path, filename?, options?, callback?)
+      - ["express", "Fuzzy.Member[download].Argument[0]", "path-injection"]
+
+      # res.render(view, ...) — first argument is the template file path
+      - ["express", "Fuzzy.Member[render].Argument[0]", "path-injection"]
+
+      # express.static(root) — root directory for serving static files
+      - ["express", "Member[static].Argument[0]", "path-injection"]

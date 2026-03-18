@@ -1,0 +1,23 @@
+extensions:
+  # =============================================================================
+  # base-64 (npm: "base-64") - RFC 4648 compliant base64 encoder/decoder
+  # =============================================================================
+  #
+  # The base-64 package by Mathias Bynens exports { encode, decode } providing
+  # base64 encoding and decoding compatible with btoa() and atob().
+  #
+  #   const base64 = require('base-64');
+  #   base64.encode('hello');       // "aGVsbG8="
+  #   base64.decode('aGVsbG8=');    // "hello"
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Only decoding (decode) is modeled as taint-propagating, consistent with the
+  # existing CodeQL convention that base64 encoding is not a taint step (to
+  # avoid false positives).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # base-64.decode(encoded) - decode base64 string
+      - ["base-64", "Member[decode]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,124 @@
+extensions:
+  # =============================================================================
+  # puppeteer (npm: "puppeteer", "puppeteer-core") — Headless Chrome automation
+  # =============================================================================
+  #
+  # Puppeteer provides a high-level API to control Chrome/Chromium over the
+  # DevTools Protocol:
+  #
+  #   const puppeteer = require('puppeteer');
+  #   const browser = await puppeteer.launch();
+  #   const page = await browser.newPage();
+  #   await page.goto('https://example.com');
+  #   await page.evaluate(() => document.title);
+  #
+  # Key types:
+  #   puppeteer.launch() / puppeteer.connect() → Browser
+  #   browser.newPage() → Page
+  #   browser.createBrowserContext() → BrowserContext
+  #   page.mainFrame() / page.frames() → Frame
+  #
+  # Security concerns:
+  # - Request forgery: page.goto(url) navigates the browser to an arbitrary URL.
+  #   addScriptTag/addStyleTag can load resources from URLs.
+  # - Code injection: page.evaluate(), page.evaluateHandle(),
+  #   page.evaluateOnNewDocument(), page.$eval(), page.$$eval() execute
+  #   JavaScript in the browser context. The first argument (a string or
+  #   function) is a code-injection sink.
+  # - HTML injection: page.setContent(html) injects raw HTML into the page.
+  # - Path injection: page.pdf({path}), page.screenshot({path}) write files
+  #   to a user-controlled path.
+  #
+  # Existing QLL coverage (Puppeteer.qll + TaintedPathCustomizations.qll):
+  # - page.goto() as ClientRequest (request-forgery)
+  # - page.addScriptTag/addStyleTag as ClientRequest via {url} option
+  # - page.pdf/screenshot {path} option as TaintedPath sink
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: request-forgery — URL navigation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # page.goto(url) — navigate to a URL
+      - ["puppeteer", "Fuzzy.Member[goto].Argument[0]", "request-forgery"]
+      - ["puppeteer-core", "Fuzzy.Member[goto].Argument[0]", "request-forgery"]
+
+      # page.addScriptTag({url}) — load a script from a URL
+      - ["puppeteer", "Fuzzy.Member[addScriptTag].Argument[0].Member[url]", "request-forgery"]
+      - ["puppeteer-core", "Fuzzy.Member[addScriptTag].Argument[0].Member[url]", "request-forgery"]
+
+      # page.addStyleTag({url}) — load a stylesheet from a URL
+      - ["puppeteer", "Fuzzy.Member[addStyleTag].Argument[0].Member[url]", "request-forgery"]
+      - ["puppeteer-core", "Fuzzy.Member[addStyleTag].Argument[0].Member[url]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: code-injection — JavaScript execution in browser context
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # page.evaluate(pageFunction, ...args) — execute JS in page
+      - ["puppeteer", "Fuzzy.Member[evaluate].Argument[0]", "code-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[evaluate].Argument[0]", "code-injection"]
+
+      # page.evaluateHandle(pageFunction, ...args) — execute JS, return handle
+      - ["puppeteer", "Fuzzy.Member[evaluateHandle].Argument[0]", "code-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[evaluateHandle].Argument[0]", "code-injection"]
+
+      # page.evaluateOnNewDocument(pageFunction, ...args) — inject JS on load
+      - ["puppeteer", "Fuzzy.Member[evaluateOnNewDocument].Argument[0]", "code-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[evaluateOnNewDocument].Argument[0]", "code-injection"]
+
+      # page.$eval(selector, pageFunction) — run JS on matched element
+      - ["puppeteer", "Fuzzy.Member[$eval].Argument[1]", "code-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[$eval].Argument[1]", "code-injection"]
+
+      # page.$$eval(selector, pageFunction) — run JS on all matched elements
+      - ["puppeteer", "Fuzzy.Member[$$eval].Argument[1]", "code-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[$$eval].Argument[1]", "code-injection"]
+
+      # page.addScriptTag({content}) — inject inline script content
+      - ["puppeteer", "Fuzzy.Member[addScriptTag].Argument[0].Member[content]", "code-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[addScriptTag].Argument[0].Member[content]", "code-injection"]
+
+      # page.addScriptTag({path}) — load script from a local file path
+      - ["puppeteer", "Fuzzy.Member[addScriptTag].Argument[0].Member[path]", "path-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[addScriptTag].Argument[0].Member[path]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: html-injection — raw HTML content
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # page.setContent(html) — set entire page HTML
+      - ["puppeteer", "Fuzzy.Member[setContent].Argument[0]", "html-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[setContent].Argument[0]", "html-injection"]
+
+      # page.addStyleTag({content}) — inject inline CSS (limited risk but included)
+      - ["puppeteer", "Fuzzy.Member[addStyleTag].Argument[0].Member[content]", "html-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[addStyleTag].Argument[0].Member[content]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path-injection — file write paths
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # page.pdf({path}) — write PDF to a file path
+      - ["puppeteer", "Fuzzy.Member[pdf].Argument[0].Member[path]", "path-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[pdf].Argument[0].Member[path]", "path-injection"]
+
+      # page.screenshot({path}) — write screenshot to a file path
+      - ["puppeteer", "Fuzzy.Member[screenshot].Argument[0].Member[path]", "path-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[screenshot].Argument[0].Member[path]", "path-injection"]
+
+      # page.addStyleTag({path}) — load stylesheet from a local file path
+      - ["puppeteer", "Fuzzy.Member[addStyleTag].Argument[0].Member[path]", "path-injection"]
+      - ["puppeteer-core", "Fuzzy.Member[addStyleTag].Argument[0].Member[path]", "path-injection"]

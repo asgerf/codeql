@@ -1,0 +1,52 @@
+extensions:
+  # =============================================================================
+  # es-cookie (npm: "es-cookie") - ES module cookie library
+  # =============================================================================
+  #
+  # Lightweight ES module for handling browser cookies, functionally equivalent
+  # to js-cookie.
+  #
+  #   import * as Cookies from 'es-cookie';
+  #
+  #   Cookies.set('name', 'value', { secure: true });
+  #   Cookies.get('name');        // => 'value'
+  #   Cookies.getAll();           // => { name: 'value', ... }
+  #   Cookies.remove('name');
+  #   Cookies.parse('foo=bar');   // => { foo: 'bar' }
+  #   Cookies.encode('foo', 'bar', { secure: true }); // => 'foo=bar; Secure'
+  #
+  # Security concerns:
+  # - get() and getAll() read from document.cookie, which is untrusted.
+  # - parse() propagates taint from a cookie string to parsed values.
+  # - encode() propagates taint from cookie name/value to encoded string.
+  # - set() writes to document.cookie (modeled as CookieWrite in QLL, no
+  #   corresponding data-extension sink kind).
+  #
+  # Existing QLL coverage:
+  # - CookieLibraries.qll: Models get() as PersistentReadAccess and set() as
+  #   PersistentWriteAccess / CookieWrite with secure/sameSite flag checking.
+  # =============================================================================
+
+  # Sources: Cookie values read from document.cookie are untrusted.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Cookies.get(name) → string | undefined
+      - ["es-cookie", "Fuzzy.Member[get].ReturnValue", "remote"]
+
+      # Cookies.getAll() → { name: value, ... }
+      - ["es-cookie", "Fuzzy.Member[getAll].ReturnValue", "remote"]
+
+  # Summaries: Taint propagation through parsing and encoding.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Cookies.parse(cookieString) → { name: value, ... }
+      # Taint flows from the raw cookie string to the parsed object.
+      - ["es-cookie", "Fuzzy.Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Cookies.encode(name, value, attributes) → "name=value; ..."
+      # Taint flows from the cookie name and value to the encoded string.
+      - ["es-cookie", "Fuzzy.Member[encode]", "Argument[0..1]", "ReturnValue", "taint"]

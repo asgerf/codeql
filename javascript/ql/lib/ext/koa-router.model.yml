@@ -1,0 +1,41 @@
+extensions:
+  # =============================================================================
+  # koa-router (npm: "koa-router") - Router middleware for Koa
+  # =============================================================================
+  #
+  # koa-router is the original routing middleware for Koa. The @koa/router
+  # package is a maintained fork with the same API. Both are already modeled
+  # comprehensively in @koa/router.model.yml, which includes a typeModel alias:
+  #
+  #   ["@koa/router", "koa-router", ""]
+  #
+  # This means all source, sink, and summary models defined for @koa/router
+  # automatically apply to koa-router as well.
+  #
+  # This file exists solely for catalog completeness. No additional models
+  # are needed beyond the alias already defined in @koa/router.model.yml.
+  #
+  # API (identical to @koa/router):
+  #   const Router = require('koa-router');
+  #   const router = new Router();
+  #   router.get('/path/:id', (ctx, next) => { ctx.params.id; });
+  #   router.post('/path', (ctx, next) => { ctx.request.body; });
+  #   router.param('id', (id, ctx, next) => { ... });
+  #   app.use(router.routes());
+  #   app.use(router.allowedMethods());
+  #
+  # Existing QLL coverage (Koa.qll):
+  # - RoutedRouteHandler: detects route handlers for both koa-router and
+  #   @koa/router, with ctx parameter treated as a Koa context
+  # - ctx.params modeled as request parameter source
+  #
+  # Existing data extension coverage (@koa/router.model.yml):
+  # - typeModel alias: koa-router → @koa/router
+  # - Sources: ctx.params, ctx.query, ctx.headers, ctx.request.*, ctx.get(),
+  #   ctx.cookies.get(), router.param() middleware
+  # - Sinks: ctx.redirect(), ctx.response.redirect(), router.redirect()
+  # - Summaries: router.url(), Router.url()
+  # =============================================================================
+
+  # No additional models needed — the typeModel in @koa/router.model.yml
+  # already aliases koa-router to @koa/router, so all models apply.

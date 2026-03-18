@@ -1,0 +1,160 @@
+extensions:
+  # =============================================================================
+  # express-brute (npm: "express-brute") - Brute-force protection middleware
+  # =============================================================================
+  #
+  # express-brute is rate-limiting middleware for Express that increases delays
+  # between requests in a Fibonacci-like sequence to protect against brute-force
+  # attacks.
+  #
+  #   const ExpressBrute = require('express-brute');
+  #   const store = new ExpressBrute.MemoryStore();
+  #   const bruteforce = new ExpressBrute(store, {
+  #     failCallback: (req, res, next, nextValidRequestDate) => { ... },
+  #     handleStoreError: (err) => { ... }
+  #   });
+  #
+  #   app.post('/auth',
+  #     bruteforce.prevent,                    // rate-limiting middleware
+  #     bruteforce.getMiddleware({
+  #       key: (req, res, next) => next(req.body.username),
+  #       failCallback: (req, res, next, nextValidRequestDate) => { ... },
+  #       ignoreIP: false
+  #     }),
+  #     (req, res) => { ... }
+  #   );
+  #
+  # API summary:
+  # - new ExpressBrute(store, options) — constructor
+  # - instance.prevent — middleware (equivalent to getMiddleware())
+  # - instance.getMiddleware(options) — returns middleware with per-call options
+  # - instance.reset(ip, key, callback) — resets rate-limit counter
+  # - ExpressBrute.MemoryStore — in-memory store (not for production)
+  # - ExpressBrute.FailTooManyRequests — built-in failCallback (429 response)
+  # - ExpressBrute.FailForbidden — built-in failCallback (403 response)
+  # - ExpressBrute.FailMark — built-in failCallback (marks res, calls next)
+  #
+  # Security analysis:
+  # - The library is primarily defensive infrastructure for rate-limiting.
+  # - No injection sinks: the library does not execute commands, SQL, or
+  #   render templates. Its internal use of crypto.createHash for key hashing
+  #   is not security-sensitive to untrusted input.
+  # - Sources: User-defined callbacks (failCallback, key function, and
+  #   handleStoreError) receive the Express request object, whose properties
+  #   are untrusted. These are modeled below.
+  #
+  # Existing QLL coverage (MissingRateLimiting.qll):
+  # - BruteForceRateLimit models `new ExpressBrute(store).prevent` as a
+  #   RateLimitingMiddleware for the MissingRateLimiting query. This cannot
+  #   be expressed as a data extension since there is no extensible predicate
+  #   for rate-limiting middleware. The QLL model should be retained.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Untrusted request data in user-defined callbacks
+  # ---------------------------------------------------------------------------
+  #
+  # express-brute invokes user-provided callbacks with the Express request
+  # object. Since CodeQL cannot track data flow through express-brute's
+  # internal code, we mark the req parameter properties as remote sources.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- Constructor failCallback ---
+      # new ExpressBrute(store, { failCallback: (req, res, next, nextValidRequestDate) => { ... } })
+      # Parameter[0] is the Express request object.
+      - [
+          "express-brute",
+          "Argument[1].Member[failCallback].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Argument[1].Member[failCallback].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Argument[1].Member[failCallback].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Argument[1].Member[failCallback].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- getMiddleware failCallback ---
+      # instance.getMiddleware({ failCallback: (req, res, next, nextValidRequestDate) => { ... } })
+      # Parameter[0] is the Express request object.
+      - [
+          "express-brute",
+          "Fuzzy.Member[getMiddleware].Argument[0].Member[failCallback].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Fuzzy.Member[getMiddleware].Argument[0].Member[failCallback].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Fuzzy.Member[getMiddleware].Argument[0].Member[failCallback].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Fuzzy.Member[getMiddleware].Argument[0].Member[failCallback].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- getMiddleware key function ---
+      # instance.getMiddleware({ key: (req, res, next) => { next(req.body.username); } })
+      # Parameter[0] is the Express request object.
+      - [
+          "express-brute",
+          "Fuzzy.Member[getMiddleware].Argument[0].Member[key].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Fuzzy.Member[getMiddleware].Argument[0].Member[key].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Fuzzy.Member[getMiddleware].Argument[0].Member[key].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Fuzzy.Member[getMiddleware].Argument[0].Member[key].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- handleStoreError ---
+      # new ExpressBrute(store, { handleStoreError: (err) => { ... } })
+      # When called from middleware, err has shape { req, res, next, message, parent }.
+      # err.req is the Express request object.
+      - [
+          "express-brute",
+          "Argument[1].Member[handleStoreError].Parameter[0].Member[req].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Argument[1].Member[handleStoreError].Parameter[0].Member[req].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Argument[1].Member[handleStoreError].Parameter[0].Member[req].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-brute",
+          "Argument[1].Member[handleStoreError].Parameter[0].Member[req].Member[get,header,param].ReturnValue",
+          "remote",
+        ]

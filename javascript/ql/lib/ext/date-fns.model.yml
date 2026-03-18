@@ -1,0 +1,73 @@
+extensions:
+  # =============================================================================
+  # date-fns (npm: "date-fns") - Comprehensive date utility library
+  # =============================================================================
+  #
+  # date-fns provides 200+ pure functions for manipulating JavaScript dates.
+  # It uses native Date objects and is modular (tree-shakeable).
+  #
+  #   import { format, lightFormat } from 'date-fns';
+  #   format(new Date(), "yyyy-MM-dd 'at' HH:mm");
+  #   //=> "2024-01-15 at 14:30"
+  #
+  # Import patterns supported:
+  #   - Main:     import { format } from 'date-fns'
+  #   - ESM:      import { format } from 'date-fns/esm'
+  #   - Direct:   import format from 'date-fns/format'
+  #   - ESM dir:  import format from 'date-fns/esm/format'
+  #   - FP:       import { format } from 'date-fns/fp'
+  #   - FP dir:   import format from 'date-fns/fp/format'
+  #   - FP ESM:   import { format } from 'date-fns/esm/fp'
+  #
+  # Security concerns:
+  # - format(date, formatStr) and lightFormat(date, formatStr) allow the
+  #   format string to embed arbitrary text via single-quote escaping
+  #   (e.g. "'injected text' yyyy"). If the format string is attacker-
+  #   controlled, arbitrary content appears in the output string.
+  # - The FP (curried) variants work as format(formatStr)(date), so the
+  #   format string is the first argument to the curried function.
+  #
+  # This library has no sources or sinks — only taint summaries.
+  #
+  # Existing QLL coverage (DateFunctions.qll):
+  #   Models format/lightFormat taint steps (format string → return value)
+  #   for both standard and FP/curried import patterns.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint from format string to return value
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # -----------------------------------------------------------------------
+      # Standard: format(date, formatStr) / lightFormat(date, formatStr)
+      # Covers: date-fns, date-fns/esm main imports
+      # -----------------------------------------------------------------------
+      - ["date-fns", "Member[format,lightFormat]", "Argument[1]", "ReturnValue", "taint"]
+
+      # -----------------------------------------------------------------------
+      # Direct sub-path imports:
+      #   import format from 'date-fns/format'
+      #   import lightFormat from 'date-fns/lightFormat'
+      # -----------------------------------------------------------------------
+      - ["date-fns/format", "", "Argument[1]", "ReturnValue", "taint"]
+      - ["date-fns/lightFormat", "", "Argument[1]", "ReturnValue", "taint"]
+
+      # -----------------------------------------------------------------------
+      # FP (curried): format(formatStr)(date)
+      # The format string is Argument[0] of the curried function, and taint
+      # flows to the return of the inner call (i.e. ReturnValue.ReturnValue).
+      # -----------------------------------------------------------------------
+      - ["date-fns/fp", "Member[format,lightFormat]", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+
+      # -----------------------------------------------------------------------
+      # FP direct sub-path imports:
+      #   import format from 'date-fns/fp/format'
+      #   import lightFormat from 'date-fns/fp/lightFormat'
+      # -----------------------------------------------------------------------
+      - ["date-fns/fp/format", "", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+      - ["date-fns/fp/lightFormat", "", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+
+      # NOTE: date-fns/esm imports are covered in date-fns/esm.model.yml

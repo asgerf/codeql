@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # json5 (npm: "json5") — JSON5 parser and serializer
+  # =============================================================================
+  #
+  # JSON5 is a superset of JSON that allows comments, trailing commas,
+  # unquoted keys, single-quoted strings, and other relaxed syntax:
+  #
+  #   const JSON5 = require('json5');
+  #   const obj = JSON5.parse('{foo: "bar"}');
+  #   const str = JSON5.stringify(obj);
+  #
+  # API:
+  #   JSON5.parse(text, reviver?)            → parsed value
+  #   JSON5.stringify(value, replacer?, space?) → JSON5 string
+  #
+  # Security concerns:
+  # - No sources or sinks: json5 does not fetch data or perform any
+  #   security-sensitive operations.
+  # - Taint propagation:
+  #   - parse: the input JSON5 string is deserialized into the return value;
+  #     taint flows from input to output.
+  #   - stringify: the input value is serialized into a string; taint flows
+  #     from input to output.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through parse and stringify
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # JSON5.parse(text) => parsed object
+      - ["json5", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+      # JSON5.stringify(value) => JSON5 string
+      - ["json5", "Member[stringify]", "Argument[0]", "ReturnValue", "taint"]

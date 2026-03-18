@@ -1,0 +1,32 @@
+extensions:
+  # =============================================================================
+  # parse-json (npm: "parse-json") — JSON parser with helpful error messages
+  # =============================================================================
+  #
+  # A wrapper around JSON.parse() that provides more useful error messages
+  # including filename, line/column numbers, and a code frame.
+  #
+  #   import parseJson from 'parse-json';
+  #   const obj = parseJson('{"foo": "bar"}');
+  #   const obj2 = parseJson(jsonString, 'config.json');
+  #
+  # API:
+  #   parseJson(string, reviver?, filename?) → parsed value
+  #   parseJson(string, filename?)           → parsed value
+  #
+  # Security concerns:
+  # - No sources or sinks: parse-json does not fetch data or perform any
+  #   security-sensitive operations.
+  # - Taint propagation: the input JSON string is deserialized into the
+  #   return value; taint flows from input to output.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through parseJson
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # parseJson(string) => parsed object
+      - ["parse-json", "", "Argument[0]", "ReturnValue", "taint"]

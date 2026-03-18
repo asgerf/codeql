@@ -1,0 +1,114 @@
+extensions:
+  # =============================================================================
+  # Sources: GitHub API responses can contain attacker-controlled content
+  # =============================================================================
+  #
+  # In contexts like GitHub Actions, data returned by the GitHub REST API
+  # (PR titles, issue bodies, branch names, commit messages, usernames, etc.)
+  # is attacker-controlled and can be used to exploit injection vulnerabilities.
+  #
+  # Usage patterns:
+  #   import { request } from "@octokit/request";
+  #   const result = await request("GET /repos/{owner}/{repo}/issues", { ... });
+  #   // result.data contains attacker-controlled issue data
+  #
+  #   const myRequest = request.defaults({ headers: { authorization: "..." } });
+  #   const result = await myRequest("GET /repos/{owner}/{repo}/pulls");
+  #
+  # The request function returns { data, status, headers, url }.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # request(route, options) returns Promise<{ data, status, headers, url }>
+      # The .data property contains the API response body.
+      - [
+          "@octokit/request",
+          "Member[request].ReturnValue.Awaited.Member[data]",
+          "remote",
+        ]
+
+      # request.defaults(options)(route) - preconfigured request function
+      - [
+          "@octokit/request",
+          "Member[request].Member[defaults].ReturnValue.ReturnValue.Awaited.Member[data]",
+          "remote",
+        ]
+
+  # =============================================================================
+  # Sinks
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ===== Request forgery =====
+      # request(route) - first argument is the route/URL (e.g. "GET /repos/{owner}/{repo}")
+      - ["@octokit/request", "Member[request].Argument[0]", "request-forgery"]
+
+      # request(route, { url, baseUrl }) - options can override the target
+      - [
+          "@octokit/request",
+          "Member[request].Argument[1].Member[url,baseUrl]",
+          "request-forgery",
+        ]
+
+      # request({ url, baseUrl, method }) - object form
+      - [
+          "@octokit/request",
+          "Member[request].Argument[0].Member[url,baseUrl]",
+          "request-forgery",
+        ]
+
+      # request.defaults({ baseUrl }) - sets the default API endpoint
+      - [
+          "@octokit/request",
+          "Member[request].Member[defaults].Argument[0].Member[baseUrl]",
+          "request-forgery",
+        ]
+
+      # Chained defaults: request.defaults(opts)(route)
+      - [
+          "@octokit/request",
+          "Member[request].Member[defaults].ReturnValue.Argument[0]",
+          "request-forgery",
+        ]
+      - [
+          "@octokit/request",
+          "Member[request].Member[defaults].ReturnValue.Argument[1].Member[url,baseUrl]",
+          "request-forgery",
+        ]
+
+      # ===== Credential sinks =====
+      # request(route, { headers: { authorization } })
+      - [
+          "@octokit/request",
+          "Member[request].Argument[1].Member[headers].Member[authorization]",
+          "credentials-key",
+        ]
+
+      # request.defaults({ headers: { authorization } })
+      - [
+          "@octokit/request",
+          "Member[request].Member[defaults].Argument[0].Member[headers].Member[authorization]",
+          "credentials-key",
+        ]
+
+  # =============================================================================
+  # Summaries: taint flow through the request/response cycle
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # request.defaults(options) returns a new request function that inherits
+      # the defaults. Taint from the defaults flows into the returned function's
+      # configuration (e.g. baseUrl, headers).
+      - [
+          "@octokit/request",
+          "Member[request].Member[defaults]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]

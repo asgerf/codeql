@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # safe-json-parse/result (npm: "safe-json-parse", sub-module "result")
+  # =============================================================================
+  #
+  # A wrapper around JSON.parse that returns a Rust-style Result object
+  # instead of throwing on invalid input:
+  #
+  #   const safeParse = require('safe-json-parse/result');
+  #   const Result = require('rust-result');
+  #
+  #   const result = safeParse(jsonString);
+  #   if (Result.isOk(result)) {
+  #     const json = Result.Ok(result);   // also accessible as result.v
+  #   }
+  #   if (Result.isErr(result)) {
+  #     const err = Result.Err(result);   // also accessible as result.v
+  #   }
+  #
+  # API:
+  #   safeParse(string) → { v: any, ... }   (rust-result Ok/Err wrapper)
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: the library only wraps JSON.parse; no command execution,
+  #   file I/O, URL navigation, or HTML rendering.
+  # - Taint propagation: the parsed output is derived from the input JSON
+  #   string. If the input is tainted, the result's .v property is tainted.
+  #
+  # Existing QLL coverage (JsonParsers.qll):
+  #   JsonParserCallWithWrapper models safe-json-parse/result as a
+  #   JsonParserCall with input at Argument[0] and output at the .v property.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow from JSON string to parsed value
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # safeParse(jsonString).v — taint flows from input string to .v property
+      - ["safe-json-parse/result", "", "Argument[0]", "ReturnValue.Member[v]", "taint"]

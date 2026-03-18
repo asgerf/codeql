@@ -1,6 +1,43 @@
 extensions:
+  # =============================================================================
+  # markdown-table (npm: "markdown-table") - Generate markdown tables from data
+  # =============================================================================
+  #
+  # By Titus Wormer. A utility that takes a 2D array of strings and returns a
+  # formatted markdown table string.
+  #
+  #   import {markdownTable} from 'markdown-table';
+  #   markdownTable([
+  #     ['Name', 'Value'],
+  #     ['key', userInput]
+  #   ]);
+  #   // => "| Name | Value |\n| ---- | ----- |\n| key  | ... |"
+  #
+  # API:
+  #   markdownTable(table, options?) → string
+  #     table: Array<Array<string>> — 2D array of cell values
+  #     options.align: alignment per column ('l', 'r', 'c')
+  #     options.padding, delimiterStart, delimiterEnd, alignDelimiters,
+  #       stringLength: formatting options
+  #
+  # Security concerns:
+  # - No sources or sinks.
+  # - Taint propagation: cell values in the input array appear verbatim in the
+  #   output string — no escaping or sanitization is performed. If untrusted
+  #   data is in any cell, the output is tainted.
+  #
+  # Existing coverage:
+  # - The CodeQL lib extension (ext/markdown-table.model.yml) already models
+  #   the taint summary from nested array elements to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from cell values to table string
+  # ---------------------------------------------------------------------------
   - addsTo:
       pack: codeql/javascript-all
       extensible: summaryModel
     data:
+      # markdownTable([[..., tainted, ...], ...]) → tainted output string.
+      # Cell values (nested array elements) flow to the return value.
       - ["markdown-table", "", "Argument[0].ArrayElement.ArrayElement", "ReturnValue", "taint"]

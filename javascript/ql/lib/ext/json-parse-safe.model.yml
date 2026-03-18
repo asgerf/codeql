@@ -1,0 +1,27 @@
+extensions:
+  # =============================================================================
+  # json-parse-safe (npm: "json-parse-safe") - Safe JSON.parse wrapper
+  # =============================================================================
+  #
+  # A thin wrapper around JSON.parse that returns { value, error } instead
+  # of throwing on malformed input.
+  #
+  #   const JSONParse = require('json-parse-safe');
+  #   const result = JSONParse(text [, reviver]);
+  #   // result.value → parsed object (or undefined on error)
+  #   // result.error → Error (or undefined on success)
+  #
+  # This library has no sources or sinks. It only performs JSON parsing.
+  # Taint propagates from the input string to the .value property of the
+  # returned result object.
+  #
+  # Existing QLL coverage (JsonParsers.qll):
+  # - JsonParserCallWithWrapper: input at Argument[0], output at .value
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # JSONParse(text) → { value: <parsed> }
+      # Taint flows from the input string to the .value property of the result
+      - ["json-parse-safe", "", "Argument[0]", "ReturnValue.Member[value]", "taint"]

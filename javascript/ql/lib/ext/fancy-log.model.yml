@@ -1,0 +1,48 @@
+extensions:
+  # =============================================================================
+  # fancy-log (npm: "fancy-log") - Timestamp-prefixed logging
+  # =============================================================================
+  #
+  # A lightweight logging utility (from gulpjs) that prefixes messages with a
+  # timestamp. Provides standard logging methods similar to console:
+  #
+  #   const log = require('fancy-log');
+  #
+  #   log('a message');              // [16:27:02] a message
+  #   log.error('oh no!');           // [16:27:02] oh no!
+  #   log.warn('this is a warn');    // [16:27:02] this is a warn
+  #   log.info('information');       // [16:27:02] information
+  #   log.dir({ foo: 'bar' });       // [16:27:02] { foo: 'bar' }
+  #
+  # API:
+  #   log(...args)         — logs to stdout with timestamp (like console.log)
+  #   log.error(...args)   — logs to stderr with timestamp (like console.error)
+  #   log.warn(...args)    — logs to stderr with timestamp (like console.warn)
+  #   log.info(...args)    — logs to stdout with timestamp (like console.info)
+  #   log.dir(...args)     — logs to stdout with timestamp (like console.dir)
+  #
+  # Security concerns:
+  # - All logging methods are log-injection sinks. Attacker-controlled input
+  #   written to logs can forge log entries, inject misleading data, or exploit
+  #   log viewers that interpret special characters (ANSI escapes, newlines).
+  # - No sources or summaries. The library does not produce or transform
+  #   untrusted data.
+  #
+  # Existing QLL coverage (Logging.qll):
+  #   Fancylog models both direct calls require('fancy-log')(msg) and method
+  #   calls require('fancy-log').error(msg) etc. as LoggerCall, which makes
+  #   all arguments log-injection sinks via LogInjectionQuery.qll.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: log injection via fancy-log calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # log(...args) — direct call, all arguments are logged
+      - ["fancy-log", "Argument[0..N-1]", "log-injection"]
+
+      # log.error(), .warn(), .info(), .dir() — all arguments are logged
+      - ["fancy-log", "Member[error,warn,info,dir].Argument[0..N-1]", "log-injection"]

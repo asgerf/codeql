@@ -1,0 +1,61 @@
+extensions:
+  # =============================================================================
+  # apollo-client-preset (npm: "apollo-client-preset") - Bundled Apollo Client
+  # =============================================================================
+  #
+  # apollo-client-preset is a deprecated convenience meta-package that re-exports
+  # from apollo-client, apollo-link, apollo-link-http, apollo-cache-inmemory, and
+  # graphql-tag. Its default export is a DefaultClient class extending ApolloClient
+  # that auto-configures InMemoryCache and HttpLink.
+  #
+  #   import ApolloClient from "apollo-client-preset";
+  #   import { HttpLink, gql, InMemoryCache } from "apollo-client-preset";
+  #   const client = new ApolloClient({ link: new HttpLink({ uri: "/graphql" }) });
+  #   client.query({ query: gql`{ users { name } }` });
+  #
+  # Exports (re-exported):
+  #   - DefaultClient (default) — extends ApolloClient, auto-wires cache + link
+  #   - ApolloClient, createNetworkInterface — from apollo-client
+  #   - HttpLink — from apollo-link-http
+  #   - InMemoryCache — from apollo-cache-inmemory
+  #   - gql — from graphql-tag
+  #   - ApolloLink, concat, split, from, execute — from apollo-link
+  #
+  # Security concerns:
+  # - The `uri` option on ApolloClient, DefaultClient, HttpLink, and
+  #   createNetworkInterface controls outbound request URLs → request-forgery.
+  # - Responses from query/mutate/watchQuery/subscribe carry untrusted server
+  #   data that may be used in injection attacks downstream.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URI options control outbound request destinations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Default import: new ApolloClient({ uri }) (DefaultClient extends ApolloClient)
+      - ["apollo-client-preset", "Argument[0].Member[uri]", "request-forgery"]
+      # Named export: new ApolloClient({ uri: <tainted> })
+      - ["apollo-client-preset", "Member[ApolloClient].Argument[0].Member[uri]", "request-forgery"]
+      # Named export: new HttpLink({ uri: <tainted> })
+      - ["apollo-client-preset", "Member[HttpLink].Argument[0].Member[uri]", "request-forgery"]
+      # Named export: createNetworkInterface({ uri: <tainted> })
+      - ["apollo-client-preset", "Member[createNetworkInterface].Argument[0].Member[uri]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through query/mutate responses
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # client.query({ query }) → Promise<{ data }> — response carries server data
+      - ["apollo-client-preset", "Fuzzy.Member[query]", "Argument[this]", "ReturnValue.Awaited.Member[data]", "taint"]
+      # client.mutate({ mutation }) → Promise<{ data }> — response carries server data
+      - ["apollo-client-preset", "Fuzzy.Member[mutate]", "Argument[this]", "ReturnValue.Awaited.Member[data]", "taint"]
+      # client.watchQuery({ query }) → ObservableQuery — observable carries server data
+      - ["apollo-client-preset", "Fuzzy.Member[watchQuery]", "Argument[this]", "ReturnValue", "taint"]
+      # client.subscribe({ query }) → Observable — observable carries server data
+      - ["apollo-client-preset", "Fuzzy.Member[subscribe]", "Argument[this]", "ReturnValue", "taint"]

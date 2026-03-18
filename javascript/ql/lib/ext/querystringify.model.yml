@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # querystringify (npm: "querystringify") - Simple query string parser/stringifier
+  # =============================================================================
+  #
+  # querystringify is a lightweight library for parsing and stringifying
+  # URL query strings:
+  #
+  #   var qs = require('querystringify');
+  #
+  #   qs.parse('?foo=bar&baz=qux');       // { foo: 'bar', baz: 'qux' }
+  #   qs.parse('#foo=bar');               // { foo: 'bar' }
+  #   qs.stringify({ foo: 'bar' });       // 'foo=bar'
+  #   qs.stringify({ foo: 'bar' }, true); // '?foo=bar'
+  #   qs.stringify({ foo: 'bar' }, '#');  // '#foo=bar'
+  #
+  # Security relevance:
+  # - No sources. The library does not provide access to untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations.
+  # - Summaries: Both parse() and stringify() propagate taint through their
+  #   first argument to the return value. An attacker who controls the input
+  #   controls the output structure/string.
+  #
+  # Existing QLL coverage (UriLibraries.qll, TaintedUrlSuffixCustomizations.qll):
+  # - Querystringify.Step: taint step for parse/stringify (Argument → ReturnValue)
+  # - QueryStringStringification: summarized callable for stringify with deep
+  #   property flow (Argument[0] and Argument[0].AnyMemberDeep → ReturnValue)
+  # - TaintedUrlSuffix: parse() strips leading ?/# (url-suffix → taint step)
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Taint flow through parse/stringify
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # qs.parse(queryString) → object
+      # Parses a query string into an object. Taint propagates from the string
+      # to all property values of the returned object.
+      - ["querystringify", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # qs.stringify(obj, prefix?) → string
+      # Converts an object to a query string. Taint propagates from the
+      # object (and its property values) to the resulting string.
+      - ["querystringify", "Member[stringify]", "Argument[0]", "ReturnValue", "taint"]

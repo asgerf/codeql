@@ -1,0 +1,79 @@
+extensions:
+  # =============================================================================
+  # sax (npm: "sax") — Streaming SAX-style XML parser
+  # =============================================================================
+  #
+  # sax (sax-js) is an event-driven, streaming XML parser for Node.js. It
+  # emits events as it encounters XML constructs (tags, text, CDATA, etc.)
+  # without building a DOM tree in memory.
+  #
+  # Core API:
+  #   const sax = require('sax');
+  #
+  #   // Parser API (non-stream):
+  #   const parser = sax.parser(strict, options);
+  #   parser.ontext = function(text) { ... };
+  #   parser.onopentag = function(node) { ... };  // node: { name, attributes }
+  #   parser.onattribute = function(attr) { ... }; // attr: { name, value }
+  #   parser.oncdata = function(cdata) { ... };
+  #   parser.oncomment = function(comment) { ... };
+  #   parser.ondoctype = function(doctype) { ... };
+  #   parser.onprocessinginstruction = function(pi) { ... }; // pi: { name, body }
+  #   parser.onerror = function(err) { ... };
+  #   parser.onend = function() { ... };
+  #   parser.write(xmlString).close();
+  #
+  #   // Stream API:
+  #   const saxStream = sax.createStream(strict, options);
+  #   saxStream.on("text", function(text) { ... });
+  #   saxStream.on("opentag", function(node) { ... });
+  #   fs.createReadStream('file.xml').pipe(saxStream);
+  #   // or: saxStream.write(xmlChunk);
+  #
+  #   // Also available:
+  #   new sax.SAXParser(strict, options);  // same as sax.parser()
+  #
+  # Event list (on* properties or EventEmitter events):
+  #   text, cdata, comment, doctype, sgmldeclaration — receive a string
+  #   opentag, opentagstart — receive { name, attributes, isSelfClosing }
+  #   attribute — receives { name, value }
+  #   processinginstruction — receives { name, body }
+  #   closetag — receives tag name string
+  #   script — receives script content string
+  #   error, end, ready — control events
+  #
+  # Security analysis:
+  #
+  # - No sources. sax is a parser, not an I/O library. The XML data must be
+  #   supplied by the caller (e.g. from an HTTP request body or file read).
+  #   The caller's data already carries taint from the upstream source.
+  #
+  # - No sinks. sax does not perform any security-sensitive operations. It
+  #   does not evaluate code, make network requests, access the file system,
+  #   or render HTML. Notably, sax-js does NOT expand XML entities, so there
+  #   is no XXE (XML External Entity) attack surface.
+  #
+  # - Summaries: The security-relevant data flow is taint propagation from
+  #   parser.write(xml) to the event handler callbacks (ontext, onopentag,
+  #   etc.). This is a cross-call pattern (write and on* are separate method
+  #   calls on the same object) that cannot be expressed as access-path
+  #   summaries.
+  #
+  # Existing QLL coverage (XmlParsers.qll):
+  # - SaxInvocation: recognizes sax.parser() and new sax.SAXParser() as
+  #   XML parser invocations; identifies parser.write(xml) as the input
+  #   and parser.on* callback parameters as the output.
+  # - XmlParserTaintStep: creates a deserialize taint step from the XML
+  #   source argument of write() to all event callback parameters.
+  # - Entity resolution: correctly models that sax-js does NOT expand
+  #   entities (no XXE risk).
+  #
+  # Not covered (QLL or data extensions):
+  # - sax.createStream() stream API: the stream-based interface uses
+  #   Node.js stream piping and EventEmitter .on() listeners. The
+  #   cross-call taint flow (write/pipe → on callbacks) requires QLL
+  #   modeling and cannot be expressed as data extensions.
+  #
+  # Nothing additional to model here as data extensions.
+  # =============================================================================
+  []

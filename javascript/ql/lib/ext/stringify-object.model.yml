@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # stringify-object (npm: "stringify-object") — Pretty-print objects without
+  # JSON double-quotes
+  # =============================================================================
+  #
+  # By Sindre Sorhus. Stringifies an object/array like JSON.stringify but
+  # without wrapping all keys/values in double-quotes, producing output
+  # closer to JavaScript literal syntax. Handles circular references, Maps,
+  # Sets, Symbols, Dates, and RegExps.
+  #
+  #   import stringifyObject from 'stringify-object';
+  #
+  #   const pretty = stringifyObject({ foo: 'bar', arr: [1, 2, 3] }, {
+  #     indent: '  ',
+  #     singleQuotes: false,
+  #   });
+  #   // => "{\n  foo: \"bar\",\n  arr: [\n    1,\n    2,\n    3\n  ]\n}"
+  #
+  # Options: indent, singleQuotes, filter(obj, prop), transform(obj, prop, result),
+  #          inlineCharacterLimit.
+  #
+  # Security concerns:
+  # - No sources or sinks — this is a pure serialization utility.
+  # - Taint propagation: the input object's content flows into the returned
+  #   string, so taint from Argument[0] reaches ReturnValue.
+  #
+  # Existing QLL coverage (JsonStringifiers.qll):
+  # - Modeled as a JsonStringifyCall: require("stringify-object")(obj) is
+  #   recognized. The input is getArgument(0), the output is the call node
+  #   itself. Taint flows from input to output via JsonStringifyCall.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through stringifyObject(input)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # stringifyObject(input, options?) — input content flows into the
+      # returned string representation.
+      - ["stringify-object", "", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,170 @@
+extensions:
+  # =============================================================================
+  # minimongo — Client-side in-memory MongoDB backed by various storage
+  # =============================================================================
+  #
+  # Minimongo is a client-side MongoDB-compatible database that supports
+  # MemoryDb, IndexedDb, LocalStorageDb, WebSQLDb, RemoteDb, HybridDb,
+  # and ReplicatingDb backends. Its collection API mirrors MongoDB's.
+  #
+  #   const minimongo = require('minimongo');
+  #   const db = new minimongo.MemoryDb();
+  #   db.addCollection('items');
+  #   db.items.find({ name: userInput }).fetch(callback);   // NoSQL injection
+  #   db.items.findOne({ _id: userInput }, {}, callback);   // NoSQL injection
+  #
+  # Security concerns:
+  #   - Collection query methods (find, findOne, etc.) accept MongoDB-style
+  #     selector objects. If an attacker can control the selector structure,
+  #     they can inject query operators ($gt, $regex, etc.) to bypass
+  #     intended query semantics — this is NoSQL injection.
+  #   - Update methods accept update operators that can modify unintended
+  #     fields if attacker-controlled.
+  #
+  # Existing QLL coverage (minimongo/model.yml + mongodb/model.yml):
+  #   - Extensive typeModel mapping minimongo types to mongodb.Collection
+  #   - mongodb.Collection sinks for find, findOne, update, etc. apply
+  #     transitively to minimongo collections via the type alias.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks — NoSQL injection via query selectors
+  # ---------------------------------------------------------------------------
+  #
+  # Minimongo collections expose MongoDB-compatible query methods.
+  # The selector/filter argument (Argument[0]) to query methods is a
+  # NoSQL injection sink. Using fuzzy models, we catch these methods
+  # on any object derived from a minimongo import, regardless of the
+  # intermediate object chain (db → collection → method).
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # find(selector, options) — selector is Argument[0]
+      # findOne(selector, options, success, error) — selector is Argument[0]
+      # aggregate, count, countDocuments, deleteMany, deleteOne,
+      # findOneAndDelete, findOneAndReplace, remove, replaceOne, watch
+      # all take a filter/selector as Argument[0]
+      - ["minimongo", "Fuzzy.Member[find,findOne].Argument[0]", "nosql-injection"]
+
+      # upsert(doc, bases, success, error) — doc contains query-like fields
+      # Not a typical injection vector since it upserts whole documents,
+      # but the selector-like _id matching uses the doc structure.
+
+  # ---------------------------------------------------------------------------
+  # Type models — alias minimongo collections to mongodb.Collection
+  # ---------------------------------------------------------------------------
+  #
+  # This allows the detailed mongodb.Collection sink models (which use
+  # the mongodb.sink kind for advanced NoSQL injection detection) to
+  # also apply to minimongo collection objects. This is the same
+  # approach used by the existing QLL model.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: typeModel
+    data:
+      # Core alias: any minimongo base collection IS a mongodb.Collection
+      - [mongodb.Collection, minimongo.MinimongoBaseCollection, ""]
+
+      # MinimongoBaseCollection subtypes
+      - [minimongo.MinimongoBaseCollection, minimongo.MinimongoCollection, ""]
+      - [minimongo.MinimongoBaseCollection, minimongo.MinimongoLocalCollection, ""]
+      - [minimongo.MinimongoBaseCollection, minimongo.HybridCollection, ""]
+      - [minimongo.MinimongoBaseCollection, "minimongo/RemoteDb.Collection", ""]
+      - [minimongo.MinimongoBaseCollection, minimongo.MinimongoDb, AnyMember]
+
+      # Db types — collections accessed as db.collectionName or db.collections.x
+      - [minimongo.MinimongoDb, minimongo.MinimongoLocalDb, ""]
+      - [minimongo.MinimongoDb, "minimongo/lib/HybridDb.default", ""]
+      - [minimongo.MinimongoDb, "minimongo/lib/MemoryDb.default", ""]
+      - [minimongo.MinimongoDb, "minimongo/lib/RemoteDb.default", ""]
+      - [minimongo.MinimongoDb, "minimongo/lib/IndexedDb.default", ""]
+      - [minimongo.MinimongoDb, "minimongo/lib/LocalStorageDb.default", ""]
+      - [minimongo.MinimongoDb, "minimongo/lib/WebSQLDb.default", ""]
+      - [minimongo.MinimongoDb, "minimongo/lib/ReplicatingDb.default", "Member[masterDb,replicaDb]"]
+
+      # Db statics — new minimongo.MemoryDb() etc.
+      - ["minimongo/lib/MemoryDb.default", "minimongo/lib/MemoryDb.defaultStatic", Instance]
+      - ["minimongo/lib/MemoryDb.defaultStatic", minimongo, "Member[MemoryDb]"]
+      - ["minimongo/lib/HybridDb.default", "minimongo/lib/HybridDb.defaultStatic", Instance]
+      - ["minimongo/lib/HybridDb.defaultStatic", minimongo, "Member[HybridDb]"]
+      - ["minimongo/lib/IndexedDb.default", "minimongo/lib/IndexedDb.defaultStatic", Instance]
+      - ["minimongo/lib/IndexedDb.defaultStatic", minimongo, "Member[IndexedDb]"]
+      - ["minimongo/lib/LocalStorageDb.default", "minimongo/lib/LocalStorageDb.defaultStatic", Instance]
+      - ["minimongo/lib/LocalStorageDb.defaultStatic", minimongo, "Member[LocalStorageDb]"]
+      - ["minimongo/lib/RemoteDb.default", "minimongo/lib/RemoteDb.defaultStatic", Instance]
+      - ["minimongo/lib/RemoteDb.defaultStatic", minimongo, "Member[RemoteDb]"]
+      - ["minimongo/lib/ReplicatingDb.default", "minimongo/lib/ReplicatingDb.defaultStatic", Instance]
+      - ["minimongo/lib/ReplicatingDb.defaultStatic", minimongo, "Member[ReplicatingDb]"]
+      - ["minimongo/lib/WebSQLDb.default", "minimongo/lib/WebSQLDb.defaultStatic", Instance]
+      - ["minimongo/lib/WebSQLDb.defaultStatic", minimongo, "Member[WebSQLDb]"]
+
+      # autoselectLocalDb utility
+      - ["minimongo/lib/IndexedDb.default", minimongo, "Member[utils].Member[autoselectLocalDb].ReturnValue"]
+      - ["minimongo/lib/LocalStorageDb.default", minimongo, "Member[utils].Member[autoselectLocalDb].ReturnValue"]
+      - ["minimongo/lib/MemoryDb.default", minimongo, "Member[utils].Member[autoselectLocalDb].ReturnValue"]
+      - ["minimongo/lib/WebSQLDb.default", minimongo, "Member[utils].Member[autoselectLocalDb].ReturnValue"]
+
+      # Local db from hybrid/replicating
+      - [minimongo.MinimongoLocalDb, minimongo.MinimongoDb, "Member[localDb]"]
+      - [minimongo.MinimongoLocalDb, "minimongo/lib/HybridDb.default", "Member[localDb]"]
+      - [minimongo.MinimongoLocalDb, "minimongo/lib/ReplicatingDb.default", ""]
+
+      # Collection access patterns
+      - [minimongo.MinimongoCollection, minimongo.MinimongoDb, "Member[collections].AnyMember"]
+      - [minimongo.MinimongoLocalCollection, minimongo.MinimongoLocalDb, "Member[collections].AnyMember"]
+      - [minimongo.MinimongoLocalCollection, minimongo.MinimongoLocalDb, "Member[addCollection].Argument[2].Argument[0]"]
+
+      # HybridCollection specifics
+      - [minimongo.HybridCollection, minimongo.HybridCollectionStatic, Instance]
+      - [minimongo.HybridCollectionStatic, minimongo, "Member[HybridCollection]"]
+      - [minimongo.MinimongoCollection, minimongo.HybridCollection, "Member[remoteCol]"]
+      - [minimongo.MinimongoLocalCollection, minimongo.HybridCollection, "Member[localCol]"]
+      - [minimongo.HybridCollection, "minimongo/lib/HybridDb.default", "Member[collections].AnyMember"]
+
+      # Subpath import collection types
+      - ["minimongo/MemoryDb.Collection", "minimongo/MemoryDb.CollectionStatic", Instance]
+      - ["minimongo/MemoryDb.Collection", "minimongo/lib/MemoryDb.default", "Member[collections].AnyMember"]
+      - [minimongo.MinimongoLocalCollection, "minimongo/MemoryDb.Collection", ""]
+      - ["minimongo/IndexedDb.IndexedDbCollection", "minimongo/IndexedDb.IndexedDbCollectionStatic", Instance]
+      - ["minimongo/IndexedDb.IndexedDbCollection", "minimongo/lib/IndexedDb.default", "Member[collections].AnyMember"]
+      - [minimongo.MinimongoLocalCollection, "minimongo/IndexedDb.IndexedDbCollection", ""]
+      - ["minimongo/RemoteDb.Collection", "minimongo/RemoteDb.CollectionStatic", Instance]
+      - ["minimongo/RemoteDb.Collection", "minimongo/lib/RemoteDb.default", "Member[collections].AnyMember"]
+      - ["minimongo/ReplicatingDb.Collection", "minimongo/ReplicatingDb.CollectionStatic", Instance]
+      - ["minimongo/ReplicatingDb.Collection", "minimongo/lib/ReplicatingDb.default", "Member[collections].AnyMember"]
+      - [minimongo.MinimongoLocalCollection, "minimongo/ReplicatingDb.Collection", ""]
+      - [minimongo.MinimongoLocalCollection, "minimongo/ReplicatingDb.Collection", "Member[masterCol,replicaCol]"]
+
+      # Remaining collection/db type aliases
+      - [minimongo.MinimongoLocalCollection, minimongo.MinimongoCollection, ""]
+      - [minimongo.MinimongoCollection, "minimongo/lib/LocalStorageDb.default", "Member[collections].AnyMember"]
+      - [minimongo.MinimongoCollection, "minimongo/lib/WebSQLDb.default", "Member[collections].AnyMember"]
+      - [minimongo.MinimongoDb, minimongo.MinimongoDb, "Member[remoteDb]"]
+      - [minimongo.MinimongoDb, "minimongo/lib/HybridDb.default", "Member[remoteDb]"]
+
+      # TypeScript type definitions from minimongo/lib/types
+      - [minimongo.MinimongoBaseCollection, "minimongo/lib/types.MinimongoBaseCollection", ""]
+      - [minimongo.MinimongoCollection, "minimongo/lib/types.MinimongoCollection", ""]
+      - [minimongo.MinimongoDb, "minimongo/lib/types.MinimongoDb", ""]
+      - [minimongo.MinimongoLocalCollection, "minimongo/lib/types.MinimongoLocalCollection", ""]
+      - [minimongo.MinimongoLocalDb, "minimongo/lib/types.MinimongoLocalDb", ""]
+
+      # HybridDb sub-path imports
+      - [minimongo.HybridCollection, "minimongo/lib/HybridDb.HybridCollection", ""]
+      - [minimongo.HybridCollectionStatic, "minimongo/lib/HybridDb.HybridCollectionStatic", ""]
+      - [minimongo.HybridCollectionStatic, "minimongo/lib/HybridDb", "Member[HybridCollection]"]
+
+      # Sub-path default exports (import X from 'minimongo/lib/XxxDb')
+      - ["minimongo/lib/HybridDb.defaultStatic", "minimongo/lib/HybridDb", "Member[default]"]
+      - ["minimongo/lib/IndexedDb.defaultStatic", "minimongo/lib/IndexedDb", "Member[default]"]
+      - ["minimongo/lib/LocalStorageDb.defaultStatic", "minimongo/lib/LocalStorageDb", "Member[default]"]
+      - ["minimongo/lib/MemoryDb.defaultStatic", "minimongo/lib/MemoryDb", "Member[default]"]
+      - ["minimongo/lib/RemoteDb.defaultStatic", "minimongo/lib/RemoteDb", "Member[default]"]
+      - ["minimongo/lib/ReplicatingDb.defaultStatic", "minimongo/lib/ReplicatingDb", "Member[default]"]
+      - ["minimongo/lib/WebSQLDb.defaultStatic", "minimongo/lib/WebSQLDb", "Member[default]"]
+
+      # IndexedDb is also a MinimongoLocalDb
+      - [minimongo.MinimongoLocalDb, "minimongo/lib/IndexedDb.default", ""]

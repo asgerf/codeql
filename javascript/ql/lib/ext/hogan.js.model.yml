@@ -1,0 +1,80 @@
+extensions:
+  # =============================================================================
+  # hogan.js (npm: "hogan.js") - A Mustache template compiler from Twitter
+  # =============================================================================
+  #
+  # Hogan.js is a fast compiler for the Mustache templating language. It
+  # pre-compiles templates into JavaScript functions for efficient rendering.
+  #
+  #   const Hogan = require('hogan.js');
+  #
+  #   // Compile a template string into a template object
+  #   const template = Hogan.compile('Hello, {{name}}!');
+  #
+  #   // Render the template with data and optional partials
+  #   const output = template.render({ name: 'World' });
+  #   // => "Hello, World!"
+  #
+  #   // Render with partials
+  #   const main = Hogan.compile('{{> header}} Content');
+  #   const output = main.render({}, { header: headerTemplate });
+  #
+  #   // Additional API:
+  #   Hogan.scan(templateString)       — tokenize a template
+  #   Hogan.parse(tokens)              — parse tokens into a tree
+  #   Hogan.generate(tree, text, opts) — generate code from tree
+  #
+  # Security concerns:
+  # - SINK (code-injection): The first argument to Hogan.compile() is a
+  #   template string that gets compiled into executable JavaScript. If
+  #   attacker-controlled data flows into the template string, it can lead
+  #   to server-side template injection / code execution.
+  # - SINK (html-injection): The data object passed to template.render()
+  #   flows into template interpolation. Mustache `{{{ }}}` (triple-stache)
+  #   and `{{& }}` produce unescaped HTML, enabling XSS if data is untrusted.
+  # - No sources. The library does not provide access to untrusted data.
+  #
+  # Existing QLL coverage:
+  # - CodeInjectionCustomizations.qll: HoganTemplateSink models the first
+  #   argument to Hogan.compile() as a code-injection sink (TemplateSink).
+  # - Templating.qll: MustacheStyleSyntax includes "hogan" and "hogan.js"
+  #   for template syntax analysis (raw interpolation detection).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: code-injection — template compilation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Hogan.compile(templateString, options?) — template string is compiled
+      # into executable code; attacker control leads to template injection
+      - ["hogan.js", "Member[compile].Argument[0]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: html-injection — template rendering with untrusted data
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # template.render(data, partials?) — data values flow into template
+      # output; triple-stache {{{ }}} renders unescaped HTML
+      - ["hogan.js", "Member[compile].ReturnValue.Member[render].Argument[0]", "html-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flows through compile and render
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Hogan.compile(str).render(data) — data flows into render output
+      - [
+          "hogan.js",
+          "Member[compile].ReturnValue.Member[render]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]

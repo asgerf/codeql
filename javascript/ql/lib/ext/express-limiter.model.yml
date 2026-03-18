@@ -1,0 +1,144 @@
+extensions:
+  # =============================================================================
+  # express-limiter (npm: "express-limiter") - Rate limiting middleware for Express
+  # =============================================================================
+  #
+  # express-limiter is rate-limiting middleware for Express built on Redis.
+  # It can install itself as middleware on the app/router, or be used inline.
+  #
+  #   var app = express();
+  #   var client = require('redis').createClient();
+  #   var limiter = require('express-limiter')(app, client);
+  #
+  #   // Self-installing: registers route directly
+  #   limiter({
+  #     path: '/api/action',
+  #     method: 'get',
+  #     lookup: ['connection.remoteAddress'],
+  #     total: 150,
+  #     expire: 1000 * 60 * 60,
+  #     whitelist: function (req) { return !!req.user.is_admin; },
+  #     onRateLimited: function (req, res, next) { next(); }
+  #   });
+  #
+  #   // As direct middleware:
+  #   app.post('/user/update', limiter({ lookup: 'user.id' }), handler);
+  #
+  # API options (passed to limiter(options)):
+  # - path: String — route path
+  # - method: String — HTTP method
+  # - lookup: Function|String|Array.<String> — value lookup on req
+  # - total: Number — allowed requests before limiting
+  # - expire: Number — time in ms before reset
+  # - whitelist: function(req) — return true to bypass limiting
+  # - skipHeaders: Boolean — skip sending rate limit headers
+  # - ignoreErrors: Boolean — ignore Redis errors
+  # - onRateLimited: function(req, res, next) — called on rate limit
+  #
+  # Security analysis:
+  # - No injection sinks: the library does not execute commands, SQL, or
+  #   render templates. It only reads from Redis and checks request counts.
+  # - Sources: User-defined callbacks (onRateLimited, whitelist, lookup as
+  #   function) receive the Express request object, whose properties are
+  #   untrusted. These are modeled below.
+  #
+  # Existing QLL coverage:
+  # - Express.qll: RateLimiterRouteSetup models the self-installing route
+  #   setup pattern where limiter({ path, method }) registers a route on
+  #   the Express app. This cannot be expressed as a data extension.
+  # - MissingRateLimiting.qll: RouteHandlerLimitedByExpressLimiter models
+  #   require('express-limiter').getReturn().getReturn() as a
+  #   RateLimitingMiddleware. There is no extensible predicate for
+  #   rate-limiting middleware, so the QLL model should be retained.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Untrusted request data in user-defined callbacks
+  # ---------------------------------------------------------------------------
+  #
+  # express-limiter invokes user-provided callbacks with the Express request
+  # object. The callbacks are properties of the options object passed to
+  # limiter(options), where limiter = require('express-limiter')(app, client).
+  #
+  # Access path: ReturnValue gives us the limiter function (return value of
+  # calling the module export), then Argument[0] gives us the options object
+  # passed to limiter(options).
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- onRateLimited callback ---
+      # Called when a request exceeds the rate limit.
+      # Signature: onRateLimited(req, res, next)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[onRateLimited].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[onRateLimited].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[onRateLimited].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[onRateLimited].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- whitelist callback ---
+      # Called to determine if a request should bypass rate limiting.
+      # Signature: whitelist(req)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[whitelist].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[whitelist].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[whitelist].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[whitelist].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]
+
+      # --- lookup callback (when used as a function) ---
+      # Called for dynamic rate-limit configuration.
+      # Signature: lookup(req, res, opts, next)
+      # Parameter[0] is the Express request object.
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[lookup].Parameter[0].Member[query,params,body,cookies,headers]",
+          "remote",
+        ]
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[lookup].Parameter[0].Member[originalUrl,path,hostname,host]",
+          "remote",
+        ]
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[lookup].Parameter[0].Member[files,file,_parsedUrl]",
+          "remote",
+        ]
+      - [
+          "express-limiter",
+          "ReturnValue.Argument[0].Member[lookup].Parameter[0].Member[get,header,param].ReturnValue",
+          "remote",
+        ]

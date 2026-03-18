@@ -1,0 +1,28 @@
+extensions:
+  # =============================================================================
+  # hash.js (npm: "hash.js") - Pure JavaScript hash implementation
+  # =============================================================================
+  #
+  # hash.js provides pure JavaScript implementations of SHA and RIPEMD hash
+  # algorithms. It is commonly used as a dependency of elliptic curve
+  # cryptography libraries.
+  #
+  # API:
+  #   const hash = require('hash.js');
+  #   hash.sha256().update('data').digest('hex');
+  #   hash.sha512().update('data').digest('hex');
+  #
+  #   // Selective import:
+  #   const sha512 = require('hash.js/lib/hash/sha/512');
+  #   sha512().update('data').digest('hex');
+  #
+  # Security assessment:
+  # - No sources: The library does not fetch or provide access to untrusted data.
+  # - No sinks: Hashing data does not pose injection risks. The library only
+  #   computes cryptographic hash digests.
+  # - The existing QLL coverage in CryptoLibraries.qll models hash.js for
+  #   cryptographic algorithm quality analysis (detecting use of weak hash
+  #   algorithms), which does not map to data extension sink/source kinds.
+  #
+  # No data extensions are needed for this library.
+  # =============================================================================

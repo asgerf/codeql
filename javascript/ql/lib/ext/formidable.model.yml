@@ -1,0 +1,71 @@
+extensions:
+  # =============================================================================
+  # formidable (npm: "formidable") - Multipart form data parser
+  # =============================================================================
+  #
+  # Formidable parses incoming multipart/form-data requests (file uploads and
+  # form fields) from HTTP requests. All parsed data originates from the
+  # client and is therefore untrusted.
+  #
+  # Instantiation patterns:
+  #   const form = formidable(options);                      // default export (v3+)
+  #   const form = formidable.formidable(options);           // named export
+  #   const form = new formidable.IncomingForm(options);     // constructor (v1/v2)
+  #   const form = new formidable.Formidable(options);       // constructor (v3)
+  #
+  # Callback-based API:
+  #   form.parse(req, (err, fields, files) => { ... });
+  #     - fields: object mapping field names to values (all untrusted)
+  #     - files: object mapping field names to file objects (all untrusted)
+  #
+  # Promise-based API (v3+):
+  #   const [fields, files] = await form.parse(req);
+  #
+  # Event-based API:
+  #   form.on('field', (name, value) => { ... });   // name and value untrusted
+  #   form.on('file', (name, file) => { ... });     // name and file untrusted
+  #   form.on('fileBegin', (name, file) => { ... });// name and file untrusted
+  #
+  # File object properties (all attacker-controlled):
+  #   file.originalFilename  — original filename from the upload
+  #   file.mimetype          — MIME type reported by the client
+  #   file.filepath          — server-generated temp path (not attacker-controlled)
+  #   file.size              — file size in bytes
+  #   file.newFilename       — server-generated name
+  #
+  # Existing QLL coverage (FormParsers.qll):
+  #   FormidableRemoteFlow models the parse() callback's fields and files
+  #   parameters (indices > 0) as RemoteFlowSource, covering all three
+  #   instantiation patterns. The event-based and promise-based APIs are not
+  #   modeled in the QLL.
+  #
+  # This data extension covers:
+  # - Sources: parse() callback parameters, promise-based parse() return value,
+  #   and event-based callbacks ('field', 'file', 'fileBegin').
+  # - No sinks or summaries needed.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Untrusted form data parsed from HTTP requests
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- Callback-based API ---
+      # form.parse(req, (err, fields, files) => {...})
+      # Parameter[1] = fields, Parameter[2] = files (Parameter[0] = err is excluded)
+      - ["formidable", "Fuzzy.Member[parse].Argument[1].Parameter[1,2]", "remote"]
+
+      # --- Promise-based API (v3+) ---
+      # const [fields, files] = await form.parse(req)
+      # The resolved value is an array [fields, files], both untrusted.
+      - ["formidable", "Fuzzy.Member[parse].ReturnValue.Awaited", "remote"]
+
+      # --- Event-based API ---
+      # form.on('field', (name, value) => {...}) — both parameters are untrusted
+      - ["formidable", "Fuzzy.Member[on].WithStringArgument[0=field].Argument[1].Parameter[0,1]", "remote"]
+      # form.on('file', (name, file) => {...}) — both parameters are untrusted
+      - ["formidable", "Fuzzy.Member[on].WithStringArgument[0=file].Argument[1].Parameter[0,1]", "remote"]
+      # form.on('fileBegin', (name, file) => {...}) — both parameters are untrusted
+      - ["formidable", "Fuzzy.Member[on].WithStringArgument[0=fileBegin].Argument[1].Parameter[0,1]", "remote"]

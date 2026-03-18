@@ -1,0 +1,242 @@
+extensions:
+  # =============================================================================
+  # node-forge (npm: "node-forge", legacy alias: "forge")
+  # =============================================================================
+  #
+  # Pure JavaScript implementation of TLS and cryptographic tools:
+  #   - Symmetric ciphers: AES, DES, 3DES, RC2 (ECB/CBC/CFB/OFB/CTR/GCM)
+  #   - Message digests: MD5, SHA-1, SHA-256, SHA-384, SHA-512
+  #   - HMAC with any supported digest
+  #   - PKI: RSA, ED25519, X.509, PKCS#5/7/8/10/12, RSA-KEM
+  #   - ASN.1 DER encoding/decoding
+  #   - SSH key format conversions
+  #   - PEM encoding/decoding
+  #   - Utility encoding: base64, hex, UTF-8, ByteBuffer
+  #   - TLS client/server, HTTP client
+  #
+  # Import styles:
+  #   const forge = require('node-forge');
+  #   const forge = require('forge');  // legacy
+  #
+  # Security-relevant aspects:
+  # - TLS dataReady callback provides access to decrypted remote data
+  # - TLS verify callback exposes remote peer certificate data
+  # - Taint propagation through crypto and encoding is the main concern
+  # - No traditional injection sinks (SQL, command, etc.)
+  #
+  # Existing QLL coverage (CryptoLibraries.qll):
+  # - CryptographicOperation for ciphers (algorithm, block mode, key)
+  # - CryptographicOperation for message digests (algorithm)
+  # - CryptographicKeyCreation for random.getBytesSync
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # forge.tls.createConnection({ dataReady(conn) { conn.data } })
+      # Decrypted data received from a remote TLS peer
+      - ["node-forge", "Member[tls].Member[createConnection].Argument[0].Member[dataReady].Parameter[0].Member[data]", "remote"]
+      - ["forge", "Member[tls].Member[createConnection].Argument[0].Member[dataReady].Parameter[0].Member[data]", "remote"]
+
+      # forge.tls.createConnection({ verify(conn, verified, depth, certs) { ... } })
+      # Remote peer's certificate chain (subject CN, extensions, etc.)
+      - ["node-forge", "Member[tls].Member[createConnection].Argument[0].Member[verify].Parameter[3]", "remote"]
+      - ["forge", "Member[tls].Member[createConnection].Argument[0].Member[verify].Parameter[3]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation (node-forge)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =======================================================================
+      # Streaming crypto: cipher.update(data), md.update(data), hmac.update(data)
+      # Taint flows from the data argument into the receiver (for later
+      # extraction via .digest() or .output) and into the return value
+      # (for method chaining: md.update('a').update('b').digest()).
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[update]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[update]", "Argument[0]", "Argument[this]", "taint"]
+
+      # =======================================================================
+      # Digest/HMAC extraction: md.digest(), hmac.digest()
+      # Returns a ByteBuffer containing the hash/HMAC of accumulated data.
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[digest]", "Argument[this]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # ByteBuffer output methods
+      # Read data from ByteBuffers (cipher.output, digest results, etc.):
+      #   buffer.getBytes(), buffer.toHex(), buffer.bytes(), buffer.toString()
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[getBytes,toHex,bytes,toString]", "Argument[this]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # ByteBuffer input methods
+      # Write data into a ByteBuffer:
+      #   buffer.putBytes(data), buffer.putBuffer(buf), buffer.putByte(b),
+      #   buffer.putInt16(i), buffer.putInt32(i)
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[putBytes,putBuffer,putByte,putInt16,putInt32]", "Argument[0]", "Argument[this]", "taint"]
+
+      # =======================================================================
+      # RSA encrypt/decrypt, ED25519/RSA sign
+      #   publicKey.encrypt(data), privateKey.decrypt(data)
+      #   privateKey.sign(md)
+      #   forge.pki.ed25519.sign({message, privateKey}) → signature
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[encrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[decrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[sign]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Utility encoding/decoding: forge.util.*
+      #   encode64, decode64, encodeUtf8, decodeUtf8,
+      #   hexToBytes, bytesToHex, createBuffer
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[encode64,decode64,encodeUtf8,decodeUtf8,hexToBytes,bytesToHex,createBuffer]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Binary encoding: forge.util.binary.{raw,hex,base64}.encode/decode
+      # Also catches forge.pem.decode
+      - ["node-forge", "Fuzzy.Member[encode,decode]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # PEM conversions: forge.pki.*
+      # Parse and serialize keys, certificates, and CSRs in PEM format.
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[publicKeyFromPem,publicKeyToPem,privateKeyFromPem,privateKeyToPem]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[certificateFromPem,certificateToPem,certificationRequestFromPem,certificationRequestToPem]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[encryptedPrivateKeyFromPem,encryptedPrivateKeyToPem,privateKeyInfoToPem]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[encryptRsaPrivateKey,decryptRsaPrivateKey]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[encryptPrivateKeyInfo,decryptPrivateKeyInfo]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # ASN.1 encoding/decoding
+      #   forge.asn1.fromDer(buf), toDer(obj), oidToDer(oid), derToOid(buf)
+      #   forge.asn1.prettyPrint(obj)
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[fromDer,toDer,oidToDer,derToOid,prettyPrint]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Key format conversions: forge.pki.*FromAsn1/*ToAsn1
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[publicKeyFromAsn1,publicKeyToAsn1,privateKeyFromAsn1,privateKeyToAsn1]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[certificateFromAsn1,certificateToAsn1]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[wrapRsaPrivateKey,setRsaPublicKey]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # PKCS#5: password-based key derivation
+      #   forge.pkcs5.pbkdf2(password, salt, iterations, keyLength[, md]) → key
+      #   forge.pkcs5.pbkdf2(password, salt, iterations, keyLength[, md], cb)
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[pbkdf2]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[pbkdf2]", "Argument[0]", "Argument[N-1].Parameter[1]", "taint"]
+
+      # =======================================================================
+      # PKCS#7: message conversion and extraction
+      #   forge.pkcs7.messageFromPem(pem), messageToPem(p7)
+      #   p7.findRecipient(cert)
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[messageFromPem,messageToPem]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[findRecipient]", "Argument[this]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # PKCS#12: archive conversion and bag extraction
+      #   forge.pkcs12.pkcs12FromAsn1(asn1, password) → p12
+      #   forge.pkcs12.toPkcs12Asn1(key, chain, password) → asn1
+      #   p12.getBags({friendlyName: ...}) → bags
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[pkcs12FromAsn1,toPkcs12Asn1]", "Argument[0]", "ReturnValue", "taint"]
+      - ["node-forge", "Fuzzy.Member[getBags]", "Argument[this]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # SSH key format conversions
+      #   forge.ssh.privateKeyToPutty(key, passphrase, comment)
+      #   forge.ssh.publicKeyToOpenSSH(key, comment)
+      #   forge.ssh.privateKeyToOpenSSH(key, passphrase)
+      #   forge.ssh.getPublicKeyFingerprint(key, options)
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[privateKeyToPutty,publicKeyToOpenSSH,privateKeyToOpenSSH,getPublicKeyFingerprint]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # PBE: OpenSSL-compatible key derivation
+      #   forge.pbe.opensslDeriveBytes(password, salt, length) → bytes
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[opensslDeriveBytes]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # HTTP response parsing
+      #   response.readHeader(buffer), response.readBody(buffer)
+      # Network data from buffer flows into the response object.
+      # =======================================================================
+      - ["node-forge", "Fuzzy.Member[readBody,readHeader]", "Argument[0]", "Argument[this]", "taint"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation (forge — legacy alias)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Streaming crypto
+      - ["forge", "Fuzzy.Member[update]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[update]", "Argument[0]", "Argument[this]", "taint"]
+
+      # Digest/HMAC extraction
+      - ["forge", "Fuzzy.Member[digest]", "Argument[this]", "ReturnValue", "taint"]
+
+      # ByteBuffer output
+      - ["forge", "Fuzzy.Member[getBytes,toHex,bytes,toString]", "Argument[this]", "ReturnValue", "taint"]
+
+      # ByteBuffer input
+      - ["forge", "Fuzzy.Member[putBytes,putBuffer,putByte,putInt16,putInt32]", "Argument[0]", "Argument[this]", "taint"]
+
+      # RSA/ED25519 operations
+      - ["forge", "Fuzzy.Member[encrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[decrypt]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[sign]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Utility encoding/decoding
+      - ["forge", "Fuzzy.Member[encode64,decode64,encodeUtf8,decodeUtf8,hexToBytes,bytesToHex,createBuffer]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[encode,decode]", "Argument[0]", "ReturnValue", "taint"]
+
+      # PEM conversions
+      - ["forge", "Fuzzy.Member[publicKeyFromPem,publicKeyToPem,privateKeyFromPem,privateKeyToPem]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[certificateFromPem,certificateToPem,certificationRequestFromPem,certificationRequestToPem]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[encryptedPrivateKeyFromPem,encryptedPrivateKeyToPem,privateKeyInfoToPem]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[encryptRsaPrivateKey,decryptRsaPrivateKey]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[encryptPrivateKeyInfo,decryptPrivateKeyInfo]", "Argument[0]", "ReturnValue", "taint"]
+
+      # ASN.1
+      - ["forge", "Fuzzy.Member[fromDer,toDer,oidToDer,derToOid,prettyPrint]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Key format conversions
+      - ["forge", "Fuzzy.Member[publicKeyFromAsn1,publicKeyToAsn1,privateKeyFromAsn1,privateKeyToAsn1]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[certificateFromAsn1,certificateToAsn1]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[wrapRsaPrivateKey,setRsaPublicKey]", "Argument[0]", "ReturnValue", "taint"]
+
+      # PKCS#5
+      - ["forge", "Fuzzy.Member[pbkdf2]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[pbkdf2]", "Argument[0]", "Argument[N-1].Parameter[1]", "taint"]
+
+      # PKCS#7
+      - ["forge", "Fuzzy.Member[messageFromPem,messageToPem]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[findRecipient]", "Argument[this]", "ReturnValue", "taint"]
+
+      # PKCS#12
+      - ["forge", "Fuzzy.Member[pkcs12FromAsn1,toPkcs12Asn1]", "Argument[0]", "ReturnValue", "taint"]
+      - ["forge", "Fuzzy.Member[getBags]", "Argument[this]", "ReturnValue", "taint"]
+
+      # SSH
+      - ["forge", "Fuzzy.Member[privateKeyToPutty,publicKeyToOpenSSH,privateKeyToOpenSSH,getPublicKeyFingerprint]", "Argument[0]", "ReturnValue", "taint"]
+
+      # PBE
+      - ["forge", "Fuzzy.Member[opensslDeriveBytes]", "Argument[0]", "ReturnValue", "taint"]
+
+      # HTTP
+      - ["forge", "Fuzzy.Member[readBody,readHeader]", "Argument[0]", "Argument[this]", "taint"]

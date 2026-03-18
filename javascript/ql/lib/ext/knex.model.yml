@@ -1,0 +1,47 @@
+extensions:
+  # =============================================================================
+  # knex (npm: "knex") — SQL query builder for Node.js
+  # =============================================================================
+  #
+  # Knex.js is a batteries-included SQL query builder supporting Postgres,
+  # MySQL, SQLite3, Oracle, and more. It provides both a chainable query
+  # builder and raw SQL methods.
+  #
+  #   const knex = require('knex')({ client: 'pg', ... });
+  #
+  #   // Query builder (parameterized, safe by default)
+  #   knex('users').where('id', userId).select('*');
+  #
+  #   // Raw SQL (UNSAFE if user input is interpolated into the string)
+  #   knex.raw('SELECT * FROM users WHERE id = ?', [userId]);
+  #   knex.whereRaw('id = ?', [userId]);
+  #
+  # Security concerns:
+  # - knex.raw(sql) and knex.*Raw(sql): the first argument is interpreted
+  #   as a raw SQL string — sql-injection sink.
+  # - Query results are database-sourced data (modeled in QLL).
+  #
+  # Existing QLL coverage (Knex.qll):
+  # - knexObject() tracks the full chainable API.
+  # - RawKnexCall: knex.raw() and knex.*Raw() arg 0 as SQL::SqlString.
+  # - KnexDatabaseCallback/KnexDatabaseAwait: query results as
+  #   DatabaseAccess (database threat model source).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: raw SQL string arguments
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # knex.raw(sql, bindings?) — sql string is executed directly
+      - ["knex", "Fuzzy.Member[raw].Argument[0]", "sql-injection"]
+
+      # knex.*Raw(sql, bindings?) — e.g. whereRaw, selectRaw, joinRaw, etc.
+      - ["knex", "Fuzzy.Member[whereRaw].Argument[0]", "sql-injection"]
+      - ["knex", "Fuzzy.Member[havingRaw].Argument[0]", "sql-injection"]
+      - ["knex", "Fuzzy.Member[orderByRaw].Argument[0]", "sql-injection"]
+      - ["knex", "Fuzzy.Member[groupByRaw].Argument[0]", "sql-injection"]
+      - ["knex", "Fuzzy.Member[joinRaw].Argument[0]", "sql-injection"]
+      - ["knex", "Fuzzy.Member[selectRaw].Argument[0]", "sql-injection"]

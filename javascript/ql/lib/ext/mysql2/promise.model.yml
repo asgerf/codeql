@@ -1,0 +1,56 @@
+extensions:
+  # =============================================================================
+  # mysql2/promise (npm: "mysql2/promise") - Promise-based MySQL client
+  # =============================================================================
+  #
+  # mysql2/promise is the Promise-based API of the mysql2 package, a fast
+  # MySQL driver for Node.js. It provides Connection, Pool, and
+  # PoolConnection objects with query/execute methods:
+  #
+  #   import mysql from 'mysql2/promise';
+  #
+  #   const conn = await mysql.createConnection({ host, user, password, database });
+  #   const [rows] = await conn.query('SELECT * FROM users WHERE id = ?', [id]);
+  #   const [rows] = await conn.execute('SELECT * FROM users WHERE id = ?', [id]);
+  #
+  #   const pool = mysql.createPool({ host, user, password, database });
+  #   const [rows] = await pool.query(sql);
+  #   const [rows] = await pool.execute(sql);
+  #   const conn2 = await pool.getConnection();
+  #
+  # Security concerns:
+  # - SQL injection: the first argument to query() and execute() is
+  #   interpreted as SQL. If an attacker controls this string, they can
+  #   inject arbitrary SQL. The second argument (parameter array) is
+  #   safely escaped and is NOT a sink.
+  # - Credentials: user and password fields in connection options.
+  # - No sources: mysql2/promise does not provide access to untrusted data
+  #   (query results flow outward but are not modeled as taint sources).
+  #
+  # Existing QLL coverage:
+  # - SQL.qll: MySql module models query/execute on Connection/Pool as
+  #   SQL injection sinks and escape/escapeId as sanitizers, covering
+  #   mysql, mysql2, and mysql2/promise.
+  # - mysql/model.yml: extensive typeModel entries for mysql2/promise
+  #   Connection, Pool, PoolConnection and how they're obtained.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: SQL injection via query() and execute()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # conn.query(sql, ...) and conn.execute(sql, ...) — first arg is SQL
+      - ["mysql2/promise", "Fuzzy.Member[query,execute].Argument[0]", "sql-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: sanitization via escape() and escapeId()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # escape(value) and escapeId(value) sanitize input for SQL embedding
+      - ["mysql2/promise", "Fuzzy.Member[escape,escapeId]", "Argument[0]", "ReturnValue", "taint"]

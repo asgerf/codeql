@@ -1,0 +1,40 @@
+extensions:
+  # =============================================================================
+  # fclone (npm: "fclone") - Deep clone with circular reference handling
+  # =============================================================================
+  #
+  # By soyuka. Deeply clones JavaScript objects, replacing circular
+  # references with the string "[Circular]" so the result is safe for
+  # JSON serialization. Supports objects, arrays, and buffers.
+  #
+  #   var fclone = require('fclone');
+  #
+  #   var a = { c: 'hello' };
+  #   a.b = a;                    // circular reference
+  #   var o = fclone(a);          // { c: 'hello', b: '[Circular]' }
+  #   JSON.stringify(o);          // works without throwing
+  #
+  # API:
+  #   fclone(value)  — returns a deep clone of value
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure value cloning utility.
+  # - The cloned output preserves all properties of the input (except
+  #   circular refs become "[Circular]"), so taint propagates from the
+  #   first argument to the return value.
+  #
+  # Existing QLL coverage (Extend.qll):
+  #   Referenced in CloneStep alongside "clone", "sort-keys", and
+  #   "camelcase-keys" — models dataflow from Argument[0] to ReturnValue.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint-preserving flow through clone operation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # fclone(value) — deep clone preserves all properties (circular refs
+      # become "[Circular]" strings, so not strictly value-preserving)
+      - ["fclone", "", "Argument[0]", "ReturnValue", "taint"]

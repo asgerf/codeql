@@ -1,0 +1,65 @@
+extensions:
+  # =============================================================================
+  # load-json-file (npm: "load-json-file") — Read and parse a JSON file
+  # =============================================================================
+  #
+  # Reads a JSON file from disk, strips UTF-8 BOM, and returns parsed JSON.
+  #
+  #   // CommonJS (v1–v5)
+  #   const loadJsonFile = require('load-json-file');
+  #   const obj = await loadJsonFile('foo.json');
+  #   const obj = loadJsonFile.sync('foo.json');
+  #
+  #   // ESM (v6+)
+  #   import { loadJsonFile, loadJsonFileSync } from 'load-json-file';
+  #   const obj = await loadJsonFile('foo.json');
+  #   const obj = loadJsonFileSync('foo.json');
+  #
+  # Security concerns:
+  # - SINK (path-injection): The file path argument controls which file is read.
+  #   An attacker who controls the path can read arbitrary files (path traversal).
+  # - SOURCE (file): The returned parsed JSON originates from the local file
+  #   system. Under the "file" threat model this data is treated as untrusted.
+  #
+  # Existing QLL coverage (Files.qll):
+  # - Models the default export and .sync() as FileSystemReadAccess, covering
+  #   path arguments and data flow from the return value / resolved promise.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: file path arguments are path-injection sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # CJS: require('load-json-file')(path)
+      - ["load-json-file", "Argument[0]", "path-injection"]
+
+      # CJS: require('load-json-file').sync(path)
+      - ["load-json-file", "Member[sync].Argument[0]", "path-injection"]
+
+      # ESM: import { loadJsonFile } from 'load-json-file'; loadJsonFile(path)
+      - ["load-json-file", "Member[loadJsonFile].Argument[0]", "path-injection"]
+
+      # ESM: import { loadJsonFileSync } from 'load-json-file'; loadJsonFileSync(path)
+      - ["load-json-file", "Member[loadJsonFileSync].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: parsed JSON from the file system (threat-model: file)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # CJS async: await require('load-json-file')(path)
+      - ["load-json-file", "ReturnValue.Awaited", "file"]
+
+      # CJS sync: require('load-json-file').sync(path)
+      - ["load-json-file", "Member[sync].ReturnValue", "file"]
+
+      # ESM async: await loadJsonFile(path)
+      - ["load-json-file", "Member[loadJsonFile].ReturnValue.Awaited", "file"]
+
+      # ESM sync: loadJsonFileSync(path)
+      - ["load-json-file", "Member[loadJsonFileSync].ReturnValue", "file"]

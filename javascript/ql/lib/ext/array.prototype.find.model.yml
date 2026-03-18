@@ -1,0 +1,33 @@
+extensions:
+  # =============================================================================
+  # array.prototype.find (npm: "array.prototype.find") - ES6 Array.prototype.find
+  # polyfill
+  # =============================================================================
+  #
+  # A polyfill for Array.prototype.find, exposed as a standalone function:
+  #
+  #   const find = require('array.prototype.find');
+  #   find([1, 2, 3], (v) => v > 1);
+  #   //=> 2
+  #
+  # Signature: find(array, callback [, thisArg])
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure data transformation.
+  # - Array elements flow to the callback parameter and to the return value.
+  # - The optional thisArg flows to the callback's `this`.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: data flow through find
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Array elements flow to the callback's first parameter
+      - ["array.prototype.find", "", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      # Array elements flow to the return value (the found element)
+      - ["array.prototype.find", "", "Argument[0].ArrayElement", "ReturnValue", "value"]
+      # thisArg flows to the callback's `this`
+      - ["array.prototype.find", "", "Argument[2]", "Argument[1].Parameter[this]", "value"]

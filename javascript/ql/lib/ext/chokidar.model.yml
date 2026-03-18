@@ -1,0 +1,61 @@
+extensions:
+  # =============================================================================
+  # chokidar (npm: "chokidar") - Efficient cross-platform file watching
+  # =============================================================================
+  #
+  # Chokidar watches files and directories for changes, emitting events:
+  #
+  #   const chokidar = require('chokidar');
+  #   const watcher = chokidar.watch('/path/to/dir', { persistent: true });
+  #   watcher
+  #     .on('add', path => console.log(`added: ${path}`))
+  #     .on('change', path => console.log(`changed: ${path}`))
+  #     .on('unlink', path => console.log(`removed: ${path}`))
+  #     .on('addDir', path => console.log(`dir added: ${path}`))
+  #     .on('unlinkDir', path => console.log(`dir removed: ${path}`))
+  #     .on('all', (event, path) => console.log(event, path));
+  #   watcher.add('/another/path');
+  #
+  # API:
+  #   chokidar.watch(paths, [options]) → FSWatcher
+  #   watcher.add(paths)
+  #   watcher.unwatch(paths)
+  #   watcher.close() → Promise
+  #   watcher.getWatched() → object
+  #   watcher.on(event, callback) — event listener
+  #
+  # Events: 'add', 'addDir', 'change', 'unlink', 'unlinkDir', 'error',
+  #   'ready', 'raw', 'all'
+  #
+  # Security concerns:
+  # - Path injection: chokidar.watch(paths) and watcher.add(paths) accept
+  #   file/directory paths that control which files are accessed.
+  # - File name source: the path parameter in event callbacks ('add',
+  #   'change', 'unlink', 'addDir', 'unlinkDir') contains file system paths
+  #   that may be attacker-controlled (e.g. via a maliciously named file).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path arguments control which files/directories are watched
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # chokidar.watch(paths, options?)
+      - ["chokidar", "Member[watch].Argument[0]", "path-injection"]
+      # watcher.add(paths)
+      - ["chokidar", "Member[watch].ReturnValue.Member[add].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: file paths from event callbacks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # watcher.on('add'|'change'|'unlink'|'addDir'|'unlinkDir', (path) => ...)
+      # The path parameter (index 0) contains the file/directory path
+      - ["chokidar", "Member[watch].ReturnValue.Member[on,addListener].Argument[1].Parameter[0]", "file"]
+      # watcher.on('all', (event, path) => ...) — the path is at index 1
+      - ["chokidar", "Member[watch].ReturnValue.Member[on,addListener].WithStringArgument[0=all].Argument[1].Parameter[1]", "file"]

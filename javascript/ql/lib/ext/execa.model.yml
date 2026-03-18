@@ -1,0 +1,130 @@
+extensions:
+  # =============================================================================
+  # execa (npm: "execa") - Process execution for humans
+  # =============================================================================
+  #
+  # execa is a popular wrapper around child_process that provides a cleaner API
+  # for executing commands. It has evolved significantly across versions:
+  #
+  # Current API (v6+):
+  #   import { execa, execaSync, execaCommand, execaCommandSync, $ } from 'execa';
+  #
+  #   // execa(file, args?, options?) — execute a file directly
+  #   await execa('echo', ['hello']);
+  #
+  #   // execaSync(file, args?, options?)
+  #   execaSync('echo', ['hello']);
+  #
+  #   // Default export is also callable as execa:
+  #   import execa from 'execa';
+  #   await execa('echo', ['hello']);
+  #
+  #   // execaCommand(command, options?) — execute a command string (space-split)
+  #   await execaCommand('echo hello');
+  #
+  #   // execaCommandSync(command, options?)
+  #   execaCommandSync('echo hello');
+  #
+  #   // $`command` — tagged template for shell-like syntax
+  #   await $`echo hello`;
+  #   $.sync`echo hello`;
+  #   $({options})`echo hello`;
+  #
+  #   // execa.node(scriptPath, args?, options?) — run a Node.js script
+  #
+  # Legacy API (v1–v5):
+  #   // execa.shell(command, options?) — shell-interpreted command (removed v6)
+  #   // execa.shellSync(command, options?)
+  #   // execa.stdout(file, args?, options?)
+  #   // execa.stderr(file, args?, options?)
+  #   // execa.sync(file, args?, options?)
+  #
+  # File system access:
+  #   // inputFile option reads a file as stdin
+  #   await execa('cat', [], { inputFile: 'input.txt' });
+  #   // pipeStdout/pipeStderr/pipeAll write output to a file
+  #   await execa('cmd').pipeStdout('output.txt');
+  #
+  # Security concerns:
+  # - SINK (command-injection): The command/file argument (arg 0) to all
+  #   execution methods.
+  # - SINK (command-injection): The args array (arg 1) for execa, execaSync,
+  #   node, stdout, stderr, sync.
+  # - SINK (command-injection): Template literal interpolations in $`...`.
+  # - SINK (path-injection): The inputFile option and pipeStdout/pipeStderr/
+  #   pipeAll path arguments control file system access.
+  #
+  # Existing QLL coverage (Execa.qll):
+  # - ExecaExec: execa(), execaSync(), and default export call — cmdArg=0
+  # - ExecaScript: $`...` and $.sync`...` tagged templates
+  # - ExecaCommandExec: execaCommand(), execaCommandSync() — cmdArg=0
+  # - ExecaNodeCall: execa.node() — cmdArg=0
+  # - ExecaStreamCall: execa.stdout(), stderr(), sync() — cmdArg=0
+  # - ExecaShellCall: execa.shell(), shellSync() — cmdArg=0, shell-interpreted
+  # - ExecaFileSystemAccess: inputFile option, pipeStdout/pipeAll/pipeStderr
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command-injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- execa(file, args?, options?) and default export ---
+      # Command (arg 0)
+      - ["execa", "Member[execa].Argument[0]", "command-injection"]
+      - ["execa", "Argument[0]", "command-injection"]
+      # Args array (arg 1)
+      - ["execa", "Member[execa].Argument[1]", "command-injection"]
+      - ["execa", "Argument[1]", "command-injection"]
+
+      # --- execaSync(file, args?, options?) ---
+      - ["execa", "Member[execaSync].Argument[0]", "command-injection"]
+      - ["execa", "Member[execaSync].Argument[1]", "command-injection"]
+
+      # --- execaCommand(command, options?) ---
+      # The entire command string is space-split and executed
+      - ["execa", "Member[execaCommand].Argument[0]", "command-injection"]
+
+      # --- execaCommandSync(command, options?) ---
+      - ["execa", "Member[execaCommandSync].Argument[0]", "command-injection"]
+
+      # --- $`command` tagged template and $.sync`command` ---
+      # Interpolated values in the tagged template become arguments
+      - ["execa", "Member[$].Argument[0..10]", "command-injection"]
+      - ["execa", "Member[$].ReturnValue.Argument[0..10]", "command-injection"]
+      - ["execa", "Member[$].Member[sync].Argument[0..10]", "command-injection"]
+      - ["execa", "Member[$].ReturnValue.Member[sync].Argument[0..10]", "command-injection"]
+
+      # --- execa.node(scriptPath, args?, options?) ---
+      - ["execa", "Member[node].Argument[0]", "command-injection"]
+      - ["execa", "Member[node].Argument[1]", "command-injection"]
+
+      # --- Legacy: execa.shell(command, options?) / shellSync ---
+      # Shell-interpreted commands (removed in v6, but still in use)
+      - ["execa", "Member[shell].Argument[0]", "command-injection"]
+      - ["execa", "Member[shellSync].Argument[0]", "command-injection"]
+
+      # --- Legacy: execa.stdout / stderr / sync (file, args?, options?) ---
+      - ["execa", "Member[stdout].Argument[0]", "command-injection"]
+      - ["execa", "Member[stdout].Argument[1]", "command-injection"]
+      - ["execa", "Member[stderr].Argument[0]", "command-injection"]
+      - ["execa", "Member[stderr].Argument[1]", "command-injection"]
+      - ["execa", "Member[sync].Argument[0]", "command-injection"]
+      - ["execa", "Member[sync].Argument[1]", "command-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path-injection (file system access)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # inputFile option on execa/execaSync/execaCommand/execaCommandSync
+      - ["execa", "Fuzzy.Member[inputFile]", "path-injection"]
+
+      # pipeStdout/pipeStderr/pipeAll(filePath) on result objects
+      - ["execa", "Fuzzy.Member[pipeStdout].Argument[0]", "path-injection"]
+      - ["execa", "Fuzzy.Member[pipeStderr].Argument[0]", "path-injection"]
+      - ["execa", "Fuzzy.Member[pipeAll].Argument[0]", "path-injection"]

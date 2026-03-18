@@ -1,0 +1,38 @@
+extensions:
+  # =============================================================================
+  # jwt-decode — Decode JWT tokens without verification
+  # =============================================================================
+  #
+  # A small library that decodes JWTs. It does NOT validate signatures,
+  # so the decoded payload should be treated as untrusted input.
+  #
+  # v3 (default export):
+  #   import jwtDecode from 'jwt-decode';
+  #   const payload = jwtDecode(token);
+  #
+  # v4 (named export):
+  #   import { jwtDecode } from 'jwt-decode';
+  #   const payload = jwtDecode(token);
+  #   const header  = jwtDecode(token, { header: true });
+  #
+  # Security note: jwt-decode performs base64 decoding only — the decoded
+  # payload/header is attacker-controlled if the token is attacker-supplied.
+  #
+  # Existing QLL coverage (JWT.qll):
+  #   - Taint step (deserialize): Argument[0] → ReturnValue for the
+  #     default import call (v3 style).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries — taint propagation through jwtDecode calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # v3: const decoded = require('jwt-decode')(token)
+      # The default export is the decode function itself.
+      - ["jwt-decode", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # v4: const decoded = jwtDecode(token)
+      - ["jwt-decode", "Member[jwtDecode]", "Argument[0]", "ReturnValue", "taint"]

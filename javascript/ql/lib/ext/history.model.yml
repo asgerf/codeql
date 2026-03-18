@@ -1,0 +1,73 @@
+extensions:
+  # =============================================================================
+  # history (npm: "history") - Browser history management for SPAs
+  # =============================================================================
+  #
+  # The history package provides a minimal API for managing session history
+  # in JavaScript applications (used by React Router, among others).
+  #
+  # Factory functions:
+  #   createBrowserHistory()  — uses the HTML5 History API (real URLs)
+  #   createHashHistory()     — stores location in the URL hash fragment
+  #   createMemoryHistory()   — in-memory history (tests, React Native)
+  #
+  # History object API:
+  #   history.location            — current location object
+  #   history.location.pathname   — URL path (attacker-influenced)
+  #   history.location.search     — query string (attacker-influenced)
+  #   history.location.hash       — hash fragment (attacker-influenced)
+  #   history.location.state      — developer-set state (not attacker-controlled)
+  #   history.push(path, [state]) — navigate to a new URL
+  #   history.replace(path, [state]) — replace current entry
+  #   history.listen(listener)    — subscribe to location changes
+  #     v4: listener(location, action)
+  #     v5: listener({ action, location })
+  #   history.go(n) / history.back() / history.forward()
+  #
+  # Security concerns:
+  # - Sources: location.pathname, location.search, and location.hash from
+  #   browser and hash histories are attacker-controlled (via the URL).
+  #   These are client-side remote flow sources.
+  # - The listen callback receives location objects containing the same
+  #   attacker-controlled properties.
+  # - memory history is not attacker-controlled (in-memory only).
+  # - push/replace take a path argument, but this is a navigation action
+  #   performed by the application, not an injection sink in the
+  #   traditional sense. URL redirection via push/replace could be a
+  #   concern but is already covered by general DOM sink modeling.
+  #
+  # Existing QLL coverage (History.qll):
+  #   HistoryLibraryRemoteFlow models location.pathname, .search, and
+  #   .hash from createBrowserHistory() and createHashHistory() as
+  #   ClientSideRemoteFlowSource (extends RemoteFlowSource). The listen
+  #   callback is not modeled in the QLL.
+  #
+  # This data extension covers:
+  # - Sources: location properties from browser and hash histories
+  # - Sources: listen callback location properties
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: Attacker-controlled location data from browser/hash history
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- Direct location property access ---
+      # createBrowserHistory().location.pathname / .search / .hash
+      - ["history", "Member[createBrowserHistory].ReturnValue.Member[location].Member[pathname,search,hash]", "remote"]
+      # createHashHistory().location.pathname / .search / .hash
+      - ["history", "Member[createHashHistory].ReturnValue.Member[location].Member[pathname,search,hash]", "remote"]
+
+      # --- listen() callback (v4): listener(location, action) ---
+      # createBrowserHistory().listen((location, action) => { location.pathname ... })
+      - ["history", "Member[createBrowserHistory].ReturnValue.Member[listen].Argument[0].Parameter[0].Member[pathname,search,hash]", "remote"]
+      # createHashHistory().listen((location, action) => { location.pathname ... })
+      - ["history", "Member[createHashHistory].ReturnValue.Member[listen].Argument[0].Parameter[0].Member[pathname,search,hash]", "remote"]
+
+      # --- listen() callback (v5): listener({ action, location }) ---
+      # createBrowserHistory().listen(({ location }) => { location.pathname ... })
+      - ["history", "Member[createBrowserHistory].ReturnValue.Member[listen].Argument[0].Parameter[0].Member[location].Member[pathname,search,hash]", "remote"]
+      # createHashHistory().listen(({ location }) => { location.pathname ... })
+      - ["history", "Member[createHashHistory].ReturnValue.Member[listen].Argument[0].Parameter[0].Member[location].Member[pathname,search,hash]", "remote"]

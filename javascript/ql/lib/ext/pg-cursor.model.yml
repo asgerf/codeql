@@ -1,0 +1,60 @@
+extensions:
+  # =============================================================================
+  # pg-cursor (npm: "pg-cursor") — Cursor-based streaming for node-postgres
+  # =============================================================================
+  #
+  # Part of the node-postgres ecosystem. Creates a cursor for incremental
+  # row retrieval from PostgreSQL, avoiding loading entire result sets into
+  # memory:
+  #
+  #   const Cursor = require('pg-cursor');
+  #   const cursor = new Cursor('SELECT * FROM users WHERE id = $1', [userId]);
+  #   const pgCursor = client.query(cursor);
+  #   const rows = await pgCursor.read(100);   // fetch 100 rows
+  #
+  # Constructor: new Cursor(text, values?, config?)
+  #   - text:   SQL query string (SQL injection sink if dynamic)
+  #   - values: parameterized query values ($1, $2, ...) — safe
+  #   - config: { rowMode, types }
+  #
+  # Methods:
+  #   - read(rowCount, [callback]) → Promise<rows[]>
+  #   - close([callback]) → Promise<void>
+  #
+  # Events: 'row' (row, result), 'end' (result), 'error' (err)
+  #
+  # Security concerns:
+  # - The first constructor argument is a SQL query string — sql-injection
+  #   sink if attacker-controlled.
+  # - Rows returned via read() and 'row' events are untrusted database data.
+  #
+  # Existing QLL coverage (SQL.qll, Postgres module):
+  #   pg-cursor constructor parameter 0 modeled as SQL::SqlString.
+  #   Query results modeled as DatabaseAccess results (ThreatModelSource).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: SQL injection via constructor query text
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # new Cursor(text, values?, config?) — first arg is the SQL query string
+      - ["pg-cursor", "Argument[0]", "sql-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: untrusted data read from the database
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # cursor.read(count) → Promise<rows[]>  — rows are untrusted DB data
+      - ["pg-cursor", "Fuzzy.Member[read].ReturnValue.Awaited", "remote"]
+
+      # cursor.read(count, (err, rows) => { ... }) — callback form
+      - ["pg-cursor", "Fuzzy.Member[read].Argument[1].Parameter[1]", "remote"]
+
+      # cursor.on('row', (row, result) => { ... }) — per-row event
+      - ["pg-cursor", "Fuzzy.Member[on,addListener,once].WithStringArgument[0=row].Argument[1].Parameter[0]", "remote"]

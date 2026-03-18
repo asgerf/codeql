@@ -1,0 +1,29 @@
+extensions:
+  # =============================================================================
+  # react-autobind (npm: "react-autobind") — Auto-bind React component methods
+  # =============================================================================
+  #
+  # Utility that binds all custom methods of an ES6 React component to `this`,
+  # called in the constructor:
+  #
+  #   import autoBind from 'react-autobind';
+  #   class MyComponent extends React.Component {
+  #     constructor(props) {
+  #       super(props);
+  #       autoBind(this);
+  #     }
+  #     handleClick() { this.setState({...}); }
+  #   }
+  #
+  # Options:
+  #   autoBind(this, { bindOnly: ['handleClick'] })
+  #   autoBind(this, { wontBind: ['helperMethod'] })
+  #
+  # Security assessment:
+  # - No sources: does not read external data.
+  # - No sinks: does not execute code, make requests, or write files.
+  # - No taint flow: mutates method bindings in-place via
+  #   Object.defineProperty and Function.prototype.bind; returns void.
+  #
+  # No data extensions are needed for this library.
+  # =============================================================================

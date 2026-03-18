@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # array-find (npm: "array-find") - Array.prototype.find polyfill
+  # =============================================================================
+  #
+  # array-find is a standalone polyfill for Array.prototype.find.
+  #
+  #   const find = require('array-find');
+  #   find([1, 2, 3], el => el > 1);
+  #   //=> 2
+  #
+  # Signature: find(array, callback, thisArg?)
+  #   - array:    the array to search
+  #   - callback: function(element, index, array) — predicate
+  #   - thisArg:  optional `this` binding for callback
+  #
+  # Returns the first element for which callback returns truthy, or undefined.
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure data transformation / search.
+  # - Array elements flow to the callback parameter and to the return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: data flow through find
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Array elements flow to callback's first parameter (the element)
+      - ["array-find", "", "Argument[0].ArrayElement", "Argument[1].Parameter[0]", "value"]
+      # Array elements flow to the return value (the found element)
+      - ["array-find", "", "Argument[0].ArrayElement", "ReturnValue", "value"]
+      # thisArg flows to callback's `this`
+      - ["array-find", "", "Argument[2]", "Argument[1].Parameter[this]", "value"]

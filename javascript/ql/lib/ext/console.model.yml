@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # console (npm: "console") - Drop-in replacement for the global console
+  # =============================================================================
+  #
+  # The `console` npm package returns the global `console` object if present,
+  # otherwise provides noops for missing methods. It exposes all standard
+  # console methods:
+  #
+  #   import console from 'console';
+  #   console.log('message');
+  #   console.error('error: %s', err);
+  #   console.assert(condition, 'assertion message');
+  #
+  # Security concerns:
+  # - All logging methods are log-injection sinks. Attacker-controlled input
+  #   written to logs can forge log entries, inject misleading data, or exploit
+  #   log viewers that interpret special characters (ANSI escapes, newlines).
+  # - No sources or summaries. The library itself does not produce or
+  #   transform untrusted data.
+  #
+  # Note: The existing QLL (Logging.qll) models both the global `console` and
+  # `require('console')` via ConsoleLoggerCall. This catalog covers the npm
+  # package import path.
+  # =============================================================================
+
+  # Sinks: Arguments to logging methods are log-injection sinks.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # console.log(), .info(), .warn(), .error(), .debug(), .dir(), .trace(),
+      # .dirxml(), .table(), .exception() — all arguments are logged
+      - [
+          "console",
+          "Fuzzy.Member[log,info,warn,error,debug,dir,trace,dirxml,table,exception].Argument[0..N-1]",
+          "log-injection",
+        ]
+
+      # console.assert(condition, ...messages) — arguments after the condition
+      # (index 1+) form the assertion failure message
+      - [
+          "console",
+          "Fuzzy.Member[assert].Argument[1..N-1]",
+          "log-injection",
+        ]

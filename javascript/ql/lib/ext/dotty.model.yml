@@ -1,0 +1,63 @@
+extensions:
+  # =============================================================================
+  # dotty (npm: "dotty") - Access nested object properties via dot-path notation
+  # =============================================================================
+  #
+  # Dotty provides utilities for accessing, setting, searching, and removing
+  # deeply nested object properties using dot-notation strings:
+  #
+  #   const dotty = require('dotty');
+  #   dotty.get(obj, 'a.b.c');              // nested property access
+  #   dotty.exists(obj, 'a.b.c');           // check path existence (returns bool)
+  #   dotty.put(obj, 'a.b.c', value);       // set nested property
+  #   dotty.remove(obj, 'a.b.c');           // remove nested property (returns bool)
+  #   dotty.search(obj, 'a.*.c');           // wildcard/regex search → array
+  #   dotty.removeSearch(obj, 'a.*.c');     // remove by wildcard → returns object
+  #   dotty.deepKeys(obj);                  // list all key paths → array
+  #
+  # Security concerns:
+  # - dotty.get() reads a nested property from an object. The path string
+  #   controls which property is read — value flows from the object to the
+  #   return value.
+  # - dotty.search() searches with wildcards/regex. Matched values flow from
+  #   the object to the return value and optionally to an action callback
+  #   (action receives value, parent, key).
+  # - dotty.put() writes a value into a nested property of an object. If the
+  #   path is attacker-controlled, this could be a prototype pollution vector
+  #   (only __proto__ is blocked, not constructor.prototype), but that is
+  #   handled by dedicated QLL (PropertyProjection).
+  # - dotty.removeSearch() returns the modified object — taint propagates
+  #   from input object to return value.
+  # - dotty.deepKeys() returns key paths derived from the object's structure.
+  #
+  # Existing QLL coverage:
+  #   PropertyProjection.qll: dotty.get modeled as a singleton property
+  #     projection (object at arg 0, selector at arg 1).
+  #   PropertyProjection.qll: dotty.search modeled as a non-singleton property
+  #     projection (object at arg 0, selector at arg 1).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint/value propagation through dotty functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # dotty.get(object, path) → nested value from object
+      - ["dotty", "Member[get]", "Argument[0]", "ReturnValue", "taint"]
+
+      # dotty.search(object, path, action?) → array of matched values
+      - ["dotty", "Member[search]", "Argument[0]", "ReturnValue", "taint"]
+      # dotty.search: action callback receives (value, parent, key) from object
+      - ["dotty", "Member[search]", "Argument[0]", "Argument[2].Parameter[0]", "taint"]
+      - ["dotty", "Member[search]", "Argument[0]", "Argument[2].Parameter[1]", "taint"]
+
+      # dotty.put(object, path, value) — value flows into the object
+      - ["dotty", "Member[put]", "Argument[2]", "Argument[0]", "taint"]
+
+      # dotty.removeSearch(object, path) → returns the (modified) input object
+      - ["dotty", "Member[removeSearch]", "Argument[0]", "ReturnValue", "taint"]
+
+      # dotty.deepKeys(object, options?) → array of key paths derived from object
+      - ["dotty", "Member[deepKeys]", "Argument[0]", "ReturnValue", "taint"]

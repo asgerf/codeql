@@ -1,0 +1,76 @@
+extensions:
+  # =============================================================================
+  # fastify-secure-session / @fastify/secure-session
+  # — Encrypted stateless cookie sessions for Fastify
+  # =============================================================================
+  #
+  # Creates encrypted, tamper-proof sessions stored in cookies using
+  # libsodium secret-key box encryption.
+  #
+  #   const fastify = require('fastify')();
+  #   fastify.register(require('@fastify/secure-session'), {
+  #     key: fs.readFileSync('secret-key'),
+  #     cookie: { path: '/', httpOnly: true }
+  #   });
+  #
+  #   fastify.get('/', (req, reply) => {
+  #     const data = req.session.get('data');  // read session value
+  #     req.session.set('data', value);        // write session value
+  #     req.session.data();                    // get all session data
+  #     req.session.delete();                  // clear session
+  #     req.session.regenerate(['keep']);       // clear except listed keys
+  #     req.session.options({ maxAge: 3600 }); // set cookie options
+  #     req.session.touch();                   // refresh cookie expiry
+  #   });
+  #
+  # Server decorators:
+  #   fastify.createSecureSession({ foo: 'bar' })           → Session
+  #   fastify.encodeSecureSession(session)                  → cookie string
+  #   fastify.decodeSecureSession(cookieString)             → Session | null
+  #
+  # Security concerns:
+  # - Session data is encrypted and authenticated; only the server can read
+  #   or write it. Therefore request.session values are NOT untrusted remote
+  #   sources — they are server-authored data.
+  # - decodeSecureSession takes a raw cookie string (potentially untrusted)
+  #   and returns a Session object. Taint flows from the cookie input to the
+  #   decoded session output.
+  # - createSecureSession takes a data object and returns a Session. Taint
+  #   from the input propagates to the session.
+  # - encodeSecureSession takes a Session and returns a cookie string. Taint
+  #   from the session propagates to the output string.
+  #
+  # Existing QLL coverage (Fastify.qll):
+  #   FastifyCookieMiddleware models fastify-secure-session as a
+  #   CookieMiddlewareInstance, tracking the `secret` option.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through session APIs
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # session.get(key) — returns the value previously stored with set().
+      # The return value depends on what was stored, not on the key string.
+      # No taint flows from the key argument to the return value.
+
+      # session.data() — returns all session data as an object.
+      # Not a source (server-authored), but propagates stored taint.
+
+      # fastify.decodeSecureSession(cookieString, [log], [sessionName]) → Session | null
+      # Decodes a raw cookie value into a Session object. The cookie
+      # string may come from an untrusted source (e.g., WebSocket headers).
+      - ["fastify-secure-session", "Fuzzy.Member[decodeSecureSession]", "Argument[0]", "ReturnValue", "taint"]
+      - ["@fastify/secure-session", "Fuzzy.Member[decodeSecureSession]", "Argument[0]", "ReturnValue", "taint"]
+
+      # fastify.createSecureSession(data) → Session
+      # Creates a new session from a data object. Taint propagates.
+      - ["fastify-secure-session", "Fuzzy.Member[createSecureSession]", "Argument[0]", "ReturnValue", "taint"]
+      - ["@fastify/secure-session", "Fuzzy.Member[createSecureSession]", "Argument[0]", "ReturnValue", "taint"]
+
+      # fastify.encodeSecureSession(session) → cookie string
+      # Serializes a session into an encrypted cookie string.
+      - ["fastify-secure-session", "Fuzzy.Member[encodeSecureSession]", "Argument[0]", "ReturnValue", "taint"]
+      - ["@fastify/secure-session", "Fuzzy.Member[encodeSecureSession]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,57 @@
+extensions:
+  # =============================================================================
+  # json-cycle (npm: "json-cycle") - Circular reference JSON handling
+  # =============================================================================
+  #
+  # json-cycle provides utilities for encoding and decoding JavaScript objects
+  # with circular references for safe JSON serialization/deserialization.
+  #
+  #   const jc = require('json-cycle');
+  #
+  #   // Remove circular references for safe stringification
+  #   const safe = jc.decycle(obj);       // returns deep copy without cycles
+  #   const json = jc.stringify(obj);     // shorthand for JSON.stringify(decycle(obj))
+  #
+  #   // Restore circular references after parsing
+  #   const restored = jc.retrocycle(parsed); // restores $ref placeholders to cycles
+  #   const obj = jc.parse(jsonString);        // shorthand for retrocycle(JSON.parse(s))
+  #
+  # API:
+  #   decycle(object)       — deep copy replacing cycles with { $ref: path }
+  #   retrocycle(object)    — restore cycles from $ref placeholders
+  #   stringify(object)     — JSON.stringify(decycle(object))
+  #   parse(string)         — retrocycle(JSON.parse(string))
+  #
+  # Security concerns:
+  # - No sources. The library does not access external or untrusted data.
+  # - No injection sinks. The library performs structural transformation
+  #   of objects.
+  # - All four functions propagate taint from input to output: decycle and
+  #   retrocycle produce deep copies preserving all values; stringify
+  #   serializes to JSON; parse deserializes from JSON.
+  #
+  # Existing QLL coverage:
+  # - JsonStringifiers.qll: json-cycle.stringify modeled as JsonStringifyCall
+  # - JsonParsers.qll: json-cycle.parse modeled as PlainJsonParserCall
+  # - Extend.qll: json-cycle.decycle and .retrocycle modeled as CloneStep
+  #   (PreCallGraphStep for value-preserving flow from arg 0 to return)
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Taint/value propagation through all functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # decycle(object) — deep copy removing cycles, preserves all values
+      - ["json-cycle", "Member[decycle]", "Argument[0]", "ReturnValue", "taint"]
+
+      # retrocycle(object) — restores cycle references, preserves all values
+      - ["json-cycle", "Member[retrocycle]", "Argument[0]", "ReturnValue", "taint"]
+
+      # stringify(object) — JSON.stringify(decycle(object))
+      - ["json-cycle", "Member[stringify]", "Argument[0]", "ReturnValue", "taint"]
+
+      # parse(string) — retrocycle(JSON.parse(string))
+      - ["json-cycle", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]

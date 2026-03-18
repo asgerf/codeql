@@ -1,0 +1,32 @@
+extensions:
+  # =============================================================================
+  # sponge-case (npm: "sponge-case") - Convert a string to sPoNgE cAsE
+  # =============================================================================
+  #
+  # Part of the change-case family of packages. Applies random capitalization
+  # to letters in a string ("mocking SpongeBob" style):
+  #
+  #   import { spongeCase } from "sponge-case";
+  #   spongeCase("hello world");  //=> e.g. "hELlO wOrLD"
+  #
+  # Exports:
+  #   spongeCase(input, options?) → string
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure string transformation.
+  # - Taint propagates from the input string to the returned string.
+  #
+  # Existing QLL coverage (StringFormatters.qll):
+  # - CaseChangingStep: recognizes spongeCase from "sponge-case" and adds a
+  #   string manipulation taint step from Argument[0] to ReturnValue.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through sponge-case function
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # spongeCase(input, options?) → string
+      - ["sponge-case", "Member[spongeCase]", "Argument[0]", "ReturnValue", "taint"]

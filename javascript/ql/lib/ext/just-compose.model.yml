@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # just-compose (npm: "just-compose") - Function composition utility
+  # =============================================================================
+  #
+  # just-compose provides a simple function composition utility that combines
+  # multiple functions into one, applying them right-to-left.
+  #
+  #   const compose = require('just-compose');
+  #   const composed = compose(f, g, h);
+  #   composed(x); // equivalent to f(g(h(x)))
+  #
+  # API:
+  #   compose(f, g, h, ...) — returns a new function that applies functions
+  #     right-to-left (h first, then g, then f).
+  #
+  # Security concerns:
+  # - No sources. The library does not access external or untrusted data.
+  # - No sinks. The library does not perform any security-sensitive operations.
+  # - Data flows through the composed functions: arguments to the composed
+  #   function flow into the rightmost function, and each function's return
+  #   value flows into the next function's parameter.
+  #
+  # Existing QLL coverage (ComposedFunctions.qll):
+  #   LeftToRight models just-compose as a FunctionCompositionCall.
+  #   ComposedFunctionTaintStep provides fine-grained taint flow through
+  #   the chain of composed functions: arguments flow into the first
+  #   function applied, and return values flow between successive functions.
+  #   This concept-level modeling of inter-function data flow cannot be
+  #   expressed as simple data extension summaries.
+  #
+  # Nothing to model. The library is a pure function composition utility
+  # with no sources, sinks, or taint-relevant transformations beyond what
+  # is already handled by the QLL's ComposedFunctionTaintStep.
+  # =============================================================================
+  []

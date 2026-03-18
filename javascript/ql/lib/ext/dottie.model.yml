@@ -1,0 +1,50 @@
+extensions:
+  # =============================================================================
+  # dottie (npm: "dottie") - Access/set nested object properties via dot paths
+  # =============================================================================
+  #
+  # Dottie lets you get, set, and transform nested object properties using
+  # dot-notation strings:
+  #
+  #   const dottie = require('dottie');
+  #   dottie.get(obj, 'a.b.c');               // nested property access
+  #   dottie.get(obj, 'a.b.c', defaultVal);   // with default
+  #   dottie.set(obj, 'a.b.c', value);        // nested property set
+  #   dottie.transform({ 'a.b': 1 });         // expand dotted keys to nested obj
+  #   dottie.paths(obj);                       // list all dotted key paths
+  #
+  # Security concerns:
+  # - dottie.get() reads a nested property from an object. The path string
+  #   controls which property is read — value flows from the object to the
+  #   return value.
+  # - dottie.set() writes a value into a nested property of an object. If the
+  #   path is attacker-controlled, this could be a prototype pollution vector,
+  #   but that is handled by dedicated QLL (PropertyProjection).
+  # - dottie.transform() restructures a flat object into a nested one — taint
+  #   propagates from input to output.
+  #
+  # Existing QLL coverage:
+  #   PropertyProjection.qll: dottie.get modeled as a property projection
+  #     (object at arg 0, selector at arg 1).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint/value propagation through dottie functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # dottie.get(obj, path, default?) → nested value from obj
+      - ["dottie", "Member[get]", "Argument[0]", "ReturnValue", "taint"]
+      # dottie.get(obj, path, default?) → default value when path not found
+      - ["dottie", "Member[get]", "Argument[2]", "ReturnValue", "value"]
+
+      # dottie.set(obj, path, value) — value flows into the object
+      - ["dottie", "Member[set]", "Argument[2]", "Argument[0]", "taint"]
+
+      # dottie.transform(obj, options?) → nested object built from flat keys
+      - ["dottie", "Member[transform]", "Argument[0]", "ReturnValue", "taint"]
+
+      # dottie.paths(obj) → array of dotted-path strings derived from obj keys
+      - ["dottie", "Member[paths]", "Argument[0]", "ReturnValue", "taint"]

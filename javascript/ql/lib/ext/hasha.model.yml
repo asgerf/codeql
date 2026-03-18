@@ -1,0 +1,49 @@
+extensions:
+  # =============================================================================
+  # hasha (npm: "hasha") - Hashing made simple
+  # =============================================================================
+  #
+  # The hasha package provides a convenient API for computing hashes of
+  # strings, buffers, streams, and files using Node.js crypto.
+  #
+  #   const hasha = require('hasha');
+  #   hasha('unicorn', { algorithm: 'md5' });          // sync hash of string
+  #   await hasha.fromFile('file.png', { algorithm: 'sha256' }); // async file hash
+  #   hasha.fromFileSync('file.png');                   // sync file hash
+  #   await hasha.fromStream(stream);                   // hash from stream
+  #   const hashStream = hasha.stream({ algorithm: 'sha256' }); // transform stream
+  #
+  # API:
+  #   hasha(input, [options])           — hash a string/buffer/array
+  #   hasha.fromFile(path, [options])   — async hash of a file
+  #   hasha.fromFileSync(path, [options]) — sync hash of a file
+  #   hasha.fromStream(stream, [options]) — hash from a readable stream
+  #   hasha.stream([options])           — returns a hash transform stream
+  #
+  # Options:
+  #   algorithm: 'md5' | 'sha1' | 'sha256' | 'sha512' (default: 'sha512')
+  #   encoding:  'hex' | 'base64' | 'buffer' | 'latin1' (default: 'hex')
+  #
+  # Security concerns:
+  # - No sources. The library does not access external or untrusted data.
+  # - No standard injection sinks. The library is a hashing utility;
+  #   its inputs are data to hash and file paths to read, neither of which
+  #   map to standard sink kinds (command-injection, sql-injection, etc.).
+  # - fromFile/fromFileSync accept a file path argument, but these are
+  #   read-only operations used for checksumming, not a typical
+  #   path-injection vector.
+  # - The use of weak algorithms (md5, sha1) for password hashing is a
+  #   security concern, but this is modeled via the CryptographicOperation
+  #   concept in CryptoLibraries.qll, which has no corresponding data
+  #   extension sink kind.
+  #
+  # Existing QLL coverage (CryptoLibraries.qll):
+  #   Hasha::Apply models require('hasha')(input, { algorithm }) as a
+  #   CryptographicOperation, feeding into the InsufficientPasswordHash
+  #   and BrokenCryptoAlgorithm queries. This concept-level modeling
+  #   cannot be expressed as a data extension.
+  #
+  # Nothing to model. The library has no sources, no injection sinks,
+  # and no taint-propagating summaries that need data extension coverage.
+  # =============================================================================
+  []

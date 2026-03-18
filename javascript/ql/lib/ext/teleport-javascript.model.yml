@@ -1,0 +1,39 @@
+extensions:
+  # =============================================================================
+  # teleport-javascript (npm: "teleport-javascript")
+  # =============================================================================
+  #
+  # A lightweight (de)serialization library that extends JSON to support
+  # Dates, BigInt, RegExp, Sets, Maps, Buffers, Symbols, circular references,
+  # and special numeric values (NaN, Infinity, -Infinity).
+  #
+  #   const { parse, stringify } = require('teleport-javascript');
+  #
+  #   const str = stringify(obj);   // serialize
+  #   const obj = parse(str);       // deserialize
+  #
+  # Security concerns:
+  # - No sources: the library does not access external or untrusted data.
+  # - No sinks: no command execution, file I/O, URL navigation, or HTML
+  #   rendering. While it deserializes objects, it does not use eval or
+  #   Function constructors — it reconstructs known types from parsed tokens.
+  # - Taint propagation:
+  #   - parse: the deserialized output is derived from the input string.
+  #   - stringify: the serialized string is derived from the input object.
+  #
+  # Existing QLL coverage:
+  #   JsonParsers.qll:    Member[parse]     — Argument[0] → ReturnValue
+  #   JsonStringifiers.qll: Member[stringify] — Argument[0] → ReturnValue
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow through parse and stringify
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # parse(string) → object — taint flows from serialized string to parsed value
+      - ["teleport-javascript", "Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+      # stringify(object) → string — taint flows from object to serialized string
+      - ["teleport-javascript", "Member[stringify]", "Argument[0]", "ReturnValue", "taint"]

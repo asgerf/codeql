@@ -1,0 +1,52 @@
+extensions:
+  # =============================================================================
+  # http-proxy (npm: "http-proxy") - Programmable HTTP proxying library
+  # =============================================================================
+  #
+  # http-proxy creates proxy servers that forward HTTP/WebSocket requests to
+  # a configurable target.
+  #
+  # API:
+  #   const httpProxy = require('http-proxy');
+  #
+  #   // Create proxy (target in options)
+  #   const proxy = httpProxy.createProxyServer({ target: 'http://...' });
+  #   // Aliases: createServer, createProxy
+  #
+  #   // Proxy requests (target overridable per-request)
+  #   proxy.web(req, res, { target: 'http://...' });
+  #   proxy.ws(req, socket, head, { target: 'http://...' });
+  #
+  #   // Listen on port (convenience)
+  #   proxy.listen(8000);
+  #
+  #   // Event handlers exposing request/response objects
+  #   proxy.on('proxyReq', (proxyReq, req, res, options) => { ... });
+  #   proxy.on('proxyRes', (proxyRes, req, res) => { ... });
+  #
+  # Security concerns:
+  # - SINK (request-forgery): The "target" option in createProxyServer() and
+  #   in proxy.web()/proxy.ws() controls where requests are forwarded.
+  #   An attacker controlling the target can perform SSRF attacks.
+  #
+  # Existing QLL coverage:
+  # - HttpProxy.qll: CreateServerCall models createProxyServer/createServer/
+  #   createProxy as ClientRequest with getUrl()=options.target.
+  #   ProxyCall models proxy.web()/proxy.ws() with target in options arg.
+  #   ProxyListenerCallback models event handlers as RouteHandler with
+  #   request/response parameters.
+  # =============================================================================
+
+  # Sinks: target URL controls where requests are proxied (request-forgery).
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # httpProxy.createProxyServer({ target: url }) and aliases
+      - ["http-proxy", "Member[createProxyServer,createServer,createProxy].Argument[0].Member[target]", "request-forgery"]
+
+      # proxy.web(req, res, { target: url })
+      - ["http-proxy", "Fuzzy.Member[web].Argument[2].Member[target]", "request-forgery"]
+
+      # proxy.ws(req, socket, head, { target: url })
+      - ["http-proxy", "Fuzzy.Member[ws].Argument[3].Member[target]", "request-forgery"]

@@ -1,0 +1,83 @@
+extensions:
+  # =============================================================================
+  # redux-form (npm: "redux-form") — Redux-based form state management for React
+  # =============================================================================
+  #
+  # redux-form connects React form components to the Redux store. Form values
+  # originate from user input and should be treated as untrusted.
+  #
+  # Key APIs that surface user-controlled form values:
+  #
+  #   // handleSubmit callback receives all form values
+  #   handleSubmit((values) => { ... });              // values is user-controlled
+  #
+  #   // reduxForm config callbacks
+  #   reduxForm({
+  #     onSubmit:      (values, dispatch, props) => { ... },
+  #     onChange:       (values, dispatch, props, previousValues) => { ... },
+  #     validate:      (values, props) => { ... },
+  #     asyncValidate: (values, dispatch, props, blurredField) => { ... },
+  #     warn:          (values, props) => { ... },
+  #   })
+  #
+  #   // Selectors that extract form values from Redux state
+  #   getFormValues('myForm')(state)                   // returns form values
+  #   formValueSelector('myForm')(state, 'field')      // returns field value(s)
+  #
+  # Security concerns:
+  # - Form values are user-controlled input and are sources of taint.
+  # - No sinks. The library does not perform security-sensitive operations.
+  #
+  # Existing QLL coverage (React.qll):
+  #   reduxForm() is modeled as a higher-order component builder, meaning
+  #   reduxForm(config)(Component) returns a wrapped version of Component.
+  #   The summary model below replicates this behavior.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: user-controlled form values
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # handleSubmit((data) => { ... }) — data contains all form values.
+      # handleSubmit is an injected prop on the decorated form component.
+      - ["redux-form", "Fuzzy.Member[handleSubmit].Argument[0].Parameter[0]", "remote"]
+
+      # reduxForm({ onSubmit: (values, dispatch, props) => { ... } })
+      - ["redux-form", "Member[reduxForm].Argument[0].Member[onSubmit].Parameter[0]", "remote"]
+
+      # reduxForm({ onChange: (values, dispatch, props, previousValues) => { ... } })
+      # Both current values (param 0) and previous values (param 3) are user-controlled.
+      - ["redux-form", "Member[reduxForm].Argument[0].Member[onChange].Parameter[0,3]", "remote"]
+
+      # reduxForm({ validate: (values, props) => { ... } })
+      - ["redux-form", "Member[reduxForm].Argument[0].Member[validate].Parameter[0]", "remote"]
+
+      # reduxForm({ asyncValidate: (values, dispatch, props, blurredField) => { ... } })
+      - ["redux-form", "Member[reduxForm].Argument[0].Member[asyncValidate].Parameter[0]", "remote"]
+
+      # reduxForm({ warn: (values, props) => { ... } })
+      - ["redux-form", "Member[reduxForm].Argument[0].Member[warn].Parameter[0]", "remote"]
+
+      # getFormValues('formName')(state) — returns all current form values
+      - ["redux-form", "Member[getFormValues].ReturnValue.ReturnValue", "remote"]
+
+      # formValueSelector('formName')(state, ...fields) — returns selected field values
+      - ["redux-form", "Member[formValueSelector].ReturnValue.ReturnValue", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: data flow through redux-form APIs
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # reduxForm(config)(Component) => WrappedComponent
+      # The component argument flows through to the return value (HOC pattern).
+      - ["redux-form", "Member[reduxForm].ReturnValue", "Argument[0]", "ReturnValue", "value"]
+
+      # formValues('field1', 'field2')(Component) => WrappedComponent
+      # Same HOC pattern: the wrapped component is equivalent to the original.
+      - ["redux-form", "Member[formValues].ReturnValue", "Argument[0]", "ReturnValue", "value"]

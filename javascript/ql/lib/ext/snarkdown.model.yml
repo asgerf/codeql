@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # snarkdown (npm: "snarkdown") - Minimal Markdown to HTML parser
+  # =============================================================================
+  #
+  # A tiny (~1KB) Markdown-to-HTML parser. Exposes a single default export:
+  #
+  #   import snarkdown from 'snarkdown';
+  #   const html = snarkdown('# Hello');  // => '<h1>Hello</h1>'
+  #
+  # Security concerns:
+  # - TAINT: Markdown input is converted to raw HTML output. The output is NOT
+  #   sanitized. If inserted into the DOM without sanitization, it is an XSS
+  #   vector. The taint summary from Argument[0] → ReturnValue is critical.
+  # - No sources or sinks of its own.
+  #
+  # Existing QLL coverage:
+  # - Markdown.qll: SnarkdownStep models taint from Argument[0] → ReturnValue
+  #   for moduleImport("snarkdown").getACall().
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through markdown-to-HTML conversion
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # snarkdown(mdString) — default export called as a function.
+      # Taint flows from the markdown string input to the HTML string output.
+      - ["snarkdown", "", "Argument[0]", "ReturnValue", "taint"]

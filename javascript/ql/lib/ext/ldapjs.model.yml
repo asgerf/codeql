@@ -1,0 +1,103 @@
+extensions:
+  # =============================================================================
+  # ldapjs (npm: "ldapjs") - LDAP client and server for Node.js
+  # =============================================================================
+  #
+  # Provides a full LDAP client and server with an Express-like API.
+  #
+  # Client usage:
+  #   const ldap = require('ldapjs');
+  #   const client = ldap.createClient({ url: 'ldap://example.com' });
+  #   client.bind(dn, password, cb);
+  #   client.search(base, { filter: '(cn=foo)' }, cb);
+  #   client.add(dn, entry, cb);
+  #   client.modify(dn, change, cb);
+  #   client.del(dn, cb);
+  #   client.compare(dn, attr, value, cb);
+  #   client.modifyDN(dn, newDN, cb);
+  #   ldap.parseFilter(filterString);
+  #   ldap.parseDN(dnString);
+  #
+  # Server usage:
+  #   const server = ldap.createServer();
+  #   server.search('o=example', (req, res, next) => { ... });
+  #   server.bind('cn=root', (req, res, next) => { ... });
+  #   // req.dn, req.filter, req.credentials, req.attributes, etc.
+  #
+  # Security concerns:
+  # - SINK (sql-injection): Distinguished name (DN) arguments and search filter
+  #   options in client calls are LDAP injection vectors. CodeQL models LDAP
+  #   injection under the sql-injection query (js/sql-injection).
+  # - SINK (sql-injection): parseFilter() and parseDN() parse untrusted strings
+  #   into LDAP filter/DN objects.
+  # - SOURCE (remote): Server-side request properties (dn, filter, credentials,
+  #   attributes, changes) come from LDAP client requests over the network.
+  #
+  # Existing QLL coverage:
+  # - LdapJS.qll: Models client calls, search options, parseFilter.
+  # - SqlInjectionCustomizations.qll: LdapJSSink adds client DN arguments,
+  #   search options, and parseDN argument as sql-injection sinks.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: LDAP injection via client API (modeled as sql-injection)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # client.bind(dn, ...) / client.add(dn, ...) / client.del(dn, ...) /
+      # client.compare(dn, ...) / client.modify(dn, ...) /
+      # client.modifyDN(dn, ...) / client.search(baseDN, ...)
+      # The first argument (DN) to all client methods is an injection sink.
+      - ["ldapjs", "Member[createClient].ReturnValue.Member[bind,add,del,compare,modify,modifyDN,search].Argument[0]", "sql-injection"]
+
+      # client.modifyDN(dn, newDN, cb) — the new DN (second arg) is also a sink.
+      - ["ldapjs", "Member[createClient].ReturnValue.Member[modifyDN].Argument[1]", "sql-injection"]
+
+      # client.search(base, options, cb) — the options object (containing filter,
+      # scope, baseDN overrides) is an injection sink.
+      - ["ldapjs", "Member[createClient].ReturnValue.Member[search].Argument[1]", "sql-injection"]
+
+      # ldap.parseFilter(filterString) — parses a raw filter string.
+      - ["ldapjs", "Member[parseFilter].Argument[0]", "sql-injection"]
+
+      # ldap.parseDN(dnString) — parses a raw DN string.
+      - ["ldapjs", "Member[parseDN].Argument[0]", "sql-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: server-side request properties from LDAP clients
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # server.search(route, (req, res, next) => { req.dn / req.filter / ... })
+      # server.bind(route, (req, res, next) => { req.dn / req.credentials })
+      # server.add(route, (req, res, next) => { req.dn / req.attributes })
+      # server.modify(route, (req, res, next) => { req.dn / req.changes })
+      # server.del(route, (req, res, next) => { req.dn })
+      # server.compare(route, (req, res, next) => { req.dn / req.attribute / req.value })
+      # The req parameter contains data from the remote LDAP client.
+      - ["ldapjs", "Member[createServer].ReturnValue.Member[search,bind,add,modify,del,compare,modifyDN].Argument[1..N-1].Parameter[0]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through utility functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # ldap.parseFilter(filterString) → Filter object
+      # Taint flows from the filter string to the parsed filter object.
+      - ["ldapjs", "Member[parseFilter]", "Argument[0]", "ReturnValue", "taint"]
+
+      # ldap.parseDN(dnString) → DN object
+      # Taint flows from the DN string to the parsed DN object.
+      - ["ldapjs", "Member[parseDN]", "Argument[0]", "ReturnValue", "taint"]
+
+      # client.search(base, opts, cb) — the callback receives (err, res)
+      # where res is an EventEmitter. searchEntry events carry result data.
+      # Taint from the search options doesn't need tracking (it's not a source),
+      # but the response emitter carries server data.
+      - ["ldapjs", "Member[createClient].ReturnValue.Member[search]", "Argument[0]", "Argument[1..2].Parameter[1]", "taint"]

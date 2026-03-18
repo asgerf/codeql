@@ -1,0 +1,9 @@
+extensions:
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      - ["browserid-crypto", "Fuzzy.Member[sign]", "Argument[0]", "Argument[2].Parameter[1]", "taint"]
+      - ["browserid-crypto", "Fuzzy.Member[verify]", "Argument[0]", "Argument[2].Parameter[1]", "taint"]
+      - ["browserid-crypto", "Fuzzy.Member[loadPublicKey]", "Argument[0]", "ReturnValue", "taint"]
+      - ["browserid-crypto", "Fuzzy.Member[loadSecretKey]", "Argument[0]", "ReturnValue", "taint"]

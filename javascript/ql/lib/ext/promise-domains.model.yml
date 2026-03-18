@@ -1,0 +1,29 @@
+extensions:
+  # =============================================================================
+  # promise/domains (npm: "promise", subpath "promise/domains") — Promise polyfill
+  #   with Node.js domain support
+  # Also covers: promise, promise/setimmediate, promise/lib/es6-extensions,
+  #   promise/domains/es6-extensions, promise/setimmediate/es6-extensions
+  # =============================================================================
+  #
+  # The "promise" package (also known as "then/promise") is a Promise/A+
+  # implementation. The "promise/domains" entry point adds integration with
+  # Node.js domains so that errors in promise callbacks are forwarded to the
+  # active domain's error handler.
+  #
+  #   const Promise = require('promise/domains');
+  #   new Promise((resolve, reject) => { resolve(value); });
+  #   Promise.resolve(value).then(v => ...);
+  #
+  # Security concerns:
+  # - No sources. The library does not access any external or untrusted data.
+  # - No sinks. The library does not perform any security-sensitive operations.
+  # - Promise data flow (.then, .catch, .all, .resolve, .reject, .race) is
+  #   already modeled generically in CodeQL's Promises.qll, which recognizes
+  #   all entry points of the "promise" package as promise constructor
+  #   references.
+  #
+  # Nothing additional to model here. The library is a spec-compliant Promise
+  # polyfill with no security-relevant sources, sinks, or taint summaries
+  # beyond what CodeQL already handles for promises generically.
+  # =============================================================================

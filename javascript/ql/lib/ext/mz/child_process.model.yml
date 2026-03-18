@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # mz/child_process (npm: "mz", subpath "mz/child_process")
+  # Promisified wrapper around Node.js child_process
+  # =============================================================================
+  #
+  # Part of the "mz" package which modernizes Node.js core APIs to return
+  # promises. mz/child_process wraps the built-in child_process module:
+  #
+  #   const { exec, execFile } = require('mz/child_process');
+  #   const [stdout, stderr] = await exec('ls -la');
+  #   const [stdout, stderr] = await execFile('/usr/bin/ls', ['-la']);
+  #
+  # The API surface is identical to Node's child_process: exec, execSync,
+  # execFile, execFileSync, spawn, spawnSync, fork — with callback-based
+  # methods also returning promises.
+  #
+  # Security concerns:
+  # - Command injection: the command/file/modulePath argument (Argument[0])
+  #   to all methods is a command-injection sink. For exec/execSync the
+  #   command is shell-interpreted.
+  # - Argument injection: the args array (Argument[1]) for execFile, spawn,
+  #   spawnSync, and fork is also a command-injection vector.
+  #
+  # Existing QLL coverage (NodeJSLib.qll):
+  # - ChildProcessMethodCall treats mz/child_process identically to
+  #   child_process, modeling all methods as SystemCommandExecution.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command-injection — command and argument parameters
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- Shell-interpreted commands (exec, execSync) ---
+      - ["mz/child_process", "Member[exec,execSync].Argument[0]", "command-injection"]
+
+      # --- Direct execution commands (execFile, execFileSync, spawn, spawnSync, fork) ---
+      - ["mz/child_process", "Member[execFile,execFileSync,spawn,spawnSync,fork].Argument[0]", "command-injection"]
+
+      # --- Argument lists (second argument for non-shell methods) ---
+      - ["mz/child_process", "Member[execFile,execFileSync,spawn,spawnSync,fork].Argument[1]", "command-injection"]

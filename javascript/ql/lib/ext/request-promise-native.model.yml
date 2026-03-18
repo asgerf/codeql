@@ -1,0 +1,49 @@
+# =============================================================================
+# request-promise-native (npm: "request-promise-native") — Promise wrapper
+# for the request library using native ES6 promises
+# =============================================================================
+#
+# request-promise-native is functionally identical to request-promise, but
+# uses native ES6 Promises instead of Bluebird. The API surface is the same:
+#
+#   const rp = require('request-promise-native');
+#
+#   // Direct call with URL string
+#   const body = await rp('https://example.com');
+#
+#   // Direct call with options object
+#   const body = await rp({ uri: 'https://example.com', json: true });
+#
+#   // HTTP method helpers
+#   await rp.get(url);
+#   await rp.post(url, { body: data });
+#   await rp.put(url);
+#   await rp.delete(url);
+#   await rp.head(url);
+#   await rp.patch(url);
+#
+#   // Custom defaults
+#   const custom = rp.defaults({ baseUrl: 'https://api.example.com' });
+#   await custom.get('/endpoint');
+#
+#   // Callback style (inherited from request)
+#   rp(url, (err, response, body) => { ... });
+#
+# Security concerns:
+# - URL arguments and uri/url options control outbound request destinations
+#   → request-forgery sinks.
+# - The resolved promise value (or callback body parameter) contains the
+#   HTTP response body → remote flow source.
+#
+# Existing QLL coverage (ClientRequests.qll):
+#   RequestUrlRequest models request-promise-native (alongside
+#   request-promise and request-promise-any) as ClientRequest::Range,
+#   providing URL sink and response data sources.
+#
+# Data extension coverage:
+#   All source and sink models for request-promise-native are defined in
+#   request-promise.model.yml and request.model.yml (which include entries
+#   for all three promise-based variants). No additional models are needed
+#   in this file.
+# =============================================================================
+extensions: []

@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # node.extend (npm: "node.extend") — jQuery-style extend for Node.js
+  # =============================================================================
+  #
+  # Port of jQuery.extend() that copies properties from source objects into
+  # a target object, optionally performing a deep (recursive) copy:
+  #
+  #   const extend = require('node.extend');
+  #
+  #   // Shallow copy
+  #   extend(target, source1, source2);
+  #
+  #   // Deep copy (first argument is boolean true)
+  #   extend(true, target, source1, source2);
+  #
+  # The target object is mutated in place and also returned.
+  #
+  # Security concerns:
+  # - No sources: pure utility function, does not access user input.
+  # - No sinks: does not execute commands, SQL, or render templates.
+  # - Taint flow: properties from source operands flow into the target
+  #   and the return value.
+  # - Prototype pollution: vulnerable in deep mode in versions < 1.1.7
+  #   and 2.0.0–2.0.1 (CVE-2018-16491). This is already modeled in QLL.
+  #
+  # Existing QLL coverage:
+  # - Extend.qll: ExtendCallWithFlag models node.extend([deep], target, ...)
+  #   as an ExtendCall, providing source/destination operands and deep
+  #   detection.
+  # - PrototypePollutionCustomizations.qll: Models node.extend as vulnerable
+  #   to prototype pollution in versions < 1.1.7 and 2.0.0–2.0.1.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow through extend()
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # extend(arg0, arg1, ...) — arg0 may be a boolean or target; all object
+      # arguments contribute properties to the returned (and mutated) target.
+      - ["'node.extend'", "", "Argument[0..N-1]", "ReturnValue", "taint"]

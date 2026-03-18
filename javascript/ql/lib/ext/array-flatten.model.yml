@@ -1,0 +1,29 @@
+extensions:
+  # =============================================================================
+  # array-flatten (npm: "array-flatten") - Flatten nested arrays
+  # =============================================================================
+  #
+  # array-flatten recursively flattens nested arrays (polyfill for Array.flat).
+  #
+  #   import { flatten } from 'array-flatten';
+  #   flatten([1, [2, [3, [4]]]]);
+  #   //=> [1, 2, 3, 4]
+  #
+  # Exports: named export `flatten(array)` → flat array
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure data transformation.
+  # - Taint propagates from the input array to the returned flattened array.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through flatten
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # flatten(arr) → flattened array
+      - ["array-flatten", "Member[flatten]", "Argument[0]", "ReturnValue", "taint"]
+      # Also exported as default in older versions: require('array-flatten')(arr)
+      - ["array-flatten", "", "Argument[0]", "ReturnValue", "taint"]

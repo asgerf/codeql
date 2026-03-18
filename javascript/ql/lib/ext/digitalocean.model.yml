@@ -1,0 +1,55 @@
+extensions:
+  # =============================================================================
+  # digitalocean (npm: "digitalocean") - DigitalOcean API v2 client
+  # =============================================================================
+  #
+  # Node.js wrapper for the DigitalOcean v2 API:
+  #
+  #   const digitalocean = require('digitalocean');
+  #   const client = digitalocean.client('TOKEN', { hostname: '...' });
+  #   client.droplets.list().then(droplets => { ... });
+  #   client.droplets.get(123, (err, droplet, headers, body) => { ... });
+  #
+  # Resources: account, actions, certificates, domains, droplets, firewalls,
+  #   floatingIps, images, loadBalancers, regions, sizes, snapshots, tags, volumes
+  #
+  # Each resource exposes CRUD-style methods (list, get, create, update, delete,
+  # plus resource-specific methods) that return promises or accept callbacks
+  # with signature (err, data, headers, body).
+  #
+  # Security concerns:
+  # - The token passed to digitalocean.client() is a credential (already modeled
+  #   in DigitalOcean.qll as CredentialsNode — not expressible via data
+  #   extensions).
+  # - All API responses contain remote data from the DigitalOcean API.
+  # - The hostname option in client() controls where requests are sent.
+  #
+  # Existing QLL coverage:
+  #   DigitalOcean.qll: Token passed to digitalocean.client() modeled as
+  #                     CredentialsNode with kind "token".
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: hostname option controls request destination
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # digitalocean.client(token, { hostname: CONTROLLED }) redirects all API
+      # requests (including the auth token) to an attacker-controlled server.
+      - ["digitalocean", "Member[client].Argument[1].Member[hostname]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: API responses are remote data
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Promise-based responses: client.droplets.list().then(data => ...)
+      - ["digitalocean", "Member[client].ReturnValue.Fuzzy.ReturnValue.Awaited", "remote"]
+
+      # Callback-based responses: client.droplets.list((err, data, headers, body) => ...)
+      # Parameter[0] is the error; parameters 1-3 carry remote data.
+      - ["digitalocean", "Member[client].ReturnValue.Fuzzy.Argument[N-1].Parameter[1..3]", "remote"]

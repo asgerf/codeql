@@ -1,0 +1,70 @@
+extensions:
+  # =============================================================================
+  # fast-glob (npm: "fast-glob") - High-performance glob matching
+  # =============================================================================
+  #
+  # fast-glob provides fast file pattern matching with async, sync, and stream
+  # APIs:
+  #
+  #   const fg = require('fast-glob');
+  #
+  #   // Async (Promise)
+  #   const entries = await fg('src/**/*.js', options);
+  #   const entries = await fg.async('src/**/*.js', options);
+  #   const entries = await fg.glob('src/**/*.js', options);
+  #
+  #   // Sync
+  #   const entries = fg.sync('src/**/*.js', options);
+  #   const entries = fg.globSync('src/**/*.js', options);
+  #
+  #   // Stream
+  #   const stream = fg.stream('src/**/*.js', options);
+  #   const stream = fg.globStream('src/**/*.js', options);
+  #
+  # Utility methods:
+  #   fg.generateTasks(patterns, options)  — returns internal task objects
+  #   fg.isDynamicPattern(pattern, opts)   — checks if a pattern is dynamic
+  #   fg.escapePath(path)                  — escapes a path for glob use
+  #   fg.convertPathToPattern(path)        — converts a path to a pattern
+  #
+  # Security concerns:
+  # - Path injection: The patterns argument (first argument) to all glob
+  #   methods controls which file system paths are accessed. If attacker-
+  #   controlled data flows into the pattern, it can read arbitrary files.
+  #   The `cwd` option also controls the base directory.
+  # - No sources modellable via data extensions: the return values contain
+  #   file system paths, but FileNameSource is handled by QLL (Files.qll),
+  #   not via the sourceModel extensible predicate.
+  #
+  # Existing QLL coverage (Files.qll):
+  #   FastGlobFileNameSource models return values from .sync(), .async(),
+  #   direct calls, and .stream() event callbacks as FileNameSource nodes.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: glob patterns control which files are accessed
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # fg(patterns, options?) — async direct call
+      - ["fast-glob", "Argument[0]", "path-injection"]
+      # fg.async(patterns, options?), fg.glob(patterns, options?)
+      - ["fast-glob", "Member[async,glob].Argument[0]", "path-injection"]
+      # fg.sync(patterns, options?), fg.globSync(patterns, options?)
+      - ["fast-glob", "Member[sync,globSync].Argument[0]", "path-injection"]
+      # fg.stream(patterns, options?), fg.globStream(patterns, options?)
+      - ["fast-glob", "Member[stream,globStream].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow through utility methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # fg.escapePath(path) → escaped path string (preserves taint)
+      - ["fast-glob", "Member[escapePath]", "Argument[0]", "ReturnValue", "taint"]
+      # fg.convertPathToPattern(path) → pattern string (preserves taint)
+      - ["fast-glob", "Member[convertPathToPattern]", "Argument[0]", "ReturnValue", "taint"]

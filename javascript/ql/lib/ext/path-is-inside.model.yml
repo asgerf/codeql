@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # path-is-inside (npm: "path-is-inside") - Check if a path is inside another
+  # =============================================================================
+  #
+  # path-is-inside is a utility by Domenic Denicola that checks whether one
+  # file system path is inside another, in a cross-platform way:
+  #
+  #   var pathIsInside = require("path-is-inside");
+  #
+  #   pathIsInside("/x/y/z", "/x/y");  // => true
+  #   pathIsInside("/x/y", "/x/y/z");  // => false
+  #   pathIsInside("/x/y", "/x/y");    // => true  (inside itself)
+  #
+  # API: pathIsInside(testPath, potentialParent) → boolean
+  #
+  # Security relevance:
+  # - No sources. The library does not provide access to untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations.
+  # - No summaries needed. The function returns a boolean, not derived data.
+  # - SANITIZER: The existing QLL (TaintedPathCustomizations.qll,
+  #   IsInsideCheckSanitizer) models path-is-inside as a barrier guard for
+  #   path-injection queries — when the call returns true, the first argument
+  #   (testPath) is considered sanitized for path traversal attacks. Barrier
+  #   guards / sanitizers are not expressible via data extension models
+  #   (sourceModel/sinkModel/summaryModel), so that coverage remains in QLL.
+  #
+  # This file is intentionally empty of data extensions. It exists to
+  # document that the library has been reviewed and its security-relevant
+  # behavior (sanitizer) is covered by QLL.
+  # =============================================================================

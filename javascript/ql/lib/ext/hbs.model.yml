@@ -1,0 +1,61 @@
+extensions:
+  # =============================================================================
+  # hbs (npm: "hbs") — Express view engine wrapper for Handlebars
+  # =============================================================================
+  #
+  # hbs is a thin Express.js view engine wrapper around Handlebars. It is
+  # primarily used with Express to render .hbs template files:
+  #
+  #   const hbs = require('hbs');
+  #   app.set('view engine', 'hbs');
+  #
+  #   hbs.registerHelper('loud', (text) => text.toUpperCase());
+  #   hbs.registerPartials(__dirname + '/views/partials');
+  #
+  # The underlying Handlebars instance is accessible via hbs.handlebars:
+  #
+  #   const template = hbs.handlebars.compile('Hello {{name}}');
+  #   template({ name: 'World' }); // => 'Hello World'
+  #
+  # Security concerns:
+  # - hbs.handlebars.compile(templateStr): the template string is compiled
+  #   into executable code — code-injection sink.
+  # - new hbs.handlebars.SafeString(str): marks content as safe for
+  #   unescaped insertion — html-injection sink.
+  # - hbs.registerPartials(dir): the directory path controls which files
+  #   are loaded from the filesystem — path-injection sink.
+  # - Data passed to compiled templates flows into the rendered output.
+  #
+  # Existing QLL coverage:
+  # - TemplateObjectInjectionCustomizations.qll: hbs listed as a vulnerable
+  #   template engine for Express view-engine template-object injection.
+  # - Handlebars.qll / CodeInjectionCustomizations.qll: models
+  #   require('handlebars').compile() but not require('hbs').handlebars.compile().
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # hbs.handlebars.compile(templateStr) — template compiled into JS
+      - ["hbs", "Member[handlebars].Member[compile].Argument[0]", "code-injection"]
+
+      # new hbs.handlebars.SafeString(str) — bypasses Handlebars escaping
+      - ["hbs", "Member[handlebars].Member[SafeString].Instance.Argument[0]", "html-injection"]
+
+      # hbs.registerPartials(dir) — directory path controls file system reads
+      - ["hbs", "Member[registerPartials].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through compiled templates
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # hbs.handlebars.compile(tmpl) returns a function; calling it with
+      # data produces rendered HTML — data taints the output
+      - ["hbs", "Member[handlebars].Member[compile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,48 @@
+extensions:
+  # Sources: data originating from untrusted input (HTTP responses, browser URL)
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- @angular/common/http: HttpClient responses ---
+      # All HttpClient methods return Observables containing remote HTTP response data.
+      # Uses typed access since HttpClient is always obtained via Angular dependency injection.
+      - ["@angular/common/http.HttpClient", "Member[get,delete,head,options].ReturnValue", "response"]
+      - ["@angular/common/http.HttpClient", "Member[post,put,patch].ReturnValue", "response"]
+      - ["@angular/common/http.HttpClient", "Member[request].ReturnValue", "response"]
+      - ["@angular/common/http.HttpClient", "Member[jsonp].ReturnValue", "response"]
+
+      # HttpResponse and HttpErrorResponse carry remote response data
+      - ["@angular/common/http.HttpResponse", "Member[body]", "response"]
+      - ["@angular/common/http.HttpErrorResponse", "Member[error,message]", "response"]
+
+      # --- @angular/common: Location service ---
+      # Location.path() returns the current URL path which may contain user-controlled segments
+      - ["@angular/common.Location", "Member[path].ReturnValue", "remote"]
+
+      # --- @angular/common: PlatformLocation ---
+      # PlatformLocation provides direct access to browser location properties
+      - ["@angular/common.PlatformLocation", "Member[pathname,search,hash,href]", "remote"]
+
+      # --- @angular/common: internal DOM adapter ---
+      # ɵgetDOM() returns a DomAdapter; getLocation() exposes the browser Location object
+      - ["@angular/common", "Member[ɵgetDOM].ReturnValue.Member[getLocation].ReturnValue.Member[href,search,hash,pathname]", "remote"]
+
+  # Sinks: operations sensitive to untrusted data
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- @angular/common/http: HttpClient URL arguments are SSRF sinks ---
+      - ["@angular/common/http.HttpClient", "Member[get,delete,head,options].Argument[0]", "request-forgery"]
+      - ["@angular/common/http.HttpClient", "Member[post,put,patch].Argument[0]", "request-forgery"]
+      - ["@angular/common/http.HttpClient", "Member[request].Argument[1]", "request-forgery"]
+      - ["@angular/common/http.HttpClient", "Member[jsonp].Argument[0]", "request-forgery"]
+
+      # --- @angular/common: Location service URL redirect sinks ---
+      # Location.go() and Location.replaceState() change the browser URL
+      - ["@angular/common.Location", "Member[go,replaceState].Argument[0]", "url-redirection"]
+
+      # --- @angular/common: PlatformLocation URL redirect sinks ---
+      # pushState/replaceState third argument is the URL
+      - ["@angular/common.PlatformLocation", "Member[pushState,replaceState].Argument[2]", "url-redirection"]

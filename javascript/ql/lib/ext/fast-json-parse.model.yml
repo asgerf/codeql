@@ -1,0 +1,48 @@
+extensions:
+  # =============================================================================
+  # fast-json-parse (npm: "fast-json-parse") - Safe JSON parsing without
+  # try/catch
+  # =============================================================================
+  #
+  # A wrapper around JSON.parse that returns an object with `err` and `value`
+  # properties instead of throwing on invalid input:
+  #
+  #   const parse = require('fast-json-parse');
+  #
+  #   // Function style
+  #   const result = parse(jsonString);
+  #   if (result.err) { /* handle error */ }
+  #   else { console.log(result.value); }
+  #
+  #   // Constructor style
+  #   const result = new Parse(jsonString);
+  #   if (result.err) { /* handle error */ }
+  #   else { console.log(result.value); }
+  #
+  # API:
+  #   parse(string) → { err: Error|null, value: any|null }
+  #   new Parse(string) → { err: Error|null, value: any|null }
+  #
+  # Security concerns:
+  # - No sinks: does not execute code, access the file system, or perform I/O.
+  # - No sources: does not access user input directly.
+  # - Taint flow: the JSON string input is deserialized and the parsed value
+  #   is accessible via the `.value` property on the returned object. Taint
+  #   must propagate from the input argument to the `.value` property.
+  #
+  # Existing QLL coverage (JsonParsers.qll):
+  #   JsonParserCallWithWrapper models fast-json-parse as a JsonParserCall
+  #   with input at argument 0 and output at the `.value` property. Taint
+  #   flows via the deserializeStep in TaintTracking.qll.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow from JSON string to parsed value
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # parse(jsonString).value — taint flows from input to .value property
+      # Covers both function-style parse() and constructor-style new Parse()
+      - ["fast-json-parse", "", "Argument[0]", "ReturnValue.Member[value]", "taint"]

@@ -1,0 +1,98 @@
+extensions:
+  # =============================================================================
+  # redux-persist (npm: "redux-persist") — Persist and rehydrate Redux stores
+  # =============================================================================
+  #
+  # redux-persist saves Redux state to a storage engine (localStorage,
+  # AsyncStorage, etc.) and rehydrates it on app startup.
+  #
+  # Core API:
+  #   import { persistStore, persistReducer, persistCombineReducers,
+  #            createTransform, createMigrate,
+  #            getStoredState, purgeStoredState } from 'redux-persist';
+  #   import storage from 'redux-persist/lib/storage';           // localStorage
+  #   import sessionStorage from 'redux-persist/lib/storage/session';
+  #
+  # Typical usage:
+  #   const persistConfig = { key: 'root', storage, whitelist: ['auth'] };
+  #   const persistedReducer = persistReducer(persistConfig, rootReducer);
+  #   const store = createStore(persistedReducer);
+  #   const persistor = persistStore(store);
+  #
+  # Advanced APIs:
+  #   createTransform(inbound, outbound, config)
+  #     — serialize/deserialize state slices through custom functions.
+  #       inbound(state, key) → transformed state for storage.
+  #       outbound(state, key) → transformed state for rehydration.
+  #
+  #   createMigrate(migrations, config)
+  #     — create a migration function from a version→transformer map.
+  #       migrations = { 0: (state) => newState, 1: (state) => newState }
+  #
+  #   getStoredState(config) → Promise<state>
+  #     — read persisted state from storage outside normal Redux flow.
+  #
+  #   purgeStoredState(config) → Promise
+  #     — clear persisted state from storage.
+  #
+  #   persistCombineReducers(config, reducers)
+  #     — convenience wrapper: combineReducers + persistReducer.
+  #
+  # State reconcilers (merge rehydrated state with initial state):
+  #   import hardSet from 'redux-persist/lib/stateReconciler/hardSet';
+  #   import autoMergeLevel1 from 'redux-persist/lib/stateReconciler/autoMergeLevel1';
+  #   import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
+  #
+  # React integration:
+  #   import { PersistGate } from 'redux-persist/integration/react';
+  #   <PersistGate loading={<Spinner/>} persistor={persistor}>
+  #     <App />
+  #   </PersistGate>
+  #
+  # Security analysis:
+  #
+  # - No sources. The rehydrated state originates from client-side storage
+  #   (localStorage/sessionStorage/AsyncStorage). While this storage CAN be
+  #   tampered with (e.g. by XSS or browser extensions), it is not classified
+  #   as a "remote" source in CodeQL's threat model. The data was originally
+  #   written by the application itself.
+  #
+  # - No sinks. The library performs only serialization to and deserialization
+  #   from storage engines. It does not render HTML, execute code, run shell
+  #   commands, make network requests, or access the file system.
+  #
+  # - Summaries: The core data flow in redux-persist — actions through
+  #   reducers, state serialization via transforms, rehydration through
+  #   state reconcilers, and migration functions — is deeply interleaved
+  #   with Redux's internal dispatch/reducer pipeline. These flows are
+  #   either already handled by the QLL or too complex to express as
+  #   access-path summaries (they involve stored callbacks that are invoked
+  #   internally by the library, not direct call-return relationships).
+  #
+  # Existing QLL coverage (Redux.qll):
+  # - persistReducer(config, reducer) is modeled as a DelegatingReducer
+  #   (class PersistReducer), ensuring taint flows through the wrapped
+  #   reducer and into the persisted store's state.
+  # - The full Redux state pipeline (dispatch → reducer → state → selector)
+  #   is modeled, so tainted data flowing through a persisted reducer is
+  #   tracked end-to-end within a single execution context.
+  #
+  # Not modeled (limitations):
+  # - persistCombineReducers: acts as combineReducers + persistReducer, but
+  #   combineReducers' delegation pattern requires QLL modeling.
+  # - createTransform: inbound/outbound functions are stored in a config
+  #   object and called internally by the library during serialize/
+  #   deserialize; this indirection cannot be expressed as access paths.
+  # - createMigrate: migration functions are called internally during
+  #   rehydration; same limitation as transforms.
+  # - getStoredState: returns data from storage as a Promise. The storage
+  #   read bypasses the normal Redux data flow, so taint from the original
+  #   dispatch is not tracked through this separate code path. However, the
+  #   data is not "remote" and marking it as such would be inaccurate.
+  # - State reconcilers (hardSet, autoMergeLevel1, autoMergeLevel2) are
+  #   called internally during rehydration.
+  # - PersistGate: a React component that delays rendering; no data flow.
+  #
+  # Nothing additional to model here as data extensions.
+  # =============================================================================
+  []

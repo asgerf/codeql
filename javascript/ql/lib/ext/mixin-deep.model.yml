@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # mixin-deep (npm: "mixin-deep") — Deep object merge/mixin
+  # =============================================================================
+  #
+  # Deeply mixes properties from source objects into a destination object,
+  # mutating the first argument and returning it:
+  #
+  #   const mixin = require('mixin-deep');
+  #   mixin({ a: { x: 1 } }, { a: { y: 2 } }, { a: { z: 3 } });
+  #   //=> { a: { x: 1, y: 2, z: 3 } }
+  #
+  # API:
+  #   mixin(dest, src1, src2, ...) → dest (mutated)
+  #
+  # Security concerns:
+  # - No sources or sinks. This is a pure in-memory object operation.
+  # - Taint propagation: properties from each source object flow into the
+  #   destination object and the return value.
+  #
+  # Existing QLL coverage (Extend.qll):
+  # - Models mixin-deep as a deep ExtendCall with source operands at
+  #   Argument[1..] and destination at Argument[0].
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through deep merge
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Source operands (Argument[1], [2], ...) flow into the return value
+      - ["mixin-deep", "", "Argument[1..]", "ReturnValue", "taint"]
+
+      # Source operands flow into the destination (Argument[0]) via mutation
+      - ["mixin-deep", "", "Argument[1..]", "Argument[0]", "taint"]

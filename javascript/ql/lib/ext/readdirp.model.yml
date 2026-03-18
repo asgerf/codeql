@@ -1,0 +1,61 @@
+extensions:
+  # =============================================================================
+  # readdirp (npm: "readdirp") — Recursive directory listing
+  # =============================================================================
+  #
+  # A recursive version of fs.readdir with streaming and promise APIs:
+  #
+  #   const readdirp = require('readdirp');
+  #
+  #   // Stream API (async iterable)
+  #   for await (const entry of readdirp('.', { fileFilter: '*.js' })) {
+  #     console.log(entry.path);     // relative path
+  #     console.log(entry.fullPath); // absolute path
+  #     console.log(entry.basename); // file name
+  #   }
+  #
+  #   // Stream API (event-based)
+  #   readdirp('.').on('data', entry => { ... });
+  #
+  #   // Promise API
+  #   const files = await readdirp.promise('.');
+  #   // files is an array of entry objects
+  #
+  # Entry objects have: path, fullPath, basename, dirent, stats
+  #
+  # Security concerns:
+  # - Path injection: the first argument (root directory path) controls which
+  #   directory is read. An attacker who controls it can enumerate arbitrary
+  #   directories on the file system.
+  # - File sources: the returned entries contain file paths and names from the
+  #   local file system. Under the "file" threat model, this data is untrusted.
+  #
+  # Existing QLL coverage (Files.qll):
+  # - readdirp(root) is recognized as a FileSystemAccess with pathArgument=0,
+  #   making the root directory argument a path-injection sink.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path-injection — directory path parameter
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # readdirp(root, [options]) — root directory to enumerate
+      - ["readdirp", "Argument[0]", "path-injection"]
+      # readdirp.promise(root, [options])
+      - ["readdirp", "Member[promise].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: file data from directory listings (threat-model: file)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # Stream API (event-based): readdirp(root).on('data', entry => { ... })
+      - ["readdirp", "ReturnValue.Member[on,addListener].WithStringArgument[0=data].Argument[1].Parameter[0]", "file"]
+
+      # Promise API: await readdirp.promise(root) — returns array of entries
+      - ["readdirp", "Member[promise].ReturnValue.Awaited", "file"]

@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # exec (npm: "exec") - Shell command execution wrapper
+  # =============================================================================
+  #
+  # The exec package wraps child_process.spawn for easier use. It is deprecated
+  # in favor of child_process.execFile.
+  #
+  #   const exec = require('exec');
+  #
+  #   // Array form (bypasses shell):
+  #   exec(['ls', '-la'], function(err, out, code) { ... });
+  #
+  #   // String form (shell-interpreted via /bin/sh -c):
+  #   exec('cat foo | grep bar', function(err, out, code) { ... });
+  #
+  #   // With options:
+  #   exec(['ls', '-la'], { timeout: 5000 }, function(err, out, code) { ... });
+  #
+  # Signature: exec(args, [opts], callback)
+  #   - args: command as a string (shell-interpreted) or array of strings
+  #   - opts: optional spawn options (timeout, env, encoding, etc.)
+  #   - callback: function(err, out, code) — receives stderr, stdout, exit code
+  #
+  # Security concerns:
+  # - SINK: The first argument (args) is executed as a system command. When
+  #   passed as a string, it is shell-interpreted (/bin/sh -c), making it
+  #   especially dangerous. When passed as an array, the first element is
+  #   the command and subsequent elements are arguments.
+  #
+  # Existing QLL coverage:
+  # - SystemCommandExecutors.qll: Models exec(cmd) as SystemCommandExecution
+  #   with cmdArg=0, optionsArg=-2, shell=true.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command-injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # exec(command, ...) — first argument is the command (string or array)
+      - ["exec", "Argument[0]", "command-injection"]

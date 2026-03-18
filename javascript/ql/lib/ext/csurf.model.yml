@@ -1,0 +1,36 @@
+extensions:
+  # =============================================================================
+  # csurf (npm: "csurf") - CSRF token middleware for Express
+  # =============================================================================
+  #
+  # csurf is Express middleware that provides Cross-Site Request Forgery (CSRF)
+  # protection by generating and validating CSRF tokens.
+  #
+  #   const csrf = require('csurf');
+  #   app.use(csrf({ cookie: true }));
+  #
+  #   app.get('/form', (req, res) => {
+  #     res.render('form', { csrfToken: req.csrfToken() });
+  #   });
+  #
+  # API:
+  # - csrf([options]) → Express middleware function
+  #   - options.cookie: store secret in cookie (bool or object)
+  #   - options.ignoreMethods: HTTP methods to skip (default: GET, HEAD, OPTIONS)
+  #   - options.sessionKey: session property name (default: 'session')
+  # - req.csrfToken() → string: generates a CSRF token for embedding in forms
+  #
+  # Security analysis:
+  # - No sources. The library does not provide access to untrusted external data.
+  #   req.csrfToken() returns a server-generated token, not user-controlled input.
+  # - No sinks. The library does not execute commands, queries, or perform any
+  #   operation sensitive to untrusted data.
+  # - No taint summaries needed. The library does not transform or propagate
+  #   user-controlled data in a security-relevant way.
+  #
+  # The library is purely defensive infrastructure — it protects against CSRF
+  # attacks but does not introduce any attack surface of its own.
+  # =============================================================================
+
+  # No sources, sinks, or summaries needed for this library.
+  []

@@ -1,0 +1,62 @@
+extensions:
+  # =============================================================================
+  # js-base64 (npm: "js-base64") - Base64 encoding/decoding with UTF-8 support
+  # =============================================================================
+  #
+  # The js-base64 package by Dan Kogai provides Base64 encoding and decoding
+  # with full UTF-8 support. It exports a `Base64` namespace object and also
+  # allows direct named imports of `encode` and `decode`.
+  #
+  # Import styles:
+  #   const { Base64 } = require('js-base64');
+  #   import { Base64 } from 'js-base64';
+  #   import { encode, decode } from 'js-base64';
+  #
+  # API:
+  #   Base64.encode(str)            → base64 string (UTF-8 aware)
+  #   Base64.encode(str, true)      → base64 string without padding
+  #   Base64.encodeURI(str)         → URL-safe base64 string
+  #   Base64.decode(b64)            → UTF-8 string
+  #   Base64.btoa(str)              → base64 string (binary/ASCII)
+  #   Base64.atob(b64)              → binary string
+  #   Base64.fromUint8Array(u8a)    → base64 string
+  #   Base64.toUint8Array(b64)      → Uint8Array
+  #   Base64.isValid(b64)           → boolean
+  #
+  # Also available as direct imports:
+  #   encode(str), decode(b64), encodeURI(str), btoa(str), atob(b64),
+  #   fromUint8Array(u8a), toUint8Array(b64)
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Both encoding and decoding directions propagate taint, since an attacker
+  # controlling the input to either direction controls the output.
+  #
+  # Existing QLL coverage (Base64.qll):
+  # - NpmBase64Encode: Base64.encode, Base64.encodeURI
+  # - NpmBase64Decode: Base64.decode
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =======================================================================
+      # Encoding: string → base64
+      # =======================================================================
+      # Base64.encode(str), Base64.encodeURI(str), Base64.btoa(str)
+      - ["js-base64", "Member[Base64].Member[encode,encodeURI,btoa]", "Argument[0]", "ReturnValue", "taint"]
+      # Direct named imports: encode(str), encodeURI(str), btoa(str)
+      - ["js-base64", "Member[encode,encodeURI,btoa]", "Argument[0]", "ReturnValue", "taint"]
+      # Base64.fromUint8Array(u8a) → base64 string
+      - ["js-base64", "Member[Base64].Member[fromUint8Array]", "Argument[0]", "ReturnValue", "taint"]
+      - ["js-base64", "Member[fromUint8Array]", "Argument[0]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Decoding: base64 → string/bytes
+      # =======================================================================
+      # Base64.decode(b64), Base64.atob(b64)
+      - ["js-base64", "Member[Base64].Member[decode,atob]", "Argument[0]", "ReturnValue", "taint"]
+      # Direct named imports: decode(b64), atob(b64)
+      - ["js-base64", "Member[decode,atob]", "Argument[0]", "ReturnValue", "taint"]
+      # Base64.toUint8Array(b64) → Uint8Array
+      - ["js-base64", "Member[Base64].Member[toUint8Array]", "Argument[0]", "ReturnValue", "taint"]
+      - ["js-base64", "Member[toUint8Array]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # immutable (npm: "immutable") - Immutable persistent data collections
+  # =============================================================================
+  #
+  # Immutable.js provides immutable data structures including List, Map, Set,
+  # Stack, OrderedMap, OrderedSet, and Record.
+  #
+  # API:
+  #   const { Map, List, Set, fromJS } = require('immutable');
+  #
+  #   const map = Map({ key: 'value' });
+  #   const list = List([1, 2, 3]);
+  #   map.get('key');
+  #   map.set('key', 'newValue');
+  #   list.push(4);
+  #   fromJS({ nested: { data: 'value' } });
+  #
+  # Security assessment:
+  # - No sources: The library does not fetch or provide access to untrusted data.
+  # - No sinks: The library only provides immutable data structures. It does not
+  #   perform any dangerous operations like command execution, file access, or
+  #   network requests.
+  # - The existing QLL in Immutable.qll models data flow steps (store/load/taint)
+  #   through immutable collections (Map.set → Map.get, List constructor,
+  #   merge, toJS, fromJS, etc.). These are internal CodeQL flow propagation
+  #   concepts not expressible as data extension sink/source kinds.
+  #
+  # No data extensions are needed for this library.
+  # =============================================================================

@@ -1,0 +1,33 @@
+extensions:
+  # =============================================================================
+  # dot-case (npm: "dot-case") - Convert a string to dot.case
+  # =============================================================================
+  #
+  # Part of the change-case family of packages by Blake Embrey. Converts strings
+  # to dot.case format.
+  #
+  #   import { dotCase } from "dot-case";
+  #   dotCase("test string");  //=> "test.string"
+  #   dotCase("fooBar");       //=> "foo.bar"
+  #
+  # Exports:
+  #   dotCase(input, options?) → string
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure string transformation.
+  # - Taint propagates from the input string to the returned string.
+  #
+  # Existing QLL coverage:
+  #   StringFormatters.qll: dot-case.dotCase modeled as a string formatter
+  #                         with taint propagation from argument to return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through dot-case function
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # dotCase(input, options?) → string
+      - ["dot-case", "Member[dotCase]", "Argument[0]", "ReturnValue", "taint"]

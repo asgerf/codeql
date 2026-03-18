@@ -1,0 +1,47 @@
+extensions:
+  # =============================================================================
+  # vuex (npm: "vuex") — State management for Vue.js applications
+  # =============================================================================
+  #
+  # Vuex is a centralized state management pattern and library for Vue.js:
+  #
+  #   import Vuex from 'vuex';
+  #   const store = new Vuex.Store({
+  #     state: { count: 0 },
+  #     mutations: { increment(state) { state.count++ } },
+  #     actions: { increment({ commit }) { commit('increment') } },
+  #     getters: { count: state => state.count }
+  #   });
+  #
+  #   // In components:
+  #   this.$store.commit('increment');
+  #   this.$store.dispatch('increment');
+  #   this.$store.getters.count;
+  #
+  # Helper functions:
+  #   mapState, mapGetters, mapMutations, mapActions,
+  #   createNamespacedHelpers
+  #
+  # Security concerns:
+  # - No sources: Vuex does not access external or untrusted data directly.
+  # - No sinks: Vuex does not perform security-sensitive operations (no code
+  #   execution, SQL, commands, etc.).
+  # - Data flow through the Vuex store (state mutations, getters, commit/
+  #   dispatch payloads, mapState/mapGetters/mapMutations/mapActions helpers)
+  #   is extensively modeled in Vuex.qll using specialized QLL classes and
+  #   predicates that track cross-file data flow with program slicing.
+  #   This cannot be expressed as data extensions.
+  #
+  # Existing QLL coverage (Vuex.qll):
+  # - Store references and configuration objects
+  # - Getter flow: getter return value → getter property access
+  # - Commit/dispatch flow: payload → mutation/action handler parameter
+  # - State mutation flow: state writes → state reads
+  # - mapState/mapGetters/mapMutations/mapActions helper flows
+  # - Program slicing to avoid cross-app state mixing in monorepos
+  # =============================================================================
+
+  # No data extensions needed. All Vuex data flow is modeled in Vuex.qll
+  # using specialized QLL predicates that cannot be expressed as simple
+  # summary/source/sink tuples.
+  []

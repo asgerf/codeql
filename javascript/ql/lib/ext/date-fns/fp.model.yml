@@ -1,0 +1,79 @@
+extensions:
+  # =============================================================================
+  # date-fns/fp (sub-path of npm: "date-fns") - Curried (FP) build
+  # =============================================================================
+  #
+  # date-fns/fp exports curried (functional programming) versions of all
+  # date-fns functions. Each function takes its non-date arguments first
+  # and returns a function that accepts the date (data-last convention).
+  #
+  #   import { format, lightFormat } from 'date-fns/fp';
+  #   format("yyyy-MM-dd 'at' HH:mm")(new Date());
+  #   //=> "2024-01-15 at 14:30"
+  #
+  # Sub-path imports:
+  #   import format from 'date-fns/fp/format'
+  #   import lightFormat from 'date-fns/fp/lightFormat'
+  #   import formatWithOptions from 'date-fns/fp/formatWithOptions'
+  #
+  # For functions accepting options, a WithOptions variant is provided
+  # where the options object is the first curried argument:
+  #   import { formatWithOptions } from 'date-fns/fp';
+  #   formatWithOptions({ locale: enUS })("yyyy-MM-dd")(new Date());
+  #
+  # Security concerns:
+  # - format(formatStr)(date) and lightFormat(formatStr)(date) allow the
+  #   format string to embed arbitrary literal text via single-quote
+  #   escaping (e.g. "'injected text' yyyy"). If the format string is
+  #   attacker-controlled, arbitrary content appears in the output string.
+  # - formatWithOptions(options)(formatStr)(date) has the same concern:
+  #   the format string (second curried argument) controls the output.
+  #
+  # No sources or sinks — only taint summaries through format functions.
+  #
+  # Existing QLL coverage (DateFunctions.qll):
+  #   Models curried format/lightFormat taint steps (format string → return
+  #   value) via CurriedFormatStep.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint from format string to return value (curried)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # -----------------------------------------------------------------------
+      # Named imports from 'date-fns/fp':
+      #   import { format, lightFormat } from 'date-fns/fp';
+      #   format(formatStr)(date) → string
+      #   lightFormat(formatStr)(date) → string
+      # -----------------------------------------------------------------------
+      - ["date-fns/fp", "Member[format,lightFormat]", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+
+      # -----------------------------------------------------------------------
+      # Named import with options from 'date-fns/fp':
+      #   import { formatWithOptions } from 'date-fns/fp';
+      #   formatWithOptions(options)(formatStr)(date) → string
+      #
+      # After applying options, the returned function behaves like format.
+      # The path targets the intermediate function (after options are bound).
+      # -----------------------------------------------------------------------
+      - ["date-fns/fp", "Member[formatWithOptions].ReturnValue", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+
+      # -----------------------------------------------------------------------
+      # Direct sub-path imports:
+      #   import format from 'date-fns/fp/format'
+      #   import lightFormat from 'date-fns/fp/lightFormat'
+      # -----------------------------------------------------------------------
+      - ["date-fns/fp/format", "", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+      - ["date-fns/fp/lightFormat", "", "Argument[0]", "ReturnValue.ReturnValue", "taint"]
+
+      # -----------------------------------------------------------------------
+      # Direct sub-path import with options:
+      #   import formatWithOptions from 'date-fns/fp/formatWithOptions'
+      #   formatWithOptions(options)(formatStr)(date) → string
+      #
+      # Path targets the intermediate function returned after options bind.
+      # -----------------------------------------------------------------------
+      - ["date-fns/fp/formatWithOptions", "ReturnValue", "Argument[0]", "ReturnValue.ReturnValue", "taint"]

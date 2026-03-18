@@ -1,0 +1,71 @@
+extensions:
+  # =============================================================================
+  # pg-promise (npm: "pg-promise") - PostgreSQL interface for Node.js
+  # =============================================================================
+  #
+  # Promise-based PostgreSQL client built on node-postgres (pg). Provides
+  # leveled query methods, tasks, transactions, and formatting helpers.
+  #
+  #   const pgp = require('pg-promise')();
+  #   const db = pgp('postgres://user:pass@host/db');
+  #
+  #   db.one('SELECT * FROM users WHERE id = $1', [id]);
+  #   db.any('SELECT * FROM users');
+  #   db.none('INSERT INTO users(name) VALUES($1)', [name]);
+  #   db.query(dangerousString);               // SQL injection
+  #   db.one({ text: dangerousString });        // SQL injection via text prop
+  #   db.task(t => t.one(query));               // task scope
+  #   db.tx(t => t.none(query));                // transaction scope
+  #
+  # Security concerns:
+  # - The first argument to all query methods is a SQL string (or object
+  #   with a `text` property) — these are SQL injection sinks.
+  # - Raw interpolation ($1:raw, $1^, ${prop}:raw) bypasses escaping,
+  #   making the corresponding values in the second argument also sinks.
+  # - Connection config objects contain credentials (user, password).
+  #
+  # Existing QLL coverage (SQL.qll):
+  #   - PgPromiseQueryCall: query methods on IBaseProtocol — arg 0 and
+  #     arg 0's `text` property as SQL injection sinks. Also raw
+  #     interpolation parameters from the values argument.
+  #   - Credentials: pgPromise().getParameter(0).getMember(user/password).
+  # Existing data extension (pg/model.yml):
+  #   - Extensive typeModel for IMain, IDatabase, IBaseProtocol, ITask,
+  #     IConnected, and related pg types.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: SQL injection via query methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # db.any/each/many/manyOrNone/map/multi/multiResult/none/one/oneOrNone/query/result(sql, ...)
+      # The first argument is a SQL string or a query config object.
+      # Using Fuzzy to cover db objects, task/tx callback parameters, etc.
+      - [
+          "pg-promise",
+          "Fuzzy.Member[any,each,many,manyOrNone,map,multi,multiResult,none,one,oneOrNone,query,result].Argument[0]",
+          "sql-injection",
+        ]
+
+      # When the first argument is an object: { text: sqlString, values: ... }
+      - [
+          "pg-promise",
+          "Fuzzy.Member[any,each,many,manyOrNone,map,multi,multiResult,none,one,oneOrNone,query,result].Argument[0].Member[text]",
+          "sql-injection",
+        ]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: Hardcoded credentials in connection config
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # pgp(connectionConfig) — the config object passed to pgp() (the
+      # IMain return value) can contain user/password properties.
+      # pgp = require('pg-promise')(); db = pgp({user, password, ...});
+      - ["pg-promise", "ReturnValue.Argument[0].Member[user]", "credentials-username"]
+      - ["pg-promise", "ReturnValue.Argument[0].Member[password]", "credentials-password"]

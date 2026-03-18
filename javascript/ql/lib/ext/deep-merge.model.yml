@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # deep-merge (npm: "deep-merge") - Deep merge with custom merge strategy
+  # =============================================================================
+  #
+  # Factory-based deep merge: create a merge function with a custom strategy,
+  # then use it to merge objects:
+  #
+  #   const DeepMerge = require('deep-merge');
+  #   const merge = DeepMerge(mergeStrategy);
+  #   merge(target, source)                    // deep merge two objects
+  #
+  # Also supports merging multiple objects:
+  #
+  #   const DeepMerge = require('deep-merge/multiple');
+  #   const merge = DeepMerge(mergeStrategy);
+  #   merge([obj1, obj2, obj3])                // deep merge array of objects
+  #
+  # Security concerns:
+  # - The merge function is a deep-merge operation and may be vulnerable to
+  #   prototype pollution. If an attacker controls a source operand, they can
+  #   inject __proto__ properties. (The prototype-pollution query is handled
+  #   by QLL, not expressible via data extensions.)
+  # - Taint from source operands flows into the return value.
+  #
+  # Existing QLL coverage:
+  #   Extend.qll:  deep-merge modeled as ExtendCallDeep via
+  #                moduleImport("deep-merge").getACall() (the factory returns
+  #                the merge function; calling that is the extend call).
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # DeepMerge(mergeStrategy) — factory: returns a merge function
+      - ["deep-merge", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # merge(target, source) — all operands flow into the return value
+      - ["deep-merge", "ReturnValue", "Argument[0..N-1]", "ReturnValue", "value"]
+
+      # deep-merge/multiple: merge([obj1, obj2, ...]) — array elements flow to return value
+      - ["deep-merge/multiple", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["deep-merge/multiple", "ReturnValue", "Argument[0].ArrayElement", "ReturnValue", "value"]

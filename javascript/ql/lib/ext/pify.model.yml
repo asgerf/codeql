@@ -1,0 +1,42 @@
+extensions:
+  # =============================================================================
+  # pify (npm: "pify") - Promisify callback-style functions
+  # =============================================================================
+  #
+  # pify converts callback-style functions and modules into promise-returning
+  # equivalents:
+  #
+  #   import pify from 'pify';
+  #   import fs from 'fs';
+  #
+  #   // Promisify a single function:
+  #   const data = await pify(fs.readFile)('package.json', 'utf8');
+  #
+  #   // Promisify all methods in a module:
+  #   const data2 = await pify(fs).readFile('package.json', 'utf8');
+  #
+  # API: pify(input, options?) → promisified function or module
+  #   - input: callback-style function or module
+  #   - options.multiArgs: return array of all callback args (default: false)
+  #   - options.include/exclude: filter which module methods to promisify
+  #   - options.excludeMain: skip promisifying the module function itself
+  #   - options.errorFirst: whether callback has error-first convention
+  #
+  # Security relevance:
+  # - No sources. pify does not provide access to untrusted data.
+  # - No sinks. pify does not perform security-sensitive operations itself;
+  #   it merely wraps existing functions. Any sinks are in the wrapped
+  #   functions (e.g. fs.readFile), not in pify.
+  # - FLOW SUMMARIES: The important taint flow (arguments to the promisified
+  #   wrapper flow to the original function, and the callback result flows
+  #   back via the resolved promise) is already modeled in QLL:
+  #     - Promises.qll: PromisifyCall and PromisifyAllCall classes recognize
+  #       pify() calls and model the promise resolution flow.
+  #   Expressing this wrapper-of-a-function flow pattern via summaryModel
+  #   data extensions is not practical since it involves higher-order
+  #   function wrapping, not a simple input→output mapping.
+  #
+  # This file is intentionally empty of data extensions. It exists to
+  # document that the library has been reviewed and its security-relevant
+  # behavior (promise flow) is covered by QLL.
+  # =============================================================================

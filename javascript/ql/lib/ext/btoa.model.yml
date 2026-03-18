@@ -1,0 +1,21 @@
+extensions:
+  # =============================================================================
+  # btoa (npm: "btoa") - Base64 encoding polyfill
+  # =============================================================================
+  #
+  # The btoa package exports a single function (the default export) that encodes
+  # a string to base64, mirroring the browser-native btoa() function.
+  #
+  #   const btoa = require("btoa");
+  #   const encoded = btoa("hello"); // "aGVsbG8="
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Encoding is modeled as taint-propagating: an attacker who controls the
+  # input string controls the base64-encoded output.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # btoa(input) - encode string to base64. Taint flows from input to output.
+      - ["btoa", "", "Argument[0]", "ReturnValue", "taint"]

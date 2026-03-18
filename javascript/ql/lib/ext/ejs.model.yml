@@ -1,0 +1,89 @@
+extensions:
+  # =============================================================================
+  # ejs (npm: "ejs") - Embedded JavaScript templating engine
+  # =============================================================================
+  #
+  # EJS compiles and renders templates containing embedded JavaScript:
+  #
+  #   const ejs = require('ejs');
+  #
+  #   // Render a template string with data
+  #   ejs.render('<h1><%= title %></h1>', { title: 'Hello' });
+  #
+  #   // Render a template file (callback or promise)
+  #   ejs.renderFile('views/page.ejs', { title: 'Hello' }, (err, html) => {});
+  #   const html = await ejs.renderFile('views/page.ejs', { title: 'Hello' });
+  #
+  #   // Compile a template into a reusable function
+  #   const fn = ejs.compile('<%= name %>');
+  #   fn({ name: 'World' });
+  #
+  #   // Express integration
+  #   app.engine('ejs', ejs.__express);  // alias for renderFile
+  #
+  #   // new Template(text, opts).compile() — low-level API
+  #
+  # Security concerns:
+  # - ejs.render(template, ...) / ejs.compile(template, ...): The template
+  #   string is compiled into JavaScript and evaluated. If an attacker controls
+  #   the template, this is a code-injection vulnerability.
+  # - ejs.renderFile(path, ...): The file path controls which file is read
+  #   from the filesystem — a path-injection sink.
+  # - Data (locals) flows into the rendered output. If the output is served
+  #   as HTML and the template uses unescaped output (<%- %>), untrusted
+  #   data can cause XSS/html-injection.
+  #
+  # Existing QLL coverage:
+  #   Templating.qll: EjsStyleSyntax recognises EJS template syntax
+  #     (<%= %> for escaped, <%- %> for raw) and .ejs file extension.
+  #   CodeInjectionCustomizations.qll: ejs.render() arg 0 modeled as
+  #     EjsTemplateSink (code-injection).
+  #   TemplateObjectInjectionCustomizations.qll: ejs listed as a
+  #     vulnerable template engine for template-object injection.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ejs.render(template, data?, opts?) — template string is evaluated as JS
+      - ["ejs", "Member[render].Argument[0]", "code-injection"]
+
+      # ejs.compile(template, opts?) — template string is compiled into JS
+      - ["ejs", "Member[compile].Argument[0]", "code-injection"]
+
+      # ejs.renderFile(path, data?, opts?, cb?) — path controls filesystem read
+      - ["ejs", "Member[renderFile].Argument[0]", "path-injection"]
+
+      # ejs.__express is an alias for ejs.renderFile
+      - ["ejs", "Member[__express].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint/value propagation through ejs functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # ejs.render(template, data, opts?) → rendered HTML string
+      # Data (locals) taint the rendered output
+      - ["ejs", "Member[render]", "Argument[1]", "ReturnValue", "taint"]
+
+      # ejs.renderFile(path, data, opts?, cb?) — callback form: cb(err, html)
+      # Data (locals) taint the rendered HTML in callback parameter 1
+      - ["ejs", "Member[renderFile]", "Argument[1]", "Argument[2].Parameter[1]", "taint"]
+      - ["ejs", "Member[renderFile]", "Argument[1]", "Argument[3].Parameter[1]", "taint"]
+      # Promise form: data taints the resolved value
+      - ["ejs", "Member[renderFile]", "Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # ejs.__express — same flows as renderFile
+      - ["ejs", "Member[__express]", "Argument[1]", "Argument[2].Parameter[1]", "taint"]
+      - ["ejs", "Member[__express]", "Argument[1]", "Argument[3].Parameter[1]", "taint"]
+      - ["ejs", "Member[__express]", "Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # ejs.compile(template, opts?) → compiled function
+      # When the compiled function is invoked with data, data taints output
+      - ["ejs", "Member[compile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]

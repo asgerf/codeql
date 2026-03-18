@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # opener (npm: "opener") — Open URLs/files with system default application
+  # =============================================================================
+  #
+  # Cross-platform utility that opens a URL, file, or executable using the
+  # system's default handler (macOS: `open`, Linux: `xdg-open`,
+  # Windows: `cmd /c start`):
+  #
+  #   const opener = require('opener');
+  #   opener('http://example.com');
+  #   opener('./my-file.txt');
+  #   opener('http://example.com', { command: 'firefox' });
+  #
+  # Signature: opener(args, [options], [callback]) → ChildProcess
+  #
+  # Security concerns:
+  # - The first argument controls what URL/file/command is opened via the
+  #   system shell — command-injection sink if attacker-controlled.
+  # - When the argument is a URL, an attacker can redirect the user to a
+  #   malicious site — url-redirection sink.
+  # - The options.command property overrides the default system command
+  #   (e.g. 'firefox') — command-injection sink.
+  # - Uses child_process.execFile() internally; returns ChildProcess.
+  #
+  # Existing QLL coverage (SystemCommandExecutors.qll):
+  #   Opener class models opener() as SystemCommandExecution with
+  #   getACommandArgument() returning options.command.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command injection and URL redirection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # opener(args) — first argument is the URL/file/command to open.
+      # Passed to platform command (open/xdg-open/start) as an argument.
+      - ["opener", "Argument[0]", "command-injection"]
+
+      # opener(args) — when the argument is a URL, it can redirect the user
+      - ["opener", "Argument[0]", "url-redirection"]
+
+      # opener(args, { command: '...' }) — overrides the system command
+      - ["opener", "Argument[1].Member[command]", "command-injection"]

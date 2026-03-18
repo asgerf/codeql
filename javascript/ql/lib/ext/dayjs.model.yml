@@ -1,0 +1,51 @@
+extensions:
+  # =============================================================================
+  # dayjs (npm: "dayjs") — Lightweight date utility with moment-compatible API
+  # =============================================================================
+  #
+  # Day.js is a minimalist JavaScript library for parsing, validating,
+  # manipulating, and displaying dates and times:
+  #
+  #   const dayjs = require('dayjs');
+  #   dayjs('2019-01-25').format('DD/MM/YYYY')       //=> '25/01/2019'
+  #   dayjs('2019-01-25').format('[Today is] dddd')   //=> 'Today is Friday'
+  #   dayjs.extend(duration);
+  #   dayjs.duration(3600000).format('HH:mm:ss')      //=> '01:00:00'
+  #
+  # The format() method accepts a template string where square-bracket escaping
+  # ([...]) can embed arbitrary literal text in the output. If the format
+  # string is attacker-controlled, arbitrary content appears in the output.
+  #
+  # dayjs has no sources (it does not fetch remote data) and no sinks
+  # (it does not execute code, make requests, or write to the filesystem).
+  #
+  # Plugins (duration, timezone, utc, customParseFormat, relativeTime, etc.)
+  # are loaded via dayjs.extend() and modify the dayjs prototype or factory.
+  # Objects created by plugin APIs (e.g. dayjs.duration(), dayjs.utc(),
+  # dayjs.tz()) are all dayjs-derived and matched by Fuzzy.
+  #
+  # Existing QLL coverage (DateFunctions.qll):
+  #   The Moment module treats dayjs as moment-compatible and models
+  #   format(f) taint: format string → return value. Also covers
+  #   @date-io/dayjs adapted instances via DateIO::getAnAdaptedInstance.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint from format string to return value
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # dayjs(...).format(formatStr) — taint from format string to output.
+      # Fuzzy matches any dayjs-derived object (method chains, plugin objects):
+      #   dayjs().add(1, 'day').format(f)
+      #   dayjs.utc().format(f)
+      #   dayjs.tz("2013-11-18", "Asia/Taipei").format(f)
+      #   dayjs.duration(3600000).format(f)  (duration plugin)
+      - ["dayjs", "Fuzzy.Member[format]", "Argument[0]", "ReturnValue", "taint"]
+
+      # @date-io/dayjs adapter creates dayjs instances via methods like
+      # .date(), .parse(), .addDays(), etc. Calling .format() on these
+      # adapted instances has the same taint behaviour.
+      - ["@date-io/dayjs", "Fuzzy.Member[format]", "Argument[0]", "ReturnValue", "taint"]

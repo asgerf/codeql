@@ -1,0 +1,152 @@
+extensions:
+  # =============================================================================
+  # electron (npm: "electron") - Desktop application framework
+  # =============================================================================
+  #
+  # Electron builds desktop apps with web technologies. The main process
+  # (Node.js) is privileged; renderer processes run web content and are
+  # treated as potentially compromised.
+  #
+  #   const { app, BrowserWindow, ipcMain, shell, net, protocol }
+  #     = require('electron');
+  #
+  # Primary threat model: untrusted data from the renderer process (via IPC),
+  # from custom protocol handlers, or from OS-level events reaches
+  # security-sensitive APIs in the main process.
+  #
+  # Existing QLL coverage:
+  #   Electron.qll:
+  #     - BrowserWindow / BrowserView instantiation and webPreferences
+  #     - WebContents as NodeJS EventEmitter
+  #     - IPC (ipcMain/ipcRenderer) via EventEmitter dispatch/registration
+  #       for send/sendSync (but NOT handle/invoke)
+  #     - ClientRequest / net.request() as NodeJSClientRequest
+  #     - ClientRequest redirect event as RemoteFlowSource
+  #   ClientSideUrlRedirectCustomizations.qll:
+  #     - shell.openExternal() as URL-redirect sink
+  #   Electron queries:
+  #     - EnablingNodeIntegration.ql (nodeIntegration in webPreferences)
+  #     - DisablingWebSecurity.ql (webSecurity: false)
+  #     - AllowRunningInsecureContent.ql
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: untrusted data entering the main process
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # === IPC from renderer → main ===
+      # This is the primary untrusted data source in Electron apps.
+      # The renderer process may be running attacker-controlled web content.
+      #
+      # ipcMain.on/once(channel, (event, ...args) => {})
+      # Parameter[0] is the IPC event object; Parameter[1+] carry untrusted
+      # data sent by ipcRenderer.send()/sendSync().
+      - ["electron", "Member[ipcMain].Member[on,once].Argument[1].Parameter[1]", "remote"]
+      - ["electron", "Member[ipcMain].Member[on,once].Argument[1].Parameter[2]", "remote"]
+      - ["electron", "Member[ipcMain].Member[on,once].Argument[1].Parameter[3]", "remote"]
+
+      # ipcMain.handle/handleOnce(channel, (event, ...args) => {})
+      # Same shape, but paired with ipcRenderer.invoke() in the renderer.
+      # Note: handle/invoke is NOT modeled in the existing Electron.qll.
+      - ["electron", "Member[ipcMain].Member[handle,handleOnce].Argument[1].Parameter[1]", "remote"]
+      - ["electron", "Member[ipcMain].Member[handle,handleOnce].Argument[1].Parameter[2]", "remote"]
+      - ["electron", "Member[ipcMain].Member[handle,handleOnce].Argument[1].Parameter[3]", "remote"]
+
+      # === OS-level events ===
+      # app.on('open-url', (event, url)) — triggered by custom protocol links
+      - ["electron", "Member[app].Member[on,once].WithStringArgument[0=open-url].Argument[1].Parameter[1]", "remote"]
+
+      # app.on('open-file', (event, path)) — triggered by file associations
+      - ["electron", "Member[app].Member[on,once].WithStringArgument[0=open-file].Argument[1].Parameter[1]", "remote"]
+
+      # app.on('second-instance', (event, argv, workingDirectory)) — argv from
+      # a second app launch, which may carry attacker-controlled deep-link URLs
+      - ["electron", "Member[app].Member[on,once].WithStringArgument[0=second-instance].Argument[1].Parameter[1]", "remote"]
+
+      # === Custom protocol handlers ===
+      # protocol.handle(scheme, (request) => {}) — request.url, headers, body
+      # are attacker-controlled from web content navigating to the scheme.
+      - ["electron", "Member[protocol].Member[handle].Argument[1].Parameter[0]", "remote"]
+
+      # Legacy protocol registration APIs
+      - ["electron", "Member[protocol].Member[registerHttpProtocol,registerFileProtocol,registerStringProtocol,registerBufferProtocol,registerStreamProtocol].Argument[1].Parameter[0]", "remote"]
+
+      # === Navigation events on webContents ===
+      # webContents.on('will-navigate', (event, url)) — URL from in-page navigation
+      - ["electron", "Fuzzy.Member[on,once].WithStringArgument[0=will-navigate].Argument[1].Parameter[1]", "remote"]
+
+      # webContents.setWindowOpenHandler(({ url }) => {}) — URL from window.open()
+      - ["electron", "Fuzzy.Member[setWindowOpenHandler].Argument[0].Parameter[0]", "remote"]
+
+      # === HTTP response data ===
+      # net.fetch() response carries remote data
+      - ["electron", "Member[net].Member[fetch].ReturnValue.Awaited", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: security-sensitive operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # === Code injection ===
+      # webContents.executeJavaScript(code) — evaluates arbitrary JS in renderer
+      - ["electron", "Fuzzy.Member[executeJavaScript].Argument[0]", "code-injection"]
+
+      # === URL / request forgery ===
+      # BrowserWindow.loadURL(url) / webContents.loadURL(url)
+      - ["electron", "Fuzzy.Member[loadURL].Argument[0]", "request-forgery"]
+
+      # webContents.downloadURL(url)
+      - ["electron", "Fuzzy.Member[downloadURL].Argument[0]", "request-forgery"]
+
+      # net.request(url | options) — outbound HTTP from main process
+      - ["electron", "Member[net].Member[request].Argument[0]", "request-forgery"]
+
+      # net.fetch(url) — Fetch API in main process
+      - ["electron", "Member[net].Member[fetch].Argument[0]", "request-forgery"]
+
+      # === URL redirection ===
+      # shell.openExternal(url) — opens in default browser/app; can trigger
+      # arbitrary protocol handlers. Already modeled in QLL; re-expressed here.
+      - ["electron", "Member[shell].Member[openExternal].Argument[0]", "url-redirection"]
+
+      # === Path injection ===
+      # BrowserWindow.loadFile(filePath) / webContents.loadFile(filePath)
+      - ["electron", "Fuzzy.Member[loadFile].Argument[0]", "path-injection"]
+
+      # shell.openPath(path) — opens a file/folder with the system default app
+      - ["electron", "Member[shell].Member[openPath].Argument[0]", "path-injection"]
+
+      # shell.trashItem(path) — moves a file to the system trash
+      - ["electron", "Member[shell].Member[trashItem].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through Electron APIs
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # net.fetch(input, init?) — request body flows into the outbound request
+      - ["electron", "Member[net].Member[fetch]", "Argument[1].Member[body]", "ReturnValue.Awaited", "taint"]
+
+      # net.request() write/end — data written to request body
+      - ["electron", "Member[net].Member[request].ReturnValue.Member[write]", "Argument[0]", "Argument[this]", "taint"]
+      - ["electron", "Member[net].Member[request].ReturnValue.Member[end]", "Argument[0]", "Argument[this]", "taint"]
+
+      # webContents.send(channel, ...args) — args flow to renderer's
+      # ipcRenderer.on callback parameters (main → renderer taint propagation)
+      - ["electron", "Fuzzy.Member[send]", "Argument[1]", "ReturnValue", "taint"]
+
+      # clipboard: read methods return potentially untrusted data.
+      # Modeled as summaries from receiver to return since clipboard is
+      # a module member, not a traditional remote source.
+      - ["electron", "Member[clipboard].Member[readText]", "Argument[this]", "ReturnValue", "taint"]
+      - ["electron", "Member[clipboard].Member[readHTML]", "Argument[this]", "ReturnValue", "taint"]
+      - ["electron", "Member[clipboard].Member[readRTF]", "Argument[this]", "ReturnValue", "taint"]
+      - ["electron", "Member[clipboard].Member[readBookmark]", "Argument[this]", "ReturnValue", "taint"]
+      - ["electron", "Member[clipboard].Member[read]", "Argument[this]", "ReturnValue", "taint"]

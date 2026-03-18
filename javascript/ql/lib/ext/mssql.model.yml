@@ -1,0 +1,285 @@
+extensions:
+  # =============================================================================
+  # mssql (npm: "mssql") — Microsoft SQL Server client for Node.js
+  # =============================================================================
+  #
+  # mssql is a full-featured SQL Server client supporting connection pooling,
+  # transactions, prepared statements, streaming, and tagged template queries:
+  #
+  #   const sql = require('mssql');
+  #   await sql.connect(config);
+  #   const result = await sql.query`select * from users where id = ${id}`;
+  #   // or via request:
+  #   const request = new sql.Request();
+  #   request.input('id', sql.Int, id);
+  #   await request.query('select * from users where id = @id');
+  #
+  # Security concerns:
+  # - SQL injection: request.query(str), request.batch(str), pool.query(str),
+  #   pool.batch(str), sql.query(str), ps.prepare(str) take raw SQL strings.
+  #   Tagged template usage (sql.query`...`) is safe (auto-parameterized).
+  # - Stored procedure names: request.execute(procName) interprets the
+  #   argument as a stored procedure name (sql-injection sink).
+  # - Credentials: config.user and config.password are credential sinks.
+  #
+  # Existing QLL coverage (SQL.qll + mssql/model.yml):
+  # - MsSql module: query/batch on queryable() types as SQL::SqlString
+  # - Tagged template queries (QueryTemplateExpr) as sanitized SQL
+  # - Credentials (user/password in config objects)
+  # - Type models for ConnectionPool, Request, PreparedStatement, Transaction
+  #
+  # The catalog below adds data-extension coverage for:
+  # 1. SQL injection sinks for query/batch/execute/prepare methods
+  # 2. Summaries for data flow through query results, callbacks, streaming,
+  #    and connection/request chaining patterns
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: SQL injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # =====================================================================
+      # request.query(sqlString) / pool.query(sqlString) / sql.query(sqlString)
+      # First argument is a raw SQL command string.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[query].Argument[0]"
+        - "sql-injection"
+
+      # =====================================================================
+      # request.batch(sqlString) / pool.batch(sqlString)
+      # First argument is a raw SQL batch string (like query but without
+      # sp_executesql).
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[batch].Argument[0]"
+        - "sql-injection"
+
+      # =====================================================================
+      # request.execute(procedureName)
+      # First argument is a stored procedure name. Untrusted input can
+      # lead to calling arbitrary stored procedures.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[execute].Argument[0]"
+        - "sql-injection"
+
+      # =====================================================================
+      # preparedStatement.prepare(sqlStatement)
+      # First argument is a T-SQL statement string to prepare.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[prepare].Argument[0]"
+        - "sql-injection"
+
+      # Also cover mssql/msnodesqlv8 variant
+      - - "mssql/msnodesqlv8"
+        - "Fuzzy.Member[query].Argument[0]"
+        - "sql-injection"
+      - - "mssql/msnodesqlv8"
+        - "Fuzzy.Member[batch].Argument[0]"
+        - "sql-injection"
+      - - "mssql/msnodesqlv8"
+        - "Fuzzy.Member[execute].Argument[0]"
+        - "sql-injection"
+      - - "mssql/msnodesqlv8"
+        - "Fuzzy.Member[prepare].Argument[0]"
+        - "sql-injection"
+
+  # ---------------------------------------------------------------------------
+  # Summaries: connection and pool methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # sql.connect(config) → Promise<ConnectionPool>
+      # The resolved pool is used for subsequent queries.
+      # Also: pool.connect() returns the pool itself.
+      # =====================================================================
+      - - "mssql"
+        - "Member[connect]"
+        - "Argument[this]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # pool.request() → Request (chaining pattern)
+      # Returns a new Request bound to this pool.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[request]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # pool.transaction() → Transaction
+      # Returns a new Transaction bound to this pool.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[transaction]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "taint"
+
+      # =====================================================================
+      # request.input(name, [type], value) → Request (returns this for chaining)
+      # request.output(name, type, [value]) → Request
+      # request.replaceInput(name, [type], value) → Request
+      # request.replaceOutput(name, type) → Request
+      # These are chaining methods — they return the same request object.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[input,output,replaceInput,replaceOutput]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "value"
+
+      # =====================================================================
+      # request.query(sql) → Promise<{recordset, recordsets, output, rowsAffected}>
+      # request.query(sql, callback(err, result))
+      # Query results flow from the promise or callback.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[query]"
+        - "Argument[1].Parameter[1]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # request.batch(sql) → Promise<result>
+      # request.batch(sql, callback(err, result))
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[batch]"
+        - "Argument[1].Parameter[1]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # request.execute(procedure) → Promise<result>
+      # request.execute(procedure, callback(err, recordsets, returnValue))
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[execute]"
+        - "Argument[1].Parameter[1]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # preparedStatement.input(name, type) → PreparedStatement (chaining)
+      # preparedStatement.output(name, type) → PreparedStatement (chaining)
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[input,output]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "value"
+
+      # =====================================================================
+      # preparedStatement.execute(values) → Promise<result>
+      # preparedStatement.execute(values, callback(err, result))
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[execute]"
+        - "Argument[1].Parameter[1]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # transaction.begin([isolationLevel]) → Promise<Transaction>
+      # transaction.begin([isolationLevel], callback(err))
+      # The transaction itself flows through for chaining.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[begin]"
+        - "Argument[this]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # transaction.request() → Request
+      # Returns a new Request bound to this transaction.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[request]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "taint"
+
+  # ---------------------------------------------------------------------------
+  # Summaries: streaming events — row data flows from 'row' event
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # Streaming: request.on('row', handler)
+      # The handler's first parameter receives each row from the result set.
+      # The 'row' event emits untrusted database data. We model taint flow
+      # from the request (which performed the query) to the row handler param.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[on].WithStringArgument[0=row]"
+        - "Argument[this]"
+        - "Argument[1].Parameter[0]"
+        - "taint"
+
+      # =====================================================================
+      # Streaming: request.on('done', handler) / request.on('recordset', handler)
+      # 'done' handler receives a result object; 'recordset' receives columns.
+      # =====================================================================
+      - - "mssql"
+        - "Fuzzy.Member[on].WithStringArgument[0=done]"
+        - "Argument[this]"
+        - "Argument[1].Parameter[0]"
+        - "taint"
+
+  # ---------------------------------------------------------------------------
+  # Summaries: also cover mssql/msnodesqlv8 variant
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      - - "mssql/msnodesqlv8"
+        - "Member[connect]"
+        - "Argument[this]"
+        - "ReturnValue.Awaited"
+        - "value"
+      - - "mssql/msnodesqlv8"
+        - "Fuzzy.Member[request]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "taint"
+      - - "mssql/msnodesqlv8"
+        - "Fuzzy.Member[input,output,replaceInput,replaceOutput]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "value"
+      - - "mssql/msnodesqlv8"
+        - "Fuzzy.Member[query]"
+        - "Argument[1].Parameter[1]"
+        - "ReturnValue.Awaited"
+        - "value"
+      - - "mssql/msnodesqlv8"
+        - "Fuzzy.Member[batch]"
+        - "Argument[1].Parameter[1]"
+        - "ReturnValue.Awaited"
+        - "value"
+      - - "mssql/msnodesqlv8"
+        - "Fuzzy.Member[execute]"
+        - "Argument[1].Parameter[1]"
+        - "ReturnValue.Awaited"
+        - "value"
+      - - "mssql/msnodesqlv8"
+        - "Fuzzy.Member[on].WithStringArgument[0=row]"
+        - "Argument[this]"
+        - "Argument[1].Parameter[0]"
+        - "taint"

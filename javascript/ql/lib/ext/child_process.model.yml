@@ -1,0 +1,75 @@
+extensions:
+  # =============================================================================
+  # child_process (Node.js built-in) - Spawning child processes
+  # =============================================================================
+  #
+  # The child_process module provides the ability to spawn child processes:
+  #
+  #   const { exec, execSync, execFile, spawn, fork } = require('child_process');
+  #   exec('ls -la', (err, stdout, stderr) => { ... });
+  #   const result = execSync('ls -la');
+  #   execFile('/usr/bin/ls', ['-la'], (err, stdout, stderr) => { ... });
+  #   const child = spawn('ls', ['-la']);
+  #   const child2 = fork('worker.js');
+  #
+  # Methods:
+  #   exec(command, [options], [callback])         - shell command (string)
+  #   execSync(command, [options])                  - synchronous shell command
+  #   execFile(file, [args], [options], [callback]) - execute a file directly
+  #   execFileSync(file, [args], [options])          - synchronous execFile
+  #   spawn(command, [args], [options])              - spawn with streaming I/O
+  #   spawnSync(command, [args], [options])           - synchronous spawn
+  #   fork(modulePath, [args], [options])             - spawn a new Node.js process
+  #
+  # Security concerns:
+  # - Command injection: the first argument (command/file/modulePath) to all
+  #   methods is a command-injection sink. For exec/execSync the command is
+  #   interpreted by a shell, making it especially dangerous.
+  # - Argument injection: the args array (argument 1) for execFile, spawn,
+  #   spawnSync, and fork is also a command-injection vector.
+  # - Path injection: the options.cwd property controls the working directory.
+  # - The callback's stdout/stderr parameters and the return value of sync
+  #   methods contain command output (not modeled as remote sources since the
+  #   output depends on what command was run, not on external input).
+  #
+  # Note: the existing CodeQL QLL model (NodeJSLib.qll ChildProcessMethodCall)
+  # already recognizes these as SystemCommandExecution. This data extension
+  # provides equivalent coverage via the sinkModel extensible predicate.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command-injection — command and argument parameters
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- Shell-interpreted commands (exec, execSync) ---
+      # exec(command, ...) — first arg is a shell command string
+      - ["child_process", "Member[exec].Argument[0]", "command-injection"]
+      # execSync(command, ...) — first arg is a shell command string
+      - ["child_process", "Member[execSync].Argument[0]", "command-injection"]
+
+      # --- Direct execution commands (execFile, execFileSync, spawn, spawnSync, fork) ---
+      # execFile(file, ...) — first arg is the executable path
+      - ["child_process", "Member[execFile].Argument[0]", "command-injection"]
+      # execFileSync(file, ...)
+      - ["child_process", "Member[execFileSync].Argument[0]", "command-injection"]
+      # spawn(command, ...)
+      - ["child_process", "Member[spawn].Argument[0]", "command-injection"]
+      # spawnSync(command, ...)
+      - ["child_process", "Member[spawnSync].Argument[0]", "command-injection"]
+      # fork(modulePath, ...)
+      - ["child_process", "Member[fork].Argument[0]", "command-injection"]
+
+      # --- Argument lists (second argument for non-shell methods) ---
+      # execFile(file, args, ...)
+      - ["child_process", "Member[execFile].Argument[1]", "command-injection"]
+      # execFileSync(file, args, ...)
+      - ["child_process", "Member[execFileSync].Argument[1]", "command-injection"]
+      # spawn(command, args, ...)
+      - ["child_process", "Member[spawn].Argument[1]", "command-injection"]
+      # spawnSync(command, args, ...)
+      - ["child_process", "Member[spawnSync].Argument[1]", "command-injection"]
+      # fork(modulePath, args, ...)
+      - ["child_process", "Member[fork].Argument[1]", "command-injection"]

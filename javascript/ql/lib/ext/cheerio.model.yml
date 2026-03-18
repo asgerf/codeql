@@ -1,0 +1,131 @@
+extensions:
+  # =============================================================================
+  # cheerio (npm: "cheerio") - Server-side DOM manipulation with jQuery-like API
+  # =============================================================================
+  #
+  # Cheerio loads and parses HTML/XML, providing a jQuery-style API for
+  # traversal and manipulation on the server:
+  #
+  #   const cheerio = require('cheerio');
+  #   const $ = cheerio.load('<div><a href="/link">text</a></div>');
+  #   $('a').text();       //=> "text"
+  #   $('a').attr('href'); //=> "/link"
+  #   $('a').html();       //=> "text"
+  #   $('div').append('<p>injected</p>');
+  #
+  # Loading functions:
+  #   cheerio.load(html, options?, isDocument?) → $
+  #   cheerio.fromURL(url, options?) → Promise<$>  (fetches remote HTML)
+  #   cheerio.loadBuffer(buffer, options?) → $
+  #
+  # Extraction (getter mode, 0 args): .text(), .html(), .attr(name),
+  #   .data(name), .val(), .prop(name)
+  #
+  # DOM mutation methods that interpret arguments as HTML (XSS sinks):
+  #   .after(html), .append(html), .before(html), .html(html),
+  #   .prepend(html), .replaceWith(html), .wrap(html), .wrapAll(html),
+  #   .wrapInner(html)
+  # Also $(selector) where the selector can be interpreted as HTML.
+  #
+  # Security concerns:
+  # - cheerio.load(html) parses untrusted HTML; taint propagates from the
+  #   input through to data extracted via .text()/.html()/.attr()/.val().
+  # - cheerio.fromURL(url): the URL is a request-forgery sink and the
+  #   returned document is a remote flow source.
+  # - DOM mutation methods that accept HTML strings are html-injection sinks.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: HTML injection via DOM mutation methods on cheerio objects
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Methods that interpret their arguments as HTML (matching jQuery semantics)
+      - ["cheerio", "Fuzzy.Member[after].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[append].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[appendTo].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[before].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[html].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[insertAfter].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[insertBefore].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[prepend].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[prependTo].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[replaceWith].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[wrap].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[wrapAll].Argument[0]", "html-injection"]
+      - ["cheerio", "Fuzzy.Member[wrapInner].Argument[0]", "html-injection"]
+
+      # cheerio.load(html) — the HTML string parsed into a DOM
+      - ["cheerio", "Member[load].Argument[0]", "html-injection"]
+
+      # $(selector) — the first argument to the loaded $ function can be HTML
+      - ["cheerio", "Member[load].ReturnValue.Argument[0]", "html-injection"]
+
+      # cheerio.fromURL(url) — URL controls an outbound HTTP request
+      - ["cheerio", "Member[fromURL].Argument[0]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: cheerio.fromURL fetches remote content
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # cheerio.fromURL(url) returns a promise resolving to a loaded $ with remote HTML
+      - ["cheerio", "Member[fromURL].ReturnValue.Awaited", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through cheerio operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # cheerio.load(html) → $: taint from the HTML input propagates to the
+      # returned $ function and everything queried from it
+      - ["cheerio", "Member[load]", "Argument[0]", "ReturnValue", "taint"]
+      # cheerio.loadBuffer(buffer) → $
+      - ["cheerio", "Member[loadBuffer]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Extraction methods on cheerio objects: taint flows from receiver to return
+      # .text() with 0 args returns text content
+      - ["cheerio", "Fuzzy.Member[text].WithArity[0]", "Argument[this]", "ReturnValue", "taint"]
+      # .html() with 0 args returns inner HTML
+      - ["cheerio", "Fuzzy.Member[html].WithArity[0]", "Argument[this]", "ReturnValue", "taint"]
+      # .attr(name) returns an attribute value
+      - ["cheerio", "Fuzzy.Member[attr].WithArity[1]", "Argument[this]", "ReturnValue", "taint"]
+      # .data(name) returns a data attribute value
+      - ["cheerio", "Fuzzy.Member[data].WithArity[0,1]", "Argument[this]", "ReturnValue", "taint"]
+      # .val() returns the value of form elements
+      - ["cheerio", "Fuzzy.Member[val].WithArity[0]", "Argument[this]", "ReturnValue", "taint"]
+      # .prop(name) returns a property value
+      - ["cheerio", "Fuzzy.Member[prop].WithArity[1]", "Argument[this]", "ReturnValue", "taint"]
+      # .toString() / .serialize() render the cheerio object to a string
+      - ["cheerio", "Fuzzy.Member[toString]", "Argument[this]", "ReturnValue", "taint"]
+      - ["cheerio", "Fuzzy.Member[serialize]", "Argument[this]", "ReturnValue", "taint"]
+      - ["cheerio", "Fuzzy.Member[serializeArray]", "Argument[this]", "ReturnValue", "taint"]
+
+      # $.html(), $.xml(), $.text() — static rendering on loaded $
+      - ["cheerio", "Member[load].ReturnValue.Member[html]", "Argument[this]", "ReturnValue", "taint"]
+      - ["cheerio", "Member[load].ReturnValue.Member[xml]", "Argument[this]", "ReturnValue", "taint"]
+      - ["cheerio", "Member[load].ReturnValue.Member[text]", "Argument[this]", "ReturnValue", "taint"]
+
+      # Traversal/query: taint flows from $ function call receiver through
+      # selected elements. $(selector) returns a cheerio object with taint
+      # from the loaded DOM.
+      - ["cheerio", "Member[load].ReturnValue", "Argument[this]", "ReturnValue", "taint"]
+
+      # .each(fn) — callback receives tainted elements
+      - ["cheerio", "Fuzzy.Member[each]", "Argument[this]", "Argument[0].Parameter[1]", "taint"]
+      # .map(fn) — callback receives tainted elements
+      - ["cheerio", "Fuzzy.Member[map]", "Argument[this]", "Argument[0].Parameter[1]", "taint"]
+      # .filter(fn) — callback receives tainted elements, result is subset
+      - ["cheerio", "Fuzzy.Member[filter]", "Argument[this]", "ReturnValue", "taint"]
+      # .toArray() — returns array of DOM elements
+      - ["cheerio", "Fuzzy.Member[toArray]", "Argument[this]", "ReturnValue", "taint"]
+      # .get(i) — returns a single DOM element
+      - ["cheerio", "Fuzzy.Member[get]", "Argument[this]", "ReturnValue", "taint"]
+      # .clone() — returns a copy of the cheerio object
+      - ["cheerio", "Fuzzy.Member[clone]", "Argument[this]", "ReturnValue", "taint"]

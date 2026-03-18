@@ -1,0 +1,40 @@
+extensions:
+  # =============================================================================
+  # printf (npm: "printf") - C-style printf string formatting for JavaScript
+  # =============================================================================
+  #
+  # printf provides C-style string formatting with standard format specifiers
+  # (%s, %d, %f, %x, etc.).
+  #
+  #   const printf = require('printf');
+  #
+  #   // Returns formatted string
+  #   printf('%s has %d items', name, count);  // => 'Alice has 3 items'
+  #   printf('%04x', 48879);                   // => 'beef'
+  #
+  #   // Can also write to a writable stream (format string at index 1)
+  #   printf(process.stdout, '%s has %d items', name, count);
+  #
+  # API:
+  #   printf(format, ...args)          => formatted string
+  #   printf(stream, format, ...args)  => writes to stream, returns undefined
+  #
+  # Security concerns:
+  # - No sources: printf does not fetch external data.
+  # - No sinks expressible via data extensions. (The format-string argument is
+  #   a tainted-format-string sink when format arguments are present, but that
+  #   query uses a custom sink class, not the extensible sinkModel predicate.)
+  # - Taint propagation: the format string and all format arguments flow into
+  #   the returned string.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through printf calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # printf(format, arg1, arg2, ...) => formatted string
+      # All arguments (format string + interpolated values) contribute to the result.
+      - ["printf", "", "Argument[0..]", "ReturnValue", "taint"]

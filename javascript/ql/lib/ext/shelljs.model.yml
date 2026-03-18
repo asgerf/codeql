@@ -1,6 +1,148 @@
 extensions:
+  # =============================================================================
+  # shelljs (npm: "shelljs") - Unix shell commands for Node.js
+  # =============================================================================
+  #
+  # shelljs provides portable Unix shell commands as Node.js functions:
+  #
+  #   const shell = require('shelljs');
+  #
+  #   // Command execution
+  #   shell.exec('git log');           // execute shell command
+  #   shell.exec('git log').stdout;    // get stdout
+  #   shell.cmd('git', 'log');         // execute with separate args
+  #
+  #   // File operations
+  #   shell.cat('file.txt');           // read file
+  #   shell.head('file.txt');          // first lines
+  #   shell.tail('file.txt');          // last lines
+  #   shell.sort('file.txt');          // sort lines
+  #   shell.uniq('file.txt');          // unique lines
+  #   shell.grep('pattern', 'file');   // search in file
+  #   shell.sed(/old/, 'new', 'file'); // find/replace in file
+  #
+  #   // File system operations
+  #   shell.cp('src', 'dest');
+  #   shell.mv('src', 'dest');
+  #   shell.rm('file');
+  #   shell.mkdir('dir');
+  #   shell.cd('dir');
+  #   shell.find('dir');
+  #   shell.ls('dir');
+  #   shell.ln('src', 'dest');
+  #   shell.touch('file');
+  #   shell.chmod('755', 'file');
+  #   shell.which('cmd');
+  #
+  #   // Piping to files
+  #   shell.cat('file1').to('file2');
+  #   shell.echo('text').toEnd('file');
+  #
+  #   // Environment
+  #   shell.env;                       // process environment variables
+  #
+  # Also covers:
+  #   shelljs.exec (npm: "shelljs.exec") — standalone exec
+  #   async-shelljs (npm: "async-shelljs") — async exec wrapper
+  #
+  # Security concerns:
+  # - exec/cmd/asyncExec execute shell commands → command-injection sinks.
+  # - File system operations accept paths → path-injection sinks.
+  # - shell.env exposes environment variables → environment source
+  #   (already modeled in existing shelljs.model.yml data extension).
+  #
+  # Existing QLL coverage (ShellJS.qll):
+  # - ShellJSExec: exec, cmd, asyncExec as SystemCommandExecution
+  # - ShellJSGenericFileAccess: cd, cp, touch, chmod, pushd, find, ls, ln,
+  #   mkdir, mv, rm, which as FileSystemAccess
+  # - ShellJSRead: cat, head, sort, tail, uniq as FileSystemReadAccess
+  # - ShellJSPatternRead: grep, sed as FileSystemReadAccess
+  # - ShellJSPipe: .to(), .toEnd() as FileSystemWriteAccess
+  # - ShellJSFilenameSource: find, ls, which as FileNameSource
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: environment variables
+  # ---------------------------------------------------------------------------
   - addsTo:
-      pack: codeql/javascript-all 
+      pack: codeql/javascript-all
       extensible: sourceModel
     data:
+      # shell.env — process environment variables
       - ["shelljs", "Member[env]", "environment"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # shell.exec(cmd) — executes a shell command
+      - ["shelljs", "Member[exec].Argument[0]", "command-injection"]
+
+      # shelljs.exec (standalone package)
+      - ["shelljs.exec", "Argument[0]", "command-injection"]
+
+      # shell.cmd(cmd, ...args) — all arguments form the command
+      - ["shelljs", "Member[cmd].Argument[0..9]", "command-injection"]
+
+      # async-shelljs.asyncExec(cmd)
+      - ["async-shelljs", "Member[asyncExec].Argument[0]", "command-injection"]
+      - ["async-shelljs", "Argument[0]", "command-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path injection (file system access)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # File reading operations — path arguments
+      - ["shelljs", "Member[cat].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[head].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[tail].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[sort].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[uniq].Argument[0..9]", "path-injection"]
+
+      # File system manipulation — path arguments
+      - ["shelljs", "Member[cp].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[mv].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[rm].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[mkdir].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[cd].Argument[0]", "path-injection"]
+      - ["shelljs", "Member[find].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[ls].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[ln].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[touch].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[chmod].Argument[0..9]", "path-injection"]
+      - ["shelljs", "Member[pushd].Argument[0]", "path-injection"]
+
+      # Pattern-based reads — file path arguments (not the pattern itself)
+      # grep(pattern, file...) — files start at argument 1
+      - ["shelljs", "Member[grep].Argument[1..9]", "path-injection"]
+      # sed(pattern, replacement, file...) — files start at argument 2
+      - ["shelljs", "Member[sed].Argument[2..9]", "path-injection"]
+
+      # Piping to files: shell.cat('f1').to('f2'), shell.echo('x').toEnd('f')
+      - ["shelljs", "Fuzzy.Member[to].Argument[0]", "path-injection"]
+      - ["shelljs", "Fuzzy.Member[toEnd].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: file read operations return file contents
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # cat, head, sort, tail, uniq read file contents → return value
+      - ["shelljs", "Member[cat]", "Argument[0..9]", "ReturnValue", "taint"]
+      - ["shelljs", "Member[head]", "Argument[0..9]", "ReturnValue", "taint"]
+      - ["shelljs", "Member[sort]", "Argument[0..9]", "ReturnValue", "taint"]
+      - ["shelljs", "Member[tail]", "Argument[0..9]", "ReturnValue", "taint"]
+      - ["shelljs", "Member[uniq]", "Argument[0..9]", "ReturnValue", "taint"]
+      - ["shelljs", "Member[grep]", "Argument[1..9]", "ReturnValue", "taint"]
+      - ["shelljs", "Member[sed]", "Argument[2..9]", "ReturnValue", "taint"]
+
+      # exec returns ShellString with stdout/stderr
+      - ["shelljs", "Member[exec]", "Argument[0]", "ReturnValue", "taint"]

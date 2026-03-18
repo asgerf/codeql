@@ -1,0 +1,87 @@
+extensions:
+  # =============================================================================
+  # express-hbs (npm: "express-hbs") - Handlebars view engine for Express
+  # =============================================================================
+  #
+  # express-hbs is a Handlebars view engine for Express with support for
+  # layouts, blocks, partials, and async helpers.
+  #
+  #   const hbs = require('express-hbs');
+  #
+  #   // Express 4 usage:
+  #   app.engine('hbs', hbs.express4({
+  #     partialsDir: __dirname + '/views/partials',
+  #     defaultLayout: __dirname + '/views/layouts/main',
+  #     layoutsDir: __dirname + '/views/layouts',
+  #     restrictLayoutsTo: __dirname + '/views/layouts'
+  #   }));
+  #   app.set('view engine', 'hbs');
+  #
+  #   // Express 3 usage (same API):
+  #   app.engine('hbs', hbs.express3({ ... }));
+  #
+  #   // Instance creation:
+  #   const instance = hbs.create();
+  #   app.engine('hbs', instance.express4({ ... }));
+  #
+  #   // Rendering:
+  #   app.get('/', (req, res) => {
+  #     res.render('home', { title: 'Hello', layout: 'custom-layout' });
+  #   });
+  #
+  # ⚠️ Security warning (from README):
+  # The `layout` property in res.render options controls which layout file
+  # is loaded from the filesystem. If untrusted data (e.g. req.query) is
+  # passed directly as render options, an attacker can read arbitrary files
+  # via the layout property. Use `restrictLayoutsTo` to mitigate this.
+  #
+  # API summary:
+  # - hbs.express3(options?) → Express engine function
+  # - hbs.express4(options?) → Express engine function (alias of express3)
+  # - hbs.create() → new ExpressHbs instance
+  # - hbs.registerHelper(name, fn) — register a Handlebars helper
+  # - hbs.registerAsyncHelper(name, fn) — register an async helper
+  # - hbs.registerPartial(name, source, filename?) — register a partial
+  # - hbs.compile(source, filename?) — compile a template string
+  # - hbs.handlebars — the underlying Handlebars instance
+  # - hbs.SafeString — Handlebars.SafeString constructor
+  #
+  # Security analysis:
+  # - Like express-handlebars, Handlebars templates are logic-less and do NOT
+  #   allow arbitrary code execution. Template strings are NOT code-injection
+  #   sinks. However, triple-stache {{{expr}}} outputs raw HTML (XSS risk).
+  # - The layout property in render locals controls filesystem reads — this is
+  #   a path-injection concern, but it flows through Express's res.render()
+  #   locals mechanism, already modeled by Express models.
+  # - No direct sources: the library doesn't provide access to untrusted data.
+  # - No direct sinks exposed via the public API. The engine function
+  #   (___express) is called internally by Express with (filename, options, cb).
+  #   The filename comes from Express internals (view resolution), not from
+  #   user code. Template compilation (hbs.compile) takes a source string but
+  #   Handlebars compilation is not code-injection.
+  #
+  # Existing QLL coverage:
+  # - Templating.qll: express-hbs is listed as a MustacheStyleSyntax package
+  #   (handlebars-family template syntax, .hbs extension).
+  # - TemplateObjectInjectionCustomizations.qll: express-hbs is listed as a
+  #   vulnerable template engine. The QLL models engine registration via
+  #   hbs.express3/express4 calls and hbs.create().express3/express4 patterns.
+  #   This should be retained as it cannot be expressed as data extensions.
+  # =============================================================================
+
+  # No sources — the library does not provide access to untrusted data.
+
+  # No code-injection sinks — Handlebars is logic-less; compiling templates
+  # does not evaluate arbitrary code the way EJS or Eta do.
+
+  # No path-injection sinks exposed via direct API — the engine function is
+  # called internally by Express (filename comes from view resolution).
+  # The layout path concern flows through res.render() locals, which is
+  # already modeled by the Express framework models.
+
+  # No summaries needed — template rendering is handled by Express's
+  # res.render() integration. The express-hbs engine function conforms to
+  # Express's view engine contract: engine(filename, locals, callback).
+  # Taint from locals into callback output is modeled generically by Express.
+
+  []

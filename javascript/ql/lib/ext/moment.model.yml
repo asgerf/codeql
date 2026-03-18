@@ -1,0 +1,48 @@
+extensions:
+  # =============================================================================
+  # moment (npm: "moment") — Date parsing, manipulation, and formatting
+  # =============================================================================
+  #
+  # Moment.js is a widely-used date library for parsing, validating,
+  # manipulating, and formatting dates:
+  #
+  #   const moment = require('moment');
+  #   moment('2019-01-25').format('DD/MM/YYYY')        //=> '25/01/2019'
+  #   moment('2019-01-25').format('[Today is] dddd')    //=> 'Today is Friday'
+  #   moment.utc('2019-01-25').format()
+  #   moment.parseZone('2019-01-25T06:00:00+06:00')
+  #
+  # The format() method accepts a template string where square-bracket
+  # escaping ([...]) can embed arbitrary literal text in the output.
+  # If the format string is attacker-controlled, arbitrary content
+  # appears in the output.
+  #
+  # moment has no sources (it does not fetch remote data) and no sinks
+  # (it does not execute code, make requests, or write to the filesystem).
+  #
+  # moment-timezone extends moment with timezone support; its API is
+  # identical for formatting purposes (moment.tz(...).format(f)).
+  #
+  # Existing QLL coverage (DateFunctions.qll):
+  #   The Moment module models format(f) taint: format string → return value.
+  #   Covers moment, moment-timezone, and dayjs (moment-compatible API).
+  #   Also covers @date-io/moment adapted instances via DateIO.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint from format string to return value
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # moment(...).format(formatStr) — taint from format string to output.
+      # Fuzzy matches any moment-derived object (method chains, clones, utc, tz):
+      #   moment().add(1, 'day').format(f)
+      #   moment.utc().format(f)
+      #   moment.tz('2013-11-18', 'America/Toronto').format(f)
+      #   moment().startOf('day').format(f)
+      - ["moment", "Fuzzy.Member[format]", "Argument[0]", "ReturnValue", "taint"]
+
+      # moment-timezone has the same format() API
+      - ["moment-timezone", "Fuzzy.Member[format]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,49 @@
+extensions:
+  # =============================================================================
+  # async-execute (npm: "async-execute") - Execute shell commands asynchronously
+  # =============================================================================
+  #
+  # async-execute is a thin promise wrapper around child_process.exec.
+  # It exports a single named function:
+  #
+  #   import { execute } from 'async-execute';
+  #   const stdout = await execute('ls -la', { pipe: true });
+  #
+  # Signature: execute(script: string, options?: Options) → Promise<string>
+  #   - script:  shell command string to execute
+  #   - options: child_process.exec options, plus { pipe?, exit? }
+  #   - returns: promise resolving to trimmed stdout string
+  #
+  # Note: v1.x exported the function as the default export; v2.x exports it as
+  # a named export "execute". The existing QLL model in SystemCommandExecutors
+  # handles the default-import form. This model covers the named-export form
+  # and adds taint summaries for the return value.
+  #
+  # Security concerns:
+  # - SINK: The first argument (script) is passed directly to child_process.exec
+  #   and is interpreted by the system shell — command injection risk.
+  # - The resolved promise value (stdout) carries tainted data from the command.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Default import: execute(script) — script is shell-interpreted
+      - ["async-execute", "Argument[0]", "command-injection"]
+      # Named import: execute(script)
+      - ["async-execute", "Member[execute].Argument[0]", "command-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: stdout flows from command execution to resolved promise
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Taint from the script argument reaches the stdout return value
+      - ["async-execute", "", "Argument[0]", "ReturnValue.Awaited", "taint"]
+      - ["async-execute", "Member[execute]", "Argument[0]", "ReturnValue.Awaited", "taint"]

@@ -1,0 +1,42 @@
+extensions:
+  # =============================================================================
+  # foo (npm: "foo") - An opinionated git CLI for OSS
+  # =============================================================================
+  #
+  # foo is a small CLI tool wrapping common git operations (checkout, push, log,
+  # diff). It can also be used programmatically:
+  #
+  #   const foo = require('foo');
+  #   foo({ args: ['checkout', '@user/branch'] });
+  #
+  # Internally, the default export dispatches to task functions:
+  #
+  #   module.exports = function(opts) {
+  #     tasks[opts.args[0]](opts.args[1]);
+  #   };
+  #
+  # The checkout task interpolates its argument directly into shell.exec()
+  # calls via gitCmd(), constructing commands such as:
+  #   shell.exec(`git remote add ${remote} ...`)
+  #   shell.exec(`git fetch ${remote}`)
+  #   shell.exec(`git checkout --track -b ${branchName} ${remote}/${branch}`)
+  #
+  # Security concerns:
+  # - SINK (command-injection): Values from opts.args flow to shell.exec()
+  #   through the checkout task's gitCmd() utility.
+  # - No sources. The library does not expose untrusted or remote data.
+  #
+  # Existing QLL coverage: None.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command-injection via default export
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # require('foo')(opts) — opts.args elements flow to shell.exec() via
+      # the checkout task's gitCmd() calls. opts.args[0] is used for dynamic
+      # task dispatch, opts.args[1] is passed as the task argument.
+      - ["foo", "Argument[0].Member[args]", "command-injection"]

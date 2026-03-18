@@ -1,0 +1,135 @@
+extensions:
+  # =============================================================================
+  # fs (Node.js built-in) — File system operations
+  # Also covers: fs/promises
+  # =============================================================================
+  #
+  # The fs module provides an API for interacting with the file system:
+  #
+  #   const fs = require('fs');
+  #   fs.readFile('/etc/passwd', 'utf8', (err, data) => { ... });
+  #   const data = fs.readFileSync('/etc/passwd', 'utf8');
+  #
+  #   const fsp = require('fs/promises');
+  #   const data = await fsp.readFile('/etc/passwd', 'utf8');
+  #
+  # Drop-in replacements with the same API exist as separate packages:
+  #   graceful-fs, original-fs, mz/fs, fs-extra (superset)
+  #
+  # Security concerns:
+  # - Path injection: all methods that accept a file path are sinks. An
+  #   attacker who controls a file path can read, write, or delete arbitrary
+  #   files on the system (path traversal / directory traversal).
+  # - File sources: methods that read file contents or list directory entries
+  #   return data from the local file system. Under the "file" threat model,
+  #   this data is treated as untrusted.
+  # - Taint propagation: realpath/realpathSync resolve a path to its
+  #   canonical form; taint flows from the input path to the result.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path-injection — file path parameters
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- fs: single-path methods (path at Argument[0]) ---
+
+      # File read/write
+      - ["fs", "Member[readFile,readFileSync,writeFile,writeFileSync,appendFile,appendFileSync].Argument[0]", "path-injection"]
+
+      # File metadata and permissions
+      - ["fs", "Member[access,accessSync,stat,statSync,lstat,lstatSync,statfs,statfsSync].Argument[0]", "path-injection"]
+      - ["fs", "Member[chmod,chmodSync,chown,chownSync,lchmod,lchmodSync,lchown,lchownSync].Argument[0]", "path-injection"]
+      - ["fs", "Member[utimes,utimesSync,lutimes,lutimesSync].Argument[0]", "path-injection"]
+
+      # Directory operations
+      - ["fs", "Member[mkdir,mkdirSync,mkdtemp,mkdtempSync,rmdir,rmdirSync,rm,rmSync].Argument[0]", "path-injection"]
+      - ["fs", "Member[readdir,readdirSync,opendir,opendirSync].Argument[0]", "path-injection"]
+
+      # File open, close, unlink, truncate
+      - ["fs", "Member[open,openSync,openAsBlob,unlink,unlinkSync,truncate,truncateSync].Argument[0]", "path-injection"]
+
+      # Path resolution and link reading
+      - ["fs", "Member[readlink,readlinkSync,realpath,realpathSync].Argument[0]", "path-injection"]
+      # realpath.native / realpathSync.native
+      - ["fs", "Member[realpath,realpathSync].Member[native].Argument[0]", "path-injection"]
+
+      # Streams
+      - ["fs", "Member[createReadStream,createWriteStream].Argument[0]", "path-injection"]
+
+      # File watching
+      - ["fs", "Member[watch,watchFile,unwatchFile].Argument[0]", "path-injection"]
+
+      # Glob
+      - ["fs", "Member[glob,globSync].Argument[0]", "path-injection"]
+
+      # Existence check (deprecated but still widely used)
+      - ["fs", "Member[exists,existsSync].Argument[0]", "path-injection"]
+
+      # --- fs: two-path methods (paths at Argument[0] and Argument[1]) ---
+      - ["fs", "Member[copyFile,copyFileSync,cp,cpSync].Argument[0..1]", "path-injection"]
+      - ["fs", "Member[link,linkSync,rename,renameSync,symlink,symlinkSync].Argument[0..1]", "path-injection"]
+
+      # --- fs.promises.* (accessed via require('fs').promises) ---
+      - ["fs", "Member[promises].Member[readFile,writeFile,appendFile,access,stat,lstat,statfs,chmod,chown,lchmod,lchown,utimes,lutimes].Argument[0]", "path-injection"]
+      - ["fs", "Member[promises].Member[mkdir,mkdtemp,rmdir,rm,readdir,opendir,open,unlink,truncate].Argument[0]", "path-injection"]
+      - ["fs", "Member[promises].Member[readlink,realpath,watch,glob].Argument[0]", "path-injection"]
+      - ["fs", "Member[promises].Member[copyFile,cp,link,rename,symlink].Argument[0..1]", "path-injection"]
+
+      # --- fs/promises module (accessed via require('fs/promises')) ---
+      - ["fs/promises", "Member[readFile,writeFile,appendFile,access,stat,lstat,statfs,chmod,chown,lchmod,lchown,utimes,lutimes].Argument[0]", "path-injection"]
+      - ["fs/promises", "Member[mkdir,mkdtemp,rmdir,rm,readdir,opendir,open,unlink,truncate].Argument[0]", "path-injection"]
+      - ["fs/promises", "Member[readlink,realpath,watch,glob].Argument[0]", "path-injection"]
+      - ["fs/promises", "Member[copyFile,cp,link,rename,symlink].Argument[0..1]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: file data and directory listings (threat-model: file)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # --- Synchronous reads: return value is file data ---
+      - ["fs", "Member[readFileSync].ReturnValue", "file"]
+      - ["fs", "Member[readdirSync].ReturnValue", "file"]
+      - ["fs", "Member[readlinkSync].ReturnValue", "file"]
+      - ["fs", "Member[realpathSync].ReturnValue", "file"]
+
+      # --- Callback-based reads: last argument is callback(err, data) ---
+      - ["fs", "Member[readFile].Argument[N-1].Parameter[1]", "file"]
+      - ["fs", "Member[readdir].Argument[N-1].Parameter[1]", "file"]
+      - ["fs", "Member[readlink].Argument[N-1].Parameter[1]", "file"]
+      - ["fs", "Member[realpath].Argument[N-1].Parameter[1]", "file"]
+
+      # --- Promise-based reads via fs.promises ---
+      - ["fs", "Member[promises].Member[readFile].ReturnValue.Awaited", "file"]
+      - ["fs", "Member[promises].Member[readdir].ReturnValue.Awaited", "file"]
+      - ["fs", "Member[promises].Member[readlink].ReturnValue.Awaited", "file"]
+      - ["fs", "Member[promises].Member[realpath].ReturnValue.Awaited", "file"]
+
+      # --- Promise-based reads via fs/promises ---
+      - ["fs/promises", "Member[readFile].ReturnValue.Awaited", "file"]
+      - ["fs/promises", "Member[readdir].ReturnValue.Awaited", "file"]
+      - ["fs/promises", "Member[readlink].ReturnValue.Awaited", "file"]
+      - ["fs/promises", "Member[realpath].ReturnValue.Awaited", "file"]
+
+      # --- Stream-based reads: data event on createReadStream ---
+      - ["fs", "Member[createReadStream].ReturnValue.Member[on,addListener].WithStringArgument[0=data].Argument[1].Parameter[0]", "file"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through path-resolving functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # realpath resolves symlinks: input path taints the resolved output path
+      - ["fs", "Member[realpathSync]", "Argument[0]", "ReturnValue", "taint"]
+      - ["fs", "Member[realpath]", "Argument[0]", "Argument[N-1].Parameter[1]", "taint"]
+      - ["fs", "Member[realpath,realpathSync].Member[native]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Promise-based realpath
+      - ["fs", "Member[promises].Member[realpath]", "Argument[0]", "ReturnValue.Awaited", "taint"]
+      - ["fs/promises", "Member[realpath]", "Argument[0]", "ReturnValue.Awaited", "taint"]

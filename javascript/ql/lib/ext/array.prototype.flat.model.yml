@@ -1,0 +1,29 @@
+extensions:
+  # =============================================================================
+  # array.prototype.flat (npm: "array.prototype.flat") - ES spec-compliant
+  # Array.prototype.flat polyfill
+  # =============================================================================
+  #
+  # A polyfill for Array.prototype.flat, exposed as a standalone function that
+  # recursively flattens nested arrays up to a given depth.
+  #
+  #   const flat = require('array.prototype.flat');
+  #   flat([1, [2, [3]]], Infinity);
+  #   //=> [1, 2, 3]
+  #
+  # Signature: flat(array [, depth])
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure data transformation.
+  # - Taint propagates from the input array to the returned flattened array.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through flat
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # flat(arr, depth?) → flattened array: taint flows from argument to return
+      - ["array.prototype.flat", "", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,31 @@
+extensions:
+  # =============================================================================
+  # capital-case (npm: "capital-case") - Convert a string to Capital Case
+  # =============================================================================
+  #
+  # Part of the change-case family of packages by Blake Embrey. Converts strings
+  # to Capital Case format (e.g. "Foo Bar").
+  #
+  #   import { capitalCase } from "capital-case";
+  #   capitalCase("test string");  //=> "Test String"
+  #
+  # Exports:
+  #   capitalCase(input, options?) → string
+  #   capitalCaseTransform(input) → string
+  #
+  # Security concerns:
+  # - No sources or sinks. All functions are pure string transformations.
+  # - Taint propagates from the input string to the returned string.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through capital-case functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # capitalCase(input, options?) → string
+      - ["capital-case", "Member[capitalCase]", "Argument[0]", "ReturnValue", "taint"]
+      # capitalCaseTransform(input) → string
+      - ["capital-case", "Member[capitalCaseTransform]", "Argument[0]", "ReturnValue", "taint"]

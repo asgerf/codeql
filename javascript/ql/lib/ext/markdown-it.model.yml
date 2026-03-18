@@ -1,0 +1,61 @@
+extensions:
+  # =============================================================================
+  # markdown-it (npm: "markdown-it") - Markdown parser and HTML renderer
+  # =============================================================================
+  #
+  # markdown-it is a fast, pluggable markdown parser that produces HTML:
+  #
+  #   const MarkdownIt = require('markdown-it');
+  #   const md = new MarkdownIt({ html: true });
+  #
+  #   // Render markdown to HTML
+  #   const html = md.render('# Hello *world*');
+  #
+  #   // Render inline markdown (no wrapping <p> tags)
+  #   const inline = md.renderInline('Hello *world*');
+  #
+  #   // Parse markdown to token array (for custom rendering / analysis)
+  #   const tokens = md.parse('# Hello', {});
+  #   const inlineTokens = md.parseInline('Hello *world*', {});
+  #
+  #   // Chaining with plugins and config
+  #   const md2 = new MarkdownIt().use(plugin).set({ html: true });
+  #
+  # Security concerns:
+  # - md.render(src) and md.renderInline(src) convert markdown to HTML.
+  #   When the `html` option is true, raw HTML tags in the input pass
+  #   through to the output unchanged. If the output is inserted into a
+  #   page (e.g. via innerHTML), untrusted markdown input causes XSS.
+  # - md.parse(src) and md.parseInline(src) return token arrays containing
+  #   data derived from the input; taint propagates through them.
+  #
+  # Existing QLL coverage:
+  #   Markdown.qll (MarkdownIt module): models render/renderInline as taint
+  #     steps, conditional on `html: true` and absence of the
+  #     markdown-it-sanitizer plugin.
+  #
+  # Note: The QLL checks `html: true` and that markdown-it-sanitizer is not
+  # used. These conditions cannot be expressed in data extensions, so the
+  # summaries below apply unconditionally.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through markdown-it methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # md.render(src, env?) → HTML string
+      # Taint from the markdown source flows to the rendered HTML output.
+      - ["markdown-it", "Fuzzy.Member[render]", "Argument[0]", "ReturnValue", "taint"]
+
+      # md.renderInline(src, env?) → HTML string (no wrapping tags)
+      - ["markdown-it", "Fuzzy.Member[renderInline]", "Argument[0]", "ReturnValue", "taint"]
+
+      # md.parse(src, env) → Token[]
+      # Taint from the markdown source flows into the returned token array.
+      - ["markdown-it", "Fuzzy.Member[parse]", "Argument[0]", "ReturnValue", "taint"]
+
+      # md.parseInline(src, env) → Token[]
+      - ["markdown-it", "Fuzzy.Member[parseInline]", "Argument[0]", "ReturnValue", "taint"]

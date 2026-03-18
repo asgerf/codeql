@@ -1,0 +1,139 @@
+extensions:
+  # =============================================================================
+  # crypto (Node.js built-in) - Cryptographic functions
+  # =============================================================================
+  #
+  # The crypto module provides cryptographic functionality including hash,
+  # HMAC, cipher, decipher, sign, verify, and key derivation operations.
+  #
+  #   const crypto = require('crypto');
+  #
+  #   // Hashing
+  #   const hash = crypto.createHash('sha256').update(data).digest('hex');
+  #
+  #   // HMAC
+  #   const hmac = crypto.createHmac('sha256', key).update(data).digest('hex');
+  #
+  #   // Encryption
+  #   const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+  #   let encrypted = cipher.update(data, 'utf8', 'hex');
+  #   encrypted += cipher.final('hex');
+  #
+  #   // Key derivation
+  #   crypto.pbkdf2(password, salt, 100000, 64, 'sha512', (err, key) => {});
+  #   const key = crypto.scryptSync(password, salt, 64);
+  #
+  #   // Direct encrypt/decrypt
+  #   const encrypted = crypto.publicEncrypt(key, buffer);
+  #
+  # Security concerns:
+  # - No traditional injection sinks (command, SQL, etc.). Crypto-specific
+  #   concerns (weak algorithms, insufficient password hashing) are handled
+  #   by the CryptographicOperation concept framework in CryptoLibraries.qll.
+  # - No sources of untrusted external data. randomBytes() produces secure
+  #   random data, not untrusted input.
+  # - Taint propagation is the key modeling concern: data flows through
+  #   hash/cipher/sign chains and key derivation functions.
+  #
+  # Existing QLL coverage:
+  # - CryptoLibraries.qll: Models createHash, createHmac, createSign,
+  #   createCipher, createCipheriv as CryptographicOperation instances.
+  #   Tracks algorithm names, block modes, and key usage.
+  # - InsecureRandomnessCustomizations.qll: Models pseudoRandomBytes as
+  #   insecure; randomBytes/randomFill/randomFillSync as secure.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through crypto operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =======================================================================
+      # Streaming method chains: update/write → digest/final/sign
+      # =======================================================================
+      # Applies to Hash, Hmac, Cipher, Decipher, Sign, and Verify objects
+      # created by createHash, createHmac, createCipheriv, createDecipheriv,
+      # createSign, createVerify (and deprecated createCipher, createDecipher).
+      #
+      # Fuzzy matches update/write/digest/final/sign on any object derived
+      # from the crypto package, avoiding the need for explicit type models
+      # for each class.
+
+      # update(data) / write(data): taint flows from data to return value
+      # (for method chaining: hash.update(data).digest()) and to receiver
+      # (for separate calls: hash.update(data); hash.digest()).
+      - ["crypto", "Fuzzy.Member[update,write]", "Argument[0]", "ReturnValue", "taint"]
+      - ["crypto", "Fuzzy.Member[update,write]", "Argument[0]", "Argument[this]", "taint"]
+
+      # digest([encoding]): reads accumulated data from receiver, returns
+      # hash/HMAC value. Used on Hash and Hmac objects.
+      - ["crypto", "Fuzzy.Member[digest]", "Argument[this]", "ReturnValue", "taint"]
+
+      # final([encoding]): reads remaining buffered data from receiver,
+      # returns final cipher/decipher output. Used on Cipher and Decipher.
+      - ["crypto", "Fuzzy.Member[final]", "Argument[this]", "ReturnValue", "taint"]
+
+      # sign(key[, encoding]): reads accumulated data from receiver, returns
+      # digital signature. Used on Sign objects.
+      - ["crypto", "Fuzzy.Member[sign]", "Argument[this]", "ReturnValue", "taint"]
+
+      # copy(): creates a copy of a Hash object preserving accumulated state.
+      - ["crypto", "Fuzzy.Member[copy]", "Argument[this]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Direct (static) encrypt/decrypt
+      # =======================================================================
+      # crypto.publicEncrypt(key, buffer) → Buffer
+      # crypto.publicDecrypt(key, buffer) → Buffer
+      # crypto.privateEncrypt(key, buffer) → Buffer
+      # crypto.privateDecrypt(key, buffer) → Buffer
+      - ["crypto", "Member[publicEncrypt]", "Argument[1]", "ReturnValue", "taint"]
+      - ["crypto", "Member[publicDecrypt]", "Argument[1]", "ReturnValue", "taint"]
+      - ["crypto", "Member[privateEncrypt]", "Argument[1]", "ReturnValue", "taint"]
+      - ["crypto", "Member[privateDecrypt]", "Argument[1]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Static sign and hash functions
+      # =======================================================================
+      # crypto.sign(algorithm, data, key) → Buffer
+      - ["crypto", "Member[sign]", "Argument[1]", "ReturnValue", "taint"]
+
+      # crypto.hash(algorithm, data[, outputEncoding]) → Buffer/string
+      # (Node.js v21.7+)
+      - ["crypto", "Member[hash]", "Argument[1]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Key derivation functions
+      # =======================================================================
+      # Password/input key material flows to derived key output.
+
+      # crypto.pbkdf2(password, salt, iterations, keylen, digest, callback)
+      # callback is (err, derivedKey)
+      - ["crypto", "Member[pbkdf2]", "Argument[0]", "Argument[N-1].Parameter[1]", "taint"]
+
+      # crypto.pbkdf2Sync(password, salt, iterations, keylen, digest) → Buffer
+      - ["crypto", "Member[pbkdf2Sync]", "Argument[0]", "ReturnValue", "taint"]
+
+      # crypto.scrypt(password, salt, keylen[, options], callback)
+      # callback is (err, derivedKey); options is optional so callback
+      # may be at position 3 or 4 — use N-1 to match the last argument.
+      - ["crypto", "Member[scrypt]", "Argument[0]", "Argument[N-1].Parameter[1]", "taint"]
+
+      # crypto.scryptSync(password, salt, keylen[, options]) → Buffer
+      - ["crypto", "Member[scryptSync]", "Argument[0]", "ReturnValue", "taint"]
+
+      # crypto.hkdf(digest, ikm, salt, info, keylen, callback)
+      # ikm (input key material) at arg 1; callback is (err, derivedKey)
+      - ["crypto", "Member[hkdf]", "Argument[1]", "Argument[N-1].Parameter[1]", "taint"]
+
+      # crypto.hkdfSync(digest, ikm, salt, info, keylen) → ArrayBuffer
+      - ["crypto", "Member[hkdfSync]", "Argument[1]", "ReturnValue", "taint"]
+
+      # =======================================================================
+      # Diffie-Hellman key exchange
+      # =======================================================================
+      # dh.computeSecret(otherPublicKey) → Buffer
+      # Taint from the other party's public key flows to the shared secret.
+      - ["crypto", "Fuzzy.Member[computeSecret]", "Argument[0]", "ReturnValue", "taint"]

@@ -1,0 +1,42 @@
+extensions:
+  # =============================================================================
+  # exec-async (npm: "exec-async") - Promise wrapper for child_process.execFile
+  # =============================================================================
+  #
+  # exec-async wraps child_process.execFile in a promise.
+  #
+  #   const execAsync = require('exec-async');
+  #
+  #   // execAsync(command, args?, options?)
+  #   const result = await execAsync('ls', ['-la']);
+  #   const result = await execAsync('git', { _: ['status'], verbose: true });
+  #
+  # Signature: execAsync(cmd, args?, opts?) → Promise<string>
+  #   - cmd: the command/file to execute (passed to child_process.execFile)
+  #   - args: arguments as an array or object (converted to array internally)
+  #   - opts: options passed to child_process.execFile
+  #   - returns: promise resolving to stdout string
+  #
+  # Security concerns:
+  # - SINK: The first argument (cmd) is executed as an OS command via execFile
+  #   — command-injection risk. Not shell-interpreted by default.
+  # - SINK: The second argument (args) provides command-line arguments —
+  #   command-injection risk (indirect argument injection).
+  #
+  # Existing QLL coverage:
+  # - SystemCommandExecutors.qll: Models exec-async as a direct invocation
+  #   with cmdArg=0, optionsArg=-1, shell=false.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command-injection
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # execAsync(cmd, ...) — first argument is the command to execute
+      - ["exec-async", "Argument[0]", "command-injection"]
+
+      # execAsync(cmd, args, ...) — second argument supplies command-line args
+      - ["exec-async", "Argument[1]", "command-injection"]

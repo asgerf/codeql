@@ -1,0 +1,220 @@
+extensions:
+  # =============================================================================
+  # firebase/app — Client-side Firebase JavaScript SDK
+  # =============================================================================
+  #
+  # Core initialization module for the Firebase client SDK. In the compat API
+  # (v8 / v9 compat), all services are accessed from the firebase namespace:
+  #
+  #   import firebase from 'firebase/app';
+  #   import 'firebase/database';
+  #   import 'firebase/firestore';
+  #
+  #   const app = firebase.initializeApp(config);
+  #   const ref = firebase.database().ref('/users');
+  #   ref.once('value', snap => snap.val());           // attacker-controlled
+  #
+  #   const doc = await firebase.firestore().collection('c').doc('d').get();
+  #   doc.data();                                       // attacker-controlled
+  #
+  # In the modular API (v9+), each service has its own import path:
+  #
+  #   import { initializeApp }             from 'firebase/app';
+  #   import { getDatabase, ref, onValue } from 'firebase/database';
+  #   import { getFirestore, doc, getDoc } from 'firebase/firestore';
+  #   import { getStorage, getBytes }      from 'firebase/storage';
+  #   import { getFunctions, httpsCallable } from 'firebase/functions';
+  #   import { getMessaging, onMessage }   from 'firebase/messaging';
+  #
+  # Security concerns:
+  #   - Realtime Database and Firestore store user-generated content; values
+  #     read from them (snapshot.val(), doc.data()) are attacker-controlled.
+  #   - Transaction callbacks receive current database values that are
+  #     attacker-controlled.
+  #   - Cloud Storage files may be uploaded by any user; downloaded content
+  #     (getBytes, getBlob, getStream) and metadata are attacker-controlled.
+  #   - Cloud Functions callable responses originate from server-side code
+  #     that may echo user-generated content.
+  #   - Cloud Messaging payloads can be sent by compromised or malicious
+  #     senders.
+  #
+  # Existing QLL coverage (Firebase.qll):
+  #   - firebase/app and global "firebase" recognized as Firebase namespace
+  #   - database().ref() chain modeled with on/once listeners
+  #   - snapshot.val() / snapshot.exportVal() as remote flow sources
+  #   - ref.transaction() callback parameter as remote flow source
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources — compat API entry points
+  # ---------------------------------------------------------------------------
+  #
+  # The compat API is accessed via several equivalent import paths:
+  #   - "firebase/app"       (v8 and v9 compat)
+  #   - "firebase"           (v7 and earlier, some v8 setups)
+  #   - "firebase/compat/app" (v9+ explicit compat mode)
+  #   - global "firebase"    (CDN script tag usage)
+  #
+  # Fuzzy models on these entry points catch method calls reachable from
+  # the firebase namespace regardless of the intermediate object chain.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # =====================================================================
+      # Compat API — Realtime Database DataSnapshot value accessors
+      # =====================================================================
+      #
+      # snapshot.val()       — returns the JS value at this location
+      # snapshot.exportVal() — returns value with priority information
+      # snapshot.toJSON()    — returns JSON-serializable representation
+
+      - ["firebase/app", "Fuzzy.Member[val,exportVal,toJSON].ReturnValue", "remote"]
+      - ["firebase", "Fuzzy.Member[val,exportVal,toJSON].ReturnValue", "remote"]
+      - ["firebase/compat/app", "Fuzzy.Member[val,exportVal,toJSON].ReturnValue", "remote"]
+      - ["global", "Member[firebase].Fuzzy.Member[val,exportVal,toJSON].ReturnValue", "remote"]
+
+      # =====================================================================
+      # Compat API — Firestore DocumentSnapshot data accessor
+      # =====================================================================
+      #
+      # snapshot.data() — returns the document's fields as a plain object
+
+      - ["firebase/app", "Fuzzy.Member[data].ReturnValue", "remote"]
+      - ["firebase", "Fuzzy.Member[data].ReturnValue", "remote"]
+      - ["firebase/compat/app", "Fuzzy.Member[data].ReturnValue", "remote"]
+      - ["global", "Member[firebase].Fuzzy.Member[data].ReturnValue", "remote"]
+
+      # =====================================================================
+      # Compat API — Realtime Database transaction callback
+      # =====================================================================
+      #
+      # ref.transaction(updateFn) — updateFn receives current DB value
+      # as its first parameter, which is attacker-controlled
+
+      - ["firebase/app", "Fuzzy.Member[transaction].Argument[0].Parameter[0]", "remote"]
+      - ["firebase", "Fuzzy.Member[transaction].Argument[0].Parameter[0]", "remote"]
+      - ["firebase/compat/app", "Fuzzy.Member[transaction].Argument[0].Parameter[0]", "remote"]
+      - ["global", "Member[firebase].Fuzzy.Member[transaction].Argument[0].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # Compat API — Realtime Database listener callbacks
+      # =====================================================================
+      #
+      # ref.on('value', callback)  — callback receives DataSnapshot
+      # ref.once('value', callback) — callback receives DataSnapshot
+      # The snapshot parameter (Argument[1]) is the first positional callback.
+
+      - ["firebase/app", "Fuzzy.Member[on,once].Argument[1].Parameter[0]", "remote"]
+      - ["firebase", "Fuzzy.Member[on,once].Argument[1].Parameter[0]", "remote"]
+      - ["firebase/compat/app", "Fuzzy.Member[on,once].Argument[1].Parameter[0]", "remote"]
+      - ["global", "Member[firebase].Fuzzy.Member[on,once].Argument[1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # Compat API — Firestore onSnapshot listener callback
+      # =====================================================================
+      #
+      # docRef.onSnapshot(callback)          — callback at Argument[0]
+      # docRef.onSnapshot(options, callback) — callback at Argument[1]
+
+      - ["firebase/app", "Fuzzy.Member[onSnapshot].Argument[0,1].Parameter[0]", "remote"]
+      - ["firebase", "Fuzzy.Member[onSnapshot].Argument[0,1].Parameter[0]", "remote"]
+      - ["firebase/compat/app", "Fuzzy.Member[onSnapshot].Argument[0,1].Parameter[0]", "remote"]
+      - ["global", "Member[firebase].Fuzzy.Member[onSnapshot].Argument[0,1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # Compat API — Cloud Messaging onMessage callback
+      # =====================================================================
+      #
+      # messaging.onMessage(callback) — callback receives MessagePayload
+
+      - ["firebase/app", "Fuzzy.Member[onMessage].Argument[0].Parameter[0]", "remote"]
+      - ["firebase", "Fuzzy.Member[onMessage].Argument[0].Parameter[0]", "remote"]
+      - ["firebase/compat/app", "Fuzzy.Member[onMessage].Argument[0].Parameter[0]", "remote"]
+      - ["global", "Member[firebase].Fuzzy.Member[onMessage].Argument[0].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # Modular API — firebase/database (Realtime Database)
+      # =====================================================================
+
+      # DataSnapshot value accessors (fuzzy covers all snapshot origins)
+      - ["firebase/database", "Fuzzy.Member[val,exportVal,toJSON].ReturnValue", "remote"]
+
+      # onValue / onChild* listeners — callback receives DataSnapshot
+      #   onValue(query, callback, ...)
+      #   onChildAdded(query, callback, ...)   etc.
+      - ["firebase/database", "Member[onValue,onChildAdded,onChildChanged,onChildRemoved,onChildMoved].Argument[1].Parameter[0]", "remote"]
+
+      # get(query) → Promise<DataSnapshot>
+      - ["firebase/database", "Member[get].ReturnValue.Awaited", "remote"]
+
+      # runTransaction(ref, updateFn) — updateFn parameter is current value
+      - ["firebase/database", "Member[runTransaction].Argument[1].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # Modular API — firebase/firestore (Cloud Firestore)
+      # =====================================================================
+
+      # DocumentSnapshot.data() return value (fuzzy covers all snapshot origins)
+      - ["firebase/firestore", "Fuzzy.Member[data].ReturnValue", "remote"]
+
+      # getDoc / getDocs and their cache/server variants → Promise<Snapshot>
+      - ["firebase/firestore", "Member[getDoc,getDocFromCache,getDocFromServer].ReturnValue.Awaited", "remote"]
+      - ["firebase/firestore", "Member[getDocs,getDocsFromCache,getDocsFromServer].ReturnValue.Awaited", "remote"]
+
+      # onSnapshot(reference, callback) or onSnapshot(reference, options, callback)
+      - ["firebase/firestore", "Member[onSnapshot].Argument[1,2].Parameter[0]", "remote"]
+
+      # =====================================================================
+      # Modular API — firebase/storage (Cloud Storage)
+      # =====================================================================
+      #
+      # Files in Cloud Storage may be uploaded by any authenticated (or
+      # unauthenticated) user. Downloaded content is attacker-controlled.
+
+      # getBytes(ref) → Promise<ArrayBuffer>
+      - ["firebase/storage", "Member[getBytes].ReturnValue.Awaited", "remote"]
+
+      # getBlob(ref) → Promise<Blob>
+      - ["firebase/storage", "Member[getBlob].ReturnValue.Awaited", "remote"]
+
+      # getStream(ref) → NodeJS.ReadableStream (not a promise)
+      - ["firebase/storage", "Member[getStream].ReturnValue", "remote"]
+
+      # getMetadata(ref) → Promise<FullMetadata>
+      # Includes user-set fields such as contentType and customMetadata.
+      - ["firebase/storage", "Member[getMetadata].ReturnValue.Awaited", "remote"]
+
+      # =====================================================================
+      # Modular API — firebase/functions (Cloud Functions client)
+      # =====================================================================
+      #
+      # httpsCallable / httpsCallableFromURL return a callable whose
+      # invocation yields Promise<HttpsCallableResult>. The result's
+      # .data property contains the server response, which may include
+      # user-generated content.
+
+      - ["firebase/functions", "Fuzzy.Member[data]", "remote"]
+
+      # =====================================================================
+      # Modular API — firebase/messaging (Cloud Messaging)
+      # =====================================================================
+
+      # onMessage(messaging, callback) — callback receives MessagePayload
+      - ["firebase/messaging", "Member[onMessage].Argument[1].Parameter[0]", "remote"]
+
+      # onBackgroundMessage (service worker variant)
+      - ["firebase/messaging/sw", "Member[onBackgroundMessage].Argument[1].Parameter[0]", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # httpsCallableFromURL(functions, url) — the url parameter controls
+      # the destination of subsequent HTTP requests. If attacker-controlled,
+      # this is a server-side request forgery vector.
+      - ["firebase/functions", "Member[httpsCallableFromURL].Argument[1]", "request-forgery"]

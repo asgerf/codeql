@@ -1,0 +1,54 @@
+extensions:
+  # =============================================================================
+  # respjs (npm: "respjs") — Redis Serialization Protocol (RESP) implementation
+  # =============================================================================
+  #
+  # Parses and encodes Redis wire-protocol messages. Instances are
+  # EventEmitters: write() feeds chunks, 'data' events emit parsed values.
+  #
+  #   const Resp = require('respjs');
+  #   const resp = new Resp();
+  #   resp.on('data', (data) => { ... });
+  #   resp.write(chunk);
+  #
+  # Static encode/decode helpers:
+  #   Resp.decode(buffer)
+  #   Resp.encodeRequest(['SET', 'key', 'val'])
+  #   Resp.encodeString(str)
+  #   Resp.encodeError(err)
+  #   Resp.encodeInteger(num)
+  #   Resp.encodeBulk(str)
+  #   Resp.encodeBufBulk(buf)
+  #   Resp.encodeArray([...])
+  #   Resp.encodeNull()
+  #   Resp.encodeNullArray()
+  #
+  # Security concerns:
+  # - No sources. The library does not create network connections or access
+  #   external data; it is a protocol codec.
+  # - No sinks. The library performs no command execution, file I/O, URL
+  #   navigation, HTML rendering, or deserialization beyond RESP parsing.
+  # - Taint propagation: the static encode/decode methods transform data
+  #   and propagate taint (input → return value).
+  #
+  # Existing QLL coverage (NodeJSLib.qll):
+  # - new Resp() is recognized as a NodeJS EventEmitter.
+  # - resp.write(chunk) is modeled as an event dispatch: taint flows from
+  #   chunk (Argument[0]) to the 'data' event handler's parameter.
+  #   This EventEmitter cross-call flow cannot be expressed as data
+  #   extensions.
+  # =============================================================================
+
+  # Static encode methods: taint from argument to return buffer
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      - ["respjs", "Member[decode]", "Argument[0]", "ReturnValue", "taint"]
+      - ["respjs", "Member[encodeRequest]", "Argument[0]", "ReturnValue", "taint"]
+      - ["respjs", "Member[encodeString]", "Argument[0]", "ReturnValue", "taint"]
+      - ["respjs", "Member[encodeError]", "Argument[0]", "ReturnValue", "taint"]
+      - ["respjs", "Member[encodeInteger]", "Argument[0]", "ReturnValue", "taint"]
+      - ["respjs", "Member[encodeBulk]", "Argument[0]", "ReturnValue", "taint"]
+      - ["respjs", "Member[encodeBufBulk]", "Argument[0]", "ReturnValue", "taint"]
+      - ["respjs", "Member[encodeArray]", "Argument[0]", "ReturnValue", "taint"]

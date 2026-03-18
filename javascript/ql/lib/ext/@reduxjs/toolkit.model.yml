@@ -1,0 +1,154 @@
+extensions:
+  # =============================================================================
+  # Sources: RTK Query fetches data from remote APIs; responses are untrusted
+  # =============================================================================
+  #
+  # RTK Query is the data-fetching layer of @reduxjs/toolkit. It uses
+  # `fetchBaseQuery` (a thin wrapper around `fetch`) or custom base queries
+  # to call remote APIs, then caches and serves the responses.
+  #
+  # The typical usage pattern is:
+  #
+  #   import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+  #   const api = createApi({
+  #     baseQuery: fetchBaseQuery({ baseUrl: '/api' }),
+  #     endpoints: (build) => ({
+  #       getPost: build.query({ query: (id) => `posts/${id}` }),
+  #       addPost: build.mutation({
+  #         query: (body) => ({ url: 'posts', method: 'POST', body }),
+  #       }),
+  #     }),
+  #   });
+  #   const { data } = api.useGetPostQuery(1);
+  #
+  # Response data flows through transformResponse and ultimately surfaces as:
+  #   - Hook results: useQuery().data, useMutation()[1].data
+  #   - Thunk results: dispatch(api.endpoints.getPost.initiate(1)).unwrap()
+  #   - Selector results: api.endpoints.getPost.select(1)(state).data
+  #
+  # createApi is exported from both @reduxjs/toolkit/query and
+  # @reduxjs/toolkit/query/react. The /react variant adds React hooks.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # ----- RTK Query hook results -----
+      # createApi() returns an object with auto-generated hooks:
+      #   api.useGetPostQuery(arg)            -> { data, error, ... }
+      #   api.useGetPostQuery(arg).data       -> response data
+      #   api.useLazyGetPostQuery()           -> [trigger, { data, ... }]
+      #   api.useAddPostMutation()            -> [trigger, { data, ... }]
+      #   api.endpoints.getPost.useQuery(arg) -> { data, ... }
+      #
+      # The hook names are dynamic (based on endpoint names), so we use
+      # Fuzzy from the createApi return value to reach them.
+      - [
+          "@reduxjs/toolkit/query/react",
+          "Member[createApi].ReturnValue.Fuzzy.ReturnValue.Member[data]",
+          "remote",
+        ]
+      - [
+          "@reduxjs/toolkit/query",
+          "Member[createApi].ReturnValue.Fuzzy.ReturnValue.Member[data]",
+          "remote",
+        ]
+
+      # ----- initiate().unwrap() results -----
+      # Dispatching an endpoint's initiate action and calling .unwrap()
+      # returns the response data directly as a promise:
+      #   const result = await dispatch(api.endpoints.getPost.initiate(1)).unwrap();
+      - [
+          "@reduxjs/toolkit/query/react",
+          "Member[createApi].ReturnValue.Fuzzy.Member[initiate].ReturnValue.Member[unwrap].ReturnValue.Awaited",
+          "remote",
+        ]
+      - [
+          "@reduxjs/toolkit/query",
+          "Member[createApi].ReturnValue.Fuzzy.Member[initiate].ReturnValue.Member[unwrap].ReturnValue.Awaited",
+          "remote",
+        ]
+
+      # ----- select() selector results -----
+      # api.endpoints.getPost.select(arg) returns a selector function.
+      # Calling that selector with state returns { data, ... }.
+      - [
+          "@reduxjs/toolkit/query/react",
+          "Member[createApi].ReturnValue.Fuzzy.Member[select].ReturnValue.ReturnValue.Member[data]",
+          "remote",
+        ]
+      - [
+          "@reduxjs/toolkit/query",
+          "Member[createApi].ReturnValue.Fuzzy.Member[select].ReturnValue.ReturnValue.Member[data]",
+          "remote",
+        ]
+
+  # =============================================================================
+  # Sinks
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ===== Request forgery =====
+
+      # fetchBaseQuery({ baseUrl }) - controls the base URL for all requests.
+      - [
+          "@reduxjs/toolkit/query",
+          "Member[fetchBaseQuery].Argument[0].Member[baseUrl]",
+          "request-forgery",
+        ]
+      - [
+          "@reduxjs/toolkit/query/react",
+          "Member[fetchBaseQuery].Argument[0].Member[baseUrl]",
+          "request-forgery",
+        ]
+
+      # ===== Credential sinks =====
+
+      # fetchBaseQuery({ headers: { authorization: ... } }) - static auth headers.
+      - [
+          "@reduxjs/toolkit/query",
+          "Member[fetchBaseQuery].Argument[0].Member[headers].Member[authorization,Authorization]",
+          "credentials-key",
+        ]
+      - [
+          "@reduxjs/toolkit/query/react",
+          "Member[fetchBaseQuery].Argument[0].Member[headers].Member[authorization,Authorization]",
+          "credentials-key",
+        ]
+
+      # fetchBaseQuery({ prepareHeaders }) callback receives a Headers object
+      # and typically calls headers.set('authorization', token).
+      # The second argument to headers.set when setting auth headers is a credential.
+      # This is hard to model precisely with access paths, so we don't add it here.
+
+  # =============================================================================
+  # Summaries: taint propagation through RTK Query data flow
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # transformResponse receives the base query result and returns the
+      # cached data. Taint flows from the first parameter (raw API response)
+      # to the return value (transformed data stored in cache).
+      #
+      #   build.query({
+      #     query: (id) => `posts/${id}`,
+      #     transformResponse: (response) => response.results,
+      #   })
+      - [
+          "@reduxjs/toolkit/query",
+          "Member[createApi].ReturnValue.Fuzzy.Member[transformResponse]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]
+      - [
+          "@reduxjs/toolkit/query/react",
+          "Member[createApi].ReturnValue.Fuzzy.Member[transformResponse]",
+          "Argument[0]",
+          "ReturnValue",
+          "taint",
+        ]

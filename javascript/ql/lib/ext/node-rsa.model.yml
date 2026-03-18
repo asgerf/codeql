@@ -1,0 +1,63 @@
+extensions:
+  # =============================================================================
+  # node-rsa (npm: "node-rsa") — RSA encryption, decryption, signing
+  # =============================================================================
+  #
+  # node-rsa provides RSA key generation, encryption, decryption, signing,
+  # and verification:
+  #
+  #   const NodeRSA = require('node-rsa');
+  #   const key = new NodeRSA({ b: 2048 });
+  #
+  #   const encrypted = key.encrypt(data, 'base64');
+  #   const decrypted = key.decrypt(encrypted, 'utf8');
+  #
+  #   const signature = key.sign(data, 'base64');
+  #   const isValid = key.verify(data, signature);
+  #
+  #   key.importKey(pemString, 'pkcs8-public-pem');
+  #   const pem = key.exportKey('pkcs8-public-pem');
+  #
+  # Security concerns:
+  # - No sources or sinks in the injection sense.
+  # - Taint propagation: data flows through encrypt, decrypt, sign, and
+  #   key export operations. If the input is tainted, the output is tainted.
+  # - Weak key size: key creation with insufficient bits is detected by
+  #   CryptoLibraries.qll (CryptographicKeyCreation).
+  #
+  # Existing QLL coverage (CryptoLibraries.qll):
+  #   NodeRsa.CreateKey: models key generation (new NodeRSA / generateKeyPair)
+  #   with algorithm=RSA, key size extraction, asymmetric flag.
+  #   Encrypt/decrypt/sign/verify operations are NOT modeled in QLL.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through cryptographic operations
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- Encryption: data flows to encrypted output ---
+      # key.encrypt(data, encoding?, sourceEncoding?) => encrypted buffer/string
+      - ["node-rsa", "Fuzzy.Member[encrypt]", "Argument[0]", "ReturnValue", "taint"]
+      # key.encryptPrivate(data, encoding?, sourceEncoding?) => encrypted buffer/string
+      - ["node-rsa", "Fuzzy.Member[encryptPrivate]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- Decryption: encrypted data flows to plaintext output ---
+      # key.decrypt(data, encoding?) => decrypted buffer/string
+      - ["node-rsa", "Fuzzy.Member[decrypt]", "Argument[0]", "ReturnValue", "taint"]
+      # key.decryptPublic(data, encoding?) => decrypted buffer/string
+      - ["node-rsa", "Fuzzy.Member[decryptPublic]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- Signing: data flows to signature ---
+      # key.sign(data, encoding?, sourceEncoding?) => signature buffer/string
+      - ["node-rsa", "Fuzzy.Member[sign]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- Key export: key material flows to exported string/buffer ---
+      # key.exportKey(format?) => key string/buffer
+      - ["node-rsa", "Fuzzy.Member[exportKey]", "Argument[this]", "ReturnValue", "taint"]
+
+      # --- Key import: imported key data taints the key instance ---
+      # key.importKey(keyData, format?) => key (returns this for chaining)
+      - ["node-rsa", "Fuzzy.Member[importKey]", "Argument[0]", "ReturnValue", "taint"]

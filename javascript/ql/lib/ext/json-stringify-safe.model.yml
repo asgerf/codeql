@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # json-stringify-safe (npm: "json-stringify-safe")
+  # — Like JSON.stringify, but handles circular references
+  # =============================================================================
+  #
+  # json-stringify-safe is a drop-in replacement for JSON.stringify that
+  # replaces circular references with "[Circular]" instead of throwing.
+  #
+  #   const stringify = require('json-stringify-safe');
+  #   stringify(obj, replacer?, space?, decycler?);
+  #
+  # Also exports getSerialize(replacer?, decycler?) which returns a
+  # replacer function for use with JSON.stringify.
+  #
+  # Security concerns:
+  # - No sources or sinks: json-stringify-safe serializes objects to strings
+  #   but does not fetch data or perform security-sensitive operations.
+  # - Taint propagation: the input object and its nested properties flow
+  #   into the returned JSON string.
+  #
+  # Existing QLL coverage:
+  # - JsonStringifiers.qll: classified as JsonStringifyCall.
+  # - JsonStringify.qll (flow summary): Argument[0] and
+  #   Argument[0].AnyMemberDeep → ReturnValue (taint).
+  # - Sanitizer for log-injection and code-injection queries.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from input object to JSON string output
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # stringify(obj, replacer?, space?, decycler?) → JSON string
+      - ["json-stringify-safe", "", "Argument[0]", "ReturnValue", "taint"]

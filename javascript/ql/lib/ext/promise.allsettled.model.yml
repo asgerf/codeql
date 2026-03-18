@@ -1,0 +1,45 @@
+extensions:
+  # =============================================================================
+  # promise.allsettled (npm: "promise.allsettled") — Promise.allSettled polyfill
+  # =============================================================================
+  #
+  # promise.allsettled is a polyfill/ponyfill for ES2020 Promise.allSettled().
+  # It takes an iterable of promises and returns a promise that resolves when
+  # all input promises have settled (fulfilled or rejected), with an array of
+  # result objects:
+  #
+  #   const allSettled = require('promise.allsettled');
+  #   const results = await allSettled([promise1, promise2, promise3]);
+  #   // results: [
+  #   //   { status: 'fulfilled', value: ... },
+  #   //   { status: 'rejected', reason: ... },
+  #   // ]
+  #
+  # Also installs as a shim:
+  #   require('promise.allsettled').shim();
+  #   const results = await Promise.allSettled([...]);
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure promise utility.
+  # - Taint propagates from input promise values to the output result
+  #   objects' .value and .reason properties.
+  #
+  # Existing QLL coverage (Promises.qll):
+  # - PromiseAllSettled models both Promise.allSettled() and
+  #   require("promise.allsettled")() with flow from input array elements'
+  #   resolved values to output .value/.reason members.
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # allSettled(promises) → Promise<Array<{status, value, reason}>>
+      # Input array elements flow to output result objects.
+      # =====================================================================
+      - - "promise.allsettled"
+        - ""
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "taint"

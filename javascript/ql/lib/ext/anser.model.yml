@@ -1,0 +1,55 @@
+extensions:
+  # =============================================================================
+  # anser (npm: "anser") - ANSI escape code parser / HTML converter
+  # =============================================================================
+  #
+  # Anser converts strings containing ANSI escape codes into HTML, JSON, or
+  # plain text. Methods are available both as static class methods and on
+  # instances created with `new Anser()`.
+  #
+  #   const Anser = require("anser");
+  #   Anser.ansiToHtml("\u001b[31mRed\u001b[0m");   // static
+  #   new Anser().ansiToHtml("\u001b[31mRed\u001b[0m"); // instance
+  #
+  # Security concerns:
+  # - ansiToHtml and linkify produce raw HTML from string input. If untrusted
+  #   data flows through these methods and is rendered in a page, it is an
+  #   HTML injection / XSS vector (the library does NOT escape HTML entities
+  #   by default — Anser.escapeForHtml must be called separately).
+  # - escapeForHtml is an HTML sanitizer (escapes <, >, &).
+  #
+  # This library has no sources. It is a data transformation library.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through anser methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- Static methods (Anser.method(input)) ---
+      # Anser.ansiToHtml(input, options?) - converts ANSI to HTML string
+      - ["anser", "Member[ansiToHtml]", "Argument[0]", "ReturnValue", "taint"]
+      # Anser.ansiToText(input) - strips ANSI codes, returns plain text
+      - ["anser", "Member[ansiToText]", "Argument[0]", "ReturnValue", "taint"]
+      # Anser.ansiToJson(input) - converts ANSI to JSON array of styled chunks
+      - ["anser", "Member[ansiToJson]", "Argument[0]", "ReturnValue", "taint"]
+      # Anser.linkify(input) - wraps URLs in <a> tags
+      - ["anser", "Member[linkify]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- Instance methods (new Anser().method(input)) ---
+      # instance.ansiToHtml(input, options?)
+      - ["anser", "Instance.Member[ansiToHtml]", "Argument[0]", "ReturnValue", "taint"]
+      # instance.ansiToText(input)
+      - ["anser", "Instance.Member[ansiToText]", "Argument[0]", "ReturnValue", "taint"]
+      # instance.ansiToJson(input)
+      - ["anser", "Instance.Member[ansiToJson]", "Argument[0]", "ReturnValue", "taint"]
+      # instance.linkify(input)
+      - ["anser", "Instance.Member[linkify]", "Argument[0]", "ReturnValue", "taint"]
+      # instance.process(input, options?, markup?)
+      - ["anser", "Instance.Member[process]", "Argument[0]", "ReturnValue", "taint"]
+      # instance.processChunk(input, options?, markup?)
+      - ["anser", "Instance.Member[processChunk]", "Argument[0]", "ReturnValue", "taint"]
+      # instance.processChunkJson(input, options?, markup?)
+      - ["anser", "Instance.Member[processChunkJson]", "Argument[0]", "ReturnValue", "taint"]

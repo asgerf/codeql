@@ -1,0 +1,24 @@
+extensions:
+  # =============================================================================
+  # date-fns/format (sub-path of npm: "date-fns") - Date format function
+  # =============================================================================
+  #
+  # Exports the `format` function as a default import:
+  #
+  #   import format from 'date-fns/format';
+  #   format(new Date(), "yyyy-MM-dd 'at' HH:mm");
+  #   //=> "2024-01-15 at 14:30"
+  #
+  # The format string supports single-quote escaping to embed arbitrary
+  # literal text, so an attacker-controlled format string results in
+  # attacker-controlled output.
+  #
+  # Standard (non-curried) calling convention: format(date, formatStr) → string
+  # =============================================================================
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # format(date, formatStr) — taint from formatStr to return value
+      - ["date-fns/format", "", "Argument[1]", "ReturnValue", "taint"]

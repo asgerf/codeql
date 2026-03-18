@@ -1,8 +1,64 @@
 extensions:
+  # =============================================================================
+  # rimraf (npm: "rimraf") — rm -rf for Node.js
+  # =============================================================================
+  #
+  # rimraf recursively removes files and directories, equivalent to rm -rf:
+  #
+  #   const { rimraf, rimrafSync } = require('rimraf');
+  #
+  #   // Async (v5+ named exports)
+  #   await rimraf('/path/to/delete');
+  #   await rimraf(['/path1', '/path2'], opts);
+  #
+  #   // Sync
+  #   rimrafSync('/path/to/delete');
+  #
+  #   // Legacy default export (v3/v4)
+  #   const rimraf = require('rimraf');
+  #   rimraf('/path/to/delete', callback);
+  #   rimraf.sync('/path/to/delete');
+  #
+  #   // Strategy-specific methods (v5+)
+  #   rimraf.native(path);  rimraf.nativeSync(path);
+  #   rimraf.manual(path);  rimraf.manualSync(path);
+  #   rimraf.windows(path); rimraf.windowsSync(path);
+  #   rimraf.posix(path);   rimraf.posixSync(path);
+  #   rimraf.moveRemove(path); rimraf.moveRemoveSync(path);
+  #
+  # Security concerns:
+  # - Path injection: the first argument (path or array of paths) controls
+  #   which files/directories are deleted. If attacker-controlled, this
+  #   enables arbitrary file deletion — a serious security issue.
+  # - No sources: rimraf does not return untrusted data.
+  #
+  # Existing QLL coverage:
+  # - Files.qll: rimraf() direct call modeled as FileSystemAccess (arg 0).
+  # - ext/rimraf.model.yml: strategy-specific methods and sync variants
+  #   modeled as path-injection sinks.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: path-injection — path controls which files are deleted
+  # ---------------------------------------------------------------------------
   - addsTo:
       pack: codeql/javascript-all
       extensible: sinkModel
     data:
-      - ["rimraf", "Member[sync,native,manual,windows,moveRemove,posix].Argument[0]", "path-injection"]
-      - ["rimraf", "Member[rimrafSync,nativeSync,manualSync,windowsSync,moveRemoveSync,posixSync].Argument[0]", "path-injection"]
+      # rimraf(path) — default export (legacy) or named export
+      - ["rimraf", "Argument[0]", "path-injection"]
+
+      # rimraf.sync(path) — legacy sync API
+      - ["rimraf", "Member[sync].Argument[0]", "path-injection"]
+
+      # Named exports (v5+): rimrafSync(path)
+      - ["rimraf", "Member[rimrafSync].Argument[0]", "path-injection"]
+
+      # Strategy-specific async methods
+      - ["rimraf", "Member[native,manual,windows,moveRemove,posix].Argument[0]", "path-injection"]
+
+      # Strategy-specific sync methods
+      - ["rimraf", "Member[nativeSync,manualSync,windowsSync,moveRemoveSync,posixSync].Argument[0]", "path-injection"]
+
+      # Strategy .sync() sub-method pattern
       - ["rimraf", "Member[native,manual,windows,moveRemove,posix].Member[sync].Argument[0]", "path-injection"]

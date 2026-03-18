@@ -1,0 +1,38 @@
+extensions:
+  # =============================================================================
+  # ncp (npm: "ncp") - Asynchronous recursive file & directory copying
+  # =============================================================================
+  #
+  # ncp provides asynchronous recursive file copying, similar to `cp -r`:
+  #
+  #   const ncp = require('ncp').ncp;
+  #   ncp(source, destination, callback);
+  #   ncp(source, destination, options, callback);
+  #
+  # It can also be used as:
+  #   const ncp = require('ncp');
+  #   ncp(source, destination, callback);
+  #
+  # Security concerns:
+  # - Path injection: both the source (Argument[0]) and destination
+  #   (Argument[1]) are file system paths. If an attacker controls either
+  #   path, they can read arbitrary files (via source) or write to
+  #   arbitrary locations (via destination).
+  # - No sources: ncp does not provide access to untrusted data.
+  # - No summaries: ncp does not return meaningful data (callback
+  #   receives only an error argument).
+  #
+  # Existing QLL coverage:
+  # - Files.qll: LibraryAccess models both ncp() and ncp.ncp() with
+  #   Argument[0] and Argument[1] as FileSystemAccess path arguments,
+  #   feeding into the path-injection (tainted path) query.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # ncp(source, dest, ...) — both source and destination paths are sinks
+      - ["ncp", "Argument[0,1]", "path-injection"]
+
+      # require('ncp').ncp(source, dest, ...) — member access variant
+      - ["ncp", "Member[ncp].Argument[0,1]", "path-injection"]

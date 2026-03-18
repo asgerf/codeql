@@ -1,0 +1,43 @@
+# =============================================================================
+# fastify-rate-limit / @fastify/rate-limit — Rate limiter for Fastify
+# =============================================================================
+#
+# A Fastify plugin that adds rate limiting to routes via an onRequest hook.
+# Clients exceeding the configured request limit receive a 429 response.
+#
+#   const fastify = require('fastify')();
+#   fastify.register(require('@fastify/rate-limit'), {
+#     max: 100,
+#     timeWindow: '1 minute'
+#   });
+#
+# The plugin also decorates the server with fastify.rateLimit(), which
+# returns a preHandler hook for per-route or 404 rate limiting:
+#
+#   fastify.setNotFoundHandler({
+#     preHandler: fastify.rateLimit({ max: 10, timeWindow: 1000 })
+#   }, (req, reply) => { reply.code(404).send({ error: 'not found' }); });
+#
+# Configuration options (all passed at registration or per-route):
+#   max, ban, timeWindow, hook, cache, allowList, redis, nameSpace,
+#   continueExceeding, skipOnError, keyGenerator, errorResponseBuilder,
+#   store, groupId, enableDraftSpec, onExceeding, onExceeded, onBanReach,
+#   addHeaders, addHeadersOnExceeding, exponentialBackoff
+#
+# Security concerns:
+# - This is a security-positive plugin (mitigates DoS / brute-force).
+# - No untrusted data is surfaced to user code through the plugin API.
+# - keyGenerator and allowList callbacks receive the request object, but
+#   request properties are already modeled as sources in fastify.model.yml.
+# - errorResponseBuilder output goes into the HTTP response — but the
+#   callback is developer-authored, not attacker-influenced.
+#
+# Existing QLL coverage (MissingRateLimiting.qll):
+#   FastifyRateLimiter class matches DataFlow::moduleImport("fastify-rate-limit")
+#   and extends RateLimitingMiddleware, used by the js/missing-rate-limiting
+#   query to detect expensive route handlers lacking rate limiting.
+#
+# No source, sink, or summary models are needed. The plugin is a pure
+# configuration/middleware plugin that does not introduce new data flow.
+# =============================================================================
+extensions: []

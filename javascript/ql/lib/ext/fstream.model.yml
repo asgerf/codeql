@@ -1,0 +1,51 @@
+extensions:
+  # =============================================================================
+  # fstream (npm: "fstream") - Advanced FS streams with stat, dirs, symlinks
+  # =============================================================================
+  #
+  # fstream provides Reader and Writer stream constructors for files,
+  # directories, symlinks, etc. The path can be a string or an options
+  # object with a "path" property.
+  #
+  # API:
+  #   const fstream = require('fstream');
+  #
+  #   // Reader: fstream.Reader(path | { path, ... })
+  #   fstream.Reader('/some/file')
+  #   fstream.Reader({ path: '/some/file', follow: true })
+  #
+  #   // Writer: fstream.Writer(path | { path, ... })
+  #   fstream.Writer({ path: 'path/to/file', mode: 0o755, size: 6 })
+  #
+  #   // Sub-types accessible as e.g. fstream.Reader.File, fstream.File.Reader
+  #   // Sub-types: File, Dir, Link, Proxy
+  #
+  # Security concerns:
+  # - SINK (path-injection): The first argument to Reader/Writer (and their
+  #   sub-type variants) controls which file path is read from or written to.
+  #   Can be a string path or an options object with a "path" property.
+  # - No sources. The library does not provide access to untrusted data.
+  #
+  # Existing QLL coverage:
+  # - Files.qll FStream module: Models Reader/Writer (and sub-type combos
+  #   like Reader.File, File.Reader, etc.) as FileSystemAccess with
+  #   getAPathArgument() = getOptionArgument(0, "path") or getArgument(0).
+  # =============================================================================
+
+  # Sinks: path argument to Reader/Writer is a path-injection vector.
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # fstream.Reader(path) / fstream.Reader({ path: ... })
+      - ["fstream", "Member[Reader].Argument[0]", "path-injection"]
+      # fstream.Writer(path) / fstream.Writer({ path: ... })
+      - ["fstream", "Member[Writer].Argument[0]", "path-injection"]
+
+      # Sub-type variants: fstream.Reader.File(...), fstream.Reader.Dir(...), etc.
+      - ["fstream", "Member[Reader].Member[File,Dir,Link,Proxy].Argument[0]", "path-injection"]
+      - ["fstream", "Member[Writer].Member[File,Dir,Link,Proxy].Argument[0]", "path-injection"]
+
+      # Reversed order: fstream.File.Reader(...), fstream.Dir.Writer(...), etc.
+      - ["fstream", "Member[File,Dir,Link,Proxy].Member[Reader].Argument[0]", "path-injection"]
+      - ["fstream", "Member[File,Dir,Link,Proxy].Member[Writer].Argument[0]", "path-injection"]

@@ -1,0 +1,33 @@
+extensions:
+  # =============================================================================
+  # header-case (npm: "header-case") - Convert a string to Header-Case
+  # =============================================================================
+  #
+  # Part of the change-case family of packages by Blake Embrey. Converts strings
+  # to Header-Case format (e.g. "Test-String").
+  #
+  #   import { headerCase } from "header-case";
+  #   headerCase("test string");  //=> "Test-String"
+  #   headerCase("fooBar");       //=> "Foo-Bar"
+  #
+  # Exports:
+  #   headerCase(input, options?) → string
+  #
+  # Security concerns:
+  # - No sources or sinks. The function is a pure string transformation.
+  # - Taint propagates from the input string to the returned string.
+  #
+  # Existing QLL coverage:
+  #   StringFormatters.qll: header-case.headerCase modeled as a string formatter
+  #                         with taint propagation from argument to return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through header-case function
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # headerCase(input, options?) → string
+      - ["header-case", "Member[headerCase]", "Argument[0]", "ReturnValue", "taint"]

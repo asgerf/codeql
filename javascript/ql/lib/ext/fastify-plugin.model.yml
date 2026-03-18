@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # fastify-plugin (npm: "fastify-plugin") — Plugin wrapper for Fastify
+  # =============================================================================
+  #
+  # Wraps a Fastify plugin function to control its encapsulation behavior.
+  # Without the wrapper, plugins run in an encapsulated scope; with fp(),
+  # decorations and modifications propagate to the parent scope.
+  #
+  #   const fp = require('fastify-plugin');
+  #
+  #   module.exports = fp(async function myPlugin(fastify, opts) {
+  #     fastify.decorate('utility', () => {});
+  #     fastify.get('/route', handler);
+  #   }, { name: 'my-plugin' });
+  #
+  # API surface:
+  #   fp(fn, [options]) → wrappedFn
+  #     fn:      (fastify, options, done) => void  or  async (fastify, options) => void
+  #     options: string (version constraint) or { name, version, fastify, dependencies }
+  #     Returns: a wrapped function that delegates to fn when invoked
+  #
+  # No sources or sinks. The wrapper preserves the behavior of the original
+  # plugin function, so taint flows through transparently.
+  #
+  # Existing QLL coverage (Fastify.qll):
+  #   FastifyPluginCall class matches calls to require('fastify-plugin').
+  #   pluginCallback() and PluginRegistration.pluginBody() step through
+  #   fp() calls to find the underlying plugin function.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # fp(pluginFn, [opts]) → wrappedFn
+      # The wrapped function delegates to pluginFn, preserving its behavior.
+      - ["fastify-plugin", "", "Argument[0]", "ReturnValue", "value"]

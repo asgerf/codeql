@@ -1,12 +1,83 @@
 extensions:
+  # =============================================================================
+  # axios (npm: "axios") - Promise-based HTTP client for browser and Node.js
+  # =============================================================================
+  #
+  # axios is a popular HTTP client supporting request/response interceptors,
+  # automatic JSON transforms, and custom instances via axios.create().
+  #
+  #   import axios from 'axios';
+  #   const resp = await axios.get('https://api.example.com/data');
+  #   console.log(resp.data);
+  #   axios.post('https://api.example.com/submit', { key: 'value' });
+  #   const instance = axios.create({ baseURL: 'https://api.example.com' });
+  #   const resp2 = await instance.get('/data');
+  #
+  # HTTP methods: get, post, put, patch, delete, head, options
+  # Form methods: postForm, putForm, patchForm
+  # Utility: request, getUri, create, createInstance
+  #
+  # Security concerns:
+  # - URL arguments and config url/uri properties control outbound request
+  #   destinations → request-forgery vector.
+  # - baseURL in create/createInstance config controls the host → request-forgery.
+  # - Response data (resp.data, resp.headers) is potentially untrusted.
+  # - Interceptor callbacks expose request config URLs and response data.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL arguments and config properties control request destinations
+  # ---------------------------------------------------------------------------
   - addsTo:
       pack: codeql/javascript-all
       extensible: sinkModel
     data:
-      - ["axios", "Member[interceptors].Member[request].Member[use].Argument[0].Parameter[0].Member[url]", "request-forgery"]
+      # --- Direct call: axios(url) or axios(config) ---
+      # axios('https://example.com')
+      - ["axios", "Argument[0]", "request-forgery"]
+      # axios({ url: 'https://example.com' })
+      - ["axios", "Argument[0].Member[url,uri]", "request-forgery"]
 
+      # --- Direct call on instance: axios.create()(url) ---
+      - ["axios", "Member[create,createInstance].ReturnValue.Argument[0]", "request-forgery"]
+      - ["axios", "Member[create,createInstance].ReturnValue.Argument[0].Member[url,uri]", "request-forgery"]
+
+      # --- Named HTTP methods: axios.get(url), axios.post(url, data), etc. ---
+      # Fuzzy covers both direct use and instances from create()/createInstance()
+      - ["axios", "Fuzzy.Member[get,head,options,delete,post,put,patch,request,postForm,putForm,patchForm,getUri].Argument[0]", "request-forgery"]
+
+      # --- URL/URI in options config objects for named methods ---
+      # GET-like (config at arg index 1): axios.get(url, { url: '...' })
+      - ["axios", "Fuzzy.Member[get,head,delete].Argument[1].Member[url,uri]", "request-forgery"]
+      # POST-like (config at arg index 2): axios.post(url, data, { url: '...' })
+      - ["axios", "Fuzzy.Member[post,put,patch].Argument[2].Member[url,uri]", "request-forgery"]
+      # request (config at arg index 0): axios.request({ url: '...' })
+      - ["axios", "Fuzzy.Member[request].Argument[0].Member[url,uri]", "request-forgery"]
+
+      # --- baseURL in create/createInstance config (controls request host) ---
+      - ["axios", "Member[create,createInstance].Argument[0].Member[baseURL]", "request-forgery"]
+
+      # --- Interceptor request config URL ---
+      # axios.interceptors.request.use(config => { /* config.url is a sink */ })
+      - ["axios", "Fuzzy.Member[interceptors].Member[request].Member[use].Argument[0].Parameter[0].Member[url]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: HTTP response data from axios calls
+  # ---------------------------------------------------------------------------
   - addsTo:
       pack: codeql/javascript-all
       extensible: sourceModel
     data:
-      - ["axios", "Member[interceptors].Member[response].Member[use].Argument[0].Parameter[0]", "response"]
+      # --- Direct call response: await axios(url) ---
+      - ["axios", "ReturnValue.Awaited", "response"]
+
+      # --- Named HTTP method responses ---
+      # Fuzzy covers instances from create()/createInstance() too
+      - ["axios", "Fuzzy.Member[get,head,options,delete,post,put,patch,request,postForm,putForm,patchForm].ReturnValue.Awaited", "response"]
+
+      # --- Direct call on instance response: await axios.create()(url) ---
+      - ["axios", "Member[create,createInstance].ReturnValue.ReturnValue.Awaited", "response"]
+
+      # --- Interceptor response callback ---
+      # axios.interceptors.response.use(response => { /* response is a source */ })
+      - ["axios", "Fuzzy.Member[interceptors].Member[response].Member[use].Argument[0].Parameter[0]", "response"]

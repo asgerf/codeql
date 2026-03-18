@@ -1,0 +1,34 @@
+extensions:
+  # =============================================================================
+  # promise/lib/es6-extensions
+  #   (npm: "promise", subpath: "lib/es6-extensions")
+  # =============================================================================
+  #
+  # This is a subpath import of the `promise` package (then/promise), exposing
+  # a Promise constructor with the standard ES6 static and prototype methods:
+  #
+  #   var Promise = require('promise/lib/es6-extensions');
+  #
+  #   new Promise((resolve, reject) => { ... })
+  #   Promise.resolve(value)
+  #   Promise.reject(reason)
+  #   Promise.all(iterable)
+  #   Promise.race(iterable)
+  #   promise.then(onFulfilled, onRejected)
+  #   promise.catch(onRejected)
+  #
+  # This module does NOT include the non-standard extensions (denodeify,
+  # nodeify, done) — those are added by promise/lib/node-extensions.js.
+  #
+  # Security relevance:
+  # - No sources. The library does not access any external or untrusted data.
+  # - No sinks. The library does not perform any security-sensitive operations
+  #   (no eval, exec, file I/O, network requests, SQL, etc.).
+  # - Promise data flow (.then, .catch, .all, .resolve, etc.) is modeled
+  #   generically in CodeQL's Promises.qll, which explicitly lists
+  #   "promise/lib/es6-extensions" as a recognized Promise polyfill entry
+  #   point. All taint propagation through promise resolution, rejection,
+  #   and chaining is handled by that infrastructure.
+  #
+  # See promise.model.yml for the full analysis of the `promise` package.
+  # =============================================================================

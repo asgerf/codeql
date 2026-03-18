@@ -1,0 +1,37 @@
+extensions:
+  # =============================================================================
+  # mixin-object (npm: "mixin-object") — Shallow object merge/mixin
+  # =============================================================================
+  #
+  # Mixes own and inherited properties from source objects into a destination
+  # object (shallow merge), mutating the first argument and returning it:
+  #
+  #   const mixin = require('mixin-object');
+  #   mixin({ a: 1 }, { b: 2 }, { c: 3 });
+  #   //=> { a: 1, b: 2, c: 3 }
+  #
+  # API:
+  #   mixin(dest, src1, src2, ...) → dest (mutated)
+  #
+  # Security concerns:
+  # - No sources or sinks. This is a pure in-memory object operation.
+  # - Taint propagation: properties from each source object flow into the
+  #   destination object and the return value.
+  #
+  # Existing QLL coverage (Extend.qll):
+  # - Models mixin-object as a shallow ExtendCall with source operands at
+  #   Argument[1..] and destination at Argument[0].
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through shallow merge
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Source operands (Argument[1], [2], ...) flow into the return value
+      - ["mixin-object", "", "Argument[1..]", "ReturnValue", "taint"]
+
+      # Source operands flow into the destination (Argument[0]) via mutation
+      - ["mixin-object", "", "Argument[1..]", "Argument[0]", "taint"]

@@ -1,0 +1,69 @@
+extensions:
+  # =============================================================================
+  # mustache (npm: "mustache") - Logic-less {{mustache}} templates
+  # =============================================================================
+  #
+  # mustache.js is a logic-less template engine:
+  #
+  #   const Mustache = require('mustache');
+  #
+  #   // Render a template with a view (data) object
+  #   Mustache.render('Hello {{name}}!', { name: 'World' });
+  #
+  #   // Pre-parse a template for faster repeated rendering
+  #   Mustache.parse(template);
+  #
+  #   // Advanced: Writer class with custom caching
+  #   const writer = new Mustache.Writer();
+  #   writer.render(template, view, partials);
+  #
+  #   // Deprecated alias
+  #   Mustache.to_html(template, view, partials);
+  #
+  # Security concerns:
+  # - Mustache.render(template, view, partials): If an attacker controls the
+  #   template string, they can extract arbitrary properties from the view
+  #   object (template injection / code-injection).
+  # - View data flows into the rendered output. Mustache HTML-escapes {{var}}
+  #   by default, but {{{var}}} and {{&var}} output raw unescaped content.
+  #   If raw interpolation is used, untrusted view data can cause XSS.
+  #
+  # Existing QLL coverage:
+  #   CodeInjectionCustomizations.qll: Mustache.render() arg 0 modeled as
+  #     MustacheTemplateSink (code-injection).
+  #   Templating.qll: MustacheStyleSyntax recognises mustache template syntax
+  #     ({{ }} for escaped, {{{ }}} / {{& }} for raw) and file extensions.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # Mustache.render(template, view, partials) — template string controls rendering
+      - ["mustache", "Member[render].Argument[0]", "code-injection"]
+
+      # Mustache.to_html — deprecated alias for render
+      - ["mustache", "Member[to_html].Argument[0]", "code-injection"]
+
+      # Writer.render(template, view, partials) — same concern via Writer instance
+      - ["mustache", "Fuzzy.Member[render].Argument[0]", "code-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through mustache rendering
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Mustache.render(template, view, partials) → rendered string
+      # View data (arg 1) taints the rendered output
+      - ["mustache", "Member[render]", "Argument[1]", "ReturnValue", "taint"]
+
+      # Mustache.to_html — deprecated alias for render
+      - ["mustache", "Member[to_html]", "Argument[1]", "ReturnValue", "taint"]
+
+      # Writer.render(template, view, partials) → rendered string
+      - ["mustache", "Fuzzy.Member[render]", "Argument[1]", "ReturnValue", "taint"]

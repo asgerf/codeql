@@ -1,0 +1,49 @@
+extensions:
+  # =============================================================================
+  # log4js (npm: "log4js") - Logging framework for Node.js
+  # =============================================================================
+  #
+  # log4js provides a configurable logging framework with multiple appenders
+  # (stdout, file, etc.), categories, and log levels.
+  #
+  #   const log4js = require('log4js');
+  #   log4js.configure({
+  #     appenders: { out: { type: 'stdout' } },
+  #     categories: { default: { appenders: ['out'], level: 'info' } }
+  #   });
+  #   const logger = log4js.getLogger('category');
+  #   logger.trace('trace message');
+  #   logger.debug('debug message');
+  #   logger.info('info message');
+  #   logger.warn('warning');
+  #   logger.error('error');
+  #   logger.fatal('fatal error');
+  #   logger.log('log level message');
+  #   logger.mark('mark message');
+  #
+  # Security concerns:
+  # - All logger methods are log-injection sinks. Attacker-controlled input
+  #   written to logs can forge log entries, inject misleading data, or exploit
+  #   log viewers that interpret special characters (ANSI escapes, newlines).
+  # - No sources or summaries. The library does not produce or transform
+  #   untrusted data.
+  #
+  # Existing QLL coverage (Logging.qll):
+  # - Log4jsLoggerCall models log4js.getLogger().method(msg) as LoggerCall,
+  #   which makes all arguments log-injection sinks via LogInjectionQuery.qll.
+  #   Covers standard logger method names: trace, debug, info, warn, error,
+  #   fatal, log, crit, emerg, notice, silly, verbose, dir.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: log injection via log4js logger calls
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # logger.trace/debug/info/warn/error/fatal/log/mark(...args)
+      # All arguments to any logging method are log-injection sinks.
+      # Using Fuzzy to cover getLogger() return values regardless of how
+      # the logger reference is passed around.
+      - ["log4js", "Fuzzy.Member[trace,debug,info,warn,error,fatal,log,mark].Argument[0..N-1]", "log-injection"]

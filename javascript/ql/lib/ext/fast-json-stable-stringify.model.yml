@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # fast-json-stable-stringify (npm: "fast-json-stable-stringify") -
+  # Deterministic JSON.stringify
+  # =============================================================================
+  #
+  # A faster, deterministic version of JSON.stringify() that produces
+  # consistent key ordering. Useful for hashing, caching, and diffing.
+  #
+  #   const stringify = require('fast-json-stable-stringify');
+  #
+  #   stringify({ c: 8, b: 7, a: 3 });
+  #   // => '{"a":3,"b":7,"c":8}'
+  #
+  #   stringify(obj, { cmp: compareFn, cycles: true });
+  #
+  # API:
+  #   stringify(obj, [opts]) → string
+  #     - obj: The value to serialize
+  #     - opts: Optional { cmp: Function, cycles: Boolean }
+  #     - Returns a JSON string with deterministically ordered keys
+  #
+  # Security concerns:
+  # - No sinks: does not execute code, access the file system, or perform I/O.
+  # - No sources: does not access user input directly.
+  # - Taint flow: the input object is serialized to a JSON string. Taint must
+  #   propagate from the input argument to the return value.
+  #
+  # Existing QLL coverage (JsonStringifiers.qll):
+  #   JsonStringifyCall models fast-json-stable-stringify (and many similar
+  #   libraries) with input at argument 0 and output as the call's return
+  #   value. Taint flows via JsonStringifyTaintStep in TaintTracking.qll.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint flow from input object to JSON string
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # stringify(obj) — taint flows from the input value to the returned string
+      - ["fast-json-stable-stringify", "", "Argument[0]", "ReturnValue", "taint"]

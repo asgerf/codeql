@@ -1,0 +1,184 @@
+# @angular/material/table - Comprehensive Security Model
+# Version: Angular Material 14+
+#
+# OVERVIEW:
+# The @angular/material/table package provides a data table component for displaying
+# structured data with support for sorting, filtering, and pagination. The main security
+# concern is XSS when table data flows through custom templates with [innerHTML] bindings.
+#
+# DATA FLOW:
+#   1. Component Input or HTTP Response
+#      ↓
+#   2. MatTableDataSource constructor/data property
+#      ↓
+#   3. Filtering via filterPredicate and filter property
+#      ↓
+#   4. Sorting via sortingDataAccessor callback
+#      ↓
+#   5. filteredData / connect() Observable
+#      ↓
+#   6. Template Rendering (*matCellDef with {{ }} or [innerHTML])
+#      ↓
+#   7. DOM Output
+#
+# SECURITY CRITICAL CLASSES:
+#   - MatTableDataSource<T>: Manages data, filtering, sorting
+#   - MatTable<T>: Main table component, binds to dataSource
+#   - MatCellDef: Template for cell content (contains the rendering logic)
+#   - MatTextColumn: Pre-built column with dataAccessor callback
+#
+# XSS VECTORS:
+#   1. {{ row.data }} in MatCellDef - SAFE (Angular auto-escapes)
+#   2. [innerHTML]="row.data" in MatCellDef - UNSAFE (raw HTML)
+#   3. [style]="row.cssStyle" - UNSAFE (CSS injection)
+#   4. [class]="row.className" - UNSAFE (class injection)
+#   5. dataAccessor callback output - Depends on usage
+
+extensions:
+  # =============================================================================
+  # Sources: Untrusted data flowing into the table
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # HTTP responses assigned to MatTableDataSource data
+      # Example: this.dataSource.data = this.http.get('/api/users')
+      # Note: This is typically handled by @angular/common/http model,
+      # but documenting here for completeness
+      - ["@angular/material/table.MatTableDataSource", "Member[data].Setter", "response"]
+
+  # =============================================================================
+  # Summaries: Taint propagation through MatTableDataSource and MatTable
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- MatTableDataSource Constructor ---
+      # new MatTableDataSource(data) - Argument[0] (data array) taints the instance
+      # This allows tracking data flow from constructor through to rendered output
+      - ["@angular/material/table.MatTableDataSource", "Member[constructor]", "Argument[0]", "Instance", "taint"]
+
+      # --- MatTableDataSource.data property (setter) ---
+      # dataSource.data = userArray - Assignment taints instance
+      - ["@angular/material/table.MatTableDataSource", "Member[data].Setter.Argument[0]", "Instance", "taint"]
+
+      # --- MatTableDataSource.data property (getter) ---
+      # const data = dataSource.data - Returns the array
+      - ["@angular/material/table.MatTableDataSource", "Member[data].Getter.ReturnValue", "Instance", "taint"]
+
+      # --- MatTableDataSource.filteredData ---
+      # Computed property that applies filter, sort, and pagination
+      # const filtered = dataSource.filteredData
+      - ["@angular/material/table.MatTableDataSource", "Member[filteredData].ReturnValue", "Instance", "taint"]
+
+      # --- MatTableDataSource.connect() ---
+      # connect(collectionViewer?) returns Observable<T[]>
+      # The Observable emits the filtered/sorted/paginated data
+      - ["@angular/material/table.MatTableDataSource", "Member[connect]", "ReturnValue.Member[toPromise].ReturnValue", "Instance", "taint"]
+      - ["@angular/material/table.MatTableDataSource", "Member[connect]", "ReturnValue", "Instance", "taint"]
+
+      # --- MatTableDataSource.filter property (setter) ---
+      # The filter string is fed to filterPredicate
+      # Not itself rendered, but documented for completeness
+      - ["@angular/material/table.MatTableDataSource", "Member[filter].Setter.Argument[0]", "Instance", "value"]
+
+      # --- MatTableDataSource.setFilter() method ---
+      # setFilter(filter: string) updates the filter
+      - ["@angular/material/table.MatTableDataSource", "Member[setFilter]", "Argument[0]", "Instance", "value"]
+
+      # --- MatTableDataSource.sortingDataAccessor ---
+      # sortingDataAccessor callback: (data: T, sortHeaderId: string) => string | number
+      # Argument[0] is the row data (tainted)
+      # ReturnValue flows to the sort comparison
+      - ["@angular/material/table.MatTableDataSource", "Member[sortingDataAccessor]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- MatTableDataSource.filterPredicate ---
+      # filterPredicate callback: (data: T, filter: string) => boolean
+      # Argument[0] is the row data (tainted)
+      # The return boolean determines if row is visible
+      - ["@angular/material/table.MatTableDataSource", "Member[filterPredicate]", "Argument[0]", "ReturnValue", "value"]
+
+      # --- MatTable component dataSource input ---
+      # @Input dataSource: DataSource<T> | Observable<T[]> | T[]
+      # Input flows directly to the table's rendering loop
+      - ["@angular/material/table.MatTable", "Member[dataSource].Setter.Argument[0]", "Instance", "taint"]
+
+      # --- MatTable trackBy callback ---
+      # trackBy: (index: number, item: T) => any
+      # Argument[1] is the row item (tainted)
+      # Used for DOM reconciliation (identity tracking)
+      - ["@angular/material/table.MatTable", "Member[trackBy]", "Argument[1]", "ReturnValue", "value"]
+
+      # --- MatTextColumn.dataAccessor callback ---
+      # dataAccessor: (data: T, dataKey: string) => string
+      # Argument[0] is row data (tainted)
+      # ReturnValue is the displayed string
+      - ["@angular/material/table.MatTextColumn", "Member[dataAccessor]", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- MatRowDef.when callback ---
+      # when: (index: number, rowData: T) => boolean
+      # Argument[1] is the row data (tainted)
+      # ReturnValue is boolean for row visibility
+      - ["@angular/material/table.MatRowDef", "Member[when]", "Argument[1]", "ReturnValue", "value"]
+
+  # =============================================================================
+  # Sinks: Security-sensitive operations involving table data
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # NOTE: Direct [innerHTML] and [style] bindings are handled by @angular/core
+      # sink model. This model focuses on Material-specific sinks.
+      #
+      # The key insight is that MatTableDataSource.data and filteredData are
+      # TAINT SOURCES, and when they flow to [innerHTML], [style], or [class]
+      # bindings in MatCellDef templates, they become XSS/CSS injection sinks.
+      #
+      # Example vulnerable code:
+      #   <mat-cell *matCellDef="let user" [innerHTML]="user.bio">
+      #   <!-- user.bio from MatTableDataSource.data with no sanitization -->
+      #
+      # CodeQL will track this via:
+      # 1. HTTP response source (http.get returns response)
+      # 2. Assigned to MatTableDataSource.data
+      # 3. Data flows through filteredData
+      # 4. Template context receives user object ($implicit: T)
+      # 5. Property access user.bio (tainted)
+      # 6. Property binding [innerHTML]="user.bio" (taint reaches sink)
+      # 7. @angular/core model marks [innerHTML] as html-injection sink
+      #
+      # Since this is already covered by @angular/core sinks, we document
+      # the key Material-specific data flow points:
+
+      # MatTextColumn.dataAccessor callback - returns string that could be
+      # rendered with [innerHTML] if the consuming code uses it unsafely
+      - ["@angular/material/table.MatTextColumn", "Member[dataAccessor]", "ReturnValue", "html-injection"]
+
+      # MatTableDataSource.sortingDataAccessor - transforms data for display
+      - ["@angular/material/table.MatTableDataSource", "Member[sortingDataAccessor]", "ReturnValue", "html-injection"]
+
+  # =============================================================================
+  # Note: XSS Vulnerabilities in MatCellDef Templates
+  # =============================================================================
+  #
+  # The most common XSS vector in Angular Material tables is:
+  #
+  #   <mat-cell *matCellDef="let row" [innerHTML]="row.bio">
+  #   </mat-cell>
+  #
+  # To detect this, CodeQL would need:
+  # 1. Template analysis to extract the [innerHTML] binding target
+  # 2. Taint tracking from MatTableDataSource.data → row object
+  # 3. Property access tracking row.bio
+  # 4. Correlation with [innerHTML] sink from @angular/core
+  #
+  # This is typically done via QLL (query language) rather than data models,
+  # as it requires understanding template context and property flow.
+  #
+  # However, the taint summaries above enable such queries by establishing:
+  # - Source: MatTableDataSource.data (tainted)
+  # - Sink: [innerHTML] and related DOM-manipulation operations
+  # - Path: Through template context and property access

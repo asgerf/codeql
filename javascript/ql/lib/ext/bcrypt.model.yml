@@ -1,0 +1,21 @@
+extensions:
+  # =============================================================================
+  # bcrypt (npm: "bcrypt") - Password hashing library
+  # =============================================================================
+  #
+  # The bcrypt package by Kelektiv provides bcrypt password hashing:
+  #
+  #   const bcrypt = require('bcrypt');
+  #   const hash = await bcrypt.hash('password', 10);
+  #   const match = await bcrypt.compare('password', hash);
+  #   const salt = await bcrypt.genSalt(10);
+  #   const hashSync = bcrypt.hashSync('password', salt);
+  #   const matchSync = bcrypt.compareSync('password', hash);
+  #   const rounds = bcrypt.getRounds(hash);
+  #
+  # This library has no sources, sinks, or taint summaries. Bcrypt hashing is a
+  # one-way cryptographic operation — the hash output is not meaningfully
+  # controlled by an attacker even if they control the input. The compare
+  # functions return a boolean, and genSalt/getRounds produce non-tainted values.
+  # =============================================================================
+  []

@@ -1,0 +1,42 @@
+extensions:
+  # =============================================================================
+  # json-safe-parse (npm: "json-safe-parse") - Safe JSON.parse wrapper
+  # =============================================================================
+  #
+  # Wraps JSON.parse() and strips dangerous properties (__proto__, constructor,
+  # prototype) from the result using the "cleanse" module, preventing prototype
+  # pollution attacks. The default export is a function:
+  #
+  #   const parse = require('json-safe-parse');
+  #   const obj = parse(jsonString);
+  #   const obj2 = parse(jsonString, reviver);
+  #   const obj3 = parse(jsonString, 'replace');  // skip cleansing
+  #
+  # Also re-exports the cleanse function:
+  #   parse.cleanse(obj, behavior);
+  #
+  # Security concerns:
+  # - No sources or sinks.
+  # - Taint propagation: the JSON string input flows to the parsed output
+  #   object, just like JSON.parse().
+  # - cleanse() propagates taint from input object to sanitized output.
+  #
+  # Existing QLL coverage:
+  # - JsonParsers.qll: Models the default import as a PlainJsonParserCall,
+  #   recognizing it as a JSON parser (input → output taint step).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through JSON parsing
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # parse(jsonString, reviver?) → parsed object
+      # Taint flows from the JSON string to the parsed result.
+      - ["json-safe-parse", "", "Argument[0]", "ReturnValue", "taint"]
+
+      # parse.cleanse(obj, behavior?) → cleansed object
+      # Taint flows from the input object to the sanitized output.
+      - ["json-safe-parse", "Member[cleanse]", "Argument[0]", "ReturnValue", "taint"]

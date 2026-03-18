@@ -1,0 +1,29 @@
+extensions:
+  # Sinks: operations sensitive to untrusted data
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- DomSanitizer bypass methods ---
+      # DomSanitizer can be imported from @angular/core (re-export) or @angular/platform-browser.
+      # bypassSecurityTrustHtml and bypassSecurityTrustStyle promote untrusted values to trusted HTML/CSS.
+      - ["@angular/core.DomSanitizer", "Member[bypassSecurityTrustHtml,bypassSecurityTrustStyle].Argument[0]", "html-injection"]
+
+      # bypassSecurityTrustScript promotes untrusted values to trusted scripts (code injection).
+      - ["@angular/core.DomSanitizer", "Member[bypassSecurityTrustScript].Argument[0]", "code-injection"]
+
+      # bypassSecurityTrustUrl and bypassSecurityTrustResourceUrl promote untrusted values to trusted URLs.
+      - ["@angular/core.DomSanitizer", "Member[bypassSecurityTrustUrl,bypassSecurityTrustResourceUrl].Argument[0]", "url-redirection"]
+
+      # --- Renderer2: setProperty with innerHTML/outerHTML ---
+      # Renderer2.setProperty(el, 'innerHTML', value) is an XSS sink.
+      - ["@angular/core.Renderer2", "Member[setProperty].WithStringArgument[1=innerHTML].Argument[2]", "html-injection"]
+      - ["@angular/core.Renderer2", "Member[setProperty].WithStringArgument[1=outerHTML].Argument[2]", "html-injection"]
+
+      # --- Renderer2: setAttribute with href-like attributes ---
+      # Renderer2.setAttribute(el, 'href', value) can be a URL redirect / XSS sink via javascript: URLs.
+      - ["@angular/core.Renderer2", "Member[setAttribute].WithStringArgument[1=href].Argument[2]", "url-redirection"]
+      - ["@angular/core.Renderer2", "Member[setAttribute].WithStringArgument[1=src].Argument[2]", "url-redirection"]
+      - ["@angular/core.Renderer2", "Member[setAttribute].WithStringArgument[1=action].Argument[2]", "url-redirection"]
+      - ["@angular/core.Renderer2", "Member[setAttribute].WithStringArgument[1=formaction].Argument[2]", "url-redirection"]
+      - ["@angular/core.Renderer2", "Member[setAttribute].WithStringArgument[1=xlink:href].Argument[2]", "url-redirection"]

@@ -1,0 +1,71 @@
+extensions:
+  # =============================================================================
+  # querystring (Node.js built-in) — URL query string parsing and serialization
+  # =============================================================================
+  #
+  # The `querystring` module provides utilities for parsing and formatting URL
+  # query strings:
+  #
+  #   const querystring = require('querystring');
+  #
+  #   // Parse a query string into an object
+  #   querystring.parse('foo=bar&baz=qux');
+  #   // => { foo: 'bar', baz: 'qux' }
+  #
+  #   // Stringify an object into a query string
+  #   querystring.stringify({ foo: 'bar', baz: 'qux' });
+  #   // => 'foo=bar&baz=qux'
+  #
+  #   // URL percent-encode / decode
+  #   querystring.escape('hello world');   // => 'hello%20world'
+  #   querystring.unescape('hello%20world'); // => 'hello world'
+  #
+  # API:
+  #   querystring.parse(str[, sep[, eq[, options]]]) — parse query string to object
+  #   querystring.decode(str[, sep[, eq[, options]]]) — alias for parse
+  #   querystring.stringify(obj[, sep[, eq[, options]]]) — stringify object to query string
+  #   querystring.encode(obj[, sep[, eq[, options]]]) — alias for stringify
+  #   querystring.escape(str) — URL percent-encode a string
+  #   querystring.unescape(str) — URL percent-decode a string
+  #
+  # Security concerns:
+  # - No sources or sinks: querystring is a pure transformation utility.
+  # - Taint flow: all functions propagate taint from input to output.
+  #   If the input contains attacker-controlled data, the output will too.
+  #
+  # Existing QLL coverage (UriLibraries.qll):
+  #   - Taint step (uriStep): parse, stringify, escape, unescape
+  #     Argument → ReturnValue
+  #   - QueryStringStringification: stringify
+  #     Argument[0] and Argument[0].AnyMemberDeep → ReturnValue
+  #   Note: the QLL does not cover the decode/encode aliases.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through all querystring functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # querystring.parse(str) / querystring.decode(str) → object
+      # Parses a URL query string into a key-value object.
+      # Taint flows from the input string to the returned object.
+      - ["querystring", "Member[parse,decode]", "Argument[0]", "ReturnValue", "taint"]
+
+      # querystring.stringify(obj) / querystring.encode(obj) → string
+      # Serializes an object into a URL query string.
+      # Taint flows from the input object to the returned string.
+      - ["querystring", "Member[stringify,encode]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Deep member flow for stringify/encode: property values of the input
+      # object are concatenated into the output string.
+      - ["querystring", "Member[stringify,encode]", "Argument[0].AnyMemberDeep", "ReturnValue", "taint"]
+
+      # querystring.escape(str) → string
+      # URL percent-encodes a string. Taint is preserved.
+      - ["querystring", "Member[escape]", "Argument[0]", "ReturnValue", "taint"]
+
+      # querystring.unescape(str) → string
+      # URL percent-decodes a string. Taint is preserved.
+      - ["querystring", "Member[unescape]", "Argument[0]", "ReturnValue", "taint"]

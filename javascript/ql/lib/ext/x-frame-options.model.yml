@@ -1,0 +1,32 @@
+extensions:
+  # =============================================================================
+  # x-frame-options (npm: "x-frame-options") — X-Frame-Options middleware
+  # =============================================================================
+  #
+  # Express/Connect middleware that sets the X-Frame-Options HTTP response
+  # header to mitigate clickjacking attacks:
+  #
+  #   const xfo = require('x-frame-options');
+  #   app.use(xfo());  // sets X-Frame-Options: DENY
+  #
+  # API:
+  #   xfo() → Express middleware function (req, res, next)
+  #   Sets X-Frame-Options: DENY by default.
+  #
+  # Security analysis:
+  # - No sources: the library does not provide access to untrusted data.
+  # - No sinks: the middleware only sets a fixed response header; it does
+  #   not consume user-controlled data in a security-sensitive way.
+  # - No taint summaries needed: the library does not transform or propagate
+  #   user-controlled data.
+  #
+  # This library is purely defensive infrastructure — it protects against
+  # clickjacking but introduces no attack surface of its own.
+  #
+  # Existing QLL coverage (ExpressModules.qll):
+  # - XFrameOptionsRouteHandler recognizes x-frame-options invocations as
+  #   route handlers that implicitly set the X-Frame-Options: DENY header.
+  # =============================================================================
+
+  # No sources, sinks, or summaries needed for this library.
+  []

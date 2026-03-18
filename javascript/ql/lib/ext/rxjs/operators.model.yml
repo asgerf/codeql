@@ -1,0 +1,34 @@
+extensions:
+  # =============================================================================
+  # rxjs/operators (npm: "rxjs/operators") - RxJS pipeable operators
+  # =============================================================================
+  #
+  # rxjs/operators provides pipeable operators for transforming, filtering,
+  # and combining RxJS Observable streams:
+  #
+  #   import { map, filter, switchMap, tap, catchError } from 'rxjs/operators';
+  #
+  #   observable.pipe(
+  #     filter(x => x > 0),
+  #     map(x => x * 2),
+  #     tap(x => console.log(x)),
+  #     catchError(err => of(fallback)),
+  #     switchMap(x => fetchData(x)),
+  #   ).subscribe(result => { ... });
+  #
+  # Key operators:
+  #   map(fn), filter(fn), tap(fn), switchMap(fn), mergeMap(fn),
+  #   concatMap(fn), exhaustMap(fn), catchError(fn), debounceTime(ms),
+  #   distinctUntilChanged(), take(n), skip(n), scan(fn, seed),
+  #   reduce(fn, seed), startWith(val), withLatestFrom(obs), etc.
+  #
+  # Security concerns:
+  # - No sources: operators do not introduce untrusted data.
+  # - No sinks: operators do not perform security-sensitive operations.
+  # - Data flow through .pipe() chains (how tainted values propagate from
+  #   one operator callback to the next, and from Observables to
+  #   .subscribe() callbacks) is modeled by the existing RxJSPipe,
+  #   RxJsPipeMapStep, and RxJsSubscribeStep abstractions in RxJS.qll.
+  #   These higher-order pipe composition patterns cannot be expressed
+  #   as data extension summaries.
+  # =============================================================================

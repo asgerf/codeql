@@ -1,0 +1,32 @@
+extensions:
+  # =============================================================================
+  # sentence-case (npm: "sentence-case") - Convert a string to Sentence case
+  # =============================================================================
+  #
+  # Part of the change-case family of packages by Blake Embrey. Converts strings
+  # to sentence case format (first letter capitalized, rest lower case):
+  #
+  #   import { sentenceCase } from "sentence-case";
+  #   sentenceCase("testString");   //=> "Test string"
+  #   sentenceCase("FOO_BAR");      //=> "Foo bar"
+  #
+  # Exports:
+  #   sentenceCase(input, options?) → string
+  #   sentenceCaseTransform(input, index) → string
+  #
+  # Security concerns:
+  # - No sources or sinks. All functions are pure string transformations.
+  # - Taint propagates from the input string to the returned string.
+  #
+  # Existing QLL coverage:
+  # - StringFormatters.qll: models sentenceCase as a taint-preserving step
+  #   from argument to return value.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # sentenceCase(input, options?) → string
+      - ["sentence-case", "Member[sentenceCase]", "Argument[0]", "ReturnValue", "taint"]
+      # sentenceCaseTransform(input, index) → string
+      - ["sentence-case", "Member[sentenceCaseTransform]", "Argument[0]", "ReturnValue", "taint"]

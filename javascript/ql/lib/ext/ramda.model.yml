@@ -1,0 +1,177 @@
+extensions:
+  # =============================================================================
+  # ramda (npm: "ramda") - Functional utility library for JavaScript
+  # =============================================================================
+  #
+  # Ramda provides functional programming utilities with auto-curried,
+  # data-last functions. All functions are immutable and side-effect free.
+  #
+  #   const R = require('ramda');
+  #   R.map(fn, list);
+  #   R.filter(pred, list);
+  #   R.merge(a, b);
+  #   R.path(['a', 'b'], obj);
+  #   R.pipe(f, g, h)(x);
+  #   R.compose(h, g, f)(x);
+  #
+  # Note: Ramda uses data-last argument order — the data/collection argument
+  # is typically the last parameter, unlike lodash where it is first.
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure functional transformations.
+  # - Taint and value flow through many utility functions.
+  #
+  # Existing QLL coverage:
+  #   Extend.qll: merge (shallow), mergeDeepLeft/mergeDeepRight (deep)
+  #   PropertyProjection.qll: pick, pickAll, pickBy, path
+  #   ComposedFunctions.qll: compose
+  #   StringOps.qll: startsWith, endsWith
+  #   Nodes.qll: partial (partial application)
+  #   DynamicPropertyAccess.qll: forEachObjIndexed (property enumeration)
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Object merge/extend — value flow from all args to return
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # R.merge(a, b) — shallow merge, returns new object
+      # R.mergeLeft(a, b) / R.mergeRight(a, b) — shallow merge with precedence
+      - ["ramda", "Member[merge,mergeLeft,mergeRight,mergeWith]", "Argument[0..1]", "ReturnValue", "value"]
+
+      # R.mergeDeepLeft(a, b) / R.mergeDeepRight(a, b) — deep merge
+      # R.mergeDeepWith(fn, a, b) / R.mergeDeepWithKey(fn, a, b)
+      - ["ramda", "Member[mergeDeepLeft,mergeDeepRight,mergeDeepWith,mergeDeepWithKey]", "Argument[0..1]", "ReturnValue", "value"]
+
+      # R.mergeAll([obj1, obj2, ...]) — merges array of objects
+      - ["ramda", "Member[mergeAll]", "Argument[0]", "ReturnValue", "value"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Object property access — taint from object to return
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # R.prop(key, obj) — access single property
+      # R.path(pathArray, obj) — deep property access
+      # R.pathOr(default, pathArray, obj) — deep access with default
+      # R.propOr(default, key, obj) — property access with default
+      - ["ramda", "Member[prop,path]", "Argument[1]", "ReturnValue", "taint"]
+      - ["ramda", "Member[propOr,pathOr]", "Argument[2]", "ReturnValue", "taint"]
+
+      # R.pick(keys, obj) / R.pickAll(keys, obj) / R.pickBy(pred, obj)
+      # R.omit(keys, obj) — select/exclude properties
+      - ["ramda", "Member[pick,pickAll,pickBy,omit]", "Argument[1]", "ReturnValue", "taint"]
+
+      # R.project(keys, objs) — pick from array of objects
+      - ["ramda", "Member[project]", "Argument[1]", "ReturnValue", "taint"]
+
+      # R.props(keys, obj) — access multiple properties, returns array
+      - ["ramda", "Member[props]", "Argument[1]", "ReturnValue", "taint"]
+
+      # R.values(obj) / R.keys(obj) / R.toPairs(obj)
+      - ["ramda", "Member[values,toPairs,toPairsIn]", "Argument[0]", "ReturnValue", "taint"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Object transformation — taint from object to return
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # R.assoc(key, val, obj) — returns obj with key set to val
+      # R.assocPath(path, val, obj) — deep version
+      - ["ramda", "Member[assoc,assocPath]", "Argument[2]", "ReturnValue", "taint"]
+      - ["ramda", "Member[assoc,assocPath]", "Argument[1]", "ReturnValue", "taint"]
+
+      # R.dissoc(key, obj) / R.dissocPath(path, obj) — remove property
+      - ["ramda", "Member[dissoc,dissocPath]", "Argument[1]", "ReturnValue", "taint"]
+
+      # R.evolve(transforms, obj) — apply transform functions to obj properties
+      - ["ramda", "Member[evolve]", "Argument[1]", "ReturnValue", "taint"]
+
+      # R.objOf(key, val) — create object {key: val}
+      - ["ramda", "Member[objOf]", "Argument[1]", "ReturnValue", "taint"]
+
+      # R.fromPairs(pairs) — [[k,v], ...] → {k: v, ...}
+      - ["ramda", "Member[fromPairs]", "Argument[0]", "ReturnValue", "taint"]
+
+      # R.clone(obj) — deep clone
+      - ["ramda", "Member[clone]", "Argument[0]", "ReturnValue", "value"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Collection/Array operations — taint from collection to return
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Functions: data-last, collection is the last argument
+      # R.map(fn, list), R.filter(pred, list), R.find(pred, list), etc.
+      - [
+          "ramda",
+          "Member[map,filter,reject,find,findLast,findIndex,findLastIndex,take,takeLast,takeWhile,takeLastWhile,drop,dropLast,dropWhile,dropLastWhile,slice,head,last,tail,init,nth,flatten,unnest,uniq,uniqBy,uniqWith,sort,sortBy,sortWith,reverse,splitAt,splitEvery,splitWhen,groupBy,groupWith,partition,aperture,intersperse,without,difference,intersection,union,symmetricDifference,pluck,chain,into,transduce,scan,unfold,adjust,update,insert,remove,move,prepend,append,indexOf,lastIndexOf,includes,length,range,repeat,times]",
+          "Argument[N-1]",
+          "ReturnValue",
+          "taint",
+        ]
+
+      # R.reduce(fn, init, list) / R.reduceRight(fn, init, list)
+      # The accumulator initial value also flows to the return.
+      - ["ramda", "Member[reduce,reduceRight,reduceWhile]", "Argument[2]", "ReturnValue", "taint"]
+      - ["ramda", "Member[reduce,reduceRight,reduceWhile]", "Argument[1]", "ReturnValue", "taint"]
+
+      # R.concat(a, b) / R.zip(a, b) / R.zipWith(fn, a, b)
+      - ["ramda", "Member[concat,zip,xprod]", "Argument[0..1]", "ReturnValue", "taint"]
+      - ["ramda", "Member[zipWith]", "Argument[1..2]", "ReturnValue", "taint"]
+      - ["ramda", "Member[zipObj]", "Argument[0..1]", "ReturnValue", "taint"]
+
+      # R.of(x) — wraps in array
+      - ["ramda", "Member[of]", "Argument[0]", "ReturnValue", "taint"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: String operations — taint from string to return
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # R.toLower(str) / R.toUpper(str) / R.trim(str) / R.toString(val)
+      - ["ramda", "Member[toLower,toUpper,trim]", "Argument[0]", "ReturnValue", "taint"]
+      - ["ramda", "Member[toString]", "Argument[0]", "ReturnValue", "taint"]
+
+      # R.replace(pattern, replacement, str) — taint from str arg
+      - ["ramda", "Member[replace]", "Argument[2]", "ReturnValue", "taint"]
+
+      # R.split(sep, str) — split string into array
+      - ["ramda", "Member[split]", "Argument[1]", "ReturnValue", "taint"]
+
+      # R.join(sep, list) — join array into string
+      - ["ramda", "Member[join]", "Argument[1]", "ReturnValue", "taint"]
+
+      # R.match(regex, str) — returns match array
+      - ["ramda", "Member[match]", "Argument[1]", "ReturnValue", "taint"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Identity and wrapping — value preservation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # R.identity(x) — returns x unchanged
+      - ["ramda", "Member[identity]", "Argument[0]", "ReturnValue", "value"]
+
+      # R.tap(fn, x) — calls fn(x), returns x
+      - ["ramda", "Member[tap]", "Argument[1]", "ReturnValue", "value"]
+
+      # R.always(x)() — returns a function that always returns x
+      - ["ramda", "Member[always]", "Argument[0]", "ReturnValue.ReturnValue", "value"]
+
+      # R.when(pred, fn, x) / R.unless(pred, fn, x) / R.ifElse(pred, onTrue, onFalse)
+      # Data arg flows to return (may or may not be transformed)
+      - ["ramda", "Member[when,unless]", "Argument[2]", "ReturnValue", "taint"]
+      - ["ramda", "Member[cond]", "Argument[0]", "ReturnValue", "taint"]

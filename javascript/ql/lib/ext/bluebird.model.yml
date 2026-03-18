@@ -1,0 +1,327 @@
+extensions:
+  # =============================================================================
+  # bluebird (npm: "bluebird") - Full-featured promise library
+  # =============================================================================
+  #
+  # Bluebird is a fully-featured promise library with advanced utilities including
+  # collection methods, promisification, resource management, and more:
+  #
+  #   const Promise = require('bluebird');
+  #   Promise.resolve([1, 2, 3]).map(fn).then(results => { ... });
+  #   Promise.promisify(fs.readFile)('file.txt').then(data => { ... });
+  #
+  # Security concerns:
+  # - No sources or sinks. Bluebird is a pure promise utility library.
+  # - Taint propagates through promise resolution, collection iteration,
+  #   and various utility methods.
+  #
+  # The core promise framework (Promises.qll) already models: new Promise(),
+  # .then(), .catch(), .finally(), Promise.resolve(), Promise.reject(),
+  # Promise.all(), Promise.race(), Promise.any(), Promise.mapSeries(),
+  # Promise.try()/attempt(), Promise.defer(), and coroutine/promisify.
+  #
+  # The summaries below cover bluebird-specific methods NOT already handled
+  # by the generic promise framework.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: static methods on require('bluebird')
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # Promise.map(array, mapper, [options])
+      # Array elements flow to mapper's first param; mapper return flows to
+      # output array elements.
+      # =====================================================================
+      - - "bluebird"
+        - "Member[map]"
+        - "Argument[0].ArrayElement"
+        - "Argument[1].Parameter[0]"
+        - "value"
+      - - "bluebird"
+        - "Member[map]"
+        - "Argument[1].ReturnValue.Awaited"
+        - "ReturnValue.Awaited.ArrayElement"
+        - "value"
+
+      # =====================================================================
+      # Promise.reduce(array, reducer, [initialValue])
+      # reducer(accumulator, currentValue, index, length) → result
+      # =====================================================================
+      - - "bluebird"
+        - "Member[reduce]"
+        - "Argument[0].ArrayElement"
+        - "Argument[1].Parameter[1]"
+        - "value"
+      - - "bluebird"
+        - "Member[reduce]"
+        - "Argument[2]"
+        - "Argument[1].Parameter[0]"
+        - "taint"
+      - - "bluebird"
+        - "Member[reduce]"
+        - "Argument[1].ReturnValue.Awaited"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # =====================================================================
+      # Promise.filter(array, filterer, [options])
+      # filterer receives elements; output is a subset of input elements.
+      # =====================================================================
+      - - "bluebird"
+        - "Member[filter]"
+        - "Argument[0].ArrayElement"
+        - "Argument[1].Parameter[0]"
+        - "value"
+      - - "bluebird"
+        - "Member[filter]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # =====================================================================
+      # Promise.each(array, iterator)
+      # iterator receives elements; returns original array.
+      # =====================================================================
+      - - "bluebird"
+        - "Member[each]"
+        - "Argument[0].ArrayElement"
+        - "Argument[1].Parameter[0]"
+        - "value"
+      - - "bluebird"
+        - "Member[each]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # Promise.some(array, count)
+      # Resolves with first `count` fulfilled values.
+      # =====================================================================
+      - - "bluebird"
+        - "Member[some]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # =====================================================================
+      # Promise.props(object)
+      # Resolves all promise values in the object's properties.
+      # =====================================================================
+      - - "bluebird"
+        - "Member[props]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # =====================================================================
+      # Promise.delay(ms, [value])
+      # Resolves with the given value after delay.
+      # =====================================================================
+      - - "bluebird"
+        - "Member[delay]"
+        - "Argument[1]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # Promise.join(...values, handler)
+      # Passes resolved values as arguments to handler; handler return is
+      # the resolved value. Similar to Promise.all but with spread semantics.
+      # =====================================================================
+      - - "bluebird"
+        - "Member[join]"
+        - "Argument[N-1].ReturnValue"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # Promise.method(fn)
+      # Wraps fn to always return a promise. The returned function passes
+      # its arguments to fn and wraps the return value in a promise.
+      # =====================================================================
+      - - "bluebird"
+        - "Member[method]"
+        - "Argument[0].ReturnValue"
+        - "ReturnValue.ReturnValue.Awaited"
+        - "value"
+
+  # ---------------------------------------------------------------------------
+  # Summaries: instance methods (via Fuzzy)
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # .spread(handler)
+      # Like .then() but spreads the resolved array as handler arguments.
+      # Handler return flows to the output promise.
+      # =====================================================================
+      - - "bluebird"
+        - "Fuzzy.Member[spread]"
+        - "Argument[this].Awaited"
+        - "Argument[0].Parameter[0]"
+        - "taint"
+      - - "bluebird"
+        - "Fuzzy.Member[spread]"
+        - "Argument[0].ReturnValue"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # .tap(handler)
+      # Passes resolved value to handler but returns the ORIGINAL value,
+      # not the handler's return value.
+      # =====================================================================
+      - - "bluebird"
+        - "Fuzzy.Member[tap]"
+        - "Argument[this].Awaited"
+        - "Argument[0].Parameter[0]"
+        - "value"
+      - - "bluebird"
+        - "Fuzzy.Member[tap]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # .tapCatch(handler)
+      # Like .tap() but for the rejection reason.
+      # =====================================================================
+      - - "bluebird"
+        - "Fuzzy.Member[tapCatch]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # .get(key)
+      # Gets a property from the resolved value. Taint propagates.
+      # =====================================================================
+      - - "bluebird"
+        - "Fuzzy.Member[get]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # =====================================================================
+      # .call(methodName, ...args)
+      # Calls a method on the resolved value. Return value is tainted.
+      # =====================================================================
+      - - "bluebird"
+        - "Fuzzy.Member[call]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # =====================================================================
+      # .return(value) / .thenReturn(value)
+      # Resolves with the given value (regardless of the original value).
+      # =====================================================================
+      - - "bluebird"
+        - "Fuzzy.Member[return,thenReturn]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # .catchReturn(value)
+      # On rejection, resolves with the given value.
+      # =====================================================================
+      - - "bluebird"
+        - "Fuzzy.Member[catchReturn]"
+        - "Argument[0]"
+        - "ReturnValue.Awaited"
+        - "value"
+      - - "bluebird"
+        - "Fuzzy.Member[catchReturn]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # .delay(ms) / .timeout(ms, [message])
+      # Pass-through: resolved value flows to output unchanged.
+      # =====================================================================
+      - - "bluebird"
+        - "Fuzzy.Member[delay,timeout]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # =====================================================================
+      # Instance collection methods: .map(), .mapSeries(), .reduce(),
+      # .filter(), .each()
+      # These operate on a promise of an array.
+      # =====================================================================
+
+      # .map(mapper) / .mapSeries(mapper)
+      - - "bluebird"
+        - "Fuzzy.Member[map,mapSeries]"
+        - "Argument[this].Awaited.ArrayElement"
+        - "Argument[0].Parameter[0]"
+        - "value"
+      - - "bluebird"
+        - "Fuzzy.Member[map,mapSeries]"
+        - "Argument[0].ReturnValue.Awaited"
+        - "ReturnValue.Awaited.ArrayElement"
+        - "value"
+
+      # .reduce(reducer, [initialValue])
+      - - "bluebird"
+        - "Fuzzy.Member[reduce]"
+        - "Argument[this].Awaited.ArrayElement"
+        - "Argument[0].Parameter[1]"
+        - "value"
+      - - "bluebird"
+        - "Fuzzy.Member[reduce]"
+        - "Argument[1]"
+        - "Argument[0].Parameter[0]"
+        - "taint"
+      - - "bluebird"
+        - "Fuzzy.Member[reduce]"
+        - "Argument[0].ReturnValue.Awaited"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # .filter(filterer) — output is a subset of resolved array
+      - - "bluebird"
+        - "Fuzzy.Member[filter]"
+        - "Argument[this].Awaited.ArrayElement"
+        - "Argument[0].Parameter[0]"
+        - "value"
+      - - "bluebird"
+        - "Fuzzy.Member[filter]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # .each(iterator) — returns original array
+      - - "bluebird"
+        - "Fuzzy.Member[each]"
+        - "Argument[this].Awaited.ArrayElement"
+        - "Argument[0].Parameter[0]"
+        - "value"
+      - - "bluebird"
+        - "Fuzzy.Member[each]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "value"
+
+      # .some(count) / .any()
+      - - "bluebird"
+        - "Fuzzy.Member[some,any]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # .props() — resolves promise values in object properties
+      - - "bluebird"
+        - "Fuzzy.Member[props]"
+        - "Argument[this].Awaited"
+        - "ReturnValue.Awaited"
+        - "taint"

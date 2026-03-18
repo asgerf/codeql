@@ -1,0 +1,59 @@
+extensions:
+  # =============================================================================
+  # sanitizer (npm: "sanitizer") - HTML sanitization based on Google Caja
+  # =============================================================================
+  #
+  # sanitizer provides functions for HTML escaping and sanitization:
+  #
+  #   const sanitizer = require('sanitizer');
+  #
+  #   // Escape HTML special characters (< > & " ')
+  #   sanitizer.escape('<script>alert("xss")</script>');
+  #   // => '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'
+  #
+  #   // Strip unsafe HTML tags and attributes
+  #   sanitizer.sanitize('<script>evil()</script><b>safe</b>');
+  #   // => '<b>safe</b>'
+  #
+  #   // Escape entities in RCDATA
+  #   sanitizer.normalizeRCData(str);
+  #
+  #   // Convert HTML entities back to text
+  #   sanitizer.unescapeEntities(str);
+  #
+  # API:
+  #   sanitizer.escape(str) => string       — HTML-escape special characters
+  #   sanitizer.sanitize(str) => string     — strip unsafe HTML tags/attributes
+  #   sanitizer.normalizeRCData(str) => string — escape RCDATA entities
+  #   sanitizer.unescapeEntities(str) => string — decode HTML entities to text
+  #
+  # Security concerns:
+  # - escape() and sanitize() are HTML sanitizers: they produce safe output
+  #   from potentially dangerous input. They act as barriers for XSS queries.
+  # - All functions propagate taint from input to output.
+  # - unescapeEntities() reverses escaping so its output should NOT be
+  #   considered sanitized.
+  #
+  # Existing QLL coverage (HtmlSanitizers.qll):
+  #   sanitizer.escape and sanitizer.sanitize are recognized as
+  #   HtmlSanitizerCall instances, acting as barriers in XSS queries.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through sanitizer functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # sanitizer.escape(str) => string — taint flows through
+      - ["sanitizer", "Member[escape]", "Argument[0]", "ReturnValue", "taint"]
+
+      # sanitizer.sanitize(str) => string — taint flows through
+      - ["sanitizer", "Member[sanitize]", "Argument[0]", "ReturnValue", "taint"]
+
+      # sanitizer.normalizeRCData(str) => string — taint flows through
+      - ["sanitizer", "Member[normalizeRCData]", "Argument[0]", "ReturnValue", "taint"]
+
+      # sanitizer.unescapeEntities(str) => string — taint flows through
+      - ["sanitizer", "Member[unescapeEntities]", "Argument[0]", "ReturnValue", "taint"]

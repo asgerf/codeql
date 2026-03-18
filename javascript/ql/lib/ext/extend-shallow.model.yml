@@ -1,0 +1,52 @@
+extensions:
+  # =============================================================================
+  # extend-shallow (npm: "extend-shallow") - Shallow object extend utility
+  # =============================================================================
+  #
+  # extend-shallow extends an object with the properties of additional objects
+  # using shallow assignment (no recursive/deep copy).
+  #
+  #   const extend = require('extend-shallow');
+  #
+  #   extend({a: 'b'}, {c: 'd'});
+  #   //=> {a: 'b', c: 'd'}
+  #
+  #   // Shallow clone into empty object
+  #   var obj = {};
+  #   extend(obj, {a: 'b'}, {c: 'd'});
+  #   //=> {a: 'b', c: 'd'}
+  #
+  # API:
+  # - extend(target, object1, [objectN]) → modified target
+  #   - target: Object — the destination object (modified in place)
+  #   - object1..N: Object — source objects whose properties are copied
+  #   - Returns the modified target object
+  #   - Always shallow (no deep/recursive option)
+  #
+  # Security analysis:
+  # - No sources: pure utility function, does not access user input.
+  # - No sinks: does not execute commands, SQL, or render templates.
+  # - Taint flow: properties from source operands flow into the target
+  #   and the return value.
+  # - No prototype pollution concern (shallow copy only).
+  #
+  # Existing QLL coverage:
+  # - Extend.qll: ExtendCallShallow models extend-shallow as an ExtendCall
+  #   with source/destination operands. Always treated as shallow (isDeep()
+  #   does not hold). This feeds into taint tracking and object property flow.
+  # The QLL model should be retained.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Taint flow through extend()
+  # ---------------------------------------------------------------------------
+  #
+  # extend(target, src1, src2, ...) — all arguments contribute properties
+  # to the returned object.
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # Taint flows from any argument to the return value.
+      - ["extend-shallow", "", "Argument[0..9]", "ReturnValue", "taint"]

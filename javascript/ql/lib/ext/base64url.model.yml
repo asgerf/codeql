@@ -1,0 +1,30 @@
+extensions:
+  # =============================================================================
+  # base64url (npm: "base64url") - Base64 URL encoding/decoding
+  # =============================================================================
+  #
+  # The base64url package by Brian J. Brennan exports functions for encoding and
+  # decoding base64url strings, plus conversion between base64 and base64url:
+  #
+  #   const base64url = require('base64url');
+  #   base64url('Node.js is awesome.');           // encode (default export)
+  #   base64url.encode('Node.js is awesome.');     // encode
+  #   base64url.decode('Tm9kZS5qcyBpcyBhd2Vzb21lLg');  // decode to string
+  #   base64url.toBuffer('Tm9kZS5qcyBpcyBhd2Vzb21lLg'); // decode to Buffer
+  #   base64url.toBase64('Tm9kZS5qcw');           // base64url -> base64 chars
+  #   base64url.fromBase64('Tm9kZS5qcw==');        // base64 -> base64url chars
+  #
+  # This library has no sources or sinks. It only performs data transformation.
+  # Only decoding (decode, toBuffer) is modeled as taint-propagating, consistent
+  # with the existing CodeQL convention that base64 encoding is not a taint step
+  # (to avoid false positives). The toBase64/fromBase64 functions perform trivial
+  # character substitution and are not modeled.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # base64url.decode(b64url, encoding?) - decode base64url string to string
+      - ["base64url", "Member[decode]", "Argument[0]", "ReturnValue", "taint"]
+      # base64url.toBuffer(b64url) - decode base64url string to Buffer
+      - ["base64url", "Member[toBuffer]", "Argument[0]", "ReturnValue", "taint"]

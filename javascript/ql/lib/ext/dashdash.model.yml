@@ -1,0 +1,44 @@
+extensions:
+  # =============================================================================
+  # dashdash (npm: "dashdash") - Light option parsing library for Node.js
+  # =============================================================================
+  #
+  # dashdash provides explicit, featureful command-line option parsing.
+  #
+  # Two usage patterns:
+  #
+  # 1. Shortcut form — parse directly:
+  #      const dashdash = require('dashdash');
+  #      const opts = dashdash.parse({ options: optionSpecs });
+  #      // opts => { file: 'bar.txt', verbose: true, _args: [...] }
+  #
+  # 2. Parser form — create a parser, then parse:
+  #      const parser = dashdash.createParser({ options: optionSpecs });
+  #      const opts = parser.parse();         // defaults to process.argv
+  #      const opts = parser.parse(argv);     // or custom argv array
+  #      const opts = parser.parse({ argv, env, slice });
+  #
+  # The parse() method also reads from environment variables when option
+  # specs include an `env` field, using process.env by default.
+  #
+  # Security concerns:
+  # - The return value of parse() contains parsed command-line arguments
+  #   (and environment variable values), which are untrusted user input.
+  #
+  # Existing QLL coverage (CommandLineArguments.qll):
+  #   dashdash.parse() and dashdash.createParser().parse() are modeled
+  #   as CommandLineArguments sources (commandargs threat model).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: parsed command-line arguments are untrusted input
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # dashdash.parse({ options }) => { key: value, _args: [...] }
+      - ["dashdash", "Member[parse].ReturnValue", "commandargs"]
+
+      # dashdash.createParser(config).parse() => { key: value, _args: [...] }
+      - ["dashdash", "Member[createParser].ReturnValue.Member[parse].ReturnValue", "commandargs"]

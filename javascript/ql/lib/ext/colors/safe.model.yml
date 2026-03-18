@@ -1,0 +1,48 @@
+extensions:
+  # =============================================================================
+  # colors/safe (npm: "colors/safe") - Terminal string styling (safe variant)
+  # =============================================================================
+  #
+  # The safe variant of the colors library by Marak Squires. Unlike
+  # require("colors"), which modifies String.prototype, the safe variant
+  # exposes styling as plain function calls on the module object.
+  #
+  #   const colors = require('colors/safe');
+  #   colors.red("error");
+  #   colors.bold.underline("important");
+  #   colors.america("hello");
+  #
+  # All color/style methods take a string argument and return a new string
+  # wrapped in ANSI escape sequences. Methods can be chained via property
+  # access: colors.bold.red("text") applies both styles before the call.
+  #
+  # API surface covered by the Fuzzy summary below:
+  #   Text colors: black, red, green, yellow, blue, magenta, cyan, white,
+  #     gray, grey, brightRed, brightGreen, brightYellow, brightBlue,
+  #     brightMagenta, brightCyan, brightWhite
+  #   Background colors: bgBlack, bgRed, bgGreen, bgYellow, bgBlue,
+  #     bgMagenta, bgCyan, bgWhite, bgGray, bgGrey, bgBrightRed,
+  #     bgBrightGreen, bgBrightYellow, bgBrightBlue, bgBrightMagenta,
+  #     bgBrightCyan, bgBrightWhite
+  #   Styles: reset, bold, dim, italic, underline, inverse, hidden,
+  #     strikethrough
+  #   Extras (themes): rainbow, zebra, america, trap, random, zalgo
+  #   Utilities: strip, stripColors, enable, disable, setTheme
+  #
+  # Security concerns:
+  # - No sources or sinks. Pure string decoration for terminal output.
+  # - Taint propagates from the string argument through to the return value,
+  #   since the styled output embeds the original text.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through all color/style/utility methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # colors.red("text"), colors.bold.underline("text"), etc.
+      # Any chain of member accesses on the module ending in a call propagates
+      # taint from the first argument to the return value.
+      - ["colors/safe", "Fuzzy", "Argument[0]", "ReturnValue", "taint"]

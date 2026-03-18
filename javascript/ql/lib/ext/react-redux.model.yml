@@ -1,0 +1,46 @@
+extensions:
+  # =============================================================================
+  # react-redux (npm: "react-redux") — Official React bindings for Redux
+  # =============================================================================
+  #
+  # Provides hooks and higher-order components for connecting React components
+  # to a Redux store:
+  #
+  #   import { useSelector, useDispatch, connect } from 'react-redux';
+  #
+  #   // Hooks API
+  #   const value = useSelector(state => state.someValue);
+  #   const dispatch = useDispatch();
+  #   dispatch(someAction());
+  #
+  #   // connect() HOC API
+  #   const mapStateToProps = (state) => ({ value: state.someValue });
+  #   const mapDispatchToProps = { someAction };
+  #   export default connect(mapStateToProps, mapDispatchToProps)(MyComponent);
+  #
+  # Exports: Provider, connect, useSelector, useDispatch, useStore,
+  #   batch, shallowEqual
+  #
+  # Security concerns:
+  # - No sources. The library reads from an in-memory Redux store, not from
+  #   external or untrusted data.
+  # - No sinks. The library does not perform security-sensitive operations
+  #   (no command execution, file I/O, URL navigation, or HTML rendering).
+  # - Taint propagation through Redux state is complex: data flows from
+  #   dispatched actions through reducers to store state, then to components
+  #   via useSelector/connect(mapStateToProps). This is already modeled in
+  #   detail by CodeQL's Redux.qll framework model.
+  #
+  # Existing QLL coverage (Redux.qll + React.qll):
+  # - useSelector: callback return value flows to the hook's return value;
+  #   callback parameter is recognized as a Redux root state reference.
+  # - useDispatch: return value recognized as a Redux dispatch function.
+  # - connect(mapStateToProps, mapDispatchToProps): both arguments are
+  #   recognized for Redux state/dispatch flow modeling; connect() itself
+  #   is recognized as a higher-order component builder (React.qll).
+  # - Heuristic recognition of connect-like calls based on parameter naming.
+  #
+  # These are complex framework-level patterns involving Redux state flow
+  # and React component composition that cannot be expressed as data
+  # extensions. Nothing additional to model here.
+  # =============================================================================

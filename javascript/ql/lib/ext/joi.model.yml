@@ -1,0 +1,62 @@
+extensions:
+  # =============================================================================
+  # joi (npm: "joi") - Schema validation library
+  # =============================================================================
+  #
+  # Joi is a powerful schema description language and data validator for
+  # JavaScript objects. It is commonly used to validate HTTP request bodies,
+  # query parameters, and other untrusted input.
+  #
+  #   const Joi = require('joi');
+  #   const schema = Joi.object({
+  #     username: Joi.string().alphanum().min(3).max(30).required(),
+  #     email: Joi.string().email().required(),
+  #   });
+  #
+  #   // Synchronous validation
+  #   const { error, value } = schema.validate(input);
+  #
+  #   // Async validation
+  #   const value = await schema.validateAsync(input);
+  #
+  # API:
+  #   Joi.object(schema)        — create an object schema
+  #   Joi.string() / .number() / .boolean() / .array() / .date() / etc.
+  #   schema.validate(value, [options]) — validate and return { error, value }
+  #   schema.validateAsync(value, [options]) — async validate, returns promise
+  #
+  # Security concerns:
+  # - No sources. Joi does not access external or untrusted data directly.
+  # - No injection sinks. Joi performs data validation, not execution.
+  # - Validation errors (.error) may contain fragments of the original
+  #   untrusted input in error messages. If these are reflected in HTML
+  #   responses, this can lead to XSS. This is modeled as a source in the
+  #   ExceptionXss query via QLL (JoiValidationErrorRead).
+  # - The validated output (.value / validateAsync result) preserves taint
+  #   from the input, since Joi's type coercion and default values do not
+  #   fully sanitize untrusted data.
+  #
+  # Existing QLL coverage (JsonSchema.qll):
+  #   Joi::JoiValidationErrorRead models schema.validate(input) as a
+  #   ValidationCall. The .error property of the result is used as a
+  #   source in ExceptionXssCustomizations.qll. Schema object tracking
+  #   is modeled through objectSchema() for chainable methods.
+  #
+  # This data extension covers:
+  # - Summaries: Taint flows from validate/validateAsync input to output.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: Taint propagation through validation
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # schema.validate(input) -> { error, value }
+      # Taint flows from input (arg 0) to the .value property of the result.
+      - ["joi", "Fuzzy.Member[validate]", "Argument[0]", "ReturnValue.Member[value]", "taint"]
+
+      # schema.validateAsync(input) -> Promise<value>
+      # Taint flows from input (arg 0) to the resolved value.
+      - ["joi", "Fuzzy.Member[validateAsync]", "Argument[0]", "ReturnValue.Awaited", "taint"]

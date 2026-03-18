@@ -1,0 +1,23 @@
+extensions:
+  # =============================================================================
+  # ava (npm: "ava") - Test runner for Node.js
+  # =============================================================================
+  #
+  # AVA is a test runner that executes tests concurrently. Tests are defined
+  # using the default export:
+  #
+  #   import test from 'ava';
+  #   test('my test', t => {
+  #     t.is(1 + 1, 2);
+  #   });
+  #
+  # The test callback receives an execution object `t` with assertion methods
+  # such as t.is(), t.deepEqual(), t.throws(), t.pass(), t.fail(), etc.
+  # Modifiers like test.serial, test.before, test.after, test.beforeEach,
+  # test.afterEach, test.only, and test.skip are also available.
+  #
+  # This library has no sources, sinks, or security-relevant taint propagation.
+  # It is a test framework whose code is typically excluded from security
+  # analysis. No models are needed.
+  # =============================================================================
+  []

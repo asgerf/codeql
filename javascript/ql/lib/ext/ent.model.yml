@@ -1,0 +1,47 @@
+extensions:
+  # =============================================================================
+  # ent (npm: "ent") - HTML entity encode/decode
+  # =============================================================================
+  #
+  # A lightweight library for encoding and decoding HTML entities:
+  #
+  #   const ent = require('ent');
+  #   ent.encode('<span>©moo</span>');   // '&#60;span&#62;&#169;moo&#60;/span&#62;'
+  #   ent.decode('&pi; &amp; &rho;');    // 'π & ρ'
+  #
+  #   // Direct sub-module imports also work:
+  #   const encode = require('ent/encode');
+  #   const decode = require('ent/decode');
+  #
+  # Security concerns:
+  # - ent.encode() is an HTML sanitizer: it converts unsafe characters to
+  #   HTML entities, making the output safe for embedding in HTML. The output
+  #   is no longer tainted for html-injection purposes.
+  # - ent.decode() reverses encoding: it converts HTML entities back to raw
+  #   characters, which re-introduces potentially dangerous content.
+  #   Taint propagates through decode.
+  #
+  # Existing QLL coverage:
+  #   HtmlSanitizers.qll: ent.encode is recognized as an HTML sanitizer
+  #     function (htmlSanitizerFunction predicate).
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through ent functions
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # ent.encode(str, opts?) → HTML-entity-encoded string.
+      # The output is sanitized (not tainted for html-injection), but still
+      # derived from the input — taint propagates for other sink kinds.
+      - ["ent", "Member[encode]", "Argument[0]", "ReturnValue", "taint"]
+
+      # ent.decode(str) → decoded string with raw characters restored.
+      # Decoding re-introduces unsafe characters — taint propagates.
+      - ["ent", "Member[decode]", "Argument[0]", "ReturnValue", "taint"]
+
+      # Direct sub-module imports: require('ent/encode'), require('ent/decode')
+      - ["ent/encode", "", "Argument[0]", "ReturnValue", "taint"]
+      - ["ent/decode", "", "Argument[0]", "ReturnValue", "taint"]

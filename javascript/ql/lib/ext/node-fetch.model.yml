@@ -1,0 +1,90 @@
+extensions:
+  # =============================================================================
+  # node-fetch (npm: "node-fetch") — Fetch API for Node.js
+  # =============================================================================
+  #
+  # node-fetch is a light-weight module that brings the WHATWG Fetch API to
+  # Node.js. It implements the standard fetch(url, init?) interface, returning
+  # a Promise<Response>.
+  #
+  #   const fetch = require('node-fetch');       // v2 (CommonJS)
+  #   import fetch from 'node-fetch';            // v3 (ESM)
+  #
+  #   const res = await fetch('https://api.example.com/data');
+  #   const json = await res.json();
+  #
+  #   const res = await fetch('https://api.example.com/submit', {
+  #     method: 'POST',
+  #     headers: { 'Content-Type': 'application/json' },
+  #     body: JSON.stringify({ key: 'value' })
+  #   });
+  #
+  # Response provides: .json(), .text(), .arrayBuffer(), .blob(), .formData(),
+  # .body (ReadableStream), .headers, .status, .url, .ok, .redirected, etc.
+  #
+  # Also exports: Request, Response, Headers, FetchError, AbortError classes.
+  #
+  # Security concerns:
+  # - The first argument (URL) controls the request destination →
+  #   request-forgery sink.
+  # - The options.body field carries request payload data.
+  # - Response data (.json(), .text(), .body, etc.) is untrusted when the
+  #   response comes from an external source → remote source.
+  #
+  # Existing QLL coverage (ClientRequests.qll):
+  # - FetchUrlRequest models node-fetch alongside cross-fetch and
+  #   isomorphic-fetch, with URL as a client request sink and response
+  #   as a "fetch.response" data node.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: URL argument controls the request destination
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # fetch(url, init?) — first argument is the request URL
+      - ["node-fetch", "Argument[0]", "request-forgery"]
+
+  # ---------------------------------------------------------------------------
+  # Sources: Response data from fetch calls is untrusted
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # await fetch(url) → Response object (contains remote data)
+      - ["node-fetch", "ReturnValue.Awaited", "remote"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation through Response body-reading methods
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # =====================================================================
+      # Response body-reading methods:
+      #   res.json()        → Promise<any>     (parsed JSON)
+      #   res.text()        → Promise<string>  (body as text)
+      #   res.arrayBuffer() → Promise<ArrayBuffer>
+      #   res.blob()        → Promise<Blob>
+      #   res.formData()    → Promise<FormData>
+      # Taint flows from the Response object through these methods.
+      # =====================================================================
+      - - "node-fetch"
+        - "ReturnValue.Awaited.Member[json,text,arrayBuffer,blob,formData]"
+        - "Argument[this]"
+        - "ReturnValue.Awaited"
+        - "taint"
+
+      # =====================================================================
+      # res.clone() → Response
+      # Clones the response; taint propagates to the clone.
+      # =====================================================================
+      - - "node-fetch"
+        - "Fuzzy.Member[clone]"
+        - "Argument[this]"
+        - "ReturnValue"
+        - "value"

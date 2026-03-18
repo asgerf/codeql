@@ -1,0 +1,38 @@
+extensions:
+  # =============================================================================
+  # remote-exec (npm: "remote-exec") - Execute shell commands on remote hosts
+  # =============================================================================
+  #
+  # remote-exec is a wrapper around ssh2 for executing shell commands on one
+  # or more remote machines via SSH:
+  #
+  #   const rexec = require('remote-exec');
+  #
+  #   rexec(hosts, commands, options, callback);
+  #
+  #   // hosts:    string | string[] — hostname(s) or IP address(es)
+  #   // commands: string | string[] — shell command(s) to execute remotely
+  #   // options:  object — SSH connection options (username, privateKey, etc.)
+  #   // callback: function — called on completion
+  #
+  # Security concerns:
+  # - commands (argument 1) are executed as shell commands on remote hosts.
+  #   If attacker-controlled data reaches this argument, it is a command
+  #   injection vulnerability.
+  # - hosts (argument 0) controls which servers are connected to. If
+  #   attacker-controlled, this is a server-side request forgery vector.
+  # - No sources. The library does not introduce untrusted data.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: command injection and request forgery
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # rexec(hosts, commands, ...) — commands are shell-interpreted
+      - ["remote-exec", "Argument[1]", "command-injection"]
+
+      # rexec(hosts, ...) — hosts controls which remote server is connected to
+      - ["remote-exec", "Argument[0]", "request-forgery"]

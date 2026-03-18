@@ -1,7 +1,46 @@
 extensions:
+  # =============================================================================
+  # mkdirp (npm: "mkdirp") — Recursive directory creation (mkdir -p)
+  # =============================================================================
+  #
+  # Creates directories recursively, like `mkdir -p`:
+  #
+  #   import { mkdirp } from 'mkdirp';
+  #   await mkdirp('/tmp/foo/bar/baz');
+  #   mkdirp.sync('/tmp/foo/bar/baz');
+  #
+  # API:
+  #   mkdirp(dir, opts?)            → Promise<string|undefined>
+  #   mkdirp.sync(dir, opts?)       → string|undefined
+  #   mkdirp.native(dir, opts?)     → Promise<string|undefined>
+  #   mkdirp.nativeSync(dir, opts?) → string|undefined
+  #   mkdirp.manual(dir, opts?)     → Promise<string|undefined>
+  #   mkdirp.manualSync(dir, opts?) → string|undefined
+  #
+  # Older/internal named exports:
+  #   mkdirpSync, mkdirpNative, mkdirpNativeSync, mkdirpManual, mkdirpManualSync
+  #
+  # Security concerns:
+  # - SINK (path-injection): The directory path argument controls which
+  #   directories are created on the file system.
+  # - No sources. The return value is the first directory created (derived from
+  #   the input path), not external data.
+  #
+  # Existing coverage:
+  # - ext/mkdirp.model.yml already provides sink models for all variants.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks: directory path arguments are path-injection sinks
+  # ---------------------------------------------------------------------------
   - addsTo:
       pack: codeql/javascript-all
       extensible: sinkModel
     data:
-      - ["mkdirp", "Member[nativeSync,native,manual,manualSync,mkdirpNative,mkdirpManual,mkdirpManualSync,mkdirpNativeSync,mkdirpSync,sync].Argument[0]", "path-injection"]
+      # Default export: mkdirp(dir) / require('mkdirp')(dir)
       - ["mkdirp", "Argument[0]", "path-injection"]
+
+      # Named variants: sync, native, nativeSync, manual, manualSync
+      # and internal aliases: mkdirpSync, mkdirpNative, mkdirpNativeSync,
+      # mkdirpManual, mkdirpManualSync
+      - ["mkdirp", "Member[sync,native,nativeSync,manual,manualSync,mkdirpSync,mkdirpNative,mkdirpNativeSync,mkdirpManual,mkdirpManualSync].Argument[0]", "path-injection"]

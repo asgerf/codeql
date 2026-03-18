@@ -1,0 +1,119 @@
+extensions:
+  # =============================================================================
+  # eta (npm: "eta") - Embedded JavaScript template engine
+  # =============================================================================
+  #
+  # Lightweight template engine for Node.js, Deno, and the browser. Templates
+  # contain embedded JS (<%= %> for escaped, <%~ %> for raw output).
+  #
+  # v1 (legacy static API):
+  #   const { render, renderFile, compile } = require('eta');
+  #   render('<h1><%= it.title %></h1>', { title: 'Hello' });
+  #
+  # v2+ (class-based API):
+  #   const { Eta } = require('eta');
+  #   const eta = new Eta({ views: './templates' });
+  #   eta.render('./page', { title: 'Hello' });
+  #   eta.renderString('<%= it.name %>', { name: 'World' });
+  #
+  # Security concerns:
+  # - Template strings (first argument to render/renderString/compile) are
+  #   compiled into JavaScript and evaluated — code-injection sinks.
+  # - renderFile / render (v2, file mode) reads templates from the file
+  #   system — the template name/path is a path-injection sink.
+  # - Data (locals) flows into rendered output as taint.
+  #
+  # Existing QLL coverage:
+  # - CodeInjectionCustomizations.qll: eta.render() arg 0 as EtaTemplateSink
+  #   (code-injection) — models only the legacy v1 static API.
+  # - TemplateObjectInjectionCustomizations.qll: eta listed as a vulnerable
+  #   template engine for Express view-engine template-object injection.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sinks
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      # --- Legacy v1 static API ---
+
+      # render(templateStr, data?, opts?) — template string compiled as JS
+      - ["eta", "Member[render].Argument[0]", "code-injection"]
+
+      # renderAsync(templateStr, data?, opts?) — async variant
+      - ["eta", "Member[renderAsync].Argument[0]", "code-injection"]
+
+      # compile(templateStr, opts?) — compiles template string into JS function
+      - ["eta", "Member[compile].Argument[0]", "code-injection"]
+
+      # renderFile(path, data?, opts?) — path controls which file is read
+      - ["eta", "Member[renderFile].Argument[0]", "path-injection"]
+
+      # renderFileAsync(path, data?, opts?) — async variant
+      - ["eta", "Member[renderFileAsync].Argument[0]", "path-injection"]
+
+      # --- v2+ class-based API: new Eta().renderString(...) ---
+
+      # eta.renderString(templateStr, data?) — template string compiled as JS
+      - ["eta", "Fuzzy.Member[renderString].Argument[0]", "code-injection"]
+
+      # eta.renderStringAsync(templateStr, data?) — async variant
+      - ["eta", "Fuzzy.Member[renderStringAsync].Argument[0]", "code-injection"]
+
+      # eta.compile(templateStr, opts?) — compiles template string into JS
+      - ["eta", "Fuzzy.Member[compile].Argument[0]", "code-injection"]
+
+      # eta.compileAsync(templateStr, opts?) — async variant
+      - ["eta", "Fuzzy.Member[compileAsync].Argument[0]", "code-injection"]
+
+      # eta.render(templateName, data?) — in v2+, renders a named template file
+      - ["eta", "Fuzzy.Member[render].Argument[0]", "path-injection"]
+
+      # eta.renderAsync(templateName, data?) — async variant
+      - ["eta", "Fuzzy.Member[renderAsync].Argument[0]", "path-injection"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from data into rendered output
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # --- Legacy v1 static API ---
+
+      # render(template, data, opts?) → rendered HTML string
+      - ["eta", "Member[render]", "Argument[1]", "ReturnValue", "taint"]
+
+      # renderAsync(template, data, opts?) → Promise<string>
+      - ["eta", "Member[renderAsync]", "Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # renderFile(path, data, opts?, cb?) → rendered HTML string
+      - ["eta", "Member[renderFile]", "Argument[1]", "ReturnValue", "taint"]
+
+      # renderFileAsync(path, data, opts?, cb?) → Promise<string>
+      - ["eta", "Member[renderFileAsync]", "Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # compile(template, opts?) → function(data) → string
+      - ["eta", "Member[compile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+
+      # --- v2+ class-based API ---
+
+      # eta.renderString(template, data?) → rendered string
+      - ["eta", "Fuzzy.Member[renderString]", "Argument[1]", "ReturnValue", "taint"]
+
+      # eta.renderStringAsync(template, data?) → Promise<string>
+      - ["eta", "Fuzzy.Member[renderStringAsync]", "Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # eta.render(templateName, data?) → rendered string
+      - ["eta", "Fuzzy.Member[render]", "Argument[1]", "ReturnValue", "taint"]
+
+      # eta.renderAsync(templateName, data?) → Promise<string>
+      - ["eta", "Fuzzy.Member[renderAsync]", "Argument[1]", "ReturnValue.Awaited", "taint"]
+
+      # eta.compile(template) → function(data) → string
+      - ["eta", "Fuzzy.Member[compile].ReturnValue", "Argument[0]", "ReturnValue", "taint"]
+
+      # eta.compileAsync(template) → function(data) → string
+      - ["eta", "Fuzzy.Member[compileAsync].ReturnValue", "Argument[0]", "ReturnValue", "taint"]

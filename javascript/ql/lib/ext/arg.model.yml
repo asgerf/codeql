@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # arg (npm: "arg") - Lightweight command-line argument parser
+  # =============================================================================
+  #
+  # arg is a simple CLI argument parser by Vercel. It takes a spec object and
+  # returns parsed arguments from process.argv (or a custom argv array).
+  #
+  #   const arg = require("arg");
+  #   const args = arg({ "--port": Number, "--verbose": Boolean, "-v": "--verbose" });
+  #   // args["--port"], args["--verbose"], args._ (positional args)
+  #
+  # Optionally accepts a custom argv source:
+  #   const args = arg(spec, { argv: customArgv });
+  #
+  # Exports: default function arg(spec, options?) → parsed args object
+  #
+  # Security concerns:
+  # - The return value contains parsed command-line arguments, which are
+  #   untrusted user input (commandargs threat model).
+  # - When a custom argv array is passed, taint propagates from argv to the
+  #   return value.
+  # =============================================================================
+
+  # ---------------------------------------------------------------------------
+  # Sources: parsed command-line arguments are untrusted input
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      # arg({...spec}) → { _: [], "--flag": value, ... }
+      - ["arg", "ReturnValue", "commandargs"]
+
+  # ---------------------------------------------------------------------------
+  # Summaries: taint propagation from custom argv to parsed result
+  # ---------------------------------------------------------------------------
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # arg(spec, { argv: tainted }) → tainted result
+      - ["arg", "", "Argument[1].Member[argv]", "ReturnValue", "taint"]

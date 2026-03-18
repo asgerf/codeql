@@ -1,0 +1,32 @@
+extensions:
+  # =============================================================================
+  # debounce (npm: "debounce") - Function debouncing utility
+  # =============================================================================
+  #
+  # Wraps a function so that it is only executed after a quiet period:
+  #
+  #   const debounce = require('debounce');
+  #   const debounced = debounce(fn, 200);
+  #   debounced(arg);          // schedules fn(arg) after 200 ms of inactivity
+  #   debounced.flush();       // execute immediately if pending
+  #   debounced.clear();       // cancel pending execution
+  #   debounced.trigger();     // force immediate execution
+  #
+  # The returned wrapper forwards all arguments to the original function
+  # and (in immediate mode) returns its return value.
+  #
+  # No sources or sinks. The wrapper preserves the behavior of the original
+  # function, so taint flows through transparently.
+  #
+  # Existing QLL coverage (Nodes.qll):
+  #   Modeled as a ThrottleLikePartialCall / PartialInvokeNode — the call
+  #   debounce(fn) is treated as a partial invocation binding zero arguments,
+  #   so argument and return-value flow through the wrapper is already handled.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # debounce(fn, wait?) -> wrappedFn
+      # The wrapped function behaves like the original.
+      - ["debounce", "", "Argument[0]", "ReturnValue", "value"]

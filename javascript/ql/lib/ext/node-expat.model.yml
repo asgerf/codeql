@@ -1,0 +1,43 @@
+extensions:
+  # =============================================================================
+  # node-expat (npm: "node-expat") - Fast SAX XML parser (libexpat binding)
+  # =============================================================================
+  #
+  # node-expat is a Node.js binding for the Expat XML SAX parser. It provides
+  # streaming event-based XML parsing:
+  #
+  #   const expat = require('node-expat');
+  #   const parser = new expat.Parser('UTF-8');
+  #
+  #   parser.on('startElement', (name, attrs) => { ... });
+  #   parser.on('text', (text) => { ... });
+  #   parser.on('endElement', (name) => { ... });
+  #
+  #   parser.write(xmlString);   // or parser.parse(xmlString)
+  #
+  # Security concerns:
+  # - Taint propagation: XML data written via parse()/write() flows to
+  #   event callback parameters (startElement, endElement, text, comment,
+  #   processingInstruction, xmlDecl, entityDecl, etc.).
+  # - XXE / XML bomb: the source argument to parse()/write() is parsed as
+  #   XML. This is modeled in QLL (XmlParsers.qll) via ParserInvocation
+  #   and feeds into the XXE and XML bomb queries, which are not
+  #   expressible as data extension sink kinds.
+  # - No sources: node-expat does not fetch external data.
+  #
+  # Existing QLL coverage:
+  # - XmlParsers.qll: ExpatParserInvocation models parse()/write() as
+  #   XML parser invocations with entity resolution info, and tracks
+  #   taint from source argument to event callback parameters.
+  # =============================================================================
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: summaryModel
+    data:
+      # parser.write(xml) / parser.parse(xml) — taint from the XML string
+      # flows into the parser object itself (which later emits events).
+      - ["node-expat", "Member[Parser].Instance.Member[write,parse]", "Argument[0]", "Argument[this]", "taint"]
+
+      # parser.on(event, callback) — taint stored in the parser flows
+      # to all callback parameters for data-bearing events.
+      - ["node-expat", "Member[Parser].Instance.Member[on,addListener]", "Argument[this]", "Argument[1].Parameter[0..N-1]", "taint"]
