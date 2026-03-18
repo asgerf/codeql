@@ -19,3 +19,19 @@ function t4() {
     const source = wrapper.lib.getSource() // $ Source=t4
     wrapper.lib.mySink(source); // $ Alert=t4
 }
+
+function t5() {
+    function getLib() {
+        return require('testlib');
+    }
+    function takeLib(lib) {
+        const source = lib.getSource() // $ Source=t5.1
+        lib.mySink(source); // $ Alert=t5.1
+    }
+    function takeWrapper(wrapper) {
+        const source = wrapper.lib.getSource() // $ Source=t5.2
+        wrapper.lib.mySink(source); // $ Alert=t5.2
+    }
+    takeLib(getLib());
+    takeWrapper({lib: getLib()});
+}

@@ -2518,6 +2518,10 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
               predicate valueStep(Node node1, Node node2);
 
+              predicate valueStepIn(Node node1, Node node2);
+
+              predicate valueStepOut(Node node1, Node node2);
+
               predicate relevantTypeNames(string type);
 
               predicate additionalSelectors(string type, string path);
@@ -2542,14 +2546,6 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 typeModel(any(string t | relevantTypeNamesEx(t)), type, accessPath)
                 or
                 Stage::additionalSelectors(type, accessPath)
-              }
-
-              private module Steps {
-                predicate readStep = Stage::readStep/3;
-
-                predicate storeStep = Stage::storeStep/3;
-
-                predicate valueStep = Stage::valueStep/2;
               }
 
               private predicate unfoldToken(AccessPathToken tok, string head, string operand) {
@@ -2582,12 +2578,21 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 )
               }
 
-              Node trackSource(Node source) {
+              Node trackSource(Node source, boolean hasCall) {
                 source = getASourceFromSelector(_, _, _) and
-                result = source
+                result = source and
+                hasCall = false
                 or
-                Steps::valueStep(trackSource(source), result)
+                Stage::valueStep(trackSource(source, hasCall), result)
+                or
+                Stage::valueStepIn(trackSource(source, _), result) and
+                hasCall = true
+                or
+                Stage::valueStepOut(trackSource(source, false), result) and
+                hasCall = false
               }
+
+              Node trackSource(Node source) { result = trackSource(source, _) }
 
               Node getASourceFromSelector(string type, AccessPath path) {
                 exists(int n |
@@ -2606,7 +2611,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                   token = accessPath.getToken(n - 1)
                 |
                   exists(ContentSet contents |
-                    Steps::readStep(prev, contents, result) and
+                    Stage::readStep(prev, contents, result) and
                     contents.getAReadContent() = contentFromToken(token)
                   )
                   or
@@ -2618,7 +2623,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 )
                 or
                 exists(ContentSet contents |
-                  Steps::readStep(getAParameterObjectFromSelector(type, accessPath, n - 1),
+                  Stage::readStep(getAParameterObjectFromSelector(type, accessPath, n - 1),
                     contents, result) and
                   argumentParameterContent(accessPath.getToken(n - 1).getAnArgument(),
                     contents.getAReadContent())
@@ -2632,7 +2637,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                   result = TArgumentObjectNode(call)
                 )
                 or
-                Steps::valueStep(result, getAnArgumentObjectFromSelector(type, accessPath, n))
+                Stage::valueStep(result, getAnArgumentObjectFromSelector(type, accessPath, n))
               }
 
               Node getASinkFromSelector(string type, AccessPath accessPath) {
@@ -2643,16 +2648,25 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               }
 
               pragma[nomagic]
-              Node backtrackSink(Node sink) {
+              Node backtrackSink(Node sink, boolean hasReturn) {
                 sink = getASinkFromSelector(_, _, _) and
-                result = sink
+                result = sink and
+                hasReturn = true
                 or
-                Steps::valueStep(result, backtrackSink(sink))
+                Stage::valueStep(result, backtrackSink(sink, hasReturn))
+                or
+                Stage::valueStepIn(result, backtrackSink(sink, false)) and
+                hasReturn = false
+                or
+                Stage::valueStepOut(result, backtrackSink(sink, _)) and
+                hasReturn = true
               }
+
+              Node backtrackSink(Node sink) { result = backtrackSink(sink, _) }
 
               Node getASinkFromSelector(string type, AccessPath accessPath, int n) {
                 exists(ContentSet contents |
-                  Steps::storeStep(result, contents,
+                  Stage::storeStep(result, contents,
                     getAnArgumentObjectFromSelector(type, accessPath, n - 1)) and
                   argumentParameterContent(accessPath.getToken(n - 1).getAnArgument(),
                     contents.getAStoreContent())
@@ -2663,7 +2677,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                   token = accessPath.getToken(n - 1)
                 |
                   exists(ContentSet contents |
-                    Steps::storeStep(result, contents, prev) and
+                    Stage::storeStep(result, contents, prev) and
                     contents.getAReadContent() = contentFromToken(token)
                   )
                   or
@@ -2683,7 +2697,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                   result = TParameterObjectNode(callable)
                 )
                 or
-                Steps::valueStep(getAParameterObjectFromSelector(type, accessPath, n), result)
+                Stage::valueStep(getAParameterObjectFromSelector(type, accessPath, n), result)
               }
             }
 
@@ -2702,6 +2716,10 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                   or
                   approxCaptureStep(node1, node2)
                 }
+
+                predicate valueStepIn(Node node1, Node node2) { none() }
+
+                predicate valueStepOut(Node node1, Node node2) { none() }
 
                 predicate additionalSelectors(string type, string path) {
                   // Do not evaluate sources/sinks at the pre-call graph stage, only the types asked for at the instantiation site
@@ -2733,6 +2751,10 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                   or
                   DataFlowInput::CallGraph::valueStepEx(node1, node2)
                 }
+
+                predicate valueStepIn = DataFlowInput::CallGraph::valueStepIn/2;
+
+                predicate valueStepOut = DataFlowInput::CallGraph::valueStepOut/2;
 
                 predicate additionalSelectors(string type, string path) {
                   // For the final evaluation stage, also find sources, sinks, barriers
@@ -3893,7 +3915,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                * Holds if `node1 -> node2` is a step into a call. Flow into method receivers is blocked.
                */
               pragma[inline]
-              private predicate valueStepIn(Node node1, Node node2) {
+              predicate valueStepIn(Node node1, Node node2) {
                 exists(
                   DataFlowCall call, DataFlowCallable callable, ArgumentPosition apos,
                   ParameterPosition ppos
@@ -3911,7 +3933,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                * Holds if `node1 -> node2` is a step out of a call.
                */
               pragma[inline]
-              private predicate valueStepOut(Node node1, Node node2) {
+              predicate valueStepOut(Node node1, Node node2) {
                 exists(DataFlowCall call, DataFlowCallable callable, ReturnKind kind |
                   callable = viableCallable(call) and
                   node1 = getReturnNodeOfKind(callable.asSourceCallable(), kind) and
