@@ -4,6 +4,7 @@ module;
 private import minimal.minimal
 private import minimal.minimal as JS
 private import codeql.unified.UnifiedDataFlow
+private import codeql.dataflow.internal.AccessPathSyntax as AccessPathSyntax
 private import codeql.util.Boolean
 import minimal.BasicBlockInternal as BB
 private import PathResolution
@@ -452,6 +453,21 @@ module UnifiedDataFlowInput implements
   import semmle.javascript.internal.unified.Transforms
 
   Content setterParameter() { result.asArrayIndex(_) = 0 }
+
+  bindingset[call, token]
+  predicate satisfiesCallSiteFilter(Call call, AccessPathTokenBase token) {
+    token.getName() = "WithArity" and
+    call.asOrdinaryCall().getNumArgument() =
+      AccessPathSyntax::parseIntUnbounded(token.getAnArgument())
+    or
+    token.getName() = "WithStringArgument" and
+    exists(string arg, int n, string value |
+      arg = token.getAnArgument() and
+      n = arg.splitAt("=", 0).toInt() and
+      value = arg.splitAt("=", 1) and
+      call.asOrdinaryCall().getArgument(n).getStringValue() = value
+    )
+  }
 }
 
 module Contents = UnifiedDataFlowInput::Contents;

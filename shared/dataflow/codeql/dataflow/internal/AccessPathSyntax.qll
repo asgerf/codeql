@@ -74,78 +74,78 @@ class AccessPathTokenBase extends string {
   int getNumArgument() { result = count(int n | exists(this.getArgument(n))) }
 }
 
+/**
+ * Parses an integer constant or interval (bounded or unbounded) that explicitly
+ * references the arity, such as `N-1` or `N-3..N-1`.
+ *
+ * Note that expressions of form `N-x` will never resolve to a negative index,
+ * even if `N` is zero (it will have no result in that case).
+ */
+bindingset[arg, arity]
+private int parseIntWithExplicitArity(string arg, int arity) {
+  result >= 0 and // do not allow N-1 to resolve to a negative index
+  exists(string lo |
+    // N-x
+    lo = arg.regexpCapture("N-(\\d+)", 1) and
+    result = arity - lo.toInt()
+    or
+    // N-x..
+    lo = arg.regexpCapture("N-(\\d+)\\.\\.", 1) and
+    result = [arity - lo.toInt(), arity - 1]
+  )
+  or
+  exists(string lo, string hi |
+    // x..N-y
+    regexpCaptureTwo(arg, "(-?\\d+)\\.\\.N-(\\d+)", lo, hi) and
+    result = [lo.toInt() .. arity - hi.toInt()]
+    or
+    // N-x..N-y
+    regexpCaptureTwo(arg, "N-(\\d+)\\.\\.N-(\\d+)", lo, hi) and
+    result = [arity - lo.toInt() .. arity - hi.toInt()] and
+    result >= 0
+    or
+    // N-x..y
+    regexpCaptureTwo(arg, "N-(\\d+)\\.\\.(\\d+)", lo, hi) and
+    result = [arity - lo.toInt() .. hi.toInt()] and
+    result >= 0
+  )
+}
+
+/**
+ * Parses an integer constant or interval (bounded or unbounded) and gets any
+ * of the integers contained within (of which there may be infinitely many).
+ *
+ * Has no result for arguments involving an explicit arity, such as `N-1`.
+ */
+bindingset[arg, result]
+int parseIntUnbounded(string arg) {
+  result = parseInt(arg)
+  or
+  result >= parseLowerBound(arg)
+}
+
+/**
+ * Parses an integer constant or interval (bounded or unbounded) that
+ * may reference the arity of a call, such as `N-1` or `N-3..N-1`.
+ *
+ * Note that expressions of form `N-x` will never resolve to a negative index,
+ * even if `N` is zero (it will have no result in that case).
+ */
+bindingset[arg, arity]
+int parseIntWithArity(string arg, int arity) {
+  result = parseInt(arg)
+  or
+  result in [parseLowerBound(arg) .. arity - 1]
+  or
+  result = parseIntWithExplicitArity(arg, arity)
+}
+
 final private class AccessPathTokenBaseFinal = AccessPathTokenBase;
 
 signature predicate accessPathRangeSig(string s);
 
 /** Companion module to the `AccessPath` class. */
 module AccessPath<accessPathRangeSig/1 accessPathRange> {
-  /**
-   * Parses an integer constant or interval (bounded or unbounded) that explicitly
-   * references the arity, such as `N-1` or `N-3..N-1`.
-   *
-   * Note that expressions of form `N-x` will never resolve to a negative index,
-   * even if `N` is zero (it will have no result in that case).
-   */
-  bindingset[arg, arity]
-  private int parseIntWithExplicitArity(string arg, int arity) {
-    result >= 0 and // do not allow N-1 to resolve to a negative index
-    exists(string lo |
-      // N-x
-      lo = arg.regexpCapture("N-(\\d+)", 1) and
-      result = arity - lo.toInt()
-      or
-      // N-x..
-      lo = arg.regexpCapture("N-(\\d+)\\.\\.", 1) and
-      result = [arity - lo.toInt(), arity - 1]
-    )
-    or
-    exists(string lo, string hi |
-      // x..N-y
-      regexpCaptureTwo(arg, "(-?\\d+)\\.\\.N-(\\d+)", lo, hi) and
-      result = [lo.toInt() .. arity - hi.toInt()]
-      or
-      // N-x..N-y
-      regexpCaptureTwo(arg, "N-(\\d+)\\.\\.N-(\\d+)", lo, hi) and
-      result = [arity - lo.toInt() .. arity - hi.toInt()] and
-      result >= 0
-      or
-      // N-x..y
-      regexpCaptureTwo(arg, "N-(\\d+)\\.\\.(\\d+)", lo, hi) and
-      result = [arity - lo.toInt() .. hi.toInt()] and
-      result >= 0
-    )
-  }
-
-  /**
-   * Parses an integer constant or interval (bounded or unbounded) and gets any
-   * of the integers contained within (of which there may be infinitely many).
-   *
-   * Has no result for arguments involving an explicit arity, such as `N-1`.
-   */
-  bindingset[arg, result]
-  int parseIntUnbounded(string arg) {
-    result = parseInt(arg)
-    or
-    result >= parseLowerBound(arg)
-  }
-
-  /**
-   * Parses an integer constant or interval (bounded or unbounded) that
-   * may reference the arity of a call, such as `N-1` or `N-3..N-1`.
-   *
-   * Note that expressions of form `N-x` will never resolve to a negative index,
-   * even if `N` is zero (it will have no result in that case).
-   */
-  bindingset[arg, arity]
-  int parseIntWithArity(string arg, int arity) {
-    result = parseInt(arg)
-    or
-    result in [parseLowerBound(arg) .. arity - 1]
-    or
-    result = parseIntWithExplicitArity(arg, arity)
-  }
-
   /** Gets the `n`th token on the access path as a string. */
   private string getRawToken(AccessPath path, int n) {
     // Avoid splitting by '.' since tokens may contain dots, e.g. `Field[foo.Bar.x]`.

@@ -6,6 +6,8 @@
 | sourceSink.js:29:20:29:25 | [value] source | sourceSink.js:28:24:28:38 | [out] lib.getSource() : any | sourceSink.js:29:20:29:25 | [value] source | Flow here |
 | sourceSink.js:33:28:33:33 | [value] source | sourceSink.js:32:24:32:46 | [out] wrapper ... ource() : any | sourceSink.js:33:28:33:33 | [value] source | Flow here |
 | sourceSink.js:42:28:42:33 | [value] source | sourceSink.js:41:24:41:36 | [value] x.fuzzySource : any | sourceSink.js:42:28:42:33 | [value] source | Flow here |
+| sourceSink.js:49:35:49:40 | [value] source | sourceSink.js:47:20:47:49 | [out] require ... ource() : any | sourceSink.js:49:35:49:40 | [value] source | Flow here |
+| sourceSink.js:51:48:51:53 | [value] source | sourceSink.js:47:20:47:49 | [out] require ... ource() : any | sourceSink.js:51:48:51:53 | [value] source | Flow here |
 edges
 | sourceSink.js:2:11:2:16 | [incoming] source : any | sourceSink.js:3:31:3:36 | [value] source | provenance |  |
 | sourceSink.js:2:20:2:49 | [out] require ... ource() : any | sourceSink.js:2:20:2:49 | [value] require ... ource() : any | provenance |  |
@@ -23,6 +25,10 @@ edges
 | sourceSink.js:32:24:32:46 | [value] wrapper ... ource() : any | sourceSink.js:32:15:32:20 | [incoming] source : any | provenance |  |
 | sourceSink.js:41:15:41:20 | [incoming] source : any | sourceSink.js:42:28:42:33 | [value] source | provenance |  |
 | sourceSink.js:41:24:41:36 | [value] x.fuzzySource : any | sourceSink.js:41:15:41:20 | [incoming] source : any | provenance |  |
+| sourceSink.js:47:11:47:16 | [incoming] source : any | sourceSink.js:49:35:49:40 | [value] source | provenance |  |
+| sourceSink.js:47:11:47:16 | [incoming] source : any | sourceSink.js:51:48:51:53 | [value] source | provenance |  |
+| sourceSink.js:47:20:47:49 | [out] require ... ource() : any | sourceSink.js:47:20:47:49 | [value] require ... ource() : any | provenance |  |
+| sourceSink.js:47:20:47:49 | [value] require ... ource() : any | sourceSink.js:47:11:47:16 | [incoming] source : any | provenance |  |
 nodes
 | sourceSink.js:2:11:2:16 | [incoming] source : any | semmle.label | [incoming] source : any |
 | sourceSink.js:2:20:2:49 | [out] require ... ource() : any | semmle.label | [out] require ... ource() : any |
@@ -47,4 +53,9 @@ nodes
 | sourceSink.js:41:15:41:20 | [incoming] source : any | semmle.label | [incoming] source : any |
 | sourceSink.js:41:24:41:36 | [value] x.fuzzySource : any | semmle.label | [value] x.fuzzySource : any |
 | sourceSink.js:42:28:42:33 | [value] source | semmle.label | [value] source |
+| sourceSink.js:47:11:47:16 | [incoming] source : any | semmle.label | [incoming] source : any |
+| sourceSink.js:47:20:47:49 | [out] require ... ource() : any | semmle.label | [out] require ... ource() : any |
+| sourceSink.js:47:20:47:49 | [value] require ... ource() : any | semmle.label | [value] require ... ource() : any |
+| sourceSink.js:49:35:49:40 | [value] source | semmle.label | [value] source |
+| sourceSink.js:51:48:51:53 | [value] source | semmle.label | [value] source |
 subpaths

@@ -2029,6 +2029,8 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
           )
         }
 
+        class AccessPathTokenBase = AccessPathSyntax::AccessPathTokenBase;
+
         signature module UnifiedDataFlowSig4 {
           predicate isTrackedAllocationSite(Node node);
 
@@ -2037,6 +2039,9 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
           predicate modelEntryPointLate(string type, Node node);
 
           predicate argumentParameterContent(string operand, Content content);
+
+          bindingset[call, token]
+          predicate satisfiesCallSiteFilter(Call call, AccessPathTokenBase token);
 
           /** Gets the content of a parameter object that contains the argument to a setter. */
           Content setterParameter();
@@ -2653,10 +2658,12 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                     contents.getAReadContent() = contentFromToken(token)
                   )
                   or
-                  exists(Call call |
-                    prev = TCallTargetNode(call) and
+                  exists(Call call | prev = TCallTargetNode(call) |
                     token = "ReturnValue" and
                     result = TOutNode(call)
+                    or
+                    satisfiesCallSiteFilter(call, token) and
+                    result = prev
                   )
                 )
                 or

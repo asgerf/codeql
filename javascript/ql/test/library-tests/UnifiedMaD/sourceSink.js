@@ -42,3 +42,11 @@ function t6() {
         x.blah().fuzzySink(source); // $ Alert=t6
     })
 }
+
+function t7() {
+    const source = require('testlib').getSource(); // $ Source=t7
+    require('testlib').arity2Sink(source);
+    require('testlib').arity2Sink(source, true); // $ Alert=t7
+    require('testlib').stringArgSink("safe", source);
+    require('testlib').stringArgSink("unsafe", source); // $ Alert=t7
+}
