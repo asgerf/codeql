@@ -17,3 +17,4 @@ extensions:
       - ['testlib', 'Fuzzy.Member[fuzzySink].Argument[0]', 'test-sink']
       - ['testlib', 'Member[arity2Sink].WithArity[2].Argument[0]', 'test-sink']
       - ['testlib', 'Member[stringArgSink].WithStringArgument[0=unsafe].Argument[1]', 'test-sink']
+      - ['testlib', 'Member[lastArgSink].Argument[N-1]', 'test-sink']

@@ -454,12 +454,13 @@ module UnifiedDataFlowInput implements
 
   Content setterParameter() { result.asArrayIndex(_) = 0 }
 
+  int getArity(Call call) {
+    result = call.asOrdinaryCall().getNumArgument() or
+    result = call.asReflectiveCall().getNumArgument() - 1
+  }
+
   bindingset[call, token]
   predicate satisfiesCallSiteFilter(Call call, AccessPathTokenBase token) {
-    token.getName() = "WithArity" and
-    call.asOrdinaryCall().getNumArgument() =
-      AccessPathSyntax::parseIntUnbounded(token.getAnArgument())
-    or
     token.getName() = "WithStringArgument" and
     exists(string arg, int n, string value |
       arg = token.getAnArgument() and

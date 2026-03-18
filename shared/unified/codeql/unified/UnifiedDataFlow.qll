@@ -2043,6 +2043,9 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
           bindingset[call, token]
           predicate satisfiesCallSiteFilter(Call call, AccessPathTokenBase token);
 
+          /** Gets the arity of the given call, for the purpose of evaluating models-as-data models. */
+          int getArity(Call call);
+
           /** Gets the content of a parameter object that contains the argument to a setter. */
           Content setterParameter();
 
@@ -2644,6 +2647,14 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 )
               }
 
+              bindingset[call, token]
+              predicate satisfiesCallSiteFilterEx(Call call, AccessPathTokenBase token) {
+                satisfiesCallSiteFilter(call, token)
+                or
+                token.getName() = "WithArity" and
+                AccessPathSyntax::parseIntUnbounded(token.getAnArgument()) = getArity(call)
+              }
+
               Node getASourceFromSelector(string type, AccessPath accessPath, int n) {
                 relevantSelector(type, accessPath) and
                 n = 0 and
@@ -2662,7 +2673,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                     token = "ReturnValue" and
                     result = TOutNode(call)
                     or
-                    satisfiesCallSiteFilter(call, token) and
+                    satisfiesCallSiteFilterEx(call, token) and
                     result = prev
                   )
                 )
@@ -2709,7 +2720,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               Node backtrackSink(Node sink, boolean hasReturn) {
                 sink = getASinkFromSelector(_, _, _) and
                 result = sink and
-                hasReturn = true
+                hasReturn = false
                 or
                 Stage::valueStep(result, backtrackSink(sink, hasReturn))
                 or
@@ -2728,6 +2739,18 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                     getAnArgumentObjectFromSelector(type, accessPath, n - 1)) and
                   argumentParameterContent(accessPath.getToken(n - 1).getAnArgument(),
                     contents.getAStoreContent())
+                  or
+                  // Support Argument[N-1], Argument[N-2], etc
+                  exists(Call call, int arity, AccessPathToken token |
+                    trackSource(getASourceFromSelector(type, accessPath, n - 1)) =
+                      TCallTargetNode(call) and
+                    Stage::storeStep(result, contents, TArgumentObjectNode(call)) and
+                    arity = getArity(call) and
+                    token = accessPath.getToken(n - 1) and
+                    token.getName() = "Argument" and
+                    contents.asContainerSlot(_).asArrayIndex() =
+                      AccessPathSyntax::parseIntWithArity(token.getAnArgument(), arity)
+                  )
                 )
                 or
                 exists(Node prev, AccessPathToken token |

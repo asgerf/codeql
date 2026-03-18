@@ -45,8 +45,20 @@ function t6() {
 
 function t7() {
     const source = require('testlib').getSource(); // $ Source=t7
+
     require('testlib').arity2Sink(source);
     require('testlib').arity2Sink(source, true); // $ Alert=t7
+    require('testlib').arity2Sink(source, true, true); // $ MISSING: Alert=t7
+
     require('testlib').stringArgSink("safe", source);
     require('testlib').stringArgSink("unsafe", source); // $ Alert=t7
+
+    require('testlib').lastArgSink(source); // $ Alert=t7
+
+    require('testlib').lastArgSink(source, "x");
+    require('testlib').lastArgSink("x", source); // $ Alert=t7
+
+    require('testlib').lastArgSink(source, "x", "x");
+    require('testlib').lastArgSink("x", source, "x");
+    require('testlib').lastArgSink("x", "x", source); // $ Alert=t7
 }
