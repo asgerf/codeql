@@ -1,0 +1,12 @@
+extensions:
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sourceModel
+    data:
+      - ['testlib', 'Member[getSource].ReturnValue', 'test-source']
+
+  - addsTo:
+      pack: codeql/javascript-all
+      extensible: sinkModel
+    data:
+      - ['testlib', 'Member[mySink].Argument[0]', 'test-sink']

@@ -12,7 +12,7 @@ private import codeql.controlflow.BasicBlock as BB
 private import codeql.ssa.Ssa as Ssa
 private import codeql.dataflow.VariableCapture as VariableCapture
 private import codeql.dataflow.DataFlow as DataFlow
-private import codeql.dataflow.TaintTracking as TaintTracking
+private import codeql.dataflow.TaintTracking as TaintTrackingLib
 private import codeql.mad.dynamic.DataExtensionSignatures
 
 module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
@@ -2034,6 +2034,8 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
           predicate modelEntryPoint(string type, Node node);
 
+          predicate modelEntryPointLate(string type, Node node);
+
           predicate argumentParameterContent(string operand, Content content);
 
           /** Gets the content of a parameter object that contains the argument to a setter. */
@@ -2487,7 +2489,17 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
           module MakeModelsAsData<DataExtensionsSig DataExtensions> {
             private import DataExtensions
 
-            private predicate shouldParse(string accessPath) { typeModel(_, _, accessPath) }
+            private predicate shouldParse(string accessPath) {
+              typeModel(_, _, accessPath)
+              or
+              sourceModel(_, accessPath, _, _)
+              or
+              sinkModel(_, accessPath, _, _)
+              or
+              barrierModel(_, accessPath, _, _)
+              or
+              barrierGuardModel(_, accessPath, _, _, _)
+            }
 
             private module AliasAccessPaths = AccessPathSyntax::AccessPath<shouldParse/1>;
 
@@ -2495,9 +2507,14 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
             signature predicate relevantTypeNamesSig(string name);
 
+            signature predicate entryPointSig(string type, Node node);
+
+            signature predicate additionalSelectorsSig(string type, string path);
+
             /** Makes a MaD evaluator using the given set of data flow steps. */
             private module MakeStage<
-              dataflowStepSig/3 step, relevantTypeNamesSig/1 relevantTypeNames>
+              dataflowStepSig/3 step, relevantTypeNamesSig/1 relevantTypeNames,
+              additionalSelectorsSig/2 additionalSelectors, entryPointSig/2 entryPoints>
             {
               /** Holds if `type` should be evaluated in this stage */
               private predicate relevantTypeNamesEx(string type) {
@@ -2512,6 +2529,8 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
               private predicate relevantSelector(string type, string accessPath) {
                 typeModel(any(string t | relevantTypeNamesEx(t)), type, accessPath)
+                or
+                additionalSelectors(type, accessPath)
               }
 
               private module Steps {
@@ -2545,13 +2564,19 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               Node getASourceFromType(string type) {
                 relevantTypeNamesEx(type) and
                 (
-                  exists(string otherType, AccessPath path, int n |
+                  exists(string otherType, AccessPath path |
                     typeModel(type, otherType, path) and
-                    result = getASourceFromSelector(otherType, path, n) and
-                    n = path.getNumToken()
+                    result = getASourceFromSelector(otherType, path)
                   )
                   or
-                  modelEntryPoint(type, result)
+                  entryPoints(type, result)
+                )
+              }
+
+              Node getASourceFromSelector(string type, AccessPath path) {
+                exists(int n |
+                  result = getASourceFromSelector(type, path, n) and
+                  n = path.getNumToken()
                 )
               }
 
@@ -2569,6 +2594,12 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                   exists(ContentSet contents |
                     Steps::readStep(prev, contents, result) and
                     contents.getAReadContent() = contentFromToken(token)
+                  )
+                  or
+                  exists(Call call |
+                    prev = TCallTargetNode(call) and
+                    token = "ReturnValue" and
+                    result = TOutNode(call)
                   )
                 )
                 or
@@ -2590,12 +2621,35 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 valueStepApprox(result, getAnArgumentObjectFromSelector(type, accessPath, n))
               }
 
+              Node getASinkFromSelector(string type, AccessPath accessPath) {
+                exists(int n |
+                  result = getASinkFromSelector(type, accessPath, n) and
+                  n = accessPath.getNumToken()
+                )
+              }
+
               Node getASinkFromSelector(string type, AccessPath accessPath, int n) {
                 exists(ContentSet contents |
                   Steps::storeStep(result, contents,
                     getAnArgumentObjectFromSelector(type, accessPath, n - 1)) and
                   argumentParameterContent(accessPath.getToken(n - 1).getAnArgument(),
                     contents.getAStoreContent())
+                )
+                or
+                exists(Node prev, AccessPathToken token |
+                  prev = getASinkFromSelector(type, accessPath, n - 1) and
+                  token = accessPath.getToken(n - 1)
+                |
+                  exists(ContentSet contents |
+                    Steps::storeStep(result, contents, prev) and
+                    contents.getAReadContent() = contentFromToken(token)
+                  )
+                  or
+                  exists(Callable callable |
+                    prev = TCallableNode(callable) and
+                    token = "ReturnValue" and
+                    result = TReturnNode(callable)
+                  )
                 )
               }
 
@@ -2611,7 +2665,47 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
             }
 
             module EvaluatePreCallGraph<relevantTypeNamesSig/1 relevantTypeNames> {
-              import MakeStage<dataflowStep6/3, relevantTypeNames/1>
+              private predicate additionalSelectors(string type, string path) {
+                // Do not evaluate sources/sinks at the pre-call graph stage, only the types asked for at the instantiation site
+                none()
+              }
+
+              import MakeStage<dataflowStep6/3, relevantTypeNames/1, additionalSelectors/2, modelEntryPoint/2>
+            }
+
+            module EvaluateFinal<relevantTypeNamesSig/1 relevantTypeNames> {
+              private predicate additionalSelectors(string type, string path) {
+                // For the final evaluation stage, also find sources, sinks, barriers
+                sourceModel(type, path, _, _)
+                or
+                sinkModel(type, path, _, _)
+                or
+                barrierModel(type, path, _, _)
+                or
+                barrierGuardModel(type, path, _, _, _)
+              }
+
+              private predicate relevantTypeNamesEx(string type) {
+                relevantTypeNames(type)
+                or
+                additionalSelectors(type, _)
+              }
+
+              import MakeStage<dataflowStepFinal/3, relevantTypeNamesEx/1, additionalSelectors/2, modelEntryPointLate/2>
+
+              Node getASource(string kind) {
+                exists(string type, string accessPath |
+                  sourceModel(type, accessPath, kind, _) and
+                  result = getASourceFromSelector(type, accessPath)
+                )
+              }
+
+              Node getASink(string kind) {
+                exists(string type, string accessPath |
+                  sinkModel(type, accessPath, kind, _) and
+                  result = getASinkFromSelector(type, accessPath)
+                )
+              }
             }
           }
 
@@ -3965,7 +4059,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
             class Node = DataFlowNode;
           }
 
-          module TaintTrackingInput implements TaintTracking::InputSig<Location, DataFlowInput> {
+          module TaintTrackingInput implements TaintTrackingLib::InputSig<Location, DataFlowInput> {
             predicate defaultTaintSanitizer(Node node) { none() }
 
             predicate defaultAdditionalTaintStep(Node src, Node sink, string model) {
@@ -3978,8 +4072,8 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
             predicate speculativeTaintStep(Node src, Node sink) { none() }
           }
 
-          module TaintTrackingPublic =
-            TaintTracking::TaintFlowMake<Location, DataFlowInput, TaintTrackingInput>;
+          module TaintTracking =
+            TaintTrackingLib::TaintFlowMake<Location, DataFlowInput, TaintTrackingInput>;
 
           private import codeql.dataflow.internal.DataFlowImplConsistency as DataFlowImplConsistency
 

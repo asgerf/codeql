@@ -239,6 +239,12 @@ File resolveExpr(RelevantNode expr) {
 }
 
 overlay[global]
+predicate importStringStep(DataFlow::Node pathNode, DataFlow::Node importedModule, string pathString) {
+  pathResolutionStep(pathNode, importedModule) and
+  pathString = PathStrings::getValue(pathNode)
+}
+
+overlay[global]
 private predicate importStepAux(DataFlow::Node pathNode, DataFlow::Node node1, DataFlow::Node node2) {
   exists(TopLevel target |
     pathResolutionStep(pathNode, node2) and

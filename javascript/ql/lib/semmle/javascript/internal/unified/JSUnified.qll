@@ -116,6 +116,12 @@ module UnifiedDataFlowInput implements
     )
   }
 
+  predicate modelEntryPointLate(string type, DataFlow::Node node) {
+    modelEntryPoint(type, node)
+    or
+    importStringStep(_, node, type)
+  }
+
   predicate argumentParameterContent(string operand, Content content) {
     operand = "" + content.asArrayIndex(_)
   }
@@ -465,3 +471,7 @@ class LocalVariable = JS::LocalVariable;
 import UnifiedDataFlowInput
 
 module CallGraph = DataFlowInput::CallGraphOutput;
+
+private predicate additionalTypes(string type) { none() }
+
+module ModelsAsDataFinal = ModelsAsData::EvaluateFinal<additionalTypes/1>;
