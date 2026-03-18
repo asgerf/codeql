@@ -2601,6 +2601,44 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 )
               }
 
+              private predicate fuzzySourcetoSourceStep(Node node1, Node node2) {
+                exists(ContentSet contents |
+                  contents.hasModelToken(_, _) and
+                  Stage::readStep(node1, _, node2)
+                )
+                or
+                exists(Call call |
+                  node1 = TCallTargetNode(call) and
+                  node2 = TOutNode(call)
+                )
+              }
+
+              private predicate fuzzySourceToSinkStep(Node node1, Node node2) {
+                exists(Call call |
+                  node1 = TCallTargetNode(call) and
+                  node2 = TArgumentObjectNode(call)
+                )
+              }
+
+              private predicate fuzzySinktoSinkStep(Node node1, Node node2) {
+                exists(ContentSet contents |
+                  contents.hasModelToken(_, _) and
+                  Stage::storeStep(node2, _, node1)
+                )
+                or
+                exists(Callable callable |
+                  node1 = TCallableNode(callable) and
+                  node2 = TReturnNode(callable)
+                )
+              }
+
+              private predicate fuzzySinkToSourceStep(Node node1, Node node2) {
+                exists(Callable callable |
+                  node1 = TCallableNode(callable) and
+                  node2 = TParameterObjectNode(callable)
+                )
+              }
+
               Node getASourceFromSelector(string type, AccessPath accessPath, int n) {
                 relevantSelector(type, accessPath) and
                 n = 0 and
@@ -2627,6 +2665,19 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                     contents, result) and
                   argumentParameterContent(accessPath.getToken(n - 1).getAnArgument(),
                     contents.getAReadContent())
+                )
+                or
+                // Advance 'n' past a 'Fuzzy' token
+                result = getASourceFromSelector(type, accessPath, n - 1) and
+                accessPath.getToken(n - 1) = "Fuzzy"
+                or
+                // Apply 'Fuzzy' token without advancing 'n'
+                exists(Node prev |
+                  prev = trackSource(getASourceFromSelector(type, accessPath, n)) and
+                  fuzzySourcetoSourceStep(prev, result)
+                  or
+                  prev = backtrackSink(getASinkFromSelector(type, accessPath, n)) and
+                  fuzzySinkToSourceStep(prev, result)
                 )
               }
 
@@ -2686,6 +2737,19 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                     token = "ReturnValue" and
                     result = TReturnNode(callable)
                   )
+                )
+                or
+                // Advance 'n' past a 'Fuzzy' token
+                result = getASinkFromSelector(type, accessPath, n - 1) and
+                accessPath.getToken(n - 1) = "Fuzzy"
+                or
+                // Apply 'Fuzzy' token without advancing 'n'
+                exists(Node prev |
+                  prev = backtrackSink(getASinkFromSelector(type, accessPath, n)) and
+                  fuzzySinktoSinkStep(prev, result)
+                  or
+                  prev = trackSource(getASourceFromSelector(type, accessPath, n)) and
+                  fuzzySourceToSinkStep(prev, result)
                 )
               }
 

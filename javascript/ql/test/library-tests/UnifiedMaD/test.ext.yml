@@ -6,6 +6,7 @@ extensions:
       - ['testlib', 'Member[getSource].ReturnValue', 'test-source']
       - ['testlib', 'Member[getSourceInProp].ReturnValue.Member[sourceProp]', 'test-source']
       - ['testlib', 'Member[getSourceInCallback].Argument[0].Parameter[0]', 'test-source']
+      - ['testlib', 'Fuzzy.Member[fuzzySource]', 'test-source']
 
   - addsTo:
       pack: codeql/javascript-all
@@ -13,3 +14,4 @@ extensions:
     data:
       - ['testlib', 'Member[mySink].Argument[0]', 'test-sink']
       - ['testlib', 'Member[mySinkInProp].Argument[0].Member[sinkProp]', 'test-sink']
+      - ['testlib', 'Fuzzy.Member[fuzzySink].Argument[0]', 'test-sink']

@@ -35,3 +35,10 @@ function t5() {
     takeLib(getLib());
     takeWrapper({lib: getLib()});
 }
+
+function t6() {
+    require('testlib').something().complicated(x => {
+        const source = x.fuzzySource; // $ Source=t6
+        x.blah().fuzzySink(source); // $ Alert=t6
+    })
+}
