@@ -2511,14 +2511,25 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
             signature predicate additionalSelectorsSig(string type, string path);
 
+            signature module StageSig {
+              predicate readStep(Node node1, ContentSet contents, Node node2);
+
+              predicate storeStep(Node node1, ContentSet contents, Node node2);
+
+              predicate valueStep(Node node1, Node node2);
+
+              predicate relevantTypeNames(string type);
+
+              predicate additionalSelectors(string type, string path);
+
+              predicate entryPoints(string type, Node node);
+            }
+
             /** Makes a MaD evaluator using the given set of data flow steps. */
-            private module MakeStage<
-              dataflowStepSig/3 step, relevantTypeNamesSig/1 relevantTypeNames,
-              additionalSelectorsSig/2 additionalSelectors, entryPointSig/2 entryPoints>
-            {
+            private module MakeStage<StageSig Stage> {
               /** Holds if `type` should be evaluated in this stage */
               private predicate relevantTypeNamesEx(string type) {
-                relevantTypeNames(type)
+                Stage::relevantTypeNames(type)
                 or
                 exists(string otherType |
                   // We need to find references to 'X' and 'X' can be obtained from 'Y' so also evaluate Y
@@ -2530,17 +2541,15 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               private predicate relevantSelector(string type, string accessPath) {
                 typeModel(any(string t | relevantTypeNamesEx(t)), type, accessPath)
                 or
-                additionalSelectors(type, accessPath)
+                Stage::additionalSelectors(type, accessPath)
               }
 
               private module Steps {
-                predicate readStep(Node node1, ContentSet contents, Node node2) {
-                  step(node1, TReadStep(contents), node2)
-                }
+                predicate readStep = Stage::readStep/3;
 
-                predicate storeStep(Node node1, ContentSet contents, Node node2) {
-                  step(node1, TStoreStep(contents), node2)
-                }
+                predicate storeStep = Stage::storeStep/3;
+
+                predicate valueStep = Stage::valueStep/2;
               }
 
               private predicate unfoldToken(AccessPathToken tok, string head, string operand) {
@@ -2569,7 +2578,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                     result = getASourceFromSelector(otherType, path)
                   )
                   or
-                  entryPoints(type, result)
+                  Stage::entryPoints(type, result)
                 )
               }
 
@@ -2577,7 +2586,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 source = getASourceFromSelector(_, _, _) and
                 result = source
                 or
-                valueStepApprox(trackSource(source), result)
+                Steps::valueStep(trackSource(source), result)
               }
 
               Node getASourceFromSelector(string type, AccessPath path) {
@@ -2623,7 +2632,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                   result = TArgumentObjectNode(call)
                 )
                 or
-                valueStepApprox(result, getAnArgumentObjectFromSelector(type, accessPath, n))
+                Steps::valueStep(result, getAnArgumentObjectFromSelector(type, accessPath, n))
               }
 
               Node getASinkFromSelector(string type, AccessPath accessPath) {
@@ -2638,7 +2647,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 sink = getASinkFromSelector(_, _, _) and
                 result = sink
                 or
-                valueStepApprox(result, backtrackSink(sink))
+                Steps::valueStep(result, backtrackSink(sink))
               }
 
               Node getASinkFromSelector(string type, AccessPath accessPath, int n) {
@@ -2674,38 +2683,76 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                   result = TParameterObjectNode(callable)
                 )
                 or
-                valueStepApprox(getAParameterObjectFromSelector(type, accessPath, n), result)
+                Steps::valueStep(getAParameterObjectFromSelector(type, accessPath, n), result)
               }
             }
 
-            module EvaluatePreCallGraph<relevantTypeNamesSig/1 relevantTypeNames> {
-              private predicate additionalSelectors(string type, string path) {
-                // Do not evaluate sources/sinks at the pre-call graph stage, only the types asked for at the instantiation site
-                none()
+            module EvaluatePreCallGraph<relevantTypeNamesSig/1 relevantTypeNamesInput> {
+              private module StageInput implements StageSig {
+                predicate readStep(Node node1, ContentSet contents, Node node2) {
+                  dataflowStep6(node1, TReadStep(contents), node2)
+                }
+
+                predicate storeStep(Node node1, ContentSet contents, Node node2) {
+                  dataflowStep6(node1, TStoreStep(contents), node2)
+                }
+
+                predicate valueStep(Node node1, Node node2) {
+                  dataflowStep6(node1, TValueStep(), node2)
+                  or
+                  approxCaptureStep(node1, node2)
+                }
+
+                predicate additionalSelectors(string type, string path) {
+                  // Do not evaluate sources/sinks at the pre-call graph stage, only the types asked for at the instantiation site
+                  none()
+                }
+
+                predicate relevantTypeNames = relevantTypeNamesInput/1;
+
+                predicate entryPoints = modelEntryPoint/2;
               }
 
-              import MakeStage<dataflowStep6/3, relevantTypeNames/1, additionalSelectors/2, modelEntryPoint/2>
+              import MakeStage<StageInput>
             }
 
-            module EvaluateFinal<relevantTypeNamesSig/1 relevantTypeNames> {
-              private predicate additionalSelectors(string type, string path) {
-                // For the final evaluation stage, also find sources, sinks, barriers
-                sourceModel(type, path, _, _)
-                or
-                sinkModel(type, path, _, _)
-                or
-                barrierModel(type, path, _, _)
-                or
-                barrierGuardModel(type, path, _, _, _)
+            module EvaluateFinal<relevantTypeNamesSig/1 relevantTypeNamesInput> {
+              private module StageInput implements StageSig {
+                predicate readStep(Node node1, ContentSet contents, Node node2) {
+                  dataflowStepFinal(node1, TReadStep(contents), node2)
+                }
+
+                predicate storeStep(Node node1, ContentSet contents, Node node2) {
+                  dataflowStepFinal(node1, TStoreStep(contents), node2)
+                }
+
+                predicate valueStep(Node node1, Node node2) {
+                  dataflowStepFinal(node1, TValueStep(), node2)
+                  or
+                  approxCaptureStep(node1, node2)
+                }
+
+                predicate additionalSelectors(string type, string path) {
+                  // For the final evaluation stage, also find sources, sinks, barriers
+                  sourceModel(type, path, _, _)
+                  or
+                  sinkModel(type, path, _, _)
+                  or
+                  barrierModel(type, path, _, _)
+                  or
+                  barrierGuardModel(type, path, _, _, _)
+                }
+
+                predicate relevantTypeNames(string type) {
+                  relevantTypeNamesInput(type)
+                  or
+                  additionalSelectors(type, _)
+                }
+
+                predicate entryPoints = modelEntryPointLate/2; //TODO: take union in here
               }
 
-              private predicate relevantTypeNamesEx(string type) {
-                relevantTypeNames(type)
-                or
-                additionalSelectors(type, _)
-              }
-
-              import MakeStage<dataflowStepFinal/3, relevantTypeNamesEx/1, additionalSelectors/2, modelEntryPointLate/2>
+              import MakeStage<StageInput>
 
               Node getASource(string kind) {
                 exists(string type, string accessPath |
