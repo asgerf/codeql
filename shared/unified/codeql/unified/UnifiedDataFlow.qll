@@ -2573,6 +2573,13 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 )
               }
 
+              Node trackSource(Node source) {
+                source = getASourceFromSelector(_, _, _) and
+                result = source
+                or
+                valueStepApprox(trackSource(source), result)
+              }
+
               Node getASourceFromSelector(string type, AccessPath path) {
                 exists(int n |
                   result = getASourceFromSelector(type, path, n) and
@@ -2585,10 +2592,8 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 n = 0 and
                 result = getASourceFromType(type)
                 or
-                valueStepApprox(getASourceFromSelector(type, accessPath, n), result)
-                or
                 exists(Node prev, AccessPathToken token |
-                  prev = getASourceFromSelector(type, accessPath, n - 1) and
+                  prev = trackSource(getASourceFromSelector(type, accessPath, n - 1)) and
                   token = accessPath.getToken(n - 1)
                 |
                   exists(ContentSet contents |
@@ -2613,7 +2618,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
               Node getAnArgumentObjectFromSelector(string type, AccessPath accessPath, int n) {
                 exists(Call call |
-                  getASourceFromSelector(type, accessPath, n) = TCallTargetNode(call) and
+                  trackSource(getASourceFromSelector(type, accessPath, n)) = TCallTargetNode(call) and
                   accessPath.getToken(n).getName() = "Argument" and
                   result = TArgumentObjectNode(call)
                 )
@@ -2628,6 +2633,14 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 )
               }
 
+              pragma[nomagic]
+              Node backtrackSink(Node sink) {
+                sink = getASinkFromSelector(_, _, _) and
+                result = sink
+                or
+                valueStepApprox(result, backtrackSink(sink))
+              }
+
               Node getASinkFromSelector(string type, AccessPath accessPath, int n) {
                 exists(ContentSet contents |
                   Steps::storeStep(result, contents,
@@ -2637,7 +2650,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 )
                 or
                 exists(Node prev, AccessPathToken token |
-                  prev = getASinkFromSelector(type, accessPath, n - 1) and
+                  prev = backtrackSink(getASinkFromSelector(type, accessPath, n - 1)) and
                   token = accessPath.getToken(n - 1)
                 |
                   exists(ContentSet contents |
@@ -2655,7 +2668,8 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
               Node getAParameterObjectFromSelector(string type, AccessPath accessPath, int n) {
                 exists(Callable callable |
-                  getASinkFromSelector(type, accessPath, n) = TClosureExprNode(callable, _, _) and
+                  backtrackSink(getASinkFromSelector(type, accessPath, n)) =
+                    TClosureExprNode(callable, _, _) and
                   accessPath.getToken(n).getName() = "Parameter" and
                   result = TParameterObjectNode(callable)
                 )

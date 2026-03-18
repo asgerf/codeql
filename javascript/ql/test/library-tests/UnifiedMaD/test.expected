@@ -1,21 +1,20 @@
 #select
-| sourceSink.js:3:31:3:36 | [value] source | sourceSink.js:2:11:2:16 | [incoming] source : any | sourceSink.js:3:31:3:36 | [value] source | Flow here |
-| sourceSink.js:3:31:3:36 | [value] source | sourceSink.js:2:11:2:49 | [variable write] source : any | sourceSink.js:3:31:3:36 | [value] source | Flow here |
 | sourceSink.js:3:31:3:36 | [value] source | sourceSink.js:2:20:2:49 | [out] require ... ource() : any | sourceSink.js:3:31:3:36 | [value] source | Flow here |
-| sourceSink.js:3:31:3:36 | [value] source | sourceSink.js:2:20:2:49 | [value] require ... ource() : any | sourceSink.js:3:31:3:36 | [value] source | Flow here |
-| sourceSink.js:3:31:3:36 | [value] source | sourceSink.js:3:31:3:36 | [value] source | sourceSink.js:3:31:3:36 | [value] source | Flow here |
-| sourceSink.js:3:31:3:36 | [value] source | sourceSink.js:3:31:3:36 | [variable read] source : any | sourceSink.js:3:31:3:36 | [value] source | Flow here |
+| sourceSink.js:8:49:8:58 | [value] sourceProp | sourceSink.js:7:13:7:22 | [incoming] sourceProp : any | sourceSink.js:8:49:8:58 | [value] sourceProp | Flow here |
+| sourceSink.js:13:35:13:35 | [value] x | sourceSink.js:12:44:12:44 | [incoming] x : any | sourceSink.js:13:35:13:35 | [value] x | Flow here |
 edges
 | sourceSink.js:2:11:2:16 | [incoming] source : any | sourceSink.js:3:31:3:36 | [value] source | provenance |  |
-| sourceSink.js:2:11:2:49 | [variable write] source : any | sourceSink.js:3:31:3:36 | [value] source | provenance |  |
 | sourceSink.js:2:20:2:49 | [out] require ... ource() : any | sourceSink.js:2:20:2:49 | [value] require ... ource() : any | provenance |  |
 | sourceSink.js:2:20:2:49 | [value] require ... ource() : any | sourceSink.js:2:11:2:16 | [incoming] source : any | provenance |  |
-| sourceSink.js:3:31:3:36 | [variable read] source : any | sourceSink.js:3:31:3:36 | [value] source | provenance |  |
+| sourceSink.js:7:13:7:22 | [incoming] sourceProp : any | sourceSink.js:8:49:8:58 | [value] sourceProp | provenance |  |
+| sourceSink.js:12:44:12:44 | [incoming] x : any | sourceSink.js:13:35:13:35 | [value] x | provenance |  |
 nodes
 | sourceSink.js:2:11:2:16 | [incoming] source : any | semmle.label | [incoming] source : any |
-| sourceSink.js:2:11:2:49 | [variable write] source : any | semmle.label | [variable write] source : any |
 | sourceSink.js:2:20:2:49 | [out] require ... ource() : any | semmle.label | [out] require ... ource() : any |
 | sourceSink.js:2:20:2:49 | [value] require ... ource() : any | semmle.label | [value] require ... ource() : any |
 | sourceSink.js:3:31:3:36 | [value] source | semmle.label | [value] source |
-| sourceSink.js:3:31:3:36 | [variable read] source : any | semmle.label | [variable read] source : any |
+| sourceSink.js:7:13:7:22 | [incoming] sourceProp : any | semmle.label | [incoming] sourceProp : any |
+| sourceSink.js:8:49:8:58 | [value] sourceProp | semmle.label | [value] sourceProp |
+| sourceSink.js:12:44:12:44 | [incoming] x : any | semmle.label | [incoming] x : any |
+| sourceSink.js:13:35:13:35 | [value] x | semmle.label | [value] x |
 subpaths
