@@ -454,9 +454,11 @@ module Transforms = UnifiedDataFlowInput::Transforms;
 
 module DataFlow = DataFlowPublic;
 
-import semmle.javascript.frameworks.data.internal.ApiGraphModelsExtensions as ApiGraphModelsExtensions
+private module DataExtensions implements DataExtensionsSig {
+  import semmle.javascript.frameworks.data.internal.ApiGraphModelsExtensions
+}
 
-module ModelsAsData = MakeModelsAsData<ApiGraphModelsExtensions::typeModel/3>;
+module ModelsAsData = MakeModelsAsData<DataExtensions>;
 
 class LocalVariable = JS::LocalVariable;
 

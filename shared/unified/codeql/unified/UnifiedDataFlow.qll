@@ -2477,13 +2477,17 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
           private import D4
 
-          private signature predicate typeModelSig(string type1, string type2, string accessPath);
+          signature module DataExtensionsSig {
+            predicate typeModel(string type1, string type2, string accessPath);
+          }
 
           private signature predicate dataflowStepSig(
             Node node1, DataFlowBuilder::Step step, Node node2
           );
 
-          module MakeModelsAsData<typeModelSig/3 typeModel> {
+          module MakeModelsAsData<DataExtensionsSig DataExtensions> {
+            private import DataExtensions
+
             private predicate shouldParse(string accessPath) { typeModel(_, _, accessPath) }
 
             private module AliasAccessPaths = AccessPathSyntax::AccessPath<shouldParse/1>;
