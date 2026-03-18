@@ -102,10 +102,10 @@ module UnifiedDataFlowInput implements
     }
   }
 
-  predicate modelEntryPoint(string head, string operand, DataFlow::Node node) {
-    head = "PredefinedVar" and
-    exists(Variable v |
-      v.getName() = operand and
+  predicate modelEntryPoint(string type, DataFlow::Node node) {
+    exists(Variable v, string name |
+      type = "PredefinedVar[" + name + "]" and
+      v.getName() = name and
       (
         v.getScope().getScopeElement() instanceof TopLevel and
         node.isVariablePreInitializer(v)
@@ -454,9 +454,9 @@ module Transforms = UnifiedDataFlowInput::Transforms;
 
 module DataFlow = DataFlowPublic;
 
-extensible predicate aliasModel(string aliasName, string accessPath);
+import semmle.javascript.frameworks.data.internal.ApiGraphModelsExtensions as ApiGraphModelsExtensions
 
-module ModelsAsData = MakeModelsAsData<aliasModel/2>;
+module ModelsAsData = MakeModelsAsData<ApiGraphModelsExtensions::typeModel/3>;
 
 class LocalVariable = JS::LocalVariable;
 

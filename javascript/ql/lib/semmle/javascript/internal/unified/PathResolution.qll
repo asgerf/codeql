@@ -15,7 +15,7 @@ private predicate moduleSystemAliases(string name) { name = ["require"] }
 private module ModuleSystemAliases = ModelsAsData::EvaluatePreCallGraph<moduleSystemAliases/1>;
 
 class RequireCall extends CallExpr {
-  RequireCall() { ModuleSystemAliases::getAnAliasSource("require").isValueOf(this.getCallee()) }
+  RequireCall() { ModuleSystemAliases::getASourceFromType("require").isValueOf(this.getCallee()) }
 
   string getImportedString() { result = PathStrings::getValueOfExpr(this.getArgument(0)) }
 }

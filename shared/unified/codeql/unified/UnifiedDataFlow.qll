@@ -2031,7 +2031,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
         signature module UnifiedDataFlowSig4 {
           predicate isTrackedAllocationSite(Node node);
 
-          predicate modelEntryPoint(string head, string operand, Node node);
+          predicate modelEntryPoint(string type, Node node);
 
           predicate argumentParameterContent(string operand, Content content);
 
@@ -2477,33 +2477,38 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
 
           private import D4
 
-          private signature predicate aliasModelSig(string aliasName, string accessPath);
+          private signature predicate typeModelSig(string type1, string type2, string accessPath);
 
           private signature predicate dataflowStepSig(
             Node node1, DataFlowBuilder::Step step, Node node2
           );
 
-          module MakeModelsAsData<aliasModelSig/2 aliasModel> {
-            private predicate aliasAccessPath(string accessPath) { aliasModel(_, accessPath) }
+          module MakeModelsAsData<typeModelSig/3 typeModel> {
+            private predicate shouldParse(string accessPath) { typeModel(_, _, accessPath) }
 
-            private module AliasAccessPaths = AccessPathSyntax::AccessPath<aliasAccessPath/1>;
+            private module AliasAccessPaths = AccessPathSyntax::AccessPath<shouldParse/1>;
 
             private import AliasAccessPaths
 
-            signature predicate relevantAliasNamesSig(string name);
+            signature predicate relevantTypeNamesSig(string name);
 
             /** Makes a MaD evaluator using the given set of data flow steps. */
             private module MakeStage<
-              dataflowStepSig/3 step, relevantAliasNamesSig/1 relevantAliasNames>
+              dataflowStepSig/3 step, relevantTypeNamesSig/1 relevantTypeNames>
             {
-              private predicate relevantAliasNamesEx(string name) {
-                relevantAliasNames(name)
+              /** Holds if `type` should be evaluated in this stage */
+              private predicate relevantTypeNamesEx(string type) {
+                relevantTypeNames(type)
                 or
-                exists(string otherAlias, AccessPath accessPath |
-                  // We need to evaluate 'X' and there is a model `X -> Alias[Y].Blah`, so we need to evaluate 'Y'
-                  aliasModel(otherAlias, accessPath) and
-                  unfoldToken(accessPath.getToken(0), "Alias", name)
+                exists(string otherType |
+                  // We need to find references to 'X' and 'X' can be obtained from 'Y' so also evaluate Y
+                  relevantTypeNamesEx(otherType) and
+                  typeModel(otherType, type, _)
                 )
+              }
+
+              private predicate relevantSelector(string type, string accessPath) {
+                typeModel(any(string t | relevantTypeNamesEx(t)), type, accessPath)
               }
 
               private module Steps {
@@ -2534,30 +2539,28 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 )
               }
 
-              Node getAnAliasSource(string aliasName) {
-                exists(AccessPath path, int n |
-                  result = getAnAliasSource(aliasName, path, n) and
-                  n = path.getNumToken()
+              Node getASourceFromType(string type) {
+                relevantTypeNamesEx(type) and
+                (
+                  exists(string otherType, AccessPath path, int n |
+                    typeModel(type, otherType, path) and
+                    result = getASourceFromSelector(otherType, path, n) and
+                    n = path.getNumToken()
+                  )
+                  or
+                  modelEntryPoint(type, result)
                 )
               }
 
-              Node getAnAliasSource(string aliasName, AccessPath accessPath, int n) {
-                aliasModel(aliasName, accessPath) and
-                relevantAliasNamesEx(aliasName) and
-                n = 1 and
-                exists(string head, string operand |
-                  unfoldToken(accessPath.getToken(0), head, operand)
-                |
-                  modelEntryPoint(head, operand, result)
-                  or
-                  head = "Alias" and
-                  result = getAnAliasSource(operand)
-                )
+              Node getASourceFromSelector(string type, AccessPath accessPath, int n) {
+                relevantSelector(type, accessPath) and
+                n = 0 and
+                result = getASourceFromType(type)
                 or
-                valueStepApprox(getAnAliasSource(aliasName, accessPath, n), result)
+                valueStepApprox(getASourceFromSelector(type, accessPath, n), result)
                 or
                 exists(Node prev, AccessPathToken token |
-                  prev = getAnAliasSource(aliasName, accessPath, n - 1) and
+                  prev = getASourceFromSelector(type, accessPath, n - 1) and
                   token = accessPath.getToken(n - 1)
                 |
                   exists(ContentSet contents |
@@ -2567,45 +2570,45 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                 )
                 or
                 exists(ContentSet contents |
-                  Steps::readStep(getAnAliasSourceParameterObject(aliasName, accessPath, n - 1),
+                  Steps::readStep(getAParameterObjectFromSelector(type, accessPath, n - 1),
                     contents, result) and
                   argumentParameterContent(accessPath.getToken(n - 1).getAnArgument(),
                     contents.getAReadContent())
                 )
               }
 
-              Node getAnAliasSinkArgumentObject(string aliasName, AccessPath accessPath, int n) {
+              Node getAnArgumentObjectFromSelector(string type, AccessPath accessPath, int n) {
                 exists(Call call |
-                  getAnAliasSource(aliasName, accessPath, n) = TCallTargetNode(call) and
+                  getASourceFromSelector(type, accessPath, n) = TCallTargetNode(call) and
                   accessPath.getToken(n).getName() = "Argument" and
                   result = TArgumentObjectNode(call)
                 )
                 or
-                valueStepApprox(result, getAnAliasSinkArgumentObject(aliasName, accessPath, n))
+                valueStepApprox(result, getAnArgumentObjectFromSelector(type, accessPath, n))
               }
 
-              Node getAnAliasSink(string aliasName, AccessPath accessPath, int n) {
+              Node getASinkFromSelector(string type, AccessPath accessPath, int n) {
                 exists(ContentSet contents |
                   Steps::storeStep(result, contents,
-                    getAnAliasSinkArgumentObject(aliasName, accessPath, n - 1)) and
+                    getAnArgumentObjectFromSelector(type, accessPath, n - 1)) and
                   argumentParameterContent(accessPath.getToken(n - 1).getAnArgument(),
                     contents.getAStoreContent())
                 )
               }
 
-              Node getAnAliasSourceParameterObject(string aliasName, AccessPath accessPath, int n) {
+              Node getAParameterObjectFromSelector(string type, AccessPath accessPath, int n) {
                 exists(Callable callable |
-                  getAnAliasSink(aliasName, accessPath, n) = TClosureExprNode(callable, _, _) and
+                  getASinkFromSelector(type, accessPath, n) = TClosureExprNode(callable, _, _) and
                   accessPath.getToken(n).getName() = "Parameter" and
                   result = TParameterObjectNode(callable)
                 )
                 or
-                valueStepApprox(getAnAliasSourceParameterObject(aliasName, accessPath, n), result)
+                valueStepApprox(getAParameterObjectFromSelector(type, accessPath, n), result)
               }
             }
 
-            module EvaluatePreCallGraph<relevantAliasNamesSig/1 relevantAliasNames> {
-              import MakeStage<dataflowStep6/3, relevantAliasNames/1>
+            module EvaluatePreCallGraph<relevantTypeNamesSig/1 relevantTypeNames> {
+              import MakeStage<dataflowStep6/3, relevantTypeNames/1>
             }
           }
 

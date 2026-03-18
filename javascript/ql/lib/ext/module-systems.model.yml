@@ -1,10 +1,7 @@
 extensions:
   - addsTo:
       pack: codeql/javascript-all
-      extensible: aliasModel
+      extensible: typeModel
     data:
-      - ["amd-define", "PredefinedVar[define]"]
-      - ["require", "PredefinedVar[require]"]
-      - ["module", "PredefinedVar[module]"]
-      - ["exports", "PredefinedVar[exports]"]
-      - ["exports", "PredefinedVar[module].Member[exports]"]
+      - ["amd-define", "PredefinedVar[define]", ""]
+      - ["require", "PredefinedVar[require]", ""]
