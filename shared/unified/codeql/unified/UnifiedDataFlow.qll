@@ -2730,6 +2730,8 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
                   dataflowStepFinal(node1, TValueStep(), node2)
                   or
                   approxCaptureStep(node1, node2)
+                  or
+                  DataFlowInput::CallGraph::valueStepEx(node1, node2)
                 }
 
                 predicate additionalSelectors(string type, string path) {
@@ -3239,7 +3241,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
             }
 
             overlay[global]
-            private module NamespaceTracking {
+            additional module NamespaceTracking {
               pragma[nomagic]
               Node trackNamespace(NamespaceObject ns) {
                 result.isNamespaceObject(ns)
@@ -3567,7 +3569,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
             }
 
             overlay[global]
-            private module CallGraph {
+            additional module CallGraph {
               private newtype TCallableTrackingState =
                 TNeutral() or
                 TOut() or
@@ -3721,7 +3723,7 @@ module MakeUnifiedDataFlow0<LocationSig Location, BB::CfgSig<Location> Cfg> {
               }
 
               pragma[inline]
-              private predicate valueStepEx(Node node1, Node node2) {
+              predicate valueStepEx(Node node1, Node node2) {
                 NamespaceTracking::valueStepEx(node1, node2)
                 or
                 callSiteFlowThrough(node1, node2)

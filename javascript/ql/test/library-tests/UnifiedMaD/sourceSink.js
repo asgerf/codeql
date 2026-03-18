@@ -13,3 +13,9 @@ function t3() {
         require('testlib').mySink(x); // $ Alert=t3
     });
 }
+
+function t4() {
+    const wrapper = { lib: require('testlib') };
+    const source = wrapper.lib.getSource() // $ Source=t4
+    wrapper.lib.mySink(source); // $ Alert=t4
+}
