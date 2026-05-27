@@ -27,7 +27,12 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "[1, 2, 3]"
+          value:
+            array_literal
+              element:
+                int_literal "1"
+                int_literal "2"
+                int_literal "3"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -68,7 +73,9 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "[]"
+          value:
+            array_literal
+              element:
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -107,7 +114,15 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "[\"a\": 1, \"b\": 2]"
+          value:
+            map_literal
+              element:
+                key_value_pair
+                  key: string_literal "\"a\""
+                  value: int_literal "1"
+                key_value_pair
+                  key: string_literal "\"b\""
+                  value: int_literal "2"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -153,7 +168,12 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "[1, 2, 3]"
+          value:
+            array_literal
+              element:
+                int_literal "1"
+                int_literal "2"
+                int_literal "3"
           modifier: modifier "let"
           pattern:
             name_pattern

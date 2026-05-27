@@ -49,7 +49,12 @@ top_level
           pattern:
             name_pattern
               identifier: identifier "x"
-          iterable: unsupported_node "[1, 2, 3]"
+          iterable:
+            array_literal
+              element:
+                int_literal "1"
+                int_literal "2"
+                int_literal "3"
 
 ===
 For-in over range
@@ -430,11 +435,21 @@ top_level
                   pattern:
                     name_pattern
                       identifier: identifier "j"
-                  iterable: unsupported_node "[4, 5, 6]"
+                  iterable:
+                    array_literal
+                      element:
+                        int_literal "4"
+                        int_literal "5"
+                        int_literal "6"
           pattern:
             name_pattern
               identifier: identifier "i"
-          iterable: unsupported_node "[1, 2, 3]"
+          iterable:
+            array_literal
+              element:
+                int_literal "1"
+                int_literal "2"
+                int_literal "3"
 
 ===
 While let

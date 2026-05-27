@@ -346,6 +346,26 @@ fn translation_rules() -> Vec<yeast::Rule> {
         ),
         // Statement label
         rule!((statement_label) @lbl => (unsupported_node)),
+        // ---- Collections ----
+        // Array literal
+        rule!((array_literal element: (_)* @elems) => (array_literal element: {..elems})),
+        // Empty array literal
+        rule!((array_literal) => (array_literal)),
+        // Dictionary literal — zip keys and values into key_value_pairs
+        rule!(
+            (dictionary_literal key: (_)* @keys value: (_)* @vals)
+            =>
+            (map_literal element: {..{
+                keys.iter().zip(vals.iter()).map(|(&k, &v)| {
+                    let k_id: usize = k.into();
+                    let v_id: usize = v.into();
+                    __yeast_ctx.node("key_value_pair", vec![
+                        ("key", vec![k_id]),
+                        ("value", vec![v_id]),
+                    ])
+                }).collect::<Vec<_>>()
+            }})
+        ),
         // ---- Fallbacks ----
         rule!(
             (_)

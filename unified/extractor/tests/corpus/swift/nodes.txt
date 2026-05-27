@@ -1535,7 +1535,9 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "[]"
+          value:
+            array_literal
+              element:
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -1581,7 +1583,9 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "[:]"
+          value:
+            map_literal
+              element:
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -1817,7 +1821,9 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "[]"
+          value:
+            array_literal
+              element:
           modifier: modifier "let"
           pattern:
             name_pattern

@@ -680,7 +680,17 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "[[1, 2], [3, 4]]"
+          value:
+            array_literal
+              element:
+                array_literal
+                  element:
+                    int_literal "1"
+                    int_literal "2"
+                array_literal
+                  element:
+                    int_literal "3"
+                    int_literal "4"
           modifier: modifier "let"
           pattern:
             name_pattern
