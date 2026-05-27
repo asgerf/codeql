@@ -28,7 +28,20 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func greet() {\n  print(\"hello\")\n}"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value: string_literal "\"hello\""
+                  function:
+                    name_expr
+                      identifier: identifier "print"
+          name: identifier "greet"
+          parameter:
 
 ===
 Function with parameters and return type
@@ -79,7 +92,33 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func add(_ a: Int, _ b: Int) -> Int {\n  return a + b\n}"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                return_expr
+                  value:
+                    binary_expr
+                      operator: operator "+"
+                      left:
+                        name_expr
+                          identifier: identifier "a"
+                      right:
+                        name_expr
+                          identifier: identifier "b"
+          name: identifier "add"
+          parameter:
+            parameter
+              external_name: identifier "_"
+              pattern:
+                name_pattern
+                  identifier: identifier "a"
+            parameter
+              external_name: identifier "_"
+              pattern:
+                name_pattern
+                  identifier: identifier "b"
 
 ===
 Function with named parameters
@@ -117,7 +156,27 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func greet(person name: String) {\n  print(name)\n}"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value:
+                        name_expr
+                          identifier: identifier "name"
+                  function:
+                    name_expr
+                      identifier: identifier "print"
+          name: identifier "greet"
+          parameter:
+            parameter
+              external_name: identifier "person"
+              pattern:
+                name_pattern
+                  identifier: identifier "name"
 
 ===
 Function with mixed argument labels
@@ -213,12 +272,67 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "func move(_ x: Int, to y: Int, by step: Int) {\n  print(x, y, step)\n}"
+        function_declaration
+          body:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value:
+                        name_expr
+                          identifier: identifier "x"
+                    argument
+                      value:
+                        name_expr
+                          identifier: identifier "y"
+                    argument
+                      value:
+                        name_expr
+                          identifier: identifier "step"
+                  function:
+                    name_expr
+                      identifier: identifier "print"
+          name: identifier "move"
+          parameter:
+            parameter
+              external_name: identifier "_"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
+            parameter
+              external_name: identifier "to"
+              pattern:
+                name_pattern
+                  identifier: identifier "y"
+            parameter
+              external_name: identifier "by"
+              pattern:
+                name_pattern
+                  identifier: identifier "step"
         unsupported_node "==="
         name_expr
           identifier: identifier "Function"
         unsupported_node "==="
-        unsupported_node "func greet(name: String = \"world\") {\n  print(name)\n}"
+        function_declaration
+          body:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value:
+                        name_expr
+                          identifier: identifier "name"
+                  function:
+                    name_expr
+                      identifier: identifier "print"
+          name: identifier "greet"
+          parameter:
+            parameter
+              pattern:
+                name_pattern
+                  identifier: identifier "name"
 
 ===
 Variadic function
@@ -270,7 +384,32 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func sum(_ values: Int...) -> Int {\n  return values.reduce(0, +)\n}"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                return_expr
+                  value:
+                    call_expr
+                      argument:
+                        argument
+                          value: int_literal "0"
+                        argument
+                          value: unsupported_node "+"
+                      function:
+                        member_access_expr
+                          target:
+                            name_expr
+                              identifier: identifier "values"
+                          member: identifier "reduce"
+          name: identifier "sum"
+          parameter:
+            parameter
+              external_name: identifier "_"
+              pattern:
+                name_pattern
+                  identifier: identifier "values"
 
 ===
 Function call
@@ -295,7 +434,16 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "foo(1, 2)"
+      stmt:
+        call_expr
+          argument:
+            argument
+              value: int_literal "1"
+            argument
+              value: int_literal "2"
+          function:
+            name_expr
+              identifier: identifier "foo"
 
 ===
 Function call with labelled arguments
@@ -323,7 +471,15 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "greet(person: \"Bob\")"
+      stmt:
+        call_expr
+          argument:
+            argument
+              name: identifier "person"
+              value: string_literal "\"Bob\""
+          function:
+            name_expr
+              identifier: identifier "greet"
 
 ===
 Method call
@@ -350,7 +506,17 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "list.append(1)"
+      stmt:
+        call_expr
+          argument:
+            argument
+              value: int_literal "1"
+          function:
+            member_access_expr
+              target:
+                name_expr
+                  identifier: identifier "list"
+              member: identifier "append"
 
 ===
 Generic function
@@ -392,7 +558,22 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func identity<T>(_ x: T) -> T {\n  return x\n}"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                return_expr
+                  value:
+                    name_expr
+                      identifier: identifier "x"
+          name: identifier "identity"
+          parameter:
+            parameter
+              external_name: identifier "_"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
 
 ===
 Function body that is a single bare literal
@@ -446,9 +627,24 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "func always() -> Bool { false }"
-        unsupported_node "func pi() -> Double { 3.14 }"
-        unsupported_node "func none() -> Int? { nil }"
+        function_declaration
+          body:
+            block
+              stmt: boolean_literal "false"
+          name: identifier "always"
+          parameter:
+        function_declaration
+          body:
+            block
+              stmt: float_literal "3.14"
+          name: identifier "pi"
+          parameter:
+        function_declaration
+          body:
+            block
+              stmt:
+          name: identifier "none"
+          parameter:
 
 ===
 Function declaration modifiers
@@ -493,9 +689,18 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "public func a() {}"
-        unsupported_node "private static func b() {}"
-        unsupported_node "@available(*, deprecated)\ninternal func c() {}"
+        function_declaration
+          body: block "public func a() {}"
+          name: identifier "a"
+          parameter:
+        function_declaration
+          body: block "private static func b() {}"
+          name: identifier "b"
+          parameter:
+        function_declaration
+          body: block "@available(*, deprecated)\ninternal func c() {}"
+          name: identifier "c"
+          parameter:
 
 ===
 Function with operator name

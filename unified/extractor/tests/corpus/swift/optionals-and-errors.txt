@@ -72,7 +72,10 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "obj?.foo?.bar"
+          value:
+            member_access_expr
+              target: unsupported_node "obj?.foo?"
+              member: identifier "bar"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -186,7 +189,15 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func read() throws -> String {\n  return \"\"\n}"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                return_expr
+                  value: string_literal "\"\""
+          name: identifier "read"
+          parameter:
 
 ===
 Do-catch
@@ -474,4 +485,10 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func f() {\n    do {\n        try remove()\n    } catch CocoaError.fileNoSuchFile {\n    }\n}"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt: unsupported_node "do {\n        try remove()\n    } catch CocoaError.fileNoSuchFile {\n    }"
+          name: identifier "f"
+          parameter:

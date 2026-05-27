@@ -276,7 +276,12 @@ top_level
           target:
             name_expr
               identifier: identifier "_"
-          value: unsupported_node "sideEffect()"
+          value:
+            call_expr
+              argument:
+              function:
+                name_expr
+                  identifier: identifier "sideEffect"
 
 ===
 Backtick identifier
@@ -483,7 +488,24 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func f() {\n    var x = 0\n    x = if cond { 1 } else { 2 }\n}"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                variable_declaration
+                  value: int_literal "0"
+                  modifier: modifier "var"
+                  pattern:
+                    name_pattern
+                      identifier: identifier "x"
+                assign_expr
+                  target:
+                    name_expr
+                      identifier: identifier "x"
+                  value: unsupported_node "if cond { 1 } else { 2 }"
+          name: identifier "f"
+          parameter:
 
 ===
 Top-level computed property

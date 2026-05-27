@@ -88,6 +88,114 @@ fn translation_rules() -> Vec<yeast::Rule> {
         rule!((pattern bound_identifier: (_) @name) => (name_pattern identifier: (identifier #{name}))),
         // Tuple pattern (destructuring)
         rule!((pattern (pattern)* @elems) => (tuple_pattern element: {..elems})),
+        // ---- Functions ----
+        // Function declaration
+        rule!(
+            (function_declaration
+                name: (_) @name
+                (parameter)* @params
+                body: (function_body (statements (_)* @body_stmts)))
+            =>
+            (function_declaration
+                name: (identifier #{name})
+                parameter: {..params}
+                body: (block stmt: {..body_stmts}))
+        ),
+        // Function declaration with return type
+        rule!(
+            (function_declaration
+                name: (_) @name
+                (parameter)* @params
+                return_type: (_) @ret
+                body: (function_body (statements (_)* @body_stmts)))
+            =>
+            (function_declaration
+                name: (identifier #{name})
+                parameter: {..params}
+                return_type: {ret}
+                body: (block stmt: {..body_stmts}))
+        ),
+        // Function declaration with empty body
+        rule!(
+            (function_declaration
+                name: (_) @name
+                (parameter)* @params
+                body: (function_body))
+            =>
+            (function_declaration
+                name: (identifier #{name})
+                parameter: {..params}
+                body: (block))
+        ),
+        // Function declaration with return type and empty body
+        rule!(
+            (function_declaration
+                name: (_) @name
+                (parameter)* @params
+                return_type: (_) @ret
+                body: (function_body))
+            =>
+            (function_declaration
+                name: (identifier #{name})
+                parameter: {..params}
+                return_type: {ret}
+                body: (block))
+        ),
+        // Parameter with external name and type
+        rule!(
+            (parameter external_name: (_) @ext name: (_) @name)
+            =>
+            (parameter
+                external_name: (identifier #{ext})
+                pattern: (name_pattern identifier: (identifier #{name})))
+        ),
+        // Parameter with just name and type (no external name)
+        rule!(
+            (parameter name: (_) @name)
+            =>
+            (parameter
+                pattern: (name_pattern identifier: (identifier #{name})))
+        ),
+        // Call expression: function(args...)
+        rule!(
+            (call_expression (_) @func (call_suffix (value_arguments (value_argument)* @args)))
+            =>
+            (call_expr function: {func} argument: {..args})
+        ),
+        // Value argument with label
+        rule!(
+            (value_argument name: (value_argument_label (_) @label) value: (_) @val)
+            =>
+            (argument name: (identifier #{label}) value: {val})
+        ),
+        // Value argument without label
+        rule!(
+            (value_argument value: (_) @val)
+            =>
+            (argument value: {val})
+        ),
+        // Navigation expression → member_access_expr
+        rule!(
+            (navigation_expression target: (_) @target suffix: (navigation_suffix suffix: (_) @member))
+            =>
+            (member_access_expr target: {target} member: (identifier #{member}))
+        ),
+        // Return statement
+        rule!(
+            (control_transfer_statement result: (_) @val)
+            =>
+            (return_expr value: {val})
+        ),
+        // Bare return (no value)
+        rule!(
+            (control_transfer_statement)
+            =>
+            (return_expr)
+        ),
+        // Statements block (used inside function bodies and other scopes)
+        rule!((statements (_)* @stmts) => (block stmt: {..stmts})),
+        // Function body wrapper — unwrap
+        rule!((function_body (_) @inner) => {inner}),
         // ---- Fallbacks ----
         rule!(
             (_)

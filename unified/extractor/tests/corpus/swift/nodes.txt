@@ -334,7 +334,10 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "self.x"
+      stmt:
+        member_access_expr
+          target: unsupported_node "self"
+          member: identifier "x"
 
 ===
 Super member access
@@ -471,27 +474,56 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "super.x"
+        member_access_expr
+          target: unsupported_node "super"
+          member: identifier "x"
         unsupported_node "==="
         name_expr
           identifier: identifier "Super"
         unsupported_node "==="
-        unsupported_node "super.greet()"
+        call_expr
+          argument:
+          function:
+            member_access_expr
+              target: unsupported_node "super"
+              member: identifier "greet"
         unsupported_node "==="
         name_expr
           identifier: identifier "Super"
         unsupported_node "==="
-        unsupported_node "super.add(1, 2)"
+        call_expr
+          argument:
+            argument
+              value: int_literal "1"
+            argument
+              value: int_literal "2"
+          function:
+            member_access_expr
+              target: unsupported_node "super"
+              member: identifier "add"
         unsupported_node "==="
         name_expr
           identifier: identifier "initializer"
         unsupported_node "==="
-        unsupported_node "super.init(name: \"x\")"
+        call_expr
+          argument:
+            argument
+              name: identifier "name"
+              value: string_literal "\"x\""
+          function:
+            member_access_expr
+              target: unsupported_node "super"
+              member: identifier "init"
         unsupported_node "==="
         name_expr
           identifier: identifier "Super"
         unsupported_node "==="
-        unsupported_node "super.foo.bar"
+        member_access_expr
+          target:
+            member_access_expr
+              target: unsupported_node "super"
+              member: identifier "foo"
+          member: identifier "bar"
         unsupported_node "==="
         name_expr
           identifier: identifier "Wildcard"
@@ -1026,7 +1058,11 @@ top_level
     block
       stmt:
         unsupported_node "throw"
-        unsupported_node "MyError.bad"
+        member_access_expr
+          target:
+            name_expr
+              identifier: identifier "MyError"
+          member: identifier "bad"
 
 ===
 Return statement
@@ -1055,7 +1091,15 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func f() -> Int { return 1 }"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                return_expr
+                  value: int_literal "1"
+          name: identifier "f"
+          parameter:
 
 ===
 Break statement
@@ -1210,7 +1254,10 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "\\Person.name"
+          value:
+            member_access_expr
+              target: unsupported_node "\\Person"
+              member: identifier "name"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -1757,7 +1804,15 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func f() -> some Equatable { return 1 }"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                return_expr
+                  value: int_literal "1"
+          name: identifier "f"
+          parameter:
 
 ===
 Any existential type
@@ -1821,7 +1876,11 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "@available(*, deprecated) func f() {}"
+      stmt:
+        function_declaration
+          body: block "@available(*, deprecated) func f() {}"
+          name: identifier "f"
+          parameter:
 
 ===
 Visibility modifier

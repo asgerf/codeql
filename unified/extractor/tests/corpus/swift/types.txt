@@ -894,7 +894,12 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "MemoryLayout<Int>.size"
+          value:
+            member_access_expr
+              target:
+                named_type_expr
+                  name: identifier "MemoryLayout"
+              member: identifier "size"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -1571,7 +1576,25 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func first<T: Equatable>(_ xs: [T]) -> T? {\n  return xs.first\n}"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                return_expr
+                  value:
+                    member_access_expr
+                      target:
+                        name_expr
+                          identifier: identifier "xs"
+                      member: identifier "first"
+          name: identifier "first"
+          parameter:
+            parameter
+              external_name: identifier "_"
+              pattern:
+                name_pattern
+                  identifier: identifier "xs"
 
 ===
 Generic function with multiple constraints in where clause
@@ -1649,7 +1672,33 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "func compare<T, U>(_ x: T, _ y: U) -> Bool where T: Equatable, T == U {\n  return x == y\n}"
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                return_expr
+                  value:
+                    binary_expr
+                      operator: operator "=="
+                      left:
+                        name_expr
+                          identifier: identifier "x"
+                      right:
+                        name_expr
+                          identifier: identifier "y"
+          name: identifier "compare"
+          parameter:
+            parameter
+              external_name: identifier "_"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
+            parameter
+              external_name: identifier "_"
+              pattern:
+                name_pattern
+                  identifier: identifier "y"
 
 ===
 Generic class with where clause

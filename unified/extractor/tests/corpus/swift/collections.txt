@@ -236,7 +236,14 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "xs[0]"
+          value:
+            call_expr
+              argument:
+                argument
+                  value: int_literal "0"
+              function:
+                name_expr
+                  identifier: identifier "xs"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -278,7 +285,14 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "d[\"key\"]"
+          value:
+            call_expr
+              argument:
+                argument
+                  value: string_literal "\"key\""
+              function:
+                name_expr
+                  identifier: identifier "d"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -313,7 +327,12 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "t.0"
+          value:
+            member_access_expr
+              target:
+                name_expr
+                  identifier: identifier "t"
+              member: identifier "0"
           modifier: modifier "let"
           pattern:
             name_pattern
