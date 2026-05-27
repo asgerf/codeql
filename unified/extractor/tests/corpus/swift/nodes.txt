@@ -960,7 +960,17 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "c ? a : b"
+          value:
+            if_expr
+              condition:
+                name_expr
+                  identifier: identifier "c"
+              else:
+                name_expr
+                  identifier: identifier "b"
+              then:
+                name_expr
+                  identifier: identifier "a"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -996,7 +1006,28 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "switch x {\ncase 1: y\ndefault: z\n}"
+      stmt:
+        switch_expr
+          value:
+            name_expr
+              identifier: identifier "x"
+          case:
+            switch_case
+              body:
+                block
+                  stmt:
+                    name_expr
+                      identifier: identifier "y"
+              pattern:
+                tuple_pattern
+                  element:
+            switch_case
+              body:
+                block
+                  stmt:
+                    name_expr
+                      identifier: identifier "z"
+              pattern:
 
 ===
 Do-catch statement

@@ -29,7 +29,27 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "if x > 0 {\n  print(x)\n}"
+      stmt:
+        if_expr
+          condition:
+            binary_expr
+              operator: operator ">"
+              left:
+                name_expr
+                  identifier: identifier "x"
+              right: int_literal "0"
+          then:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value:
+                        name_expr
+                          identifier: identifier "x"
+                  function:
+                    name_expr
+                      identifier: identifier "print"
 
 ===
 If-else
@@ -75,7 +95,42 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "if x > 0 {\n  print(x)\n} else {\n  print(-x)\n}"
+      stmt:
+        if_expr
+          condition:
+            binary_expr
+              operator: operator ">"
+              left:
+                name_expr
+                  identifier: identifier "x"
+              right: int_literal "0"
+          else:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value:
+                        unary_expr
+                          operator: operator "-"
+                          operand:
+                            name_expr
+                              identifier: identifier "x"
+                  function:
+                    name_expr
+                      identifier: identifier "print"
+          then:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value:
+                        name_expr
+                          identifier: identifier "x"
+                  function:
+                    name_expr
+                      identifier: identifier "print"
 
 ===
 If-else-if chain
@@ -135,7 +190,54 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "if x > 0 {\n  print(1)\n} else if x < 0 {\n  print(2)\n} else {\n  print(3)\n}"
+      stmt:
+        if_expr
+          condition:
+            binary_expr
+              operator: operator ">"
+              left:
+                name_expr
+                  identifier: identifier "x"
+              right: int_literal "0"
+          else:
+            if_expr
+              condition:
+                binary_expr
+                  operator: operator "<"
+                  left:
+                    name_expr
+                      identifier: identifier "x"
+                  right: int_literal "0"
+              else:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: int_literal "3"
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              then:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: int_literal "2"
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+          then:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value: int_literal "1"
+                  function:
+                    name_expr
+                      identifier: identifier "print"
 
 ===
 If-let optional binding
@@ -169,7 +271,28 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "if let value = optional {\n  print(value)\n}"
+      stmt:
+        if_expr
+          condition:
+            pattern_guard_expr
+              value:
+                name_expr
+                  identifier: identifier "optional"
+              pattern:
+                name_pattern
+                  identifier: identifier "value"
+          then:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value:
+                        name_expr
+                          identifier: identifier "value"
+                  function:
+                    name_expr
+                      identifier: identifier "print"
 
 ===
 Guard let
@@ -197,7 +320,19 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "guard let value = optional else { return }"
+      stmt:
+        guard_if_stmt
+          condition:
+            pattern_guard_expr
+              value:
+                name_expr
+                  identifier: identifier "optional"
+              pattern:
+                name_pattern
+                  identifier: identifier "value"
+          else:
+            block
+              stmt: return_expr "return"
 
 ===
 Ternary expression
@@ -234,7 +369,20 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "x > 0 ? 1 : -1"
+          value:
+            if_expr
+              condition:
+                binary_expr
+                  operator: operator ">"
+                  left:
+                    name_expr
+                      identifier: identifier "x"
+                  right: int_literal "0"
+              else:
+                unary_expr
+                  operator: operator "-"
+                  operand: int_literal "1"
+              then: int_literal "1"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -304,7 +452,54 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "switch x {\ncase 1:\n  print(\"one\")\ncase 2, 3:\n  print(\"two or three\")\ndefault:\n  print(\"other\")\n}"
+      stmt:
+        switch_expr
+          value:
+            name_expr
+              identifier: identifier "x"
+          case:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"one\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                tuple_pattern
+                  element:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"two or three\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                tuple_pattern
+                  element:
+                tuple_pattern
+                  element:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"other\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
 
 ===
 Switch with binding pattern
@@ -358,7 +553,48 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "switch shape {\ncase .circle(let r):\n  print(r)\ncase .square(let s):\n  print(s)\n}"
+      stmt:
+        switch_expr
+          value:
+            name_expr
+              identifier: identifier "shape"
+          case:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value:
+                            name_expr
+                              identifier: identifier "r"
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                tuple_pattern
+                  element:
+                    name_pattern
+                      identifier: identifier "r"
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value:
+                            name_expr
+                              identifier: identifier "s"
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                tuple_pattern
+                  element:
+                    name_pattern
+                      identifier: identifier "s"
 
 ===
 Switch case with where clause
@@ -434,7 +670,60 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "switch p {\ncase let (x, y) where x > y:\n    print(\"greater\")\ncase (0, 0):\n    print(\"origin\")\ndefault:\n    print(\"other\")\n}"
+      stmt:
+        switch_expr
+          value:
+            name_expr
+              identifier: identifier "p"
+          case:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"greater\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                tuple_pattern
+                  element:
+                    tuple_pattern
+                      element:
+                    tuple_pattern
+                      element:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"origin\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                tuple_pattern
+                  element:
+                    tuple_pattern
+                      element:
+                    tuple_pattern
+                      element:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"other\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
 
 ===
 Switch with multi-pattern case
@@ -506,7 +795,58 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "switch x {\ncase 1, 2, 3:\n    print(\"small\")\ncase 4, 5:\n    print(\"mid\")\ndefault:\n    print(\"other\")\n}"
+      stmt:
+        switch_expr
+          value:
+            name_expr
+              identifier: identifier "x"
+          case:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"small\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                tuple_pattern
+                  element:
+                tuple_pattern
+                  element:
+                tuple_pattern
+                  element:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"mid\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                tuple_pattern
+                  element:
+                tuple_pattern
+                  element:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"other\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
 
 ===
 Switch with range patterns
@@ -575,7 +915,52 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "switch n {\ncase 0..<10:\n    print(\"small\")\ncase 10...100:\n    print(\"med\")\ndefault:\n    print(\"big\")\n}"
+      stmt:
+        switch_expr
+          value:
+            name_expr
+              identifier: identifier "n"
+          case:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"small\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                tuple_pattern
+                  element:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"med\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                tuple_pattern
+                  element:
+            switch_case
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value: string_literal "\"big\""
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
 
 ===
 Multi-condition if-let
@@ -620,7 +1005,28 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "if let x = a, let y = b, x > y {\n    print(x)\n}"
+      stmt:
+        if_expr
+          condition:
+            pattern_guard_expr
+              value:
+                name_expr
+                  identifier: identifier "a"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
+          then:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value:
+                        name_expr
+                          identifier: identifier "x"
+                  function:
+                    name_expr
+                      identifier: identifier "print"
 
 ===
 If let shorthand
@@ -653,4 +1059,22 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "if let x {\n    print(x)\n}"
+      stmt:
+        if_expr
+          condition:
+            pattern_guard_expr
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
+          then:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      value:
+                        name_expr
+                          identifier: identifier "x"
+                  function:
+                    name_expr
+                      identifier: identifier "print"

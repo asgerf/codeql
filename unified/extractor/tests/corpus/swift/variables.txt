@@ -390,7 +390,17 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "if cond { 1 } else { 2 }"
+          value:
+            if_expr
+              condition:
+                name_expr
+                  identifier: identifier "cond"
+              else:
+                block
+                  stmt: int_literal "2"
+              then:
+                block
+                  stmt: int_literal "1"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -437,7 +447,24 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "switch state {\ncase .on: \"on\"\ndefault: \"off\"\n}"
+          value:
+            switch_expr
+              value:
+                name_expr
+                  identifier: identifier "state"
+              case:
+                switch_case
+                  body:
+                    block
+                      stmt: string_literal "\"on\""
+                  pattern:
+                    tuple_pattern
+                      element:
+                switch_case
+                  body:
+                    block
+                      stmt: string_literal "\"off\""
+                  pattern:
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -503,7 +530,17 @@ top_level
                   target:
                     name_expr
                       identifier: identifier "x"
-                  value: unsupported_node "if cond { 1 } else { 2 }"
+                  value:
+                    if_expr
+                      condition:
+                        name_expr
+                          identifier: identifier "cond"
+                      else:
+                        block
+                          stmt: int_literal "2"
+                      then:
+                        block
+                          stmt: int_literal "1"
           name: identifier "f"
           parameter:
 

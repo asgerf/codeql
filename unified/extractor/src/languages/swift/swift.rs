@@ -227,6 +227,84 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 function: {func}
                 argument: (argument value: (function_expr body: (block stmt: {..body}))))
         ),
+        // ---- Control flow ----
+        // If statement with else clause followed by another statements block
+        rule!(
+            (if_statement condition: (_) @cond (statements (_)* @then_stmts) (else) (statements (_)* @else_stmts))
+            =>
+            (if_expr
+                condition: {cond}
+                then: (block stmt: {..then_stmts})
+                else: (block stmt: {..else_stmts}))
+        ),
+        // If statement with else-if chain
+        rule!(
+            (if_statement condition: (_) @cond (statements (_)* @then_stmts) (else) (if_statement) @else_if)
+            =>
+            (if_expr
+                condition: {cond}
+                then: (block stmt: {..then_stmts})
+                else: {else_if})
+        ),
+        // If statement without else
+        rule!(
+            (if_statement condition: (_) @cond (statements (_)* @then_stmts))
+            =>
+            (if_expr
+                condition: {cond}
+                then: (block stmt: {..then_stmts}))
+        ),
+        // Guard statement
+        rule!(
+            (guard_statement condition: (_) @cond (else) (statements (_)* @else_stmts))
+            =>
+            (guard_if_stmt
+                condition: {cond}
+                else: (block stmt: {..else_stmts}))
+        ),
+        // Ternary expression → if_expr
+        rule!(
+            (ternary_expression condition: (_) @cond if_true: (_) @then_val if_false: (_) @else_val)
+            =>
+            (if_expr condition: {cond} then: {then_val} else: {else_val})
+        ),
+        // Switch statement
+        rule!(
+            (switch_statement expr: (_) @val (switch_entry)* @cases)
+            =>
+            (switch_expr value: {val} case: {..cases})
+        ),
+        // Switch entry with patterns and body
+        rule!(
+            (switch_entry (switch_pattern)* @pats (statements (_)* @body))
+            =>
+            (switch_case pattern: {..pats} body: (block stmt: {..body}))
+        ),
+        // Switch entry: default case (no patterns)
+        rule!(
+            (switch_entry (default_keyword) (statements (_)* @body))
+            =>
+            (switch_case body: (block stmt: {..body}))
+        ),
+        // Switch pattern — unwrap to inner pattern
+        rule!((switch_pattern (pattern)* @inner) => {..inner}),
+        // If-let binding
+        rule!(
+            (if_let_binding (value_binding_pattern mutability: _ @binding_kind) bound_identifier: (_) @name (_) @val)
+            =>
+            (pattern_guard_expr
+                value: {val}
+                pattern: (name_pattern identifier: (identifier #{name})))
+        ),
+        // If-let shorthand (no value)
+        rule!(
+            (if_let_binding (value_binding_pattern mutability: _ @binding_kind) bound_identifier: (_) @name)
+            =>
+            (pattern_guard_expr
+                pattern: (name_pattern identifier: (identifier #{name})))
+        ),
+        // If-condition — unwrap (pass through the inner expression/pattern)
+        rule!((if_condition (_) @inner) => {inner}),
         // ---- Fallbacks ----
         rule!(
             (_)
