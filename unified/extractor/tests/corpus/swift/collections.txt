@@ -22,15 +22,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: unsupported_node "[1, 2, 3]"
-          pattern:
-            var_pattern
-              identifier: identifier "xs"
+unsupported_node "let xs = [1, 2, 3]"
 
 ===
 Empty array literal with type
@@ -62,15 +54,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: unsupported_node "[]"
-          pattern:
-            var_pattern
-              identifier: identifier "xs"
+unsupported_node "let xs: [Int] = []"
 
 ===
 Dictionary literal
@@ -100,15 +84,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: unsupported_node "[\"a\": 1, \"b\": 2]"
-          pattern:
-            var_pattern
-              identifier: identifier "d"
+unsupported_node "let d = [\"a\": 1, \"b\": 2]"
 
 ===
 Set literal
@@ -145,15 +121,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: unsupported_node "[1, 2, 3]"
-          pattern:
-            var_pattern
-              identifier: identifier "s"
+unsupported_node "let s: Set<Int> = [1, 2, 3]"
 
 ===
 Tuple literal
@@ -180,15 +148,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: unsupported_node "(1, \"two\", 3.0)"
-          pattern:
-            var_pattern
-              identifier: identifier "t"
+unsupported_node "let t = (1, \"two\", 3.0)"
 
 ===
 Subscript access
@@ -221,23 +181,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    unsupported_node "// TODO: tree-sitter-swift parses `xs[0]` as a call_expression (same shape"
-    unsupported_node "// as `xs(0)`), so the mapping currently produces a call_expr. Update the"
-    unsupported_node "// parser / add a separate subscript_expr node and remap when fixed."
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value:
-            call_expr
-              argument: int_literal "0"
-              function:
-                name_expr
-                  identifier: identifier "xs"
-          pattern:
-            var_pattern
-              identifier: identifier "first"
+unsupported_node "// TODO: tree-sitter-swift parses `xs[0]` as a call_expression (same shape\n// as `xs(0)`), so the mapping currently produces a call_expr. Update the\n// parser / add a separate subscript_expr node and remap when fixed.\nlet first = xs[0]"
 
 ===
 Dictionary subscript
@@ -270,22 +214,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    unsupported_node "// TODO: same parser issue as the array subscript case above —"
-    unsupported_node "// `d[\"key\"]` is parsed as `call_expression(d, (\"key\"))`."
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value:
-            call_expr
-              argument: string_literal "\"key\""
-              function:
-                name_expr
-                  identifier: identifier "d"
-          pattern:
-            var_pattern
-              identifier: identifier "v"
+unsupported_node "// TODO: same parser issue as the array subscript case above —\n// `d[\"key\"]` is parsed as `call_expression(d, (\"key\"))`.\nlet v = d[\"key\"]"
 
 ===
 Tuple member access
@@ -311,12 +240,4 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: unsupported_node "t.0"
-          pattern:
-            var_pattern
-              identifier: identifier "n"
+unsupported_node "let n = t.0"

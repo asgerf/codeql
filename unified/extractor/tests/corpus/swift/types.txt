@@ -15,8 +15,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "class Foo {}"
+unsupported_node "class Foo {}"
 
 ===
 Class with stored properties
@@ -62,8 +61,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "class Point {\n  var x: Int\n  var y: Int\n}"
+unsupported_node "class Point {\n  var x: Int\n  var y: Int\n}"
 
 ===
 Class with initializer
@@ -122,8 +120,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "class Point {\n  var x: Int\n  init(x: Int) {\n    self.x = x\n  }\n}"
+unsupported_node "class Point {\n  var x: Int\n  init(x: Int) {\n    self.x = x\n  }\n}"
 
 ===
 Class with method
@@ -165,8 +162,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "class Counter {\n  var n = 0\n  func bump() {\n    n += 1\n  }\n}"
+unsupported_node "class Counter {\n  var n = 0\n  func bump() {\n    n += 1\n  }\n}"
 
 ===
 Class inheritance
@@ -189,8 +185,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "class Dog: Animal {}"
+unsupported_node "class Dog: Animal {}"
 
 ===
 Struct
@@ -236,8 +231,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "struct Point {\n  let x: Int\n  let y: Int\n}"
+unsupported_node "struct Point {\n  let x: Int\n  let y: Int\n}"
 
 ===
 Enum with cases
@@ -269,8 +263,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "enum Direction {\n  case north\n  case south\n  case east\n  case west\n}"
+unsupported_node "enum Direction {\n  case north\n  case south\n  case east\n  case west\n}"
 
 ===
 Enum with associated values
@@ -310,8 +303,60 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "enum Shape {\n  case circle(radius: Double)\n  case square(side: Double)\n}"
+unsupported_node "enum Shape {\n  case circle(radius: Double)\n  case square(side: Double)\n}"
+
+===
+Enum with external labels, defaults, and positional payloads
+===
+
+enum Event {
+  case named(label: Int = 0)
+  case external(_ x: String = "hi")
+  case positional(Bool)
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      enum_class_body
+        enum_entry
+          data_contents:
+            enum_type_parameters
+              simple_identifier "label"
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+              integer_literal "0"
+          name: simple_identifier "named"
+        enum_entry
+          data_contents:
+            enum_type_parameters
+              wildcard_pattern "_"
+              simple_identifier "x"
+              type
+                name:
+                  user_type
+                    type_identifier "String"
+              line_string_literal
+                text: line_str_text "hi"
+          name: simple_identifier "external"
+        enum_entry
+          data_contents:
+            enum_type_parameters
+              type
+                name:
+                  user_type
+                    type_identifier "Bool"
+          name: simple_identifier "positional"
+    declaration_kind: enum
+    name: type_identifier "Event"
+
+---
+
+unsupported_node "enum Event {\n  case named(label: Int = 0)\n  case external(_ x: String = \"hi\")\n  case positional(Bool)\n}"
 
 ===
 Protocol declaration
@@ -334,8 +379,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "protocol Drawable {\n  func draw()\n}"
+unsupported_node "protocol Drawable {\n  func draw()\n}"
 
 ===
 Extension
@@ -376,8 +420,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "extension Int {\n  func squared() -> Int { return self * self }\n}"
+unsupported_node "extension Int {\n  func squared() -> Int { return self * self }\n}"
 
 ===
 Computed property
@@ -447,8 +490,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "class Rect {\n  var w: Double\n  var h: Double\n  var area: Double {\n    return w * h\n  }\n}"
+unsupported_node "class Rect {\n  var w: Double\n  var h: Double\n  var area: Double {\n    return w * h\n  }\n}"
 
 ===
 Property with getter and setter
@@ -510,5 +552,1203 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "class Box {\n  private var _v = 0\n  var v: Int {\n    get { return _v }\n    set { _v = newValue }\n  }\n}"
+unsupported_node "class Box {\n  private var _v = 0\n  var v: Int {\n    get { return _v }\n    set { _v = newValue }\n  }\n}"
+
+===
+Qualified type reference
+===
+
+let y: Swift.Int = 42
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "y"
+    value: integer_literal "42"
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            user_type
+              type_identifier "Swift"
+              type_identifier "Int"
+
+---
+
+unsupported_node "let y: Swift.Int = 42"
+
+===
+Nested generic type
+===
+
+let x: Array<Array<Int>> = [[1, 2], [3, 4]]
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      array_literal
+        element:
+          array_literal
+            element:
+              integer_literal "1"
+              integer_literal "2"
+          array_literal
+            element:
+              integer_literal "3"
+              integer_literal "4"
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            user_type
+              type_identifier "Array"
+              type_arguments
+                type
+                  name:
+                    user_type
+                      type_identifier "Array"
+                      type_arguments
+                        type
+                          name:
+                            user_type
+                              type_identifier "Int"
+
+---
+
+unsupported_node "let x: Array<Array<Int>> = [[1, 2], [3, 4]]"
+
+===
+Enum with method
+===
+
+enum E {
+  case a
+  case b
+  func describe() -> String { return "x" }
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      enum_class_body
+        enum_entry
+          name: simple_identifier "a"
+        enum_entry
+          name: simple_identifier "b"
+        function_declaration
+          body:
+            function_body
+              statements
+                control_transfer_statement
+                  result:
+                    line_string_literal
+                      text: line_str_text "x"
+          name: simple_identifier "describe"
+          return_type:
+            type
+              name:
+                user_type
+                  type_identifier "String"
+    declaration_kind: enum
+    name: type_identifier "E"
+
+---
+
+unsupported_node "enum E {\n  case a\n  case b\n  func describe() -> String { return \"x\" }\n}"
+
+===
+Protocol with property requirement
+===
+
+protocol P {
+  var x: Int { get set }
+  var y: String { get }
+}
+
+---
+
+source_file
+  protocol_declaration
+    body:
+      protocol_body
+        protocol_property_declaration
+          name:
+            pattern
+              bound_identifier: simple_identifier "x"
+              value_binding_pattern
+                mutability: var
+          type_annotation
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+          protocol_property_requirements
+            getter_specifier
+            setter_specifier
+        protocol_property_declaration
+          name:
+            pattern
+              bound_identifier: simple_identifier "y"
+              value_binding_pattern
+                mutability: var
+          type_annotation
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "String"
+          protocol_property_requirements
+            getter_specifier
+    declaration_kind: protocol
+    name: type_identifier "P"
+
+---
+
+unsupported_node "protocol P {\n  var x: Int { get set }\n  var y: String { get }\n}"
+
+===
+Class with nested type
+===
+
+class Outer {
+  class Inner {
+    var x: Int
+  }
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        class_declaration
+          body:
+            class_body
+              property_declaration
+                name:
+                  pattern
+                    bound_identifier: simple_identifier "x"
+                value_binding_pattern
+                  mutability: var
+                type_annotation
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "Int"
+          declaration_kind: class
+          name: type_identifier "Inner"
+    declaration_kind: class
+    name: type_identifier "Outer"
+
+---
+
+unsupported_node "class Outer {\n  class Inner {\n    var x: Int\n  }\n}"
+
+===
+Class with typealias member
+===
+
+class C {
+  typealias T = Int
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        typealias_declaration
+          name: type_identifier "T"
+          value:
+            type
+              name:
+                user_type
+                  type_identifier "Int"
+    declaration_kind: class
+    name: type_identifier "C"
+
+---
+
+unsupported_node "class C {\n  typealias T = Int\n}"
+
+===
+Static member access on a generic type
+===
+
+let n = MemoryLayout<Int>.size
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "n"
+    value:
+      navigation_expression
+        suffix:
+          navigation_suffix
+            suffix: simple_identifier "size"
+        target:
+          user_type
+            type_identifier "MemoryLayout"
+            type_arguments
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let n = MemoryLayout<Int>.size"
+
+===
+Constructor inside conditional-compilation block at class scope
+===
+
+class C {
+#if DEBUG
+  init(x: Int) {}
+#endif
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+    declaration_kind: class
+    name: type_identifier "C"
+  directive
+    simple_identifier "DEBUG"
+  init_declaration
+    body:
+      function_body
+    name: init
+    parameter
+      name: simple_identifier "x"
+      type:
+        type
+          name:
+            user_type
+              type_identifier "Int"
+  directive
+  ERROR
+
+---
+
+unsupported_node "class C {\n#if DEBUG\n  init(x: Int) {}\n#endif\n}"
+
+===
+Visibility and member modifiers on class-like declarations
+===
+
+public class C {}
+private struct S {}
+internal enum E {}
+fileprivate final class F {}
+open class O {}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+    declaration_kind: class
+    name: type_identifier "C"
+    modifiers
+      visibility_modifier
+  class_declaration
+    body:
+      class_body
+    declaration_kind: struct
+    name: type_identifier "S"
+    modifiers
+      visibility_modifier
+  class_declaration
+    body:
+      enum_class_body
+    declaration_kind: enum
+    name: type_identifier "E"
+    modifiers
+      visibility_modifier
+  class_declaration
+    body:
+      class_body
+    declaration_kind: class
+    name: type_identifier "F"
+    modifiers
+      visibility_modifier
+      inheritance_modifier
+  class_declaration
+    body:
+      class_body
+    declaration_kind: class
+    name: type_identifier "O"
+    modifiers
+      visibility_modifier
+
+---
+
+unsupported_node "public class C {}\nprivate struct S {}\ninternal enum E {}\nfileprivate final class F {}\nopen class O {}"
+
+===
+Modifiers on members (methods and properties)
+===
+
+class C {
+    public static var count: Int = 0
+    private let name: String = "x"
+    public func greet() {}
+    private static func help() {}
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        property_declaration
+          name:
+            pattern
+              bound_identifier: simple_identifier "count"
+          value: integer_literal "0"
+          modifiers
+            visibility_modifier
+            property_modifier
+          value_binding_pattern
+            mutability: var
+          type_annotation
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+        property_declaration
+          name:
+            pattern
+              bound_identifier: simple_identifier "name"
+          value:
+            line_string_literal
+              text: line_str_text "x"
+          modifiers
+            visibility_modifier
+          value_binding_pattern
+            mutability: let
+          type_annotation
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "String"
+        function_declaration
+          body:
+            function_body
+          name: simple_identifier "greet"
+          modifiers
+            visibility_modifier
+        function_declaration
+          body:
+            function_body
+          name: simple_identifier "help"
+          modifiers
+            visibility_modifier
+            property_modifier
+    declaration_kind: class
+    name: type_identifier "C"
+
+---
+
+unsupported_node "class C {\n    public static var count: Int = 0\n    private let name: String = \"x\"\n    public func greet() {}\n    private static func help() {}\n}"
+
+===
+Modifiers on init, deinit, subscript, typealias, protocol and enum entries
+===
+
+public typealias Name = String
+
+public protocol P {
+    static func foo() -> Int
+    var x: Int { get }
+    associatedtype A
+    associatedtype B: Equatable
+}
+
+class C {
+    public required init() {}
+    deinit {}
+    public subscript(i: Int) -> Int { return i }
+}
+
+public enum E {
+    case a
+    case b(x: Int)
+    case c = 1
+}
+
+---
+
+source_file
+  typealias_declaration
+    name: type_identifier "Name"
+    value:
+      type
+        name:
+          user_type
+            type_identifier "String"
+    modifiers
+      visibility_modifier
+  protocol_declaration
+    body:
+      protocol_body
+        protocol_function_declaration
+          name: simple_identifier "foo"
+          return_type:
+            type
+              name:
+                user_type
+                  type_identifier "Int"
+          modifiers
+            property_modifier
+        protocol_property_declaration
+          name:
+            pattern
+              bound_identifier: simple_identifier "x"
+              value_binding_pattern
+                mutability: var
+          type_annotation
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+          protocol_property_requirements
+            getter_specifier
+        associatedtype_declaration
+          name: type_identifier "A"
+        associatedtype_declaration
+          must_inherit:
+            type
+              name:
+                user_type
+                  type_identifier "Equatable"
+          name: type_identifier "B"
+    declaration_kind: protocol
+    name: type_identifier "P"
+    modifiers
+      visibility_modifier
+  class_declaration
+    body:
+      class_body
+        init_declaration
+          body:
+            function_body
+          name: init
+          modifiers
+            visibility_modifier
+            member_modifier
+        deinit_declaration
+          body:
+            function_body
+        subscript_declaration
+          return_type:
+            type
+              name:
+                user_type
+                  type_identifier "Int"
+          modifiers
+            visibility_modifier
+          parameter
+            name: simple_identifier "i"
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+          computed_property
+            statements
+              control_transfer_statement
+                result: simple_identifier "i"
+    declaration_kind: class
+    name: type_identifier "C"
+  class_declaration
+    body:
+      enum_class_body
+        enum_entry
+          name: simple_identifier "a"
+        enum_entry
+          data_contents:
+            enum_type_parameters
+              simple_identifier "x"
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+          name: simple_identifier "b"
+        enum_entry
+          name: simple_identifier "c"
+          raw_value: integer_literal "1"
+    declaration_kind: enum
+    name: type_identifier "E"
+    modifiers
+      visibility_modifier
+
+---
+
+unsupported_node "public typealias Name = String\n\npublic protocol P {\n    static func foo() -> Int\n    var x: Int { get }\n    associatedtype A\n    associatedtype B: Equatable\n}\n\nclass C {\n    public required init() {}\n    deinit {}\n    public subscript(i: Int) -> Int { return i }\n}\n\npublic enum E {\n    case a\n    case b(x: Int)\n    case c = 1\n}"
+
+===
+Override computed property
+===
+
+class A: B {
+  override var x: Int {
+    get { return _x }
+    set {}
+  }
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        property_declaration
+          computed_value:
+            computed_property
+              computed_getter
+                getter_specifier
+                statements
+                  control_transfer_statement
+                    result: simple_identifier "_x"
+              computed_setter
+                setter_specifier
+          name:
+            pattern
+              bound_identifier: simple_identifier "x"
+          modifiers
+            member_modifier
+          value_binding_pattern
+            mutability: var
+          type_annotation
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+    declaration_kind: class
+    name: type_identifier "A"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "B"
+
+---
+
+unsupported_node "class A: B {\n  override var x: Int {\n    get { return _x }\n    set {}\n  }\n}"
+
+===
+Empty getter body
+===
+
+class C {
+  var y: Int {
+    get {}
+    set {}
+  }
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        property_declaration
+          computed_value:
+            computed_property
+              computed_getter
+                getter_specifier
+              computed_setter
+                setter_specifier
+          name:
+            pattern
+              bound_identifier: simple_identifier "y"
+          value_binding_pattern
+            mutability: var
+          type_annotation
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+    declaration_kind: class
+    name: type_identifier "C"
+
+---
+
+unsupported_node "class C {\n  var y: Int {\n    get {}\n    set {}\n  }\n}"
+
+===
+Override stored property with empty didSet
+===
+
+class C {
+  @available(*, unavailable)
+  override var x: Int! {
+    didSet {}
+  }
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        property_declaration
+          name:
+            pattern
+              bound_identifier: simple_identifier "x"
+          modifiers
+            attribute
+              user_type
+                type_identifier "available"
+              referenceable_operator
+              simple_identifier "unavailable"
+            member_modifier
+          value_binding_pattern
+            mutability: var
+          type_annotation
+            type:
+              implicitly_unwrapped_type
+                type
+                  name:
+                    user_type
+                      type_identifier "Int"
+          willset_didset_block
+            didset_clause
+    declaration_kind: class
+    name: type_identifier "C"
+
+---
+
+unsupported_node "class C {\n  @available(*, unavailable)\n  override var x: Int! {\n    didSet {}\n  }\n}"
+
+===
+Typealias for labeled tuple type
+===
+
+typealias T = (a: A, b: B)
+
+---
+
+source_file
+  typealias_declaration
+    name: type_identifier "T"
+    value:
+      type
+        name:
+          tuple_type
+            element:
+              tuple_type_item
+                name: simple_identifier "a"
+                type:
+                  type
+                    name:
+                      user_type
+                        type_identifier "A"
+              tuple_type_item
+                name: simple_identifier "b"
+                type:
+                  type
+                    name:
+                      user_type
+                        type_identifier "B"
+
+---
+
+unsupported_node "typealias T = (a: A, b: B)"
+
+===
+Typealias for function type
+===
+
+typealias F = (Int, String) -> Bool
+
+---
+
+source_file
+  typealias_declaration
+    name: type_identifier "F"
+    value:
+      type
+        name:
+          function_type
+            params:
+              tuple_type
+                element:
+                  tuple_type_item
+                    type:
+                      type
+                        name:
+                          user_type
+                            type_identifier "Int"
+                  tuple_type_item
+                    type:
+                      type
+                        name:
+                          user_type
+                            type_identifier "String"
+            return_type:
+              type
+                name:
+                  user_type
+                    type_identifier "Bool"
+
+---
+
+unsupported_node "typealias F = (Int, String) -> Bool"
+
+===
+Typealias for array of qualified type
+===
+
+typealias T = [A.B]
+
+---
+
+source_file
+  typealias_declaration
+    name: type_identifier "T"
+    value:
+      type
+        name:
+          array_type
+            element:
+              type
+                name:
+                  user_type
+                    type_identifier "A"
+                    type_identifier "B"
+
+---
+
+unsupported_node "typealias T = [A.B]"
+
+===
+Typealias for optional dictionary
+===
+
+typealias T = [A: B]?
+
+---
+
+source_file
+  typealias_declaration
+    name: type_identifier "T"
+    value:
+      type
+        name:
+          optional_type
+            wrapped:
+              dictionary_type
+                key:
+                  type
+                    name:
+                      user_type
+                        type_identifier "A"
+                value:
+                  type
+                    name:
+                      user_type
+                        type_identifier "B"
+
+---
+
+unsupported_node "typealias T = [A: B]?"
+
+===
+Generic function with conformance constraint
+===
+
+func first<T: Equatable>(_ xs: [T]) -> T? {
+  return xs.first
+}
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          control_transfer_statement
+            result:
+              navigation_expression
+                suffix:
+                  navigation_suffix
+                    suffix: simple_identifier "first"
+                target: simple_identifier "xs"
+    name: simple_identifier "first"
+    return_type:
+      type
+        name:
+          optional_type
+            wrapped:
+              user_type
+                type_identifier "T"
+    type_parameters
+      type_parameter
+        type_identifier "T"
+        type
+          name:
+            user_type
+              type_identifier "Equatable"
+    parameter
+      external_name: simple_identifier "_"
+      name: simple_identifier "xs"
+      type:
+        type
+          name:
+            array_type
+              element:
+                type
+                  name:
+                    user_type
+                      type_identifier "T"
+
+---
+
+unsupported_node "func first<T: Equatable>(_ xs: [T]) -> T? {\n  return xs.first\n}"
+
+===
+Generic function with multiple constraints in where clause
+===
+
+func compare<T, U>(_ x: T, _ y: U) -> Bool where T: Equatable, T == U {
+  return x == y
+}
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          control_transfer_statement
+            result:
+              equality_expression
+                lhs: simple_identifier "x"
+                op: ==
+                rhs: simple_identifier "y"
+    name: simple_identifier "compare"
+    return_type:
+      type
+        name:
+          user_type
+            type_identifier "Bool"
+    type_parameters
+      type_parameter
+        type_identifier "T"
+      type_parameter
+        type_identifier "U"
+    parameter
+      external_name: simple_identifier "_"
+      name: simple_identifier "x"
+      type:
+        type
+          name:
+            user_type
+              type_identifier "T"
+    parameter
+      external_name: simple_identifier "_"
+      name: simple_identifier "y"
+      type:
+        type
+          name:
+            user_type
+              type_identifier "U"
+    type_constraints
+      where_keyword "where"
+      type_constraint
+        inheritance_constraint
+          constrained_type:
+            identifier
+              simple_identifier "T"
+          inherits_from:
+            type
+              name:
+                user_type
+                  type_identifier "Equatable"
+      type_constraint
+        equality_constraint
+          constrained_type:
+            identifier
+              simple_identifier "T"
+          must_equal:
+            type
+              name:
+                user_type
+                  type_identifier "U"
+
+---
+
+unsupported_node "func compare<T, U>(_ x: T, _ y: U) -> Bool where T: Equatable, T == U {\n  return x == y\n}"
+
+===
+Generic class with where clause
+===
+
+class Box<T> where T: Hashable {
+  let value: T
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        property_declaration
+          name:
+            pattern
+              bound_identifier: simple_identifier "value"
+          value_binding_pattern
+            mutability: let
+          type_annotation
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "T"
+    declaration_kind: class
+    name: type_identifier "Box"
+    type_parameters
+      type_parameter
+        type_identifier "T"
+    type_constraints
+      where_keyword "where"
+      type_constraint
+        inheritance_constraint
+          constrained_type:
+            identifier
+              simple_identifier "T"
+          inherits_from:
+            type
+              name:
+                user_type
+                  type_identifier "Hashable"
+
+---
+
+unsupported_node "class Box<T> where T: Hashable {\n  let value: T\n}"
+
+===
+Protocol with associated type and constraint
+===
+
+protocol Container where Element: Equatable {
+  associatedtype Element
+}
+
+---
+
+source_file
+  protocol_declaration
+    body:
+      protocol_body
+        associatedtype_declaration
+          name: type_identifier "Element"
+    declaration_kind: protocol
+    name: type_identifier "Container"
+    type_constraints
+      where_keyword "where"
+      type_constraint
+        inheritance_constraint
+          constrained_type:
+            identifier
+              simple_identifier "Element"
+          inherits_from:
+            type
+              name:
+                user_type
+                  type_identifier "Equatable"
+
+---
+
+unsupported_node "protocol Container where Element: Equatable {\n  associatedtype Element\n}"
+
+===
+Class with base class and protocols
+===
+
+class Dog: Animal, Pet, Trainable {}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+    declaration_kind: class
+    name: type_identifier "Dog"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "Animal"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "Pet"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "Trainable"
+
+---
+
+unsupported_node "class Dog: Animal, Pet, Trainable {}"
+
+===
+Struct conforming to protocol
+===
+
+struct Point: Equatable, Hashable {
+  let x: Int
+  let y: Int
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        property_declaration
+          name:
+            pattern
+              bound_identifier: simple_identifier "x"
+          value_binding_pattern
+            mutability: let
+          type_annotation
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+        property_declaration
+          name:
+            pattern
+              bound_identifier: simple_identifier "y"
+          value_binding_pattern
+            mutability: let
+          type_annotation
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+    declaration_kind: struct
+    name: type_identifier "Point"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "Equatable"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "Hashable"
+
+---
+
+unsupported_node "struct Point: Equatable, Hashable {\n  let x: Int\n  let y: Int\n}"
+
+===
+Enum with raw type
+===
+
+enum Color: String {
+  case red
+  case green
+  case blue
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      enum_class_body
+        enum_entry
+          name: simple_identifier "red"
+        enum_entry
+          name: simple_identifier "green"
+        enum_entry
+          name: simple_identifier "blue"
+    declaration_kind: enum
+    name: type_identifier "Color"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "String"
+
+---
+
+unsupported_node "enum Color: String {\n  case red\n  case green\n  case blue\n}"
+
+===
+Protocol with inherited protocols
+===
+
+protocol Drawable: Renderable, Identifiable {
+  func draw()
+}
+
+---
+
+source_file
+  protocol_declaration
+    body:
+      protocol_body
+        protocol_function_declaration
+          name: simple_identifier "draw"
+    declaration_kind: protocol
+    name: type_identifier "Drawable"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "Renderable"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "Identifiable"
+
+---
+
+unsupported_node "protocol Drawable: Renderable, Identifiable {\n  func draw()\n}"

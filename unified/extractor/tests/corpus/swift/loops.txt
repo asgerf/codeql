@@ -29,8 +29,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "for x in [1, 2, 3] {\n  print(x)\n}"
+unsupported_node "for x in [1, 2, 3] {\n  print(x)\n}"
 
 ===
 For-in over range
@@ -62,8 +61,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "for i in 0..<10 {\n  print(i)\n}"
+unsupported_node "for i in 0..<10 {\n  print(i)\n}"
 
 ===
 For-in with where clause
@@ -97,8 +95,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "for x in xs where x > 0 {\n  print(x)\n}"
+unsupported_node "for x in xs where x > 0 {\n  print(x)\n}"
 
 ===
 While loop
@@ -128,8 +125,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "while x > 0 {\n  x -= 1\n}"
+unsupported_node "while x > 0 {\n  x -= 1\n}"
 
 ===
 Repeat-while loop
@@ -159,8 +155,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "repeat {\n  x -= 1\n} while x > 0"
+unsupported_node "repeat {\n  x -= 1\n} while x > 0"
 
 ===
 Break and continue
@@ -208,5 +203,126 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "for x in xs {\n  if x < 0 { continue }\n  if x > 100 { break }\n  print(x)\n}"
+unsupported_node "for x in xs {\n  if x < 0 { continue }\n  if x > 100 { break }\n  print(x)\n}"
+
+===
+Labeled for loop with break/continue label
+===
+
+outer: for i in [1, 2, 3] {
+    for j in [4, 5, 6] {
+        break outer
+        continue outer
+    }
+}
+
+---
+
+source_file
+  statement_label "outer:"
+  for_statement
+    collection:
+      array_literal
+        element:
+          integer_literal "1"
+          integer_literal "2"
+          integer_literal "3"
+    item:
+      pattern
+        bound_identifier: simple_identifier "i"
+    statements
+      for_statement
+        collection:
+          array_literal
+            element:
+              integer_literal "4"
+              integer_literal "5"
+              integer_literal "6"
+        item:
+          pattern
+            bound_identifier: simple_identifier "j"
+        statements
+          control_transfer_statement
+            result: simple_identifier "outer"
+          control_transfer_statement
+            result: simple_identifier "outer"
+
+---
+
+unsupported_node "outer: for i in [1, 2, 3] {\n    for j in [4, 5, 6] {\n        break outer\n        continue outer\n    }\n}"
+
+===
+While let
+===
+
+while let line = readline() {
+    print(line)
+}
+
+---
+
+source_file
+  while_statement
+    condition:
+      if_condition
+        if_let_binding
+          bound_identifier: simple_identifier "line"
+          value_binding_pattern
+            mutability: let
+          call_expression
+            simple_identifier "readline"
+            call_suffix
+              value_arguments
+    statements
+      call_expression
+        simple_identifier "print"
+        call_suffix
+          value_arguments
+            value_argument
+              value: simple_identifier "line"
+
+---
+
+unsupported_node "while let line = readline() {\n    print(line)\n}"
+
+===
+For-in with where clause
+===
+
+for i in 0..<10 where i % 2 == 0 {
+    print(i)
+}
+
+---
+
+source_file
+  for_statement
+    collection:
+      range_expression
+        end: integer_literal "10"
+        op: ..<
+        start: integer_literal "0"
+    item:
+      pattern
+        bound_identifier: simple_identifier "i"
+    where_clause
+      where_keyword "where"
+      equality_expression
+        lhs:
+          multiplicative_expression
+            lhs: simple_identifier "i"
+            op: %
+            rhs: integer_literal "2"
+        op: ==
+        rhs: integer_literal "0"
+    statements
+      call_expression
+        simple_identifier "print"
+        call_suffix
+          value_arguments
+            value_argument
+              value: simple_identifier "i"
+
+---
+
+unsupported_node "for i in 0..<10 where i % 2 == 0 {\n    print(i)\n}"

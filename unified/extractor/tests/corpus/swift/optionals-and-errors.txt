@@ -25,14 +25,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          pattern:
-            var_pattern
-              identifier: identifier "x"
+unsupported_node "let x: Int? = nil"
 
 ===
 Optional chaining
@@ -66,18 +59,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value:
-            member_access_expr
-              target: unsupported_node "obj?.foo?"
-              member: identifier "bar"
-          pattern:
-            var_pattern
-              identifier: identifier "n"
+unsupported_node "let n = obj?.foo?.bar"
 
 ===
 Force unwrap
@@ -101,15 +83,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: unsupported_node "opt!"
-          pattern:
-            var_pattern
-              identifier: identifier "n"
+unsupported_node "let n = opt!"
 
 ===
 Nil-coalescing
@@ -133,15 +107,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: unsupported_node "opt ?? 0"
-          pattern:
-            var_pattern
-              identifier: identifier "n"
+unsupported_node "let n = opt ?? 0"
 
 ===
 Throwing function
@@ -171,8 +137,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "func read() throws -> String {\n  return \"\"\n}"
+unsupported_node "func read() throws -> String {\n  return \"\"\n}"
 
 ===
 Do-catch
@@ -208,8 +173,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "do {\n  try foo()\n} catch {\n  print(error)\n}"
+unsupported_node "do {\n  try foo()\n} catch {\n  print(error)\n}"
 
 ===
 Try? expression
@@ -237,15 +201,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: unsupported_node "try? foo()"
-          pattern:
-            var_pattern
-              identifier: identifier "result"
+unsupported_node "let result = try? foo()"
 
 ===
 Try! expression
@@ -273,12 +229,155 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: unsupported_node "try! foo()"
-          pattern:
-            var_pattern
-              identifier: identifier "result"
+unsupported_node "let result = try! foo()"
+
+===
+Double optional type
+===
+
+let x: Int?? = 42
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: integer_literal "42"
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            optional_type
+              wrapped:
+                user_type
+                  type_identifier "Int"
+
+---
+
+unsupported_node "let x: Int?? = 42"
+
+===
+Implicitly unwrapped optional type
+===
+
+let y: String! = "hello"
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "y"
+    value:
+      line_string_literal
+        text: line_str_text "hello"
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        implicitly_unwrapped_type
+          type
+            name:
+              user_type
+                type_identifier "String"
+
+---
+
+unsupported_node "let y: String! = \"hello\""
+
+===
+Catch with where clause
+===
+
+do {
+    try foo()
+} catch let e where e.code > 0 {
+    print(e)
+}
+
+---
+
+source_file
+  do_statement
+    statements
+      try_expression
+        expr:
+          call_expression
+            simple_identifier "foo"
+            call_suffix
+              value_arguments
+        try_operator
+    catch_block
+      error:
+        pattern
+          bound_identifier: simple_identifier "e"
+          value_binding_pattern
+            mutability: let
+      catch_keyword "catch"
+      where_clause
+        where_keyword "where"
+        comparison_expression
+          lhs:
+            navigation_expression
+              suffix:
+                navigation_suffix
+                  suffix: simple_identifier "code"
+              target: simple_identifier "e"
+          op: >
+          rhs: integer_literal "0"
+      statements
+        call_expression
+          simple_identifier "print"
+          call_suffix
+            value_arguments
+              value_argument
+                value: simple_identifier "e"
+
+---
+
+unsupported_node "do {\n    try foo()\n} catch let e where e.code > 0 {\n    print(e)\n}"
+
+===
+Catch with pattern matching a static member
+===
+
+func f() {
+    do {
+        try remove()
+    } catch CocoaError.fileNoSuchFile {
+    }
+}
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          do_statement
+            statements
+              try_expression
+                expr:
+                  call_expression
+                    simple_identifier "remove"
+                    call_suffix
+                      value_arguments
+                try_operator
+            catch_block
+              error:
+                pattern
+                  user_type
+                    type_identifier "CocoaError"
+                  simple_identifier "fileNoSuchFile"
+              catch_keyword "catch"
+    name: simple_identifier "f"
+
+---
+
+unsupported_node "func f() {\n    do {\n        try remove()\n    } catch CocoaError.fileNoSuchFile {\n    }\n}"

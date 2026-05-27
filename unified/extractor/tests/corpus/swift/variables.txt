@@ -17,15 +17,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: int_literal "1"
-          pattern:
-            var_pattern
-              identifier: identifier "x"
+unsupported_node "let x = 1"
 
 ===
 Var binding
@@ -46,15 +38,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: int_literal "1"
-          pattern:
-            var_pattern
-              identifier: identifier "x"
+unsupported_node "var x = 1"
 
 ===
 Let with type annotation
@@ -81,15 +65,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: int_literal "1"
-          pattern:
-            var_pattern
-              identifier: identifier "x"
+unsupported_node "let x: Int = 1"
 
 ===
 Var without initialiser
@@ -115,14 +91,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          pattern:
-            var_pattern
-              identifier: identifier "x"
+unsupported_node "var x: Int"
 
 ===
 Tuple destructuring binding
@@ -146,21 +115,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value:
-            name_expr
-              identifier: identifier "pair"
-          pattern:
-            tuple_pattern
-              element:
-                var_pattern
-                  identifier: identifier "a"
-                var_pattern
-                  identifier: identifier "b"
+unsupported_node "let (a, b) = pair"
 
 ===
 Multiple bindings on one line
@@ -185,20 +140,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value: int_literal "1"
-          pattern:
-            var_pattern
-              identifier: identifier "x"
-        variable_declarator
-          value: int_literal "2"
-          pattern:
-            var_pattern
-              identifier: identifier "y"
+unsupported_node "let x = 1, y = 2"
 
 ===
 Assignment
@@ -218,8 +160,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "x = 1"
+unsupported_node "x = 1"
 
 ===
 Compound assignment
@@ -239,5 +180,270 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "x += 1"
+unsupported_node "x += 1"
+
+===
+Discard underscore
+===
+
+_ = sideEffect()
+
+---
+
+source_file
+  assignment
+    operator: =
+    result:
+      call_expression
+        simple_identifier "sideEffect"
+        call_suffix
+          value_arguments
+    target:
+      directly_assignable_expression
+        simple_identifier "_"
+
+---
+
+unsupported_node "_ = sideEffect()"
+
+===
+Backtick identifier
+===
+
+let `class` = 1
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "`class`"
+    value: integer_literal "1"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let `class` = 1"
+
+===
+Underscore in identifier names
+===
+
+let _foo = 1
+let my_var = 2
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "_foo"
+    value: integer_literal "1"
+    value_binding_pattern
+      mutability: let
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "my_var"
+    value: integer_literal "2"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let _foo = 1\nlet my_var = 2"
+
+===
+Variable initialized with if-expression
+===
+
+let x = if cond { 1 } else { 2 }
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      if_statement
+        condition:
+          if_condition
+            simple_identifier "cond"
+        statements
+          integer_literal "1"
+        else "else"
+        statements
+          integer_literal "2"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = if cond { 1 } else { 2 }"
+
+===
+Variable initialized with switch-expression
+===
+
+let label = switch state {
+case .on: "on"
+default: "off"
+}
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "label"
+    value:
+      switch_statement
+        expr: simple_identifier "state"
+        switch_entry
+          switch_pattern
+            pattern
+              simple_identifier "on"
+          statements
+            line_string_literal
+              text: line_str_text "on"
+        switch_entry
+          default_keyword "default"
+          statements
+            line_string_literal
+              text: line_str_text "off"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let label = switch state {\ncase .on: \"on\"\ndefault: \"off\"\n}"
+
+===
+Assignment with if-expression value
+===
+
+func f() {
+    var x = 0
+    x = if cond { 1 } else { 2 }
+}
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          property_declaration
+            name:
+              pattern
+                bound_identifier: simple_identifier "x"
+            value: integer_literal "0"
+            value_binding_pattern
+              mutability: var
+          assignment
+            operator: =
+            result:
+              if_statement
+                condition:
+                  if_condition
+                    simple_identifier "cond"
+                statements
+                  integer_literal "1"
+                else "else"
+                statements
+                  integer_literal "2"
+            target:
+              directly_assignable_expression
+                simple_identifier "x"
+    name: simple_identifier "f"
+
+---
+
+unsupported_node "func f() {\n    var x = 0\n    x = if cond { 1 } else { 2 }\n}"
+
+===
+Top-level computed property
+===
+
+var doubled: Int { x * 2 }
+
+---
+
+source_file
+  property_declaration
+    computed_value:
+      computed_property
+        statements
+          multiplicative_expression
+            lhs: simple_identifier "x"
+            op: *
+            rhs: integer_literal "2"
+    name:
+      pattern
+        bound_identifier: simple_identifier "doubled"
+    value_binding_pattern
+      mutability: var
+    type_annotation
+      type:
+        type
+          name:
+            user_type
+              type_identifier "Int"
+
+---
+
+unsupported_node "var doubled: Int { x * 2 }"
+
+===
+Stored property with willSet and didSet observers
+===
+
+var counter: Int = 0 {
+  willSet { print(newValue) }
+  didSet { print(oldValue) }
+}
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "counter"
+    value: integer_literal "0"
+    value_binding_pattern
+      mutability: var
+    type_annotation
+      type:
+        type
+          name:
+            user_type
+              type_identifier "Int"
+    willset_didset_block
+      willset_clause
+        statements
+          call_expression
+            simple_identifier "print"
+            call_suffix
+              value_arguments
+                value_argument
+                  value: simple_identifier "newValue"
+      didset_clause
+        statements
+          call_expression
+            simple_identifier "print"
+            call_suffix
+              value_arguments
+                value_argument
+                  value: simple_identifier "oldValue"
+
+---
+
+unsupported_node "var counter: Int = 0 {\n  willSet { print(newValue) }\n  didSet { print(oldValue) }\n}"

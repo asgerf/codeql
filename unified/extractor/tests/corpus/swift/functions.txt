@@ -25,8 +25,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "func greet() {\n  print(\"hello\")\n}"
+unsupported_node "func greet() {\n  print(\"hello\")\n}"
 
 ===
 Function with parameters and return type
@@ -74,8 +73,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "func add(_ a: Int, _ b: Int) -> Int {\n  return a + b\n}"
+unsupported_node "func add(_ a: Int, _ b: Int) -> Int {\n  return a + b\n}"
 
 ===
 Function with named parameters
@@ -110,8 +108,15 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "func greet(person name: String) {\n  print(name)\n}"
+unsupported_node "func greet(person name: String) {\n  print(name)\n}"
+
+===
+Function with mixed argument labels
+===
+
+func move(_ x: Int, to y: Int, by step: Int) {
+  print(x, y, step)
+}
 
 ===
 Function with default parameter value
@@ -124,6 +129,53 @@ func greet(name: String = "world") {
 ---
 
 source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          call_expression
+            simple_identifier "print"
+            call_suffix
+              value_arguments
+                value_argument
+                  value: simple_identifier "x"
+                value_argument
+                  value: simple_identifier "y"
+                value_argument
+                  value: simple_identifier "step"
+    name: simple_identifier "move"
+    parameter
+      external_name: simple_identifier "_"
+      name: simple_identifier "x"
+      type:
+        type
+          name:
+            user_type
+              type_identifier "Int"
+    parameter
+      external_name: simple_identifier "to"
+      name: simple_identifier "y"
+      type:
+        type
+          name:
+            user_type
+              type_identifier "Int"
+    parameter
+      external_name: simple_identifier "by"
+      name: simple_identifier "step"
+      type:
+        type
+          name:
+            user_type
+              type_identifier "Int"
+  referenceable_operator
+  simple_identifier "Function"
+  ERROR
+    ERROR "with"
+    default_keyword "default"
+    ERROR "parameter val"
+    ERROR "e"
+  referenceable_operator
   function_declaration
     body:
       function_body
@@ -148,8 +200,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "func greet(name: String = \"world\") {\n  print(name)\n}"
+unsupported_node "func move(_ x: Int, to y: Int, by step: Int) {\n  print(x, y, step)\n}\n\n===\nFunction with default parameter value\n===\n\nfunc greet(name: String = \"world\") {\n  print(name)\n}"
 
 ===
 Variadic function
@@ -198,8 +249,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "func sum(_ values: Int...) -> Int {\n  return values.reduce(0, +)\n}"
+unsupported_node "func sum(_ values: Int...) -> Int {\n  return values.reduce(0, +)\n}"
 
 ===
 Function call
@@ -221,15 +271,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    call_expr
-      argument:
-        int_literal "1"
-        int_literal "2"
-      function:
-        name_expr
-          identifier: identifier "foo"
+unsupported_node "foo(1, 2)"
 
 ===
 Function call with labelled arguments
@@ -254,13 +296,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    call_expr
-      argument: string_literal "\"Bob\""
-      function:
-        name_expr
-          identifier: identifier "greet"
+unsupported_node "greet(person: \"Bob\")"
 
 ===
 Method call
@@ -284,16 +320,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    call_expr
-      argument: int_literal "1"
-      function:
-        member_access_expr
-          target:
-            name_expr
-              identifier: identifier "list"
-          member: identifier "append"
+unsupported_node "list.append(1)"
 
 ===
 Generic function
@@ -332,5 +359,144 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "func identity<T>(_ x: T) -> T {\n  return x\n}"
+unsupported_node "func identity<T>(_ x: T) -> T {\n  return x\n}"
+
+===
+Function body that is a single bare literal
+===
+
+func always() -> Bool { false }
+func pi() -> Double { 3.14 }
+func none() -> Int? { nil }
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          boolean_literal
+    name: simple_identifier "always"
+    return_type:
+      type
+        name:
+          user_type
+            type_identifier "Bool"
+  function_declaration
+    body:
+      function_body
+        statements
+          real_literal "3.14"
+    name: simple_identifier "pi"
+    return_type:
+      type
+        name:
+          user_type
+            type_identifier "Double"
+  function_declaration
+    body:
+      function_body
+        statements
+    name: simple_identifier "none"
+    return_type:
+      type
+        name:
+          optional_type
+            wrapped:
+              user_type
+                type_identifier "Int"
+
+---
+
+unsupported_node "func always() -> Bool { false }\nfunc pi() -> Double { 3.14 }\nfunc none() -> Int? { nil }"
+
+===
+Function declaration modifiers
+===
+
+public func a() {}
+private static func b() {}
+@available(*, deprecated)
+internal func c() {}
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+    name: simple_identifier "a"
+    modifiers
+      visibility_modifier
+  function_declaration
+    body:
+      function_body
+    name: simple_identifier "b"
+    modifiers
+      visibility_modifier
+      property_modifier
+  function_declaration
+    body:
+      function_body
+    name: simple_identifier "c"
+    modifiers
+      attribute
+        user_type
+          type_identifier "available"
+        referenceable_operator
+        simple_identifier "deprecated"
+      visibility_modifier
+
+---
+
+unsupported_node "public func a() {}\nprivate static func b() {}\n@available(*, deprecated)\ninternal func c() {}"
+
+===
+Function with operator name
+===
+
+struct S {
+    static func < (a: S, b: S) -> Bool { false }
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        function_declaration
+          body:
+            function_body
+              statements
+                boolean_literal
+          name:
+            referenceable_operator
+          return_type:
+            type
+              name:
+                user_type
+                  type_identifier "Bool"
+          modifiers
+            property_modifier
+          parameter
+            name: simple_identifier "a"
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "S"
+          parameter
+            name: simple_identifier "b"
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "S"
+    declaration_kind: struct
+    name: type_identifier "S"
+
+---
+
+unsupported_node "struct S {\n    static func < (a: S, b: S) -> Bool { false }\n}"

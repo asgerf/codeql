@@ -14,16 +14,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "+"
-      left:
-        name_expr
-          identifier: identifier "a"
-      right:
-        name_expr
-          identifier: identifier "b"
+unsupported_node "a + b"
 
 ===
 Subtraction
@@ -41,16 +32,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "-"
-      left:
-        name_expr
-          identifier: identifier "a"
-      right:
-        name_expr
-          identifier: identifier "b"
+unsupported_node "a - b"
 
 ===
 Multiplication
@@ -68,16 +50,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "*"
-      left:
-        name_expr
-          identifier: identifier "a"
-      right:
-        name_expr
-          identifier: identifier "b"
+unsupported_node "a * b"
 
 ===
 Division
@@ -95,16 +68,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "/"
-      left:
-        name_expr
-          identifier: identifier "a"
-      right:
-        name_expr
-          identifier: identifier "b"
+unsupported_node "a / b"
 
 ===
 Operator precedence: addition and multiplication
@@ -126,22 +90,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "+"
-      left:
-        name_expr
-          identifier: identifier "a"
-      right:
-        binary_expr
-          operator: operator "*"
-          left:
-            name_expr
-              identifier: identifier "b"
-          right:
-            name_expr
-              identifier: identifier "c"
+unsupported_node "a + b * c"
 
 ===
 Parenthesised expression
@@ -165,14 +114,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "*"
-      left: unsupported_node "(a + b)"
-      right:
-        name_expr
-          identifier: identifier "c"
+unsupported_node "(a + b) * c"
 
 ===
 Comparison
@@ -190,16 +132,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "<"
-      left:
-        name_expr
-          identifier: identifier "a"
-      right:
-        name_expr
-          identifier: identifier "b"
+unsupported_node "a < b"
 
 ===
 Equality
@@ -217,16 +150,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "=="
-      left:
-        name_expr
-          identifier: identifier "a"
-      right:
-        name_expr
-          identifier: identifier "b"
+unsupported_node "a == b"
 
 ===
 Logical and
@@ -244,16 +168,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "&&"
-      left:
-        name_expr
-          identifier: identifier "a"
-      right:
-        name_expr
-          identifier: identifier "b"
+unsupported_node "a && b"
 
 ===
 Logical or
@@ -271,16 +186,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "||"
-      left:
-        name_expr
-          identifier: identifier "a"
-      right:
-        name_expr
-          identifier: identifier "b"
+unsupported_node "a || b"
 
 ===
 Logical not
@@ -297,13 +203,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    unary_expr
-      operator: operator "!"
-      operand:
-        name_expr
-          identifier: identifier "a"
+unsupported_node "!a"
 
 ===
 Range operator
@@ -321,9 +221,207 @@ source_file
 
 ---
 
-top_level
-  body:
-    binary_expr
-      operator: operator "..."
-      left: int_literal "1"
-      right: int_literal "10"
+unsupported_node "1...10"
+
+===
+Identity operators (=== and !==)
+===
+
+let same = a === b
+let diff = a !== b
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "same"
+    value:
+      equality_expression
+        lhs: simple_identifier "a"
+        op: ===
+        rhs: simple_identifier "b"
+    value_binding_pattern
+      mutability: let
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "diff"
+    value:
+      infix_expression
+        lhs: simple_identifier "a"
+        op: custom_operator "!=="
+        rhs: simple_identifier "b"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let same = a === b\nlet diff = a !== b"
+
+===
+Chained method calls
+===
+
+let x = a.foo().bar()
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      call_expression
+        navigation_expression
+          suffix:
+            navigation_suffix
+              suffix: simple_identifier "bar"
+          target:
+            call_expression
+              navigation_expression
+                suffix:
+                  navigation_suffix
+                    suffix: simple_identifier "foo"
+                target: simple_identifier "a"
+              call_suffix
+                value_arguments
+        call_suffix
+          value_arguments
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = a.foo().bar()"
+
+===
+Chained member access
+===
+
+let x = a.b.c
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      navigation_expression
+        suffix:
+          navigation_suffix
+            suffix: simple_identifier "c"
+        target:
+          navigation_expression
+            suffix:
+              navigation_suffix
+                suffix: simple_identifier "b"
+            target: simple_identifier "a"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = a.b.c"
+
+===
+Chained casts
+===
+
+let x = v as? Base as? Sub
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      as_expression
+        expr:
+          as_expression
+            expr: simple_identifier "v"
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Base"
+            as_operator
+        type:
+          type
+            name:
+              user_type
+                type_identifier "Sub"
+        as_operator
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = v as? Base as? Sub"
+
+===
+Inout expression
+===
+
+swap(&x, &y)
+
+---
+
+source_file
+  call_expression
+    simple_identifier "swap"
+    call_suffix
+      value_arguments
+        value_argument
+          value:
+            prefix_expression
+              operation: &
+              target: simple_identifier "x"
+        value_argument
+          value:
+            prefix_expression
+              operation: &
+              target: simple_identifier "y"
+
+---
+
+unsupported_node "swap(&x, &y)"
+
+===
+Function reference
+===
+
+let f = String.init(describing:)
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "f"
+    value:
+      call_expression
+        navigation_expression
+          suffix:
+            navigation_suffix
+              suffix: simple_identifier "init"
+          target: simple_identifier "String"
+        call_suffix
+          value_arguments
+            value_argument
+              reference_specifier:
+                value_argument_label
+                  simple_identifier "describing"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let f = String.init(describing:)"

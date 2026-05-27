@@ -11,8 +11,7 @@ source_file
 
 ---
 
-top_level
-  body: int_literal "42"
+unsupported_node "42"
 
 ===
 Negative integer literal
@@ -29,11 +28,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    unary_expr
-      operator: operator "-"
-      operand: int_literal "7"
+unsupported_node "-7"
 
 ===
 Floating-point literal
@@ -48,8 +43,7 @@ source_file
 
 ---
 
-top_level
-  body: unsupported_node "3.14"
+unsupported_node "3.14"
 
 ===
 Boolean literals
@@ -66,10 +60,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    unsupported_node "true"
-    unsupported_node "false"
+unsupported_node "true\nfalse"
 
 ===
 Nil literal
@@ -83,8 +74,7 @@ source_file
 
 ---
 
-top_level
-  body:
+unsupported_node "nil"
 
 ===
 String literal
@@ -100,8 +90,7 @@ source_file
 
 ---
 
-top_level
-  body: string_literal "\"hello\""
+unsupported_node "\"hello\""
 
 ===
 String with interpolation
@@ -120,5 +109,167 @@ source_file
 
 ---
 
-top_level
-  body: string_literal "\"hello \\(name)\""
+unsupported_node "\"hello \\(name)\""
+
+===
+Hex / binary / octal integer literals
+===
+
+let hex = 0xFF
+let bin = 0b1010
+let oct = 0o77
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "hex"
+    value: hex_literal "0xFF"
+    value_binding_pattern
+      mutability: let
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "bin"
+    value: bin_literal "0b1010"
+    value_binding_pattern
+      mutability: let
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "oct"
+    value: oct_literal "0o77"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let hex = 0xFF\nlet bin = 0b1010\nlet oct = 0o77"
+
+===
+Float with exponent
+===
+
+let x = 1.5e-3
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: real_literal "1.5e-3"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = 1.5e-3"
+
+===
+Hex floating-point literal
+===
+
+let x = 0xFp2
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: real_literal "0xFp2"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = 0xFp2"
+
+===
+Multi-line string literal
+===
+
+let s = """
+  hi
+  there
+  """
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "s"
+    value:
+      multi_line_string_literal
+        text: multi_line_str_text "\n  hi\n  there\n  "
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let s = \"\"\"\n  hi\n  there\n  \"\"\""
+
+===
+Raw string literal
+===
+
+let s = #"hello \(name)"#
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "s"
+    value:
+      raw_string_literal
+        text: raw_str_end_part "#\"hello \\(name)\"#"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let s = #\"hello \\(name)\"#"
+
+===
+Negative float literal
+===
+
+let x = -3.14
+let y = -1.5e-3
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      prefix_expression
+        operation: -
+        target: real_literal "3.14"
+    value_binding_pattern
+      mutability: let
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "y"
+    value:
+      prefix_expression
+        operation: -
+        target: real_literal "1.5e-3"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = -3.14\nlet y = -1.5e-3"

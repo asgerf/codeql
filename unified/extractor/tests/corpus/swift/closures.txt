@@ -38,23 +38,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value:
-            lambda_expr
-              body:
-                binary_expr
-                  operator: operator "*"
-                  left:
-                    name_expr
-                      identifier: identifier "x"
-                  right: int_literal "2"
-          pattern:
-            var_pattern
-              identifier: identifier "f"
+unsupported_node "let f = { (x: Int) -> Int in x * 2 }"
 
 ===
 Closure with shorthand parameters
@@ -81,25 +65,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value:
-            lambda_expr
-              body:
-                binary_expr
-                  operator: operator "+"
-                  left:
-                    name_expr
-                      identifier: identifier "$0"
-                  right:
-                    name_expr
-                      identifier: identifier "$1"
-          pattern:
-            var_pattern
-              identifier: identifier "f"
+unsupported_node "let f = { $0 + $1 }"
 
 ===
 Trailing closure
@@ -126,24 +92,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    call_expr
-      argument:
-        lambda_expr
-          body:
-            binary_expr
-              operator: operator "*"
-              left:
-                name_expr
-                  identifier: identifier "$0"
-              right: int_literal "2"
-      function:
-        member_access_expr
-          target:
-            name_expr
-              identifier: identifier "xs"
-          member: identifier "map"
+unsupported_node "xs.map { $0 * 2 }"
 
 ===
 Closure with capture list
@@ -181,23 +130,7 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value:
-            lambda_expr
-              body:
-                call_expr
-                  argument:
-                  function:
-                    member_access_expr
-                      target: unsupported_node "self?"
-                      member: identifier "doThing"
-          pattern:
-            var_pattern
-              identifier: identifier "f"
+unsupported_node "let f = { [weak self] in self?.doThing() }"
 
 ===
 Multi-statement closure
@@ -255,27 +188,4 @@ source_file
 
 ---
 
-top_level
-  body:
-    variable_declaration_stmt
-      variable_declarator:
-        variable_declarator
-          value:
-            lambda_expr
-              body:
-                variable_declaration_stmt
-                  variable_declarator:
-                    variable_declarator
-                      value:
-                        binary_expr
-                          operator: operator "+"
-                          left:
-                            name_expr
-                              identifier: identifier "x"
-                          right: int_literal "1"
-                      pattern:
-                        var_pattern
-                          identifier: identifier "y"
-          pattern:
-            var_pattern
-              identifier: identifier "f"
+unsupported_node "let f = { (x: Int) -> Int in\n  let y = x + 1\n  return y * 2\n}"

@@ -1,0 +1,1643 @@
+===
+Hex literal
+===
+
+let x = 0xFF
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: hex_literal "0xFF"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = 0xFF"
+
+===
+Octal literal
+===
+
+let x = 0o17
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: oct_literal "0o17"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = 0o17"
+
+===
+Binary literal
+===
+
+let x = 0b1010
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: bin_literal "0b1010"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = 0b1010"
+
+===
+Real literal
+===
+
+let x = 3.14
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: real_literal "3.14"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = 3.14"
+
+===
+Boolean true
+===
+
+let x = true
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      boolean_literal
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = true"
+
+===
+Boolean false
+===
+
+let x = false
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      boolean_literal
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = false"
+
+===
+Nil literal
+===
+
+let x: Int? = nil
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: nil
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            optional_type
+              wrapped:
+                user_type
+                  type_identifier "Int"
+
+---
+
+unsupported_node "let x: Int? = nil"
+
+===
+Multi-line string literal
+===
+
+let x = """
+hello
+"""
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      multi_line_string_literal
+        text: multi_line_str_text "\nhello\n"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = \"\"\"\nhello\n\"\"\""
+
+===
+Raw string literal
+===
+
+let x = #"hello \(name)"#
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      raw_string_literal
+        text: raw_str_end_part "#\"hello \\(name)\"#"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = #\"hello \\(name)\"#"
+
+===
+Regex literal
+===
+
+let r = /a+b*/
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "r"
+    value: regex_literal "/a+b*/"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let r = /a+b*/"
+
+===
+Self expression
+===
+
+self.x
+
+---
+
+source_file
+  navigation_expression
+    suffix:
+      navigation_suffix
+        suffix: simple_identifier "x"
+    target:
+      self_expression
+
+---
+
+unsupported_node "self.x"
+
+===
+Super member access
+===
+
+super.x
+
+===
+Super method call
+===
+
+super.greet()
+
+===
+Super method call with arguments
+===
+
+super.add(1, 2)
+
+===
+Super initializer call
+===
+
+super.init(name: "x")
+
+===
+Super chained member access
+===
+
+super.foo.bar
+
+===
+Wildcard in let
+===
+
+let _ = 1
+
+---
+
+source_file
+  navigation_expression
+    suffix:
+      navigation_suffix
+        suffix: simple_identifier "x"
+    target:
+      super_expression
+  referenceable_operator
+  simple_identifier "Super"
+  ERROR
+    ERROR "method call"
+  referenceable_operator
+  call_expression
+    navigation_expression
+      suffix:
+        navigation_suffix
+          suffix: simple_identifier "greet"
+      target:
+        super_expression
+    call_suffix
+      value_arguments
+  referenceable_operator
+  simple_identifier "Super"
+  ERROR
+    ERROR "method call with arguments"
+  referenceable_operator
+  call_expression
+    navigation_expression
+      suffix:
+        navigation_suffix
+          suffix: simple_identifier "add"
+      target:
+        super_expression
+    call_suffix
+      value_arguments
+        value_argument
+          value: integer_literal "1"
+        value_argument
+          value: integer_literal "2"
+  referenceable_operator
+  ERROR
+    simple_identifier "Super"
+  simple_identifier "initializer"
+  ERROR
+    ERROR "call"
+  referenceable_operator
+  call_expression
+    navigation_expression
+      suffix:
+        navigation_suffix
+          suffix: simple_identifier "init"
+      target:
+        super_expression
+    call_suffix
+      value_arguments
+        value_argument
+          name:
+            value_argument_label
+              simple_identifier "name"
+          value:
+            line_string_literal
+              text: line_str_text "x"
+  referenceable_operator
+  simple_identifier "Super"
+  ERROR
+    ERROR "cha"
+    ERROR "ed member access"
+  referenceable_operator
+  navigation_expression
+    suffix:
+      navigation_suffix
+        suffix: simple_identifier "bar"
+    target:
+      navigation_expression
+        suffix:
+          navigation_suffix
+            suffix: simple_identifier "foo"
+        target:
+          super_expression
+  referenceable_operator
+  simple_identifier "Wildcard"
+  ERROR
+  referenceable_operator
+  property_declaration
+    name:
+      pattern
+        wildcard_pattern "_"
+    value: integer_literal "1"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "super.x\n\n===\nSuper method call\n===\n\nsuper.greet()\n\n===\nSuper method call with arguments\n===\n\nsuper.add(1, 2)\n\n===\nSuper initializer call\n===\n\nsuper.init(name: \"x\")\n\n===\nSuper chained member access\n===\n\nsuper.foo.bar\n\n===\nWildcard in let\n===\n\nlet _ = 1"
+
+===
+As expression
+===
+
+let x = y as Int
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      as_expression
+        expr: simple_identifier "y"
+        type:
+          type
+            name:
+              user_type
+                type_identifier "Int"
+        as_operator
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = y as Int"
+
+===
+As? expression
+===
+
+let x = y as? Int
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      as_expression
+        expr: simple_identifier "y"
+        type:
+          type
+            name:
+              user_type
+                type_identifier "Int"
+        as_operator
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = y as? Int"
+
+===
+Is check expression
+===
+
+let b = y is Int
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "b"
+    value:
+      check_expression
+        op: is
+        target: simple_identifier "y"
+        type:
+          type
+            name:
+              user_type
+                type_identifier "Int"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let b = y is Int"
+
+===
+Await expression
+===
+
+let x = await foo()
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      await_expression
+        expr:
+          call_expression
+            simple_identifier "foo"
+            call_suffix
+              value_arguments
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = await foo()"
+
+===
+Try expression bare
+===
+
+try foo()
+
+---
+
+source_file
+  try_expression
+    expr:
+      call_expression
+        simple_identifier "foo"
+        call_suffix
+          value_arguments
+    try_operator
+
+---
+
+unsupported_node "try foo()"
+
+===
+Try? expression bare
+===
+
+try? foo()
+
+---
+
+source_file
+  try_expression
+    expr:
+      call_expression
+        simple_identifier "foo"
+        call_suffix
+          value_arguments
+    try_operator
+
+---
+
+unsupported_node "try? foo()"
+
+===
+Bitwise and
+===
+
+let x = a & b
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      bitwise_operation
+        lhs: simple_identifier "a"
+        op: &
+        rhs: simple_identifier "b"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = a & b"
+
+===
+Bitwise or
+===
+
+let x = a | b
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      bitwise_operation
+        lhs: simple_identifier "a"
+        op: |
+        rhs: simple_identifier "b"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = a | b"
+
+===
+Bitwise xor
+===
+
+let x = a ^ b
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      bitwise_operation
+        lhs: simple_identifier "a"
+        op: ^
+        rhs: simple_identifier "b"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = a ^ b"
+
+===
+Left shift
+===
+
+let x = a << 2
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      bitwise_operation
+        lhs: simple_identifier "a"
+        op: <<
+        rhs: integer_literal "2"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = a << 2"
+
+===
+Postfix force unwrap
+===
+
+let x = y!
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      postfix_expression
+        operation: bang "!"
+        target: simple_identifier "y"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = y!"
+
+===
+Ternary expression
+===
+
+let x = c ? a : b
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value:
+      ternary_expression
+        condition: simple_identifier "c"
+        if_false: simple_identifier "b"
+        if_true: simple_identifier "a"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let x = c ? a : b"
+
+===
+Switch statement
+===
+
+switch x {
+case 1: y
+default: z
+}
+
+---
+
+source_file
+  switch_statement
+    expr: simple_identifier "x"
+    switch_entry
+      switch_pattern
+        pattern
+          integer_literal "1"
+      statements
+        simple_identifier "y"
+    switch_entry
+      default_keyword "default"
+      statements
+        simple_identifier "z"
+
+---
+
+unsupported_node "switch x {\ncase 1: y\ndefault: z\n}"
+
+===
+Do-catch statement
+===
+
+do {
+  try foo()
+} catch {
+  bar()
+}
+
+---
+
+source_file
+  do_statement
+    statements
+      try_expression
+        expr:
+          call_expression
+            simple_identifier "foo"
+            call_suffix
+              value_arguments
+        try_operator
+    catch_block
+      catch_keyword "catch"
+      statements
+        call_expression
+          simple_identifier "bar"
+          call_suffix
+            value_arguments
+
+---
+
+unsupported_node "do {\n  try foo()\n} catch {\n  bar()\n}"
+
+===
+Throw statement
+===
+
+throw MyError.bad
+
+---
+
+source_file
+  throw_keyword "throw"
+  navigation_expression
+    suffix:
+      navigation_suffix
+        suffix: simple_identifier "bad"
+    target: simple_identifier "MyError"
+
+---
+
+unsupported_node "throw MyError.bad"
+
+===
+Return statement
+===
+
+func f() -> Int { return 1 }
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          control_transfer_statement
+            result: integer_literal "1"
+    name: simple_identifier "f"
+    return_type:
+      type
+        name:
+          user_type
+            type_identifier "Int"
+
+---
+
+unsupported_node "func f() -> Int { return 1 }"
+
+===
+Break statement
+===
+
+while true { break }
+
+---
+
+source_file
+  while_statement
+    condition:
+      if_condition
+        boolean_literal
+    statements
+      control_transfer_statement
+
+---
+
+unsupported_node "while true { break }"
+
+===
+Continue statement
+===
+
+while true { continue }
+
+---
+
+source_file
+  while_statement
+    condition:
+      if_condition
+        boolean_literal
+    statements
+      control_transfer_statement
+
+---
+
+unsupported_node "while true { continue }"
+
+===
+Import declaration
+===
+
+import Foundation
+
+---
+
+source_file
+  import_declaration
+    identifier
+      simple_identifier "Foundation"
+
+---
+
+unsupported_node "import Foundation"
+
+===
+Typealias declaration
+===
+
+typealias Number = Int
+
+---
+
+source_file
+  typealias_declaration
+    name: type_identifier "Number"
+    value:
+      type
+        name:
+          user_type
+            type_identifier "Int"
+
+---
+
+unsupported_node "typealias Number = Int"
+
+===
+Selector expression
+===
+
+let s = #selector(foo)
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "s"
+    value:
+      selector_expression
+        simple_identifier "foo"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let s = #selector(foo)"
+
+===
+KeyPath expression
+===
+
+let kp = \Person.name
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "kp"
+    value:
+      navigation_expression
+        suffix:
+          navigation_suffix
+            suffix: simple_identifier "name"
+        target:
+          key_path_expression
+            type_identifier "Person"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let kp = \\Person.name"
+
+===
+Macro invocation
+===
+
+#warning("oops")
+
+---
+
+source_file
+  diagnostic
+
+---
+
+unsupported_node "#warning(\"oops\")"
+
+===
+Range half-open
+===
+
+let r = 0..<10
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "r"
+    value:
+      range_expression
+        end: integer_literal "10"
+        op: ..<
+        start: integer_literal "0"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let r = 0..<10"
+
+===
+Range closed
+===
+
+let r = 0...10
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "r"
+    value:
+      range_expression
+        end: integer_literal "10"
+        op: ...
+        start: integer_literal "0"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let r = 0...10"
+
+===
+Open end range
+===
+
+let r = 0...
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "r"
+    value:
+      open_end_range_expression
+        start: integer_literal "0"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let r = 0..."
+
+===
+Open start range
+===
+
+let r = ...10
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "r"
+    value:
+      open_start_range_expression
+        end: integer_literal "10"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let r = ...10"
+
+===
+Tuple expression
+===
+
+let t = (1, 2)
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "t"
+    value:
+      tuple_expression
+        value:
+          integer_literal "1"
+          integer_literal "2"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let t = (1, 2)"
+
+===
+Array type
+===
+
+let xs: [Int] = []
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "xs"
+    value:
+      array_literal
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            array_type
+              element:
+                type
+                  name:
+                    user_type
+                      type_identifier "Int"
+
+---
+
+unsupported_node "let xs: [Int] = []"
+
+===
+Dictionary type
+===
+
+let m: [String: Int] = [:]
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "m"
+    value:
+      dictionary_literal
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            dictionary_type
+              key:
+                type
+                  name:
+                    user_type
+                      type_identifier "String"
+              value:
+                type
+                  name:
+                    user_type
+                      type_identifier "Int"
+
+---
+
+unsupported_node "let m: [String: Int] = [:]"
+
+===
+Optional type
+===
+
+let x: Int? = nil
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: nil
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            optional_type
+              wrapped:
+                user_type
+                  type_identifier "Int"
+
+---
+
+unsupported_node "let x: Int? = nil"
+
+===
+Implicitly unwrapped type
+===
+
+var x: Int! = 1
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: integer_literal "1"
+    value_binding_pattern
+      mutability: var
+    type_annotation
+      type:
+        implicitly_unwrapped_type
+          type
+            name:
+              user_type
+                type_identifier "Int"
+
+---
+
+unsupported_node "var x: Int! = 1"
+
+===
+Tuple type
+===
+
+let t: (Int, String) = (1, "a")
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "t"
+    value:
+      tuple_expression
+        value:
+          integer_literal "1"
+          line_string_literal
+            text: line_str_text "a"
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            tuple_type
+              element:
+                tuple_type_item
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "Int"
+                tuple_type_item
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "String"
+
+---
+
+unsupported_node "let t: (Int, String) = (1, \"a\")"
+
+===
+Function type
+===
+
+let f: (Int) -> Int = { x in x }
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "f"
+    value:
+      lambda_literal
+        type:
+          lambda_function_type
+            lambda_function_type_parameters
+              lambda_parameter
+                name: simple_identifier "x"
+        statements
+          simple_identifier "x"
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            function_type
+              params:
+                tuple_type
+                  element:
+                    tuple_type_item
+                      type:
+                        type
+                          name:
+                            user_type
+                              type_identifier "Int"
+              return_type:
+                type
+                  name:
+                    user_type
+                      type_identifier "Int"
+
+---
+
+unsupported_node "let f: (Int) -> Int = { x in x }"
+
+===
+Generic user type
+===
+
+let xs: Array<Int> = []
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "xs"
+    value:
+      array_literal
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            user_type
+              type_identifier "Array"
+              type_arguments
+                type
+                  name:
+                    user_type
+                      type_identifier "Int"
+
+---
+
+unsupported_node "let xs: Array<Int> = []"
+
+===
+Some opaque type
+===
+
+func f() -> some Equatable { return 1 }
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          control_transfer_statement
+            result: integer_literal "1"
+    name: simple_identifier "f"
+    return_type:
+      type
+        name:
+          opaque_type
+            user_type
+              type_identifier "Equatable"
+
+---
+
+unsupported_node "func f() -> some Equatable { return 1 }"
+
+===
+Any existential type
+===
+
+let x: any Equatable = 1
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        bound_identifier: simple_identifier "x"
+    value: integer_literal "1"
+    value_binding_pattern
+      mutability: let
+    type_annotation
+      type:
+        type
+          name:
+            existential_type
+              user_type
+                type_identifier "Equatable"
+
+---
+
+unsupported_node "let x: any Equatable = 1"
+
+===
+Attribute on declaration
+===
+
+@available(*, deprecated) func f() {}
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+    name: simple_identifier "f"
+    modifiers
+      attribute
+        user_type
+          type_identifier "available"
+        referenceable_operator
+        simple_identifier "deprecated"
+
+---
+
+unsupported_node "@available(*, deprecated) func f() {}"
+
+===
+Visibility modifier
+===
+
+public class Foo {}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+    declaration_kind: class
+    name: type_identifier "Foo"
+    modifiers
+      visibility_modifier
+
+---
+
+unsupported_node "public class Foo {}"
+
+===
+Static modifier
+===
+
+class Foo { static let x = 1 }
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        property_declaration
+          name:
+            pattern
+              bound_identifier: simple_identifier "x"
+          value: integer_literal "1"
+          modifiers
+            property_modifier
+          value_binding_pattern
+            mutability: let
+    declaration_kind: class
+    name: type_identifier "Foo"
+
+---
+
+unsupported_node "class Foo { static let x = 1 }"
+
+===
+Deinit declaration
+===
+
+class Foo { deinit { } }
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        deinit_declaration
+          body:
+            function_body
+    declaration_kind: class
+    name: type_identifier "Foo"
+
+---
+
+unsupported_node "class Foo { deinit { } }"
+
+===
+Subscript declaration
+===
+
+class Foo {
+  subscript(i: Int) -> Int { return i }
+}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+        subscript_declaration
+          return_type:
+            type
+              name:
+                user_type
+                  type_identifier "Int"
+          parameter
+            name: simple_identifier "i"
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+          computed_property
+            statements
+              control_transfer_statement
+                result: simple_identifier "i"
+    declaration_kind: class
+    name: type_identifier "Foo"
+
+---
+
+unsupported_node "class Foo {\n  subscript(i: Int) -> Int { return i }\n}"
+
+===
+Associatedtype declaration
+===
+
+protocol P { associatedtype T }
+
+---
+
+source_file
+  protocol_declaration
+    body:
+      protocol_body
+        associatedtype_declaration
+          name: type_identifier "T"
+    declaration_kind: protocol
+    name: type_identifier "P"
+
+---
+
+unsupported_node "protocol P { associatedtype T }"
+
+===
+Operator declaration
+===
+
+infix operator +++ : AdditionPrecedence
+
+---
+
+source_file
+  operator_declaration
+    referenceable_operator
+      custom_operator "+++"
+    simple_identifier "AdditionPrecedence"
+
+---
+
+unsupported_node "infix operator +++ : AdditionPrecedence"
+
+===
+Enum case with raw value
+===
+
+enum E: Int { case a = 1 }
+
+---
+
+source_file
+  class_declaration
+    body:
+      enum_class_body
+        enum_entry
+          name: simple_identifier "a"
+          raw_value: integer_literal "1"
+    declaration_kind: enum
+    name: type_identifier "E"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "Int"
+
+---
+
+unsupported_node "enum E: Int { case a = 1 }"
+
+===
+Enum case with associated values
+===
+
+enum E { case some(Int, String) }
+
+---
+
+source_file
+  class_declaration
+    body:
+      enum_class_body
+        enum_entry
+          data_contents:
+            enum_type_parameters
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+              type
+                name:
+                  user_type
+                    type_identifier "String"
+          name: simple_identifier "some"
+    declaration_kind: enum
+    name: type_identifier "E"
+
+---
+
+unsupported_node "enum E { case some(Int, String) }"
+
+===
+Inheritance specifier
+===
+
+class Dog: Animal {}
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+    declaration_kind: class
+    name: type_identifier "Dog"
+    inheritance_specifier
+      inherits_from:
+        user_type
+          type_identifier "Animal"
+
+---
+
+unsupported_node "class Dog: Animal {}"
+
+===
+Tuple destructuring
+===
+
+let (a, b) = (1, 2)
+
+---
+
+source_file
+  property_declaration
+    name:
+      pattern
+        pattern
+          simple_identifier "a"
+        pattern
+          simple_identifier "b"
+    value:
+      tuple_expression
+        value:
+          integer_literal "1"
+          integer_literal "2"
+    value_binding_pattern
+      mutability: let
+
+---
+
+unsupported_node "let (a, b) = (1, 2)"
