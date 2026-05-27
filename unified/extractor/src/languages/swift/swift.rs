@@ -366,6 +366,57 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 }).collect::<Vec<_>>()
             }})
         ),
+        // ---- Optionals and errors ----
+        // Optional chaining — unwrap the marker
+        rule!((optional_chain_marker (_) @inner) => {inner}),
+        // try expression — just pass through to the inner expression
+        rule!((try_expression expr: (_) @inner) => {inner}),
+        // Do-catch → try_expr
+        rule!(
+            (do_statement (statements (_)* @body) (catch_block)* @catches)
+            =>
+            (try_expr
+                body: (block stmt: {..body})
+                catch_clause: {..catches})
+        ),
+        // Catch block
+        rule!(
+            (catch_block (catch_keyword) error: (pattern bound_identifier: (_) @name) (statements (_)* @body))
+            =>
+            (catch_clause
+                pattern: (name_pattern identifier: (identifier #{name}))
+                body: (block stmt: {..body}))
+        ),
+        // Catch block with where clause
+        rule!(
+            (catch_block (catch_keyword) error: (pattern bound_identifier: (_) @name) (where_clause (where_keyword) (_) @guard) (statements (_)* @body))
+            =>
+            (catch_clause
+                pattern: (name_pattern identifier: (identifier #{name}))
+                guard: {guard}
+                body: (block stmt: {..body}))
+        ),
+        // Catch block without error binding
+        rule!(
+            (catch_block (catch_keyword) (statements (_)* @body))
+            =>
+            (catch_clause body: (block stmt: {..body}))
+        ),
+        // Catch block with unhandled pattern — just map the body
+        rule!(
+            (catch_block (catch_keyword) error: (_) @_pat (statements (_)* @body))
+            =>
+            (catch_clause body: (block stmt: {..body}))
+        ),
+        // Catch block with pattern but no statements (empty body)
+        rule!(
+            (catch_block (catch_keyword) error: (_) @_pat)
+            =>
+            (catch_clause body: (block))
+        ),
+        // As expression (type cast) — as?, as!
+        // Type output field not yet supported; just unwrap to the inner expr
+        rule!((as_expression expr: (_) @val) => {val}),
         // ---- Fallbacks ----
         rule!(
             (_)

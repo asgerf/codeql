@@ -74,7 +74,12 @@ top_level
         variable_declaration
           value:
             member_access_expr
-              target: unsupported_node "obj?.foo?"
+              target:
+                member_access_expr
+                  target:
+                    name_expr
+                      identifier: identifier "obj"
+                  member: identifier "foo"
               member: identifier "bar"
           modifier: modifier "let"
           pattern:
@@ -236,7 +241,30 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "do {\n  try foo()\n} catch {\n  print(error)\n}"
+      stmt:
+        try_expr
+          body:
+            block
+              stmt:
+                call_expr
+                  argument:
+                  function:
+                    name_expr
+                      identifier: identifier "foo"
+          catch_clause:
+            catch_clause
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value:
+                            name_expr
+                              identifier: identifier "error"
+                      function:
+                        name_expr
+                          identifier: identifier "print"
 
 ===
 Try? expression
@@ -269,7 +297,12 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "try? foo()"
+          value:
+            call_expr
+              argument:
+              function:
+                name_expr
+                  identifier: identifier "foo"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -306,7 +339,12 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "try! foo()"
+          value:
+            call_expr
+              argument:
+              function:
+                name_expr
+                  identifier: identifier "foo"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -442,7 +480,33 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "do {\n    try foo()\n} catch let e where e.code > 0 {\n    print(e)\n}"
+      stmt:
+        try_expr
+          body:
+            block
+              stmt:
+                call_expr
+                  argument:
+                  function:
+                    name_expr
+                      identifier: identifier "foo"
+          catch_clause:
+            catch_clause
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value:
+                            name_expr
+                              identifier: identifier "e"
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              pattern:
+                name_pattern
+                  identifier: identifier "e"
 
 ===
 Catch with pattern matching a static member
@@ -489,6 +553,18 @@ top_level
         function_declaration
           body:
             block
-              stmt: unsupported_node "do {\n        try remove()\n    } catch CocoaError.fileNoSuchFile {\n    }"
+              stmt:
+                try_expr
+                  body:
+                    block
+                      stmt:
+                        call_expr
+                          argument:
+                          function:
+                            name_expr
+                              identifier: identifier "remove"
+                  catch_clause:
+                    catch_clause
+                      body: block "catch CocoaError.fileNoSuchFile {\n    }"
           name: identifier "f"
           parameter:

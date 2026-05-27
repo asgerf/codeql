@@ -207,7 +207,7 @@ top_level
                       argument:
                       function:
                         member_access_expr
-                          target: unsupported_node "self?"
+                          target: unsupported_node "self"
                           member: identifier "doThing"
           modifier: modifier "let"
           pattern:

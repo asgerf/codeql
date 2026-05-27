@@ -578,7 +578,9 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "v as? Base as? Sub"
+          value:
+            name_expr
+              identifier: identifier "v"
           modifier: modifier "let"
           pattern:
             name_pattern

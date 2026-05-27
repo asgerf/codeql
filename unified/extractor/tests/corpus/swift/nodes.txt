@@ -562,7 +562,9 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "y as Int"
+          value:
+            name_expr
+              identifier: identifier "y"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -600,7 +602,9 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "y as? Int"
+          value:
+            name_expr
+              identifier: identifier "y"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -702,7 +706,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "try foo()"
+      stmt:
+        call_expr
+          argument:
+          function:
+            name_expr
+              identifier: identifier "foo"
 
 ===
 Try? expression bare
@@ -726,7 +735,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "try? foo()"
+      stmt:
+        call_expr
+          argument:
+          function:
+            name_expr
+              identifier: identifier "foo"
 
 ===
 Bitwise and
@@ -1064,7 +1078,26 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "do {\n  try foo()\n} catch {\n  bar()\n}"
+      stmt:
+        try_expr
+          body:
+            block
+              stmt:
+                call_expr
+                  argument:
+                  function:
+                    name_expr
+                      identifier: identifier "foo"
+          catch_clause:
+            catch_clause
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                      function:
+                        name_expr
+                          identifier: identifier "bar"
 
 ===
 Throw statement
