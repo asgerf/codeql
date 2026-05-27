@@ -43,7 +43,17 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "{ (x: Int) -> Int in x * 2 }"
+          value:
+            function_expr
+              body:
+                block
+                  stmt:
+                    binary_expr
+                      operator: operator "*"
+                      left:
+                        name_expr
+                          identifier: identifier "x"
+                      right: int_literal "2"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -79,7 +89,19 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "{ $0 + $1 }"
+          value:
+            function_expr
+              body:
+                block
+                  stmt:
+                    binary_expr
+                      operator: operator "+"
+                      left:
+                        name_expr
+                          identifier: identifier "$0"
+                      right:
+                        name_expr
+                          identifier: identifier "$1"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -113,7 +135,27 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "xs.map { $0 * 2 }"
+      stmt:
+        call_expr
+          argument:
+            argument
+              value:
+                function_expr
+                  body:
+                    block
+                      stmt:
+                        binary_expr
+                          operator: operator "*"
+                          left:
+                            name_expr
+                              identifier: identifier "$0"
+                          right: int_literal "2"
+          function:
+            member_access_expr
+              target:
+                name_expr
+                  identifier: identifier "xs"
+              member: identifier "map"
 
 ===
 Closure with capture list
@@ -156,7 +198,17 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "{ [weak self] in self?.doThing() }"
+          value:
+            function_expr
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                      function:
+                        member_access_expr
+                          target: unsupported_node "self?"
+                          member: identifier "doThing"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -223,7 +275,31 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "{ (x: Int) -> Int in\n  let y = x + 1\n  return y * 2\n}"
+          value:
+            function_expr
+              body:
+                block
+                  stmt:
+                    variable_declaration
+                      value:
+                        binary_expr
+                          operator: operator "+"
+                          left:
+                            name_expr
+                              identifier: identifier "x"
+                          right: int_literal "1"
+                      modifier: modifier "let"
+                      pattern:
+                        name_pattern
+                          identifier: identifier "y"
+                    return_expr
+                      value:
+                        binary_expr
+                          operator: operator "*"
+                          left:
+                            name_expr
+                              identifier: identifier "y"
+                          right: int_literal "2"
           modifier: modifier "let"
           pattern:
             name_pattern

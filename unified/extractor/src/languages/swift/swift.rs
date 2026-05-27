@@ -196,6 +196,37 @@ fn translation_rules() -> Vec<yeast::Rule> {
         rule!((statements (_)* @stmts) => (block stmt: {..stmts})),
         // Function body wrapper — unwrap
         rule!((function_body (_) @inner) => {inner}),
+        // ---- Closures ----
+        // Lambda literal (closure) with body
+        rule!(
+            (lambda_literal (statements (_)* @body))
+            =>
+            (function_expr body: (block stmt: {..body}))
+        ),
+        // Lambda parameter
+        rule!(
+            (lambda_parameter external_name: (_) @ext name: (_) @name)
+            =>
+            (parameter
+                external_name: (identifier #{ext})
+                pattern: (name_pattern identifier: (identifier #{name})))
+        ),
+        rule!(
+            (lambda_parameter name: (_) @name)
+            =>
+            (parameter pattern: (name_pattern identifier: (identifier #{name})))
+        ),
+        // Lambda function type — unwrap; just let children translate individually
+        rule!((lambda_function_type) => (unsupported_node)),
+        rule!((lambda_function_type_parameters) => (unsupported_node)),
+        // Call expression with trailing closure (no value_arguments)
+        rule!(
+            (call_expression (_) @func (call_suffix (lambda_literal (statements (_)* @body))))
+            =>
+            (call_expr
+                function: {func}
+                argument: (argument value: (function_expr body: (block stmt: {..body}))))
+        ),
         // ---- Fallbacks ----
         rule!(
             (_)

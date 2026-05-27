@@ -1728,7 +1728,13 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "{ x in x }"
+          value:
+            function_expr
+              body:
+                block
+                  stmt:
+                    name_expr
+                      identifier: identifier "x"
           modifier: modifier "let"
           pattern:
             name_pattern
