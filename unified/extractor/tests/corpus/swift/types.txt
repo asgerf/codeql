@@ -18,7 +18,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Foo {}"
+      stmt:
+        class_like_declaration
+          name: identifier "Foo"
+          modifier: modifier "class"
+          base_type:
+          member:
 
 ===
 Class with stored properties
@@ -67,7 +72,22 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Point {\n  var x: Int\n  var y: Int\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Point"
+          modifier: modifier "class"
+          base_type:
+          member:
+            variable_declaration
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
+            variable_declaration
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "y"
 
 ===
 Class with initializer
@@ -129,7 +149,35 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Point {\n  var x: Int\n  init(x: Int) {\n    self.x = x\n  }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Point"
+          modifier: modifier "class"
+          base_type:
+          member:
+            variable_declaration
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
+            constructor_declaration
+              body:
+                block
+                  stmt:
+                    assign_expr
+                      target:
+                        member_access_expr
+                          target: keyword_literal "self"
+                          member: identifier "x"
+                      value:
+                        name_expr
+                          identifier: identifier "x"
+              modifier:
+              parameter:
+                parameter
+                  pattern:
+                    name_pattern
+                      identifier: identifier "x"
 
 ===
 Class with method
@@ -174,7 +222,30 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Counter {\n  var n = 0\n  func bump() {\n    n += 1\n  }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Counter"
+          modifier: modifier "class"
+          base_type:
+          member:
+            variable_declaration
+              value: int_literal "0"
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "n"
+            function_declaration
+              body:
+                block
+                  stmt:
+                    compound_assign_expr
+                      operator: operator "+="
+                      target:
+                        name_expr
+                          identifier: identifier "n"
+                      value: int_literal "1"
+              name: identifier "bump"
+              parameter:
 
 ===
 Class inheritance
@@ -200,7 +271,16 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Dog: Animal {}"
+      stmt:
+        class_like_declaration
+          name: identifier "Dog"
+          modifier: modifier "class"
+          base_type:
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "Animal"
+          member:
 
 ===
 Struct
@@ -249,7 +329,22 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "struct Point {\n  let x: Int\n  let y: Int\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Point"
+          modifier: modifier "struct"
+          base_type:
+          member:
+            variable_declaration
+              modifier: modifier "let"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
+            variable_declaration
+              modifier: modifier "let"
+              pattern:
+                name_pattern
+                  identifier: identifier "y"
 
 ===
 Enum with cases
@@ -284,7 +379,32 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "enum Direction {\n  case north\n  case south\n  case east\n  case west\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Direction"
+          modifier: modifier "enum"
+          base_type:
+          member:
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "north"
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "south"
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "east"
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "west"
 
 ===
 Enum with associated values
@@ -327,7 +447,18 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "enum Shape {\n  case circle(radius: Double)\n  case square(side: Double)\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Shape"
+          modifier: modifier "enum"
+          base_type:
+          member:
+            class_like_declaration
+              name: identifier "circle"
+              modifier: modifier "enum_case"
+            class_like_declaration
+              name: identifier "square"
+              modifier: modifier "enum_case"
 
 ===
 Enum with external labels, defaults, and positional payloads
@@ -383,7 +514,21 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "enum Event {\n  case named(label: Int = 0)\n  case external(_ x: String = \"hi\")\n  case positional(Bool)\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Event"
+          modifier: modifier "enum"
+          base_type:
+          member:
+            class_like_declaration
+              name: identifier "named"
+              modifier: modifier "enum_case"
+            class_like_declaration
+              name: identifier "external"
+              modifier: modifier "enum_case"
+            class_like_declaration
+              name: identifier "positional"
+              modifier: modifier "enum_case"
 
 ===
 Protocol declaration
@@ -409,7 +554,17 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "protocol Drawable {\n  func draw()\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Drawable"
+          modifier: modifier "protocol"
+          base_type:
+          member:
+            function_declaration
+              body: block "func draw()"
+              name: identifier "draw"
+              modifier:
+              parameter:
 
 ===
 Extension
@@ -453,7 +608,24 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "extension Int {\n  func squared() -> Int { return self * self }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Int"
+          modifier: modifier "extension"
+          base_type:
+          member:
+            function_declaration
+              body:
+                block
+                  stmt:
+                    return_expr
+                      value:
+                        binary_expr
+                          operator: operator "*"
+                          left: keyword_literal "self"
+                          right: keyword_literal "self"
+              name: identifier "squared"
+              parameter:
 
 ===
 Computed property
@@ -526,7 +698,27 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Rect {\n  var w: Double\n  var h: Double\n  var area: Double {\n    return w * h\n  }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Rect"
+          modifier: modifier "class"
+          base_type:
+          member:
+            variable_declaration
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "w"
+            variable_declaration
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "h"
+            variable_declaration
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "area"
 
 ===
 Property with getter and setter
@@ -591,7 +783,23 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Box {\n  private var _v = 0\n  var v: Int {\n    get { return _v }\n    set { _v = newValue }\n  }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Box"
+          modifier: modifier "class"
+          base_type:
+          member:
+            variable_declaration
+              value: int_literal "0"
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "_v"
+            variable_declaration
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "v"
 
 ===
 Qualified type reference
@@ -738,7 +946,30 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "enum E {\n  case a\n  case b\n  func describe() -> String { return \"x\" }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "E"
+          modifier: modifier "enum"
+          base_type:
+          member:
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "a"
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "b"
+            function_declaration
+              body:
+                block
+                  stmt:
+                    return_expr
+                      value: string_literal "\"x\""
+              name: identifier "describe"
+              parameter:
 
 ===
 Protocol with property requirement
@@ -792,7 +1023,18 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "protocol P {\n  var x: Int { get set }\n  var y: String { get }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "P"
+          modifier: modifier "protocol"
+          base_type:
+          member:
+            computed_property_declaration
+              name: identifier "x"
+              modifier:
+            computed_property_declaration
+              name: identifier "y"
+              modifier:
 
 ===
 Class with nested type
@@ -835,7 +1077,22 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Outer {\n  class Inner {\n    var x: Int\n  }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Outer"
+          modifier: modifier "class"
+          base_type:
+          member:
+            class_like_declaration
+              name: identifier "Inner"
+              modifier: modifier "class"
+              base_type:
+              member:
+                variable_declaration
+                  modifier: modifier "var"
+                  pattern:
+                    name_pattern
+                      identifier: identifier "x"
 
 ===
 Class with typealias member
@@ -866,7 +1123,15 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class C {\n  typealias T = Int\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "C"
+          modifier: modifier "class"
+          base_type:
+          member:
+            type_alias_declaration
+              name: identifier "T"
+              modifier:
 
 ===
 Static member access on a generic type
@@ -955,9 +1220,20 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "class C {"
+        class_like_declaration
+          name: identifier "C"
+          modifier: modifier "class"
+          base_type:
+          member:
         unsupported_node "#if DEBUG"
-        unsupported_node "init(x: Int) {}"
+        constructor_declaration <-- ERROR: The field block.stmt should contain stmt, but got constructor_declaration
+          body: block "init(x: Int) {}"
+          modifier:
+          parameter:
+            parameter
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
         unsupported_node "#endif"
 
 ===
@@ -1016,11 +1292,42 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "public class C {}"
-        unsupported_node "private struct S {}"
-        unsupported_node "internal enum E {}"
-        unsupported_node "fileprivate final class F {}"
-        unsupported_node "open class O {}"
+        class_like_declaration
+          name: identifier "C"
+          modifier:
+            modifier "class"
+            modifier "public"
+          base_type:
+          member:
+        class_like_declaration
+          name: identifier "S"
+          modifier:
+            modifier "struct"
+            modifier "private"
+          base_type:
+          member:
+        class_like_declaration
+          name: identifier "E"
+          modifier:
+            modifier "enum"
+            modifier "internal"
+          base_type:
+          member:
+        class_like_declaration
+          name: identifier "F"
+          modifier:
+            modifier "class"
+            modifier "fileprivate"
+            modifier "final"
+          base_type:
+          member:
+        class_like_declaration
+          name: identifier "O"
+          modifier:
+            modifier "class"
+            modifier "open"
+          base_type:
+          member:
 
 ===
 Modifiers on members (methods and properties)
@@ -1093,7 +1400,32 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class C {\n    public static var count: Int = 0\n    private let name: String = \"x\"\n    public func greet() {}\n    private static func help() {}\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "C"
+          modifier: modifier "class"
+          base_type:
+          member:
+            variable_declaration
+              value: int_literal "0"
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "count"
+            variable_declaration
+              value: string_literal "\"x\""
+              modifier: modifier "let"
+              pattern:
+                name_pattern
+                  identifier: identifier "name"
+            function_declaration
+              body: block "public func greet() {}"
+              name: identifier "greet"
+              parameter:
+            function_declaration
+              body: block "private static func help() {}"
+              name: identifier "help"
+              parameter:
 
 ===
 Modifiers on init, deinit, subscript, typealias, protocol and enum entries
@@ -1233,10 +1565,76 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "public typealias Name = String"
-        unsupported_node "public protocol P {\n    static func foo() -> Int\n    var x: Int { get }\n    associatedtype A\n    associatedtype B: Equatable\n}"
-        unsupported_node "class C {\n    public required init() {}\n    deinit {}\n    public subscript(i: Int) -> Int { return i }\n}"
-        unsupported_node "public enum E {\n    case a\n    case b(x: Int)\n    case c = 1\n}"
+        type_alias_declaration
+          name: identifier "Name"
+          modifier: modifier "public"
+        class_like_declaration
+          name: identifier "P"
+          modifier:
+            modifier "protocol"
+            modifier "public"
+          base_type:
+          member:
+            function_declaration
+              body: block "static func foo() -> Int"
+              name: identifier "foo"
+              return_type:
+                named_type_expr
+                  name: identifier "Int"
+              modifier: modifier "static"
+              parameter:
+            computed_property_declaration
+              name: identifier "x"
+              modifier:
+            associated_type_declaration
+              name: identifier "A"
+              modifier:
+            associated_type_declaration
+              name: identifier "B"
+              modifier:
+        class_like_declaration
+          name: identifier "C"
+          modifier: modifier "class"
+          base_type:
+          member:
+            constructor_declaration
+              body: block "public required init() {}"
+              modifier:
+                modifier "public"
+                modifier "required"
+              parameter:
+            destructor_declaration
+              body: block "deinit {}"
+              modifier:
+            function_declaration
+              body: block "public subscript(i: Int) -> Int { return i }"
+              name: identifier "subscript"
+              modifier:
+              parameter:
+                parameter
+                  pattern:
+                    name_pattern
+                      identifier: identifier "i"
+        class_like_declaration
+          name: identifier "E"
+          modifier:
+            modifier "enum"
+            modifier "public"
+          base_type:
+          member:
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "a"
+            class_like_declaration
+              name: identifier "b"
+              modifier: modifier "enum_case"
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "c"
 
 ===
 Override computed property
@@ -1290,7 +1688,21 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class A: B {\n  override var x: Int {\n    get { return _x }\n    set {}\n  }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "A"
+          modifier: modifier "class"
+          base_type:
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "B"
+          member:
+            variable_declaration
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
 
 ===
 Empty getter body
@@ -1335,7 +1747,17 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class C {\n  var y: Int {\n    get {}\n    set {}\n  }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "C"
+          modifier: modifier "class"
+          base_type:
+          member:
+            variable_declaration
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "y"
 
 ===
 Override stored property with empty didSet
@@ -1384,7 +1806,17 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class C {\n  @available(*, unavailable)\n  override var x: Int! {\n    didSet {}\n  }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "C"
+          modifier: modifier "class"
+          base_type:
+          member:
+            variable_declaration
+              modifier: modifier "var"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
 
 ===
 Typealias for labeled tuple type
@@ -1422,7 +1854,10 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "typealias T = (a: A, b: B)"
+      stmt:
+        type_alias_declaration
+          name: identifier "T"
+          modifier:
 
 ===
 Typealias for function type
@@ -1465,7 +1900,10 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "typealias F = (Int, String) -> Bool"
+      stmt:
+        type_alias_declaration
+          name: identifier "F"
+          modifier:
 
 ===
 Typealias for array of qualified type
@@ -1494,7 +1932,10 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "typealias T = [A.B]"
+      stmt:
+        type_alias_declaration
+          name: identifier "T"
+          modifier:
 
 ===
 Typealias for optional dictionary
@@ -1529,7 +1970,10 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "typealias T = [A: B]?"
+      stmt:
+        type_alias_declaration
+          name: identifier "T"
+          modifier:
 
 ===
 Generic function with conformance constraint
@@ -1759,7 +2203,17 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Box<T> where T: Hashable {\n  let value: T\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Box"
+          modifier: modifier "class"
+          base_type:
+          member:
+            variable_declaration
+              modifier: modifier "let"
+              pattern:
+                name_pattern
+                  identifier: identifier "value"
 
 ===
 Protocol with associated type and constraint
@@ -1797,7 +2251,15 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "protocol Container where Element: Equatable {\n  associatedtype Element\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Container"
+          modifier: modifier "protocol"
+          base_type:
+          member:
+            associated_type_declaration
+              name: identifier "Element"
+              modifier:
 
 ===
 Class with base class and protocols
@@ -1831,7 +2293,24 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Dog: Animal, Pet, Trainable {}"
+      stmt:
+        class_like_declaration
+          name: identifier "Dog"
+          modifier: modifier "class"
+          base_type:
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "Animal"
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "Pet"
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "Trainable"
+          member:
 
 ===
 Struct conforming to protocol
@@ -1888,7 +2367,30 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "struct Point: Equatable, Hashable {\n  let x: Int\n  let y: Int\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Point"
+          modifier: modifier "struct"
+          base_type:
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "Equatable"
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "Hashable"
+          member:
+            variable_declaration
+              modifier: modifier "let"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
+            variable_declaration
+              modifier: modifier "let"
+              pattern:
+                name_pattern
+                  identifier: identifier "y"
 
 ===
 Enum with raw type
@@ -1924,7 +2426,31 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "enum Color: String {\n  case red\n  case green\n  case blue\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Color"
+          modifier: modifier "enum"
+          base_type:
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "String"
+          member:
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "red"
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "green"
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "blue"
 
 ===
 Protocol with inherited protocols
@@ -1958,4 +2484,22 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "protocol Drawable: Renderable, Identifiable {\n  func draw()\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Drawable"
+          modifier: modifier "protocol"
+          base_type:
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "Renderable"
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "Identifiable"
+          member:
+            function_declaration
+              body: block "func draw()"
+              name: identifier "draw"
+              modifier:
+              parameter:

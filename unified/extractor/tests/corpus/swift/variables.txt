@@ -153,7 +153,19 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let (a, b) = pair"
+      stmt:
+        variable_declaration
+          value:
+            name_expr
+              identifier: identifier "pair"
+          modifier: modifier "let"
+          pattern:
+            tuple_pattern
+              element:
+                tuple_pattern
+                  element:
+                tuple_pattern
+                  element:
 
 ===
 Multiple bindings on one line

@@ -674,7 +674,9 @@ top_level
         variable_declaration
           value:
             call_expr
-              argument: unsupported_node "describing:" <-- ERROR: The field call_expr.argument should contain argument, but got unsupported_node
+              argument:
+                argument
+                  name: identifier "describing"
               function:
                 member_access_expr
                   target:

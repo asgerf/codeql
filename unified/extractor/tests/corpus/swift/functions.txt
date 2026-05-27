@@ -752,4 +752,23 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "struct S {\n    static func < (a: S, b: S) -> Bool { false }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "S"
+          modifier: modifier "struct"
+          base_type:
+          member:
+            function_declaration
+              body:
+                block
+                  stmt: boolean_literal "false"
+              name: identifier "<"
+              parameter:
+                parameter
+                  pattern:
+                    name_pattern
+                      identifier: identifier "a"
+                parameter
+                  pattern:
+                    name_pattern
+                      identifier: identifier "b"

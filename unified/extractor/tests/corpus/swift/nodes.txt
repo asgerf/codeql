@@ -336,7 +336,7 @@ top_level
     block
       stmt:
         member_access_expr
-          target: unsupported_node "self"
+          target: keyword_literal "self"
           member: identifier "x"
 
 ===
@@ -475,7 +475,7 @@ top_level
     block
       stmt:
         member_access_expr
-          target: unsupported_node "super"
+          target: super_expr "super"
           member: identifier "x"
         unsupported_node "==="
         name_expr
@@ -485,7 +485,7 @@ top_level
           argument:
           function:
             member_access_expr
-              target: unsupported_node "super"
+              target: super_expr "super"
               member: identifier "greet"
         unsupported_node "==="
         name_expr
@@ -499,7 +499,7 @@ top_level
               value: int_literal "2"
           function:
             member_access_expr
-              target: unsupported_node "super"
+              target: super_expr "super"
               member: identifier "add"
         unsupported_node "==="
         name_expr
@@ -512,7 +512,7 @@ top_level
               value: string_literal "\"x\""
           function:
             member_access_expr
-              target: unsupported_node "super"
+              target: super_expr "super"
               member: identifier "init"
         unsupported_node "==="
         name_expr
@@ -521,14 +521,19 @@ top_level
         member_access_expr
           target:
             member_access_expr
-              target: unsupported_node "super"
+              target: super_expr "super"
               member: identifier "foo"
           member: identifier "bar"
         unsupported_node "==="
         name_expr
           identifier: identifier "Wildcard"
         unsupported_node "==="
-        unsupported_node "let _ = 1"
+        variable_declaration
+          value: int_literal "1"
+          modifier: modifier "let"
+          pattern:
+            tuple_pattern
+              element:
 
 ===
 As expression
@@ -1263,7 +1268,10 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "typealias Number = Int"
+      stmt:
+        type_alias_declaration
+          name: identifier "Number"
+          modifier:
 
 ===
 Selector expression
@@ -1990,7 +1998,14 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "public class Foo {}"
+      stmt:
+        class_like_declaration
+          name: identifier "Foo"
+          modifier:
+            modifier "class"
+            modifier "public"
+          base_type:
+          member:
 
 ===
 Static modifier
@@ -2021,7 +2036,18 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Foo { static let x = 1 }"
+      stmt:
+        class_like_declaration
+          name: identifier "Foo"
+          modifier: modifier "class"
+          base_type:
+          member:
+            variable_declaration
+              value: int_literal "1"
+              modifier: modifier "let"
+              pattern:
+                name_pattern
+                  identifier: identifier "x"
 
 ===
 Deinit declaration
@@ -2046,7 +2072,15 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Foo { deinit { } }"
+      stmt:
+        class_like_declaration
+          name: identifier "Foo"
+          modifier: modifier "class"
+          base_type:
+          member:
+            destructor_declaration
+              body: block "deinit { }"
+              modifier:
 
 ===
 Subscript declaration
@@ -2087,7 +2121,21 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Foo {\n  subscript(i: Int) -> Int { return i }\n}"
+      stmt:
+        class_like_declaration
+          name: identifier "Foo"
+          modifier: modifier "class"
+          base_type:
+          member:
+            function_declaration
+              body: block "subscript(i: Int) -> Int { return i }"
+              name: identifier "subscript"
+              modifier:
+              parameter:
+                parameter
+                  pattern:
+                    name_pattern
+                      identifier: identifier "i"
 
 ===
 Associatedtype declaration
@@ -2111,7 +2159,15 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "protocol P { associatedtype T }"
+      stmt:
+        class_like_declaration
+          name: identifier "P"
+          modifier: modifier "protocol"
+          base_type:
+          member:
+            associated_type_declaration
+              name: identifier "T"
+              modifier:
 
 ===
 Operator declaration
@@ -2161,7 +2217,21 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "enum E: Int { case a = 1 }"
+      stmt:
+        class_like_declaration
+          name: identifier "E"
+          modifier: modifier "enum"
+          base_type:
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "Int"
+          member:
+            variable_declaration
+              modifier: modifier "enum_case"
+              pattern:
+                name_pattern
+                  identifier: identifier "a"
 
 ===
 Enum case with associated values
@@ -2195,7 +2265,15 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "enum E { case some(Int, String) }"
+      stmt:
+        class_like_declaration
+          name: identifier "E"
+          modifier: modifier "enum"
+          base_type:
+          member:
+            class_like_declaration
+              name: identifier "some"
+              modifier: modifier "enum_case"
 
 ===
 Inheritance specifier
@@ -2221,7 +2299,16 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "class Dog: Animal {}"
+      stmt:
+        class_like_declaration
+          name: identifier "Dog"
+          modifier: modifier "class"
+          base_type:
+            base_type
+              name:
+                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+                  name: identifier "Animal"
+          member:
 
 ===
 Tuple destructuring
@@ -2252,4 +2339,18 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let (a, b) = (1, 2)"
+      stmt:
+        variable_declaration
+          value:
+            tuple_expr
+              element:
+                int_literal "1"
+                int_literal "2"
+          modifier: modifier "let"
+          pattern:
+            tuple_pattern
+              element:
+                tuple_pattern
+                  element:
+                tuple_pattern
+                  element:

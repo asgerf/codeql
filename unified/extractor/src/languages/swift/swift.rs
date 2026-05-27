@@ -78,6 +78,28 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 modifier: (modifier #{binding_kind})
                 pattern: (name_pattern identifier: (identifier #{name})))
         ),
+        // Property declaration with a complex pattern (tuple destructuring etc.)
+        rule!(
+            (property_declaration
+                (value_binding_pattern mutability: _ @binding_kind)
+                name: (_) @pat
+                value: (_) @val)
+            =>
+            (variable_declaration
+                modifier: (modifier #{binding_kind})
+                pattern: {pat}
+                value: {val})
+        ),
+        // Property declaration with complex pattern, no value
+        rule!(
+            (property_declaration
+                (value_binding_pattern mutability: _ @binding_kind)
+                name: (_) @pat)
+            =>
+            (variable_declaration
+                modifier: (modifier #{binding_kind})
+                pattern: {pat})
+        ),
         // Unwrap `type` wrapper node
         rule!((type name: (_) @inner) => {inner}),
         // User type → named_type_expr
@@ -173,6 +195,12 @@ fn translation_rules() -> Vec<yeast::Rule> {
             (value_argument value: (_) @val)
             =>
             (argument value: {val})
+        ),
+        // Value argument with reference_specifier label (some argument labels use this field)
+        rule!(
+            (value_argument reference_specifier: (value_argument_label (_) @label))
+            =>
+            (argument name: (identifier #{label}))
         ),
         // Navigation expression → member_access_expr
         rule!(
@@ -417,6 +445,296 @@ fn translation_rules() -> Vec<yeast::Rule> {
         // As expression (type cast) — as?, as!
         // Type output field not yet supported; just unwrap to the inner expr
         rule!((as_expression expr: (_) @val) => {val}),
+        // ---- Types and classes ----
+        // Self expression → keyword_literal
+        rule!((self_expression) => (keyword_literal)),
+        // Super expression → super_expr
+        rule!((super_expression) => (super_expr)),
+        // Modifiers — unwrap to individual modifier children
+        rule!((modifiers (_)* @mods) => {..mods}),
+        rule!((visibility_modifier) @m => (modifier #{m})),
+        rule!((function_modifier) @m => (modifier #{m})),
+        rule!((member_modifier) @m => (modifier #{m})),
+        rule!((mutation_modifier) @m => (modifier #{m})),
+        rule!((ownership_modifier) @m => (modifier #{m})),
+        rule!((property_modifier) @m => (modifier #{m})),
+        rule!((parameter_modifier) @m => (modifier #{m})),
+        rule!((inheritance_modifier) @m => (modifier #{m})),
+        rule!((property_behavior_modifier) @m => (modifier #{m})),
+        // Type annotations — unwrap
+        rule!((type_annotation (_) @inner) => {inner}),
+        // Inheritance specifier → base_type
+        rule!((inheritance_specifier inherits_from: (_) @ty) => (base_type name: {ty})),
+        // User type with multiple components (qualified) → nested named_type_expr
+        rule!((user_type (type_identifier)* @parts (type_arguments (_)* @args))
+            => (generic_type_expr
+                base: {..{
+                    let result = parts.iter().copied().fold(None, |acc: Option<usize>, part| {
+                        let text = __yeast_ctx.ast.source_text(part.into());
+                        let name_node = __yeast_ctx.literal("identifier", &text);
+                        Some(if let Some(qual) = acc {
+                            __yeast_ctx.node("named_type_expr", vec![
+                                ("qualifier", vec![qual]),
+                                ("name", vec![name_node]),
+                            ])
+                        } else {
+                            __yeast_ctx.node("named_type_expr", vec![
+                                ("name", vec![name_node]),
+                            ])
+                        })
+                    });
+                    result.into_iter().collect::<Vec<_>>()
+                }}
+                type_argument: {..args})),
+        // Class declaration with body containing members
+        rule!(
+            (class_declaration
+                declaration_kind: _ @kind
+                name: (_) @name
+                body: (class_body (_)* @members)
+                (inheritance_specifier)* @bases
+                (modifiers)* @mods)
+            =>
+            (class_like_declaration
+                modifier: (modifier #{kind})
+                modifier: {..mods}
+                name: (identifier #{name})
+                base_type: {..bases}
+                member: {..members})
+        ),
+        // Class declaration with enum body
+        rule!(
+            (class_declaration
+                declaration_kind: _ @kind
+                name: (_) @name
+                body: (enum_class_body (_)* @members)
+                (inheritance_specifier)* @bases
+                (modifiers)* @mods)
+            =>
+            (class_like_declaration
+                modifier: (modifier #{kind})
+                modifier: {..mods}
+                name: (identifier #{name})
+                base_type: {..bases}
+                member: {..members})
+        ),
+        // Class declaration with empty body
+        rule!(
+            (class_declaration
+                declaration_kind: _ @kind
+                name: (_) @name
+                body: (_)
+                (inheritance_specifier)* @bases
+                (modifiers)* @mods)
+            =>
+            (class_like_declaration
+                modifier: (modifier #{kind})
+                modifier: {..mods}
+                name: (identifier #{name})
+                base_type: {..bases})
+        ),
+        // Protocol declaration
+        rule!(
+            (protocol_declaration
+                declaration_kind: _ @kind
+                name: (_) @name
+                body: (protocol_body (_)* @members)
+                (inheritance_specifier)* @bases
+                (modifiers)* @mods)
+            =>
+            (class_like_declaration
+                modifier: (modifier #{kind})
+                modifier: {..mods}
+                name: (identifier #{name})
+                base_type: {..bases}
+                member: {..members})
+        ),
+        // Protocol function → function_declaration
+        rule!(
+            (protocol_function_declaration
+                name: (_) @name
+                (parameter)* @params
+                return_type: (_) @ret
+                body: (function_body (statements (_)* @body_stmts))
+                (modifiers)* @mods)
+            =>
+            (function_declaration
+                modifier: {..mods}
+                name: (identifier #{name})
+                parameter: {..params}
+                return_type: {ret}
+                body: (block stmt: {..body_stmts}))
+        ),
+        rule!(
+            (protocol_function_declaration
+                name: (_) @name
+                (parameter)* @params
+                return_type: (_) @ret
+                (modifiers)* @mods)
+            =>
+            (function_declaration
+                modifier: {..mods}
+                name: (identifier #{name})
+                parameter: {..params}
+                return_type: {ret}
+                body: (block))
+        ),
+        rule!(
+            (protocol_function_declaration
+                name: (_) @name
+                (parameter)* @params
+                (modifiers)* @mods)
+            =>
+            (function_declaration
+                modifier: {..mods}
+                name: (identifier #{name})
+                parameter: {..params}
+                body: (block))
+        ),
+        // Protocol property → computed_property_declaration
+        rule!(
+            (protocol_property_declaration
+                name: (pattern bound_identifier: (_) @name)
+                (protocol_property_requirements)* @_reqs
+                (modifiers)* @mods)
+            =>
+            (computed_property_declaration
+                modifier: {..mods}
+                name: (identifier #{name}))
+        ),
+        // Init declaration → constructor_declaration
+        rule!(
+            (init_declaration
+                (parameter)* @params
+                body: (function_body (statements (_)* @body_stmts))
+                (modifiers)* @mods)
+            =>
+            (constructor_declaration
+                modifier: {..mods}
+                parameter: {..params}
+                body: (block stmt: {..body_stmts}))
+        ),
+        // Init with empty body
+        rule!(
+            (init_declaration
+                (parameter)* @params
+                body: (function_body)
+                (modifiers)* @mods)
+            =>
+            (constructor_declaration
+                modifier: {..mods}
+                parameter: {..params}
+                body: (block))
+        ),
+        // Init without body (protocol requirement)
+        rule!(
+            (init_declaration
+                (parameter)* @params
+                (modifiers)* @mods)
+            =>
+            (constructor_declaration
+                modifier: {..mods}
+                parameter: {..params}
+                body: (block))
+        ),
+        // Deinit declaration → destructor_declaration
+        rule!(
+            (deinit_declaration
+                body: (function_body (statements (_)* @body_stmts))
+                (modifiers)* @mods)
+            =>
+            (destructor_declaration
+                modifier: {..mods}
+                body: (block stmt: {..body_stmts}))
+        ),
+        rule!(
+            (deinit_declaration
+                body: (function_body)
+                (modifiers)* @mods)
+            =>
+            (destructor_declaration
+                modifier: {..mods}
+                body: (block))
+        ),
+        // Enum entry with associated values → class_like_declaration with "enum_case" modifier
+        rule!(
+            (enum_entry name: (_)* @names data_contents: (enum_type_parameters) @_data)
+            =>
+            (class_like_declaration
+                modifier: (modifier "enum_case")
+                name: {..{
+                    names.iter().map(|&n| {
+                        let text = __yeast_ctx.ast.source_text(n.into());
+                        __yeast_ctx.literal("identifier", &text)
+                    }).collect::<Vec<_>>()
+                }})
+        ),
+        // Enum entry without data → variable_declaration with "enum_case" modifier
+        rule!(
+            (enum_entry name: (_)* @names)
+            =>
+            (variable_declaration
+                modifier: (modifier "enum_case")
+                pattern: {..{
+                    names.iter().map(|&n| {
+                        let text = __yeast_ctx.ast.source_text(n.into());
+                        let ident = __yeast_ctx.literal("identifier", &text);
+                        __yeast_ctx.node("name_pattern", vec![("identifier", vec![ident])])
+                    }).collect::<Vec<_>>()
+                }})
+        ),
+        // Typealias declaration (type field pending macro fix)
+        rule!(
+            (typealias_declaration name: (_) @name value: (_) @_val (modifiers)* @mods)
+            =>
+            (type_alias_declaration
+                modifier: {..mods}
+                name: (identifier #{name}))
+        ),
+        // Computed property (with accessors)
+        rule!(
+            (property_declaration
+                (value_binding_pattern mutability: _ @binding_kind)
+                name: (pattern bound_identifier: (_) @name)
+                (computed_getter)* @getters
+                (computed_setter)* @setters
+                (computed_modify)* @modifiers_list)
+            =>
+            (computed_property_declaration
+                modifier: (modifier #{binding_kind})
+                name: (identifier #{name}))
+        ),
+        // Subscript declaration (treat as function for now)
+        rule!(
+            (subscript_declaration (parameter)* @params (modifiers)* @mods)
+            =>
+            (function_declaration
+                modifier: {..mods}
+                name: (identifier "subscript")
+                parameter: {..params}
+                body: (block))
+        ),
+        // Associated type declaration
+        rule!(
+            (associatedtype_declaration name: (_) @name (modifiers)* @mods)
+            =>
+            (associated_type_declaration
+                modifier: {..mods}
+                name: (identifier #{name}))
+        ),
+        // Associated type with bound
+        rule!(
+            (associatedtype_declaration name: (_) @name inherits_from: (_) @bound (modifiers)* @mods)
+            =>
+            (associated_type_declaration
+                modifier: {..mods}
+                name: (identifier #{name})
+                bound: {bound})
+        ),
+        // Protocol property requirements — just discard
+        rule!((protocol_property_requirements) => (unsupported_node)),
+        // Preprocessor conditionals — unsupported
+        rule!((diagnostic) => (unsupported_node)),
         // ---- Fallbacks ----
         rule!(
             (_)
