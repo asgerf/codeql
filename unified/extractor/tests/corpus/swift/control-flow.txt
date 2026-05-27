@@ -26,7 +26,10 @@ source_file
 
 ---
 
-unsupported_node "if x > 0 {\n  print(x)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "if x > 0 {\n  print(x)\n}"
 
 ===
 If-else
@@ -69,7 +72,10 @@ source_file
 
 ---
 
-unsupported_node "if x > 0 {\n  print(x)\n} else {\n  print(-x)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "if x > 0 {\n  print(x)\n} else {\n  print(-x)\n}"
 
 ===
 If-else-if chain
@@ -126,7 +132,10 @@ source_file
 
 ---
 
-unsupported_node "if x > 0 {\n  print(1)\n} else if x < 0 {\n  print(2)\n} else {\n  print(3)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "if x > 0 {\n  print(1)\n} else if x < 0 {\n  print(2)\n} else {\n  print(3)\n}"
 
 ===
 If-let optional binding
@@ -157,7 +166,10 @@ source_file
 
 ---
 
-unsupported_node "if let value = optional {\n  print(value)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "if let value = optional {\n  print(value)\n}"
 
 ===
 Guard let
@@ -182,7 +194,10 @@ source_file
 
 ---
 
-unsupported_node "guard let value = optional else { return }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "guard let value = optional else { return }"
 
 ===
 Ternary expression
@@ -214,7 +229,10 @@ source_file
 
 ---
 
-unsupported_node "let y = x > 0 ? 1 : -1"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let y = x > 0 ? 1 : -1"
 
 ===
 Switch statement
@@ -277,7 +295,10 @@ source_file
 
 ---
 
-unsupported_node "switch x {\ncase 1:\n  print(\"one\")\ncase 2, 3:\n  print(\"two or three\")\ndefault:\n  print(\"other\")\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "switch x {\ncase 1:\n  print(\"one\")\ncase 2, 3:\n  print(\"two or three\")\ndefault:\n  print(\"other\")\n}"
 
 ===
 Switch with binding pattern
@@ -328,7 +349,10 @@ source_file
 
 ---
 
-unsupported_node "switch shape {\ncase .circle(let r):\n  print(r)\ncase .square(let s):\n  print(s)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "switch shape {\ncase .circle(let r):\n  print(r)\ncase .square(let s):\n  print(s)\n}"
 
 ===
 Switch case with where clause
@@ -401,7 +425,10 @@ source_file
 
 ---
 
-unsupported_node "switch p {\ncase let (x, y) where x > y:\n    print(\"greater\")\ncase (0, 0):\n    print(\"origin\")\ndefault:\n    print(\"other\")\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "switch p {\ncase let (x, y) where x > y:\n    print(\"greater\")\ncase (0, 0):\n    print(\"origin\")\ndefault:\n    print(\"other\")\n}"
 
 ===
 Switch with multi-pattern case
@@ -470,7 +497,10 @@ source_file
 
 ---
 
-unsupported_node "switch x {\ncase 1, 2, 3:\n    print(\"small\")\ncase 4, 5:\n    print(\"mid\")\ndefault:\n    print(\"other\")\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "switch x {\ncase 1, 2, 3:\n    print(\"small\")\ncase 4, 5:\n    print(\"mid\")\ndefault:\n    print(\"other\")\n}"
 
 ===
 Switch with range patterns
@@ -536,7 +566,10 @@ source_file
 
 ---
 
-unsupported_node "switch n {\ncase 0..<10:\n    print(\"small\")\ncase 10...100:\n    print(\"med\")\ndefault:\n    print(\"big\")\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "switch n {\ncase 0..<10:\n    print(\"small\")\ncase 10...100:\n    print(\"med\")\ndefault:\n    print(\"big\")\n}"
 
 ===
 Multi-condition if-let
@@ -578,7 +611,10 @@ source_file
 
 ---
 
-unsupported_node "if let x = a, let y = b, x > y {\n    print(x)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "if let x = a, let y = b, x > y {\n    print(x)\n}"
 
 ===
 If let shorthand
@@ -608,4 +644,7 @@ source_file
 
 ---
 
-unsupported_node "if let x {\n    print(x)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "if let x {\n    print(x)\n}"

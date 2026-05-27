@@ -38,7 +38,10 @@ source_file
 
 ---
 
-unsupported_node "let f = { (x: Int) -> Int in x * 2 }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let f = { (x: Int) -> Int in x * 2 }"
 
 ===
 Closure with shorthand parameters
@@ -65,7 +68,10 @@ source_file
 
 ---
 
-unsupported_node "let f = { $0 + $1 }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let f = { $0 + $1 }"
 
 ===
 Trailing closure
@@ -92,7 +98,10 @@ source_file
 
 ---
 
-unsupported_node "xs.map { $0 * 2 }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "xs.map { $0 * 2 }"
 
 ===
 Closure with capture list
@@ -130,7 +139,10 @@ source_file
 
 ---
 
-unsupported_node "let f = { [weak self] in self?.doThing() }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let f = { [weak self] in self?.doThing() }"
 
 ===
 Multi-statement closure
@@ -188,4 +200,7 @@ source_file
 
 ---
 
-unsupported_node "let f = { (x: Int) -> Int in\n  let y = x + 1\n  return y * 2\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let f = { (x: Int) -> Int in\n  let y = x + 1\n  return y * 2\n}"

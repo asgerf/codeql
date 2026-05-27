@@ -25,7 +25,10 @@ source_file
 
 ---
 
-unsupported_node "let x: Int? = nil"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x: Int? = nil"
 
 ===
 Optional chaining
@@ -59,7 +62,10 @@ source_file
 
 ---
 
-unsupported_node "let n = obj?.foo?.bar"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let n = obj?.foo?.bar"
 
 ===
 Force unwrap
@@ -83,7 +89,10 @@ source_file
 
 ---
 
-unsupported_node "let n = opt!"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let n = opt!"
 
 ===
 Nil-coalescing
@@ -107,7 +116,10 @@ source_file
 
 ---
 
-unsupported_node "let n = opt ?? 0"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let n = opt ?? 0"
 
 ===
 Throwing function
@@ -137,7 +149,10 @@ source_file
 
 ---
 
-unsupported_node "func read() throws -> String {\n  return \"\"\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func read() throws -> String {\n  return \"\"\n}"
 
 ===
 Do-catch
@@ -173,7 +188,10 @@ source_file
 
 ---
 
-unsupported_node "do {\n  try foo()\n} catch {\n  print(error)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "do {\n  try foo()\n} catch {\n  print(error)\n}"
 
 ===
 Try? expression
@@ -201,7 +219,10 @@ source_file
 
 ---
 
-unsupported_node "let result = try? foo()"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let result = try? foo()"
 
 ===
 Try! expression
@@ -229,7 +250,10 @@ source_file
 
 ---
 
-unsupported_node "let result = try! foo()"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let result = try! foo()"
 
 ===
 Double optional type
@@ -258,7 +282,10 @@ source_file
 
 ---
 
-unsupported_node "let x: Int?? = 42"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x: Int?? = 42"
 
 ===
 Implicitly unwrapped optional type
@@ -288,7 +315,10 @@ source_file
 
 ---
 
-unsupported_node "let y: String! = \"hello\""
+top_level
+  body:
+    block
+      stmt: unsupported_node "let y: String! = \"hello\""
 
 ===
 Catch with where clause
@@ -340,7 +370,10 @@ source_file
 
 ---
 
-unsupported_node "do {\n    try foo()\n} catch let e where e.code > 0 {\n    print(e)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "do {\n    try foo()\n} catch let e where e.code > 0 {\n    print(e)\n}"
 
 ===
 Catch with pattern matching a static member
@@ -380,4 +413,7 @@ source_file
 
 ---
 
-unsupported_node "func f() {\n    do {\n        try remove()\n    } catch CocoaError.fileNoSuchFile {\n    }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func f() {\n    do {\n        try remove()\n    } catch CocoaError.fileNoSuchFile {\n    }\n}"

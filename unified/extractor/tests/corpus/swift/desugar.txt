@@ -14,7 +14,10 @@ source_file
 
 ---
 
-unsupported_node "1 + 2"
+top_level
+  body:
+    block
+      stmt: unsupported_node "1 + 2"
 
 ===
 Another additive expression is desugared
@@ -32,4 +35,7 @@ source_file
 
 ---
 
-unsupported_node "foo + bar"
+top_level
+  body:
+    block
+      stmt: unsupported_node "foo + bar"

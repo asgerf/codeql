@@ -11,7 +11,10 @@ source_file
 
 ---
 
-unsupported_node "42"
+top_level
+  body:
+    block
+      stmt: int_literal "42"
 
 ===
 Negative integer literal
@@ -28,7 +31,10 @@ source_file
 
 ---
 
-unsupported_node "-7"
+top_level
+  body:
+    block
+      stmt: unsupported_node "-7"
 
 ===
 Floating-point literal
@@ -43,7 +49,10 @@ source_file
 
 ---
 
-unsupported_node "3.14"
+top_level
+  body:
+    block
+      stmt: float_literal "3.14"
 
 ===
 Boolean literals
@@ -60,7 +69,12 @@ source_file
 
 ---
 
-unsupported_node "true\nfalse"
+top_level
+  body:
+    block
+      stmt:
+        boolean_literal "true"
+        boolean_literal "false"
 
 ===
 Nil literal
@@ -74,7 +88,10 @@ source_file
 
 ---
 
-unsupported_node "nil"
+top_level
+  body:
+    block
+      stmt:
 
 ===
 String literal
@@ -90,7 +107,10 @@ source_file
 
 ---
 
-unsupported_node "\"hello\""
+top_level
+  body:
+    block
+      stmt: string_literal "\"hello\""
 
 ===
 String with interpolation
@@ -109,7 +129,10 @@ source_file
 
 ---
 
-unsupported_node "\"hello \\(name)\""
+top_level
+  body:
+    block
+      stmt: string_literal "\"hello \\(name)\""
 
 ===
 Hex / binary / octal integer literals
@@ -146,7 +169,13 @@ source_file
 
 ---
 
-unsupported_node "let hex = 0xFF\nlet bin = 0b1010\nlet oct = 0o77"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "let hex = 0xFF"
+        unsupported_node "let bin = 0b1010"
+        unsupported_node "let oct = 0o77"
 
 ===
 Float with exponent
@@ -167,7 +196,10 @@ source_file
 
 ---
 
-unsupported_node "let x = 1.5e-3"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = 1.5e-3"
 
 ===
 Hex floating-point literal
@@ -188,7 +220,10 @@ source_file
 
 ---
 
-unsupported_node "let x = 0xFp2"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = 0xFp2"
 
 ===
 Multi-line string literal
@@ -214,7 +249,10 @@ source_file
 
 ---
 
-unsupported_node "let s = \"\"\"\n  hi\n  there\n  \"\"\""
+top_level
+  body:
+    block
+      stmt: unsupported_node "let s = \"\"\"\n  hi\n  there\n  \"\"\""
 
 ===
 Raw string literal
@@ -237,7 +275,10 @@ source_file
 
 ---
 
-unsupported_node "let s = #\"hello \\(name)\"#"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let s = #\"hello \\(name)\"#"
 
 ===
 Negative float literal
@@ -272,4 +313,9 @@ source_file
 
 ---
 
-unsupported_node "let x = -3.14\nlet y = -1.5e-3"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "let x = -3.14"
+        unsupported_node "let y = -1.5e-3"

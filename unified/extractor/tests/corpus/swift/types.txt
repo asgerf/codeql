@@ -15,7 +15,10 @@ source_file
 
 ---
 
-unsupported_node "class Foo {}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Foo {}"
 
 ===
 Class with stored properties
@@ -61,7 +64,10 @@ source_file
 
 ---
 
-unsupported_node "class Point {\n  var x: Int\n  var y: Int\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Point {\n  var x: Int\n  var y: Int\n}"
 
 ===
 Class with initializer
@@ -120,7 +126,10 @@ source_file
 
 ---
 
-unsupported_node "class Point {\n  var x: Int\n  init(x: Int) {\n    self.x = x\n  }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Point {\n  var x: Int\n  init(x: Int) {\n    self.x = x\n  }\n}"
 
 ===
 Class with method
@@ -162,7 +171,10 @@ source_file
 
 ---
 
-unsupported_node "class Counter {\n  var n = 0\n  func bump() {\n    n += 1\n  }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Counter {\n  var n = 0\n  func bump() {\n    n += 1\n  }\n}"
 
 ===
 Class inheritance
@@ -185,7 +197,10 @@ source_file
 
 ---
 
-unsupported_node "class Dog: Animal {}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Dog: Animal {}"
 
 ===
 Struct
@@ -231,7 +246,10 @@ source_file
 
 ---
 
-unsupported_node "struct Point {\n  let x: Int\n  let y: Int\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "struct Point {\n  let x: Int\n  let y: Int\n}"
 
 ===
 Enum with cases
@@ -263,7 +281,10 @@ source_file
 
 ---
 
-unsupported_node "enum Direction {\n  case north\n  case south\n  case east\n  case west\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "enum Direction {\n  case north\n  case south\n  case east\n  case west\n}"
 
 ===
 Enum with associated values
@@ -303,7 +324,10 @@ source_file
 
 ---
 
-unsupported_node "enum Shape {\n  case circle(radius: Double)\n  case square(side: Double)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "enum Shape {\n  case circle(radius: Double)\n  case square(side: Double)\n}"
 
 ===
 Enum with external labels, defaults, and positional payloads
@@ -356,7 +380,10 @@ source_file
 
 ---
 
-unsupported_node "enum Event {\n  case named(label: Int = 0)\n  case external(_ x: String = \"hi\")\n  case positional(Bool)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "enum Event {\n  case named(label: Int = 0)\n  case external(_ x: String = \"hi\")\n  case positional(Bool)\n}"
 
 ===
 Protocol declaration
@@ -379,7 +406,10 @@ source_file
 
 ---
 
-unsupported_node "protocol Drawable {\n  func draw()\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "protocol Drawable {\n  func draw()\n}"
 
 ===
 Extension
@@ -420,7 +450,10 @@ source_file
 
 ---
 
-unsupported_node "extension Int {\n  func squared() -> Int { return self * self }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "extension Int {\n  func squared() -> Int { return self * self }\n}"
 
 ===
 Computed property
@@ -490,7 +523,10 @@ source_file
 
 ---
 
-unsupported_node "class Rect {\n  var w: Double\n  var h: Double\n  var area: Double {\n    return w * h\n  }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Rect {\n  var w: Double\n  var h: Double\n  var area: Double {\n    return w * h\n  }\n}"
 
 ===
 Property with getter and setter
@@ -552,7 +588,10 @@ source_file
 
 ---
 
-unsupported_node "class Box {\n  private var _v = 0\n  var v: Int {\n    get { return _v }\n    set { _v = newValue }\n  }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Box {\n  private var _v = 0\n  var v: Int {\n    get { return _v }\n    set { _v = newValue }\n  }\n}"
 
 ===
 Qualified type reference
@@ -580,7 +619,10 @@ source_file
 
 ---
 
-unsupported_node "let y: Swift.Int = 42"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let y: Swift.Int = 42"
 
 ===
 Nested generic type
@@ -627,7 +669,10 @@ source_file
 
 ---
 
-unsupported_node "let x: Array<Array<Int>> = [[1, 2], [3, 4]]"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x: Array<Array<Int>> = [[1, 2], [3, 4]]"
 
 ===
 Enum with method
@@ -668,7 +713,10 @@ source_file
 
 ---
 
-unsupported_node "enum E {\n  case a\n  case b\n  func describe() -> String { return \"x\" }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "enum E {\n  case a\n  case b\n  func describe() -> String { return \"x\" }\n}"
 
 ===
 Protocol with property requirement
@@ -719,7 +767,10 @@ source_file
 
 ---
 
-unsupported_node "protocol P {\n  var x: Int { get set }\n  var y: String { get }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "protocol P {\n  var x: Int { get set }\n  var y: String { get }\n}"
 
 ===
 Class with nested type
@@ -759,7 +810,10 @@ source_file
 
 ---
 
-unsupported_node "class Outer {\n  class Inner {\n    var x: Int\n  }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Outer {\n  class Inner {\n    var x: Int\n  }\n}"
 
 ===
 Class with typealias member
@@ -787,7 +841,10 @@ source_file
 
 ---
 
-unsupported_node "class C {\n  typealias T = Int\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class C {\n  typealias T = Int\n}"
 
 ===
 Static member access on a generic type
@@ -820,7 +877,10 @@ source_file
 
 ---
 
-unsupported_node "let n = MemoryLayout<Int>.size"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let n = MemoryLayout<Int>.size"
 
 ===
 Constructor inside conditional-compilation block at class scope
@@ -858,7 +918,14 @@ source_file
 
 ---
 
-unsupported_node "class C {\n#if DEBUG\n  init(x: Int) {}\n#endif\n}"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "class C {"
+        unsupported_node "#if DEBUG"
+        unsupported_node "init(x: Int) {}"
+        unsupported_node "#endif"
 
 ===
 Visibility and member modifiers on class-like declarations
@@ -912,7 +979,15 @@ source_file
 
 ---
 
-unsupported_node "public class C {}\nprivate struct S {}\ninternal enum E {}\nfileprivate final class F {}\nopen class O {}"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "public class C {}"
+        unsupported_node "private struct S {}"
+        unsupported_node "internal enum E {}"
+        unsupported_node "fileprivate final class F {}"
+        unsupported_node "open class O {}"
 
 ===
 Modifiers on members (methods and properties)
@@ -982,7 +1057,10 @@ source_file
 
 ---
 
-unsupported_node "class C {\n    public static var count: Int = 0\n    private let name: String = \"x\"\n    public func greet() {}\n    private static func help() {}\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class C {\n    public static var count: Int = 0\n    private let name: String = \"x\"\n    public func greet() {}\n    private static func help() {}\n}"
 
 ===
 Modifiers on init, deinit, subscript, typealias, protocol and enum entries
@@ -1118,7 +1196,14 @@ source_file
 
 ---
 
-unsupported_node "public typealias Name = String\n\npublic protocol P {\n    static func foo() -> Int\n    var x: Int { get }\n    associatedtype A\n    associatedtype B: Equatable\n}\n\nclass C {\n    public required init() {}\n    deinit {}\n    public subscript(i: Int) -> Int { return i }\n}\n\npublic enum E {\n    case a\n    case b(x: Int)\n    case c = 1\n}"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "public typealias Name = String"
+        unsupported_node "public protocol P {\n    static func foo() -> Int\n    var x: Int { get }\n    associatedtype A\n    associatedtype B: Equatable\n}"
+        unsupported_node "class C {\n    public required init() {}\n    deinit {}\n    public subscript(i: Int) -> Int { return i }\n}"
+        unsupported_node "public enum E {\n    case a\n    case b(x: Int)\n    case c = 1\n}"
 
 ===
 Override computed property
@@ -1169,7 +1254,10 @@ source_file
 
 ---
 
-unsupported_node "class A: B {\n  override var x: Int {\n    get { return _x }\n    set {}\n  }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class A: B {\n  override var x: Int {\n    get { return _x }\n    set {}\n  }\n}"
 
 ===
 Empty getter body
@@ -1211,7 +1299,10 @@ source_file
 
 ---
 
-unsupported_node "class C {\n  var y: Int {\n    get {}\n    set {}\n  }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class C {\n  var y: Int {\n    get {}\n    set {}\n  }\n}"
 
 ===
 Override stored property with empty didSet
@@ -1257,7 +1348,10 @@ source_file
 
 ---
 
-unsupported_node "class C {\n  @available(*, unavailable)\n  override var x: Int! {\n    didSet {}\n  }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class C {\n  @available(*, unavailable)\n  override var x: Int! {\n    didSet {}\n  }\n}"
 
 ===
 Typealias for labeled tuple type
@@ -1292,7 +1386,10 @@ source_file
 
 ---
 
-unsupported_node "typealias T = (a: A, b: B)"
+top_level
+  body:
+    block
+      stmt: unsupported_node "typealias T = (a: A, b: B)"
 
 ===
 Typealias for function type
@@ -1332,7 +1429,10 @@ source_file
 
 ---
 
-unsupported_node "typealias F = (Int, String) -> Bool"
+top_level
+  body:
+    block
+      stmt: unsupported_node "typealias F = (Int, String) -> Bool"
 
 ===
 Typealias for array of qualified type
@@ -1358,7 +1458,10 @@ source_file
 
 ---
 
-unsupported_node "typealias T = [A.B]"
+top_level
+  body:
+    block
+      stmt: unsupported_node "typealias T = [A.B]"
 
 ===
 Typealias for optional dictionary
@@ -1390,7 +1493,10 @@ source_file
 
 ---
 
-unsupported_node "typealias T = [A: B]?"
+top_level
+  body:
+    block
+      stmt: unsupported_node "typealias T = [A: B]?"
 
 ===
 Generic function with conformance constraint
@@ -1444,7 +1550,10 @@ source_file
 
 ---
 
-unsupported_node "func first<T: Equatable>(_ xs: [T]) -> T? {\n  return xs.first\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func first<T: Equatable>(_ xs: [T]) -> T? {\n  return xs.first\n}"
 
 ===
 Generic function with multiple constraints in where clause
@@ -1519,7 +1628,10 @@ source_file
 
 ---
 
-unsupported_node "func compare<T, U>(_ x: T, _ y: U) -> Bool where T: Equatable, T == U {\n  return x == y\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func compare<T, U>(_ x: T, _ y: U) -> Bool where T: Equatable, T == U {\n  return x == y\n}"
 
 ===
 Generic class with where clause
@@ -1567,7 +1679,10 @@ source_file
 
 ---
 
-unsupported_node "class Box<T> where T: Hashable {\n  let value: T\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Box<T> where T: Hashable {\n  let value: T\n}"
 
 ===
 Protocol with associated type and constraint
@@ -1602,7 +1717,10 @@ source_file
 
 ---
 
-unsupported_node "protocol Container where Element: Equatable {\n  associatedtype Element\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "protocol Container where Element: Equatable {\n  associatedtype Element\n}"
 
 ===
 Class with base class and protocols
@@ -1633,7 +1751,10 @@ source_file
 
 ---
 
-unsupported_node "class Dog: Animal, Pet, Trainable {}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Dog: Animal, Pet, Trainable {}"
 
 ===
 Struct conforming to protocol
@@ -1687,7 +1808,10 @@ source_file
 
 ---
 
-unsupported_node "struct Point: Equatable, Hashable {\n  let x: Int\n  let y: Int\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "struct Point: Equatable, Hashable {\n  let x: Int\n  let y: Int\n}"
 
 ===
 Enum with raw type
@@ -1720,7 +1844,10 @@ source_file
 
 ---
 
-unsupported_node "enum Color: String {\n  case red\n  case green\n  case blue\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "enum Color: String {\n  case red\n  case green\n  case blue\n}"
 
 ===
 Protocol with inherited protocols
@@ -1751,4 +1878,7 @@ source_file
 
 ---
 
-unsupported_node "protocol Drawable: Renderable, Identifiable {\n  func draw()\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "protocol Drawable: Renderable, Identifiable {\n  func draw()\n}"

@@ -17,7 +17,10 @@ source_file
 
 ---
 
-unsupported_node "let x = 0xFF"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = 0xFF"
 
 ===
 Octal literal
@@ -38,7 +41,10 @@ source_file
 
 ---
 
-unsupported_node "let x = 0o17"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = 0o17"
 
 ===
 Binary literal
@@ -59,7 +65,10 @@ source_file
 
 ---
 
-unsupported_node "let x = 0b1010"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = 0b1010"
 
 ===
 Real literal
@@ -80,7 +89,10 @@ source_file
 
 ---
 
-unsupported_node "let x = 3.14"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = 3.14"
 
 ===
 Boolean true
@@ -102,7 +114,10 @@ source_file
 
 ---
 
-unsupported_node "let x = true"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = true"
 
 ===
 Boolean false
@@ -124,7 +139,10 @@ source_file
 
 ---
 
-unsupported_node "let x = false"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = false"
 
 ===
 Nil literal
@@ -153,7 +171,10 @@ source_file
 
 ---
 
-unsupported_node "let x: Int? = nil"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x: Int? = nil"
 
 ===
 Multi-line string literal
@@ -178,7 +199,10 @@ source_file
 
 ---
 
-unsupported_node "let x = \"\"\"\nhello\n\"\"\""
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = \"\"\"\nhello\n\"\"\""
 
 ===
 Raw string literal
@@ -201,7 +225,10 @@ source_file
 
 ---
 
-unsupported_node "let x = #\"hello \\(name)\"#"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = #\"hello \\(name)\"#"
 
 ===
 Regex literal
@@ -222,7 +249,10 @@ source_file
 
 ---
 
-unsupported_node "let r = /a+b*/"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let r = /a+b*/"
 
 ===
 Self expression
@@ -242,7 +272,10 @@ source_file
 
 ---
 
-unsupported_node "self.x"
+top_level
+  body:
+    block
+      stmt: unsupported_node "self.x"
 
 ===
 Super member access
@@ -375,7 +408,31 @@ source_file
 
 ---
 
-unsupported_node "super.x\n\n===\nSuper method call\n===\n\nsuper.greet()\n\n===\nSuper method call with arguments\n===\n\nsuper.add(1, 2)\n\n===\nSuper initializer call\n===\n\nsuper.init(name: \"x\")\n\n===\nSuper chained member access\n===\n\nsuper.foo.bar\n\n===\nWildcard in let\n===\n\nlet _ = 1"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "super.x"
+        unsupported_node "==="
+        unsupported_node "Super"
+        unsupported_node "==="
+        unsupported_node "super.greet()"
+        unsupported_node "==="
+        unsupported_node "Super"
+        unsupported_node "==="
+        unsupported_node "super.add(1, 2)"
+        unsupported_node "==="
+        unsupported_node "initializer"
+        unsupported_node "==="
+        unsupported_node "super.init(name: \"x\")"
+        unsupported_node "==="
+        unsupported_node "Super"
+        unsupported_node "==="
+        unsupported_node "super.foo.bar"
+        unsupported_node "==="
+        unsupported_node "Wildcard"
+        unsupported_node "==="
+        unsupported_node "let _ = 1"
 
 ===
 As expression
@@ -404,7 +461,10 @@ source_file
 
 ---
 
-unsupported_node "let x = y as Int"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = y as Int"
 
 ===
 As? expression
@@ -433,7 +493,10 @@ source_file
 
 ---
 
-unsupported_node "let x = y as? Int"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = y as? Int"
 
 ===
 Is check expression
@@ -462,7 +525,10 @@ source_file
 
 ---
 
-unsupported_node "let b = y is Int"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let b = y is Int"
 
 ===
 Await expression
@@ -489,7 +555,10 @@ source_file
 
 ---
 
-unsupported_node "let x = await foo()"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = await foo()"
 
 ===
 Try expression bare
@@ -510,7 +579,10 @@ source_file
 
 ---
 
-unsupported_node "try foo()"
+top_level
+  body:
+    block
+      stmt: unsupported_node "try foo()"
 
 ===
 Try? expression bare
@@ -531,7 +603,10 @@ source_file
 
 ---
 
-unsupported_node "try? foo()"
+top_level
+  body:
+    block
+      stmt: unsupported_node "try? foo()"
 
 ===
 Bitwise and
@@ -556,7 +631,10 @@ source_file
 
 ---
 
-unsupported_node "let x = a & b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = a & b"
 
 ===
 Bitwise or
@@ -581,7 +659,10 @@ source_file
 
 ---
 
-unsupported_node "let x = a | b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = a | b"
 
 ===
 Bitwise xor
@@ -606,7 +687,10 @@ source_file
 
 ---
 
-unsupported_node "let x = a ^ b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = a ^ b"
 
 ===
 Left shift
@@ -631,7 +715,10 @@ source_file
 
 ---
 
-unsupported_node "let x = a << 2"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = a << 2"
 
 ===
 Postfix force unwrap
@@ -655,7 +742,10 @@ source_file
 
 ---
 
-unsupported_node "let x = y!"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = y!"
 
 ===
 Ternary expression
@@ -680,7 +770,10 @@ source_file
 
 ---
 
-unsupported_node "let x = c ? a : b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = c ? a : b"
 
 ===
 Switch statement
@@ -709,7 +802,10 @@ source_file
 
 ---
 
-unsupported_node "switch x {\ncase 1: y\ndefault: z\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "switch x {\ncase 1: y\ndefault: z\n}"
 
 ===
 Do-catch statement
@@ -743,7 +839,10 @@ source_file
 
 ---
 
-unsupported_node "do {\n  try foo()\n} catch {\n  bar()\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "do {\n  try foo()\n} catch {\n  bar()\n}"
 
 ===
 Throw statement
@@ -763,7 +862,12 @@ source_file
 
 ---
 
-unsupported_node "throw MyError.bad"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "throw"
+        unsupported_node "MyError.bad"
 
 ===
 Return statement
@@ -789,7 +893,10 @@ source_file
 
 ---
 
-unsupported_node "func f() -> Int { return 1 }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func f() -> Int { return 1 }"
 
 ===
 Break statement
@@ -809,7 +916,10 @@ source_file
 
 ---
 
-unsupported_node "while true { break }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "while true { break }"
 
 ===
 Continue statement
@@ -829,7 +939,10 @@ source_file
 
 ---
 
-unsupported_node "while true { continue }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "while true { continue }"
 
 ===
 Import declaration
@@ -846,7 +959,10 @@ source_file
 
 ---
 
-unsupported_node "import Foundation"
+top_level
+  body:
+    block
+      stmt: unsupported_node "import Foundation"
 
 ===
 Typealias declaration
@@ -867,7 +983,10 @@ source_file
 
 ---
 
-unsupported_node "typealias Number = Int"
+top_level
+  body:
+    block
+      stmt: unsupported_node "typealias Number = Int"
 
 ===
 Selector expression
@@ -890,7 +1009,10 @@ source_file
 
 ---
 
-unsupported_node "let s = #selector(foo)"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let s = #selector(foo)"
 
 ===
 KeyPath expression
@@ -918,7 +1040,10 @@ source_file
 
 ---
 
-unsupported_node "let kp = \\Person.name"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let kp = \\Person.name"
 
 ===
 Macro invocation
@@ -933,7 +1058,10 @@ source_file
 
 ---
 
-unsupported_node "#warning(\"oops\")"
+top_level
+  body:
+    block
+      stmt: unsupported_node "#warning(\"oops\")"
 
 ===
 Range half-open
@@ -958,7 +1086,10 @@ source_file
 
 ---
 
-unsupported_node "let r = 0..<10"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let r = 0..<10"
 
 ===
 Range closed
@@ -983,7 +1114,10 @@ source_file
 
 ---
 
-unsupported_node "let r = 0...10"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let r = 0...10"
 
 ===
 Open end range
@@ -1006,7 +1140,10 @@ source_file
 
 ---
 
-unsupported_node "let r = 0..."
+top_level
+  body:
+    block
+      stmt: unsupported_node "let r = 0..."
 
 ===
 Open start range
@@ -1029,7 +1166,10 @@ source_file
 
 ---
 
-unsupported_node "let r = ...10"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let r = ...10"
 
 ===
 Tuple expression
@@ -1054,7 +1194,10 @@ source_file
 
 ---
 
-unsupported_node "let t = (1, 2)"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let t = (1, 2)"
 
 ===
 Array type
@@ -1086,7 +1229,10 @@ source_file
 
 ---
 
-unsupported_node "let xs: [Int] = []"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let xs: [Int] = []"
 
 ===
 Dictionary type
@@ -1123,7 +1269,10 @@ source_file
 
 ---
 
-unsupported_node "let m: [String: Int] = [:]"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let m: [String: Int] = [:]"
 
 ===
 Optional type
@@ -1152,7 +1301,10 @@ source_file
 
 ---
 
-unsupported_node "let x: Int? = nil"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x: Int? = nil"
 
 ===
 Implicitly unwrapped type
@@ -1180,7 +1332,10 @@ source_file
 
 ---
 
-unsupported_node "var x: Int! = 1"
+top_level
+  body:
+    block
+      stmt: unsupported_node "var x: Int! = 1"
 
 ===
 Tuple type
@@ -1224,7 +1379,10 @@ source_file
 
 ---
 
-unsupported_node "let t: (Int, String) = (1, \"a\")"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let t: (Int, String) = (1, \"a\")"
 
 ===
 Function type
@@ -1272,7 +1430,10 @@ source_file
 
 ---
 
-unsupported_node "let f: (Int) -> Int = { x in x }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let f: (Int) -> Int = { x in x }"
 
 ===
 Generic user type
@@ -1305,7 +1466,10 @@ source_file
 
 ---
 
-unsupported_node "let xs: Array<Int> = []"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let xs: Array<Int> = []"
 
 ===
 Some opaque type
@@ -1332,7 +1496,10 @@ source_file
 
 ---
 
-unsupported_node "func f() -> some Equatable { return 1 }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func f() -> some Equatable { return 1 }"
 
 ===
 Any existential type
@@ -1360,7 +1527,10 @@ source_file
 
 ---
 
-unsupported_node "let x: any Equatable = 1"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x: any Equatable = 1"
 
 ===
 Attribute on declaration
@@ -1384,7 +1554,10 @@ source_file
 
 ---
 
-unsupported_node "@available(*, deprecated) func f() {}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "@available(*, deprecated) func f() {}"
 
 ===
 Visibility modifier
@@ -1405,7 +1578,10 @@ source_file
 
 ---
 
-unsupported_node "public class Foo {}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "public class Foo {}"
 
 ===
 Static modifier
@@ -1433,7 +1609,10 @@ source_file
 
 ---
 
-unsupported_node "class Foo { static let x = 1 }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Foo { static let x = 1 }"
 
 ===
 Deinit declaration
@@ -1455,7 +1634,10 @@ source_file
 
 ---
 
-unsupported_node "class Foo { deinit { } }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Foo { deinit { } }"
 
 ===
 Subscript declaration
@@ -1493,7 +1675,10 @@ source_file
 
 ---
 
-unsupported_node "class Foo {\n  subscript(i: Int) -> Int { return i }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Foo {\n  subscript(i: Int) -> Int { return i }\n}"
 
 ===
 Associatedtype declaration
@@ -1514,7 +1699,10 @@ source_file
 
 ---
 
-unsupported_node "protocol P { associatedtype T }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "protocol P { associatedtype T }"
 
 ===
 Operator declaration
@@ -1532,7 +1720,10 @@ source_file
 
 ---
 
-unsupported_node "infix operator +++ : AdditionPrecedence"
+top_level
+  body:
+    block
+      stmt: unsupported_node "infix operator +++ : AdditionPrecedence"
 
 ===
 Enum case with raw value
@@ -1558,7 +1749,10 @@ source_file
 
 ---
 
-unsupported_node "enum E: Int { case a = 1 }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "enum E: Int { case a = 1 }"
 
 ===
 Enum case with associated values
@@ -1589,7 +1783,10 @@ source_file
 
 ---
 
-unsupported_node "enum E { case some(Int, String) }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "enum E { case some(Int, String) }"
 
 ===
 Inheritance specifier
@@ -1612,7 +1809,10 @@ source_file
 
 ---
 
-unsupported_node "class Dog: Animal {}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "class Dog: Animal {}"
 
 ===
 Tuple destructuring
@@ -1640,4 +1840,7 @@ source_file
 
 ---
 
-unsupported_node "let (a, b) = (1, 2)"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let (a, b) = (1, 2)"

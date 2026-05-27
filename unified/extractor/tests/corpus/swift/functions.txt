@@ -25,7 +25,10 @@ source_file
 
 ---
 
-unsupported_node "func greet() {\n  print(\"hello\")\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func greet() {\n  print(\"hello\")\n}"
 
 ===
 Function with parameters and return type
@@ -73,7 +76,10 @@ source_file
 
 ---
 
-unsupported_node "func add(_ a: Int, _ b: Int) -> Int {\n  return a + b\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func add(_ a: Int, _ b: Int) -> Int {\n  return a + b\n}"
 
 ===
 Function with named parameters
@@ -108,7 +114,10 @@ source_file
 
 ---
 
-unsupported_node "func greet(person name: String) {\n  print(name)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func greet(person name: String) {\n  print(name)\n}"
 
 ===
 Function with mixed argument labels
@@ -200,7 +209,15 @@ source_file
 
 ---
 
-unsupported_node "func move(_ x: Int, to y: Int, by step: Int) {\n  print(x, y, step)\n}\n\n===\nFunction with default parameter value\n===\n\nfunc greet(name: String = \"world\") {\n  print(name)\n}"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "func move(_ x: Int, to y: Int, by step: Int) {\n  print(x, y, step)\n}"
+        unsupported_node "==="
+        unsupported_node "Function"
+        unsupported_node "==="
+        unsupported_node "func greet(name: String = \"world\") {\n  print(name)\n}"
 
 ===
 Variadic function
@@ -249,7 +266,10 @@ source_file
 
 ---
 
-unsupported_node "func sum(_ values: Int...) -> Int {\n  return values.reduce(0, +)\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func sum(_ values: Int...) -> Int {\n  return values.reduce(0, +)\n}"
 
 ===
 Function call
@@ -271,7 +291,10 @@ source_file
 
 ---
 
-unsupported_node "foo(1, 2)"
+top_level
+  body:
+    block
+      stmt: unsupported_node "foo(1, 2)"
 
 ===
 Function call with labelled arguments
@@ -296,7 +319,10 @@ source_file
 
 ---
 
-unsupported_node "greet(person: \"Bob\")"
+top_level
+  body:
+    block
+      stmt: unsupported_node "greet(person: \"Bob\")"
 
 ===
 Method call
@@ -320,7 +346,10 @@ source_file
 
 ---
 
-unsupported_node "list.append(1)"
+top_level
+  body:
+    block
+      stmt: unsupported_node "list.append(1)"
 
 ===
 Generic function
@@ -359,7 +388,10 @@ source_file
 
 ---
 
-unsupported_node "func identity<T>(_ x: T) -> T {\n  return x\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func identity<T>(_ x: T) -> T {\n  return x\n}"
 
 ===
 Function body that is a single bare literal
@@ -409,7 +441,13 @@ source_file
 
 ---
 
-unsupported_node "func always() -> Bool { false }\nfunc pi() -> Double { 3.14 }\nfunc none() -> Int? { nil }"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "func always() -> Bool { false }"
+        unsupported_node "func pi() -> Double { 3.14 }"
+        unsupported_node "func none() -> Int? { nil }"
 
 ===
 Function declaration modifiers
@@ -450,7 +488,13 @@ source_file
 
 ---
 
-unsupported_node "public func a() {}\nprivate static func b() {}\n@available(*, deprecated)\ninternal func c() {}"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "public func a() {}"
+        unsupported_node "private static func b() {}"
+        unsupported_node "@available(*, deprecated)\ninternal func c() {}"
 
 ===
 Function with operator name
@@ -499,4 +543,7 @@ source_file
 
 ---
 
-unsupported_node "struct S {\n    static func < (a: S, b: S) -> Bool { false }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "struct S {\n    static func < (a: S, b: S) -> Bool { false }\n}"

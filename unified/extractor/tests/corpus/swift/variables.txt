@@ -17,7 +17,10 @@ source_file
 
 ---
 
-unsupported_node "let x = 1"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = 1"
 
 ===
 Var binding
@@ -38,7 +41,10 @@ source_file
 
 ---
 
-unsupported_node "var x = 1"
+top_level
+  body:
+    block
+      stmt: unsupported_node "var x = 1"
 
 ===
 Let with type annotation
@@ -65,7 +71,10 @@ source_file
 
 ---
 
-unsupported_node "let x: Int = 1"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x: Int = 1"
 
 ===
 Var without initialiser
@@ -91,7 +100,10 @@ source_file
 
 ---
 
-unsupported_node "var x: Int"
+top_level
+  body:
+    block
+      stmt: unsupported_node "var x: Int"
 
 ===
 Tuple destructuring binding
@@ -115,7 +127,10 @@ source_file
 
 ---
 
-unsupported_node "let (a, b) = pair"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let (a, b) = pair"
 
 ===
 Multiple bindings on one line
@@ -140,7 +155,10 @@ source_file
 
 ---
 
-unsupported_node "let x = 1, y = 2"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = 1, y = 2"
 
 ===
 Assignment
@@ -160,7 +178,10 @@ source_file
 
 ---
 
-unsupported_node "x = 1"
+top_level
+  body:
+    block
+      stmt: unsupported_node "x = 1"
 
 ===
 Compound assignment
@@ -180,7 +201,10 @@ source_file
 
 ---
 
-unsupported_node "x += 1"
+top_level
+  body:
+    block
+      stmt: unsupported_node "x += 1"
 
 ===
 Discard underscore
@@ -204,7 +228,10 @@ source_file
 
 ---
 
-unsupported_node "_ = sideEffect()"
+top_level
+  body:
+    block
+      stmt: unsupported_node "_ = sideEffect()"
 
 ===
 Backtick identifier
@@ -225,7 +252,10 @@ source_file
 
 ---
 
-unsupported_node "let `class` = 1"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let `class` = 1"
 
 ===
 Underscore in identifier names
@@ -254,7 +284,12 @@ source_file
 
 ---
 
-unsupported_node "let _foo = 1\nlet my_var = 2"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "let _foo = 1"
+        unsupported_node "let my_var = 2"
 
 ===
 Variable initialized with if-expression
@@ -284,7 +319,10 @@ source_file
 
 ---
 
-unsupported_node "let x = if cond { 1 } else { 2 }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = if cond { 1 } else { 2 }"
 
 ===
 Variable initialized with switch-expression
@@ -322,7 +360,10 @@ source_file
 
 ---
 
-unsupported_node "let label = switch state {\ncase .on: \"on\"\ndefault: \"off\"\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let label = switch state {\ncase .on: \"on\"\ndefault: \"off\"\n}"
 
 ===
 Assignment with if-expression value
@@ -366,7 +407,10 @@ source_file
 
 ---
 
-unsupported_node "func f() {\n    var x = 0\n    x = if cond { 1 } else { 2 }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "func f() {\n    var x = 0\n    x = if cond { 1 } else { 2 }\n}"
 
 ===
 Top-level computed property
@@ -399,7 +443,10 @@ source_file
 
 ---
 
-unsupported_node "var doubled: Int { x * 2 }"
+top_level
+  body:
+    block
+      stmt: unsupported_node "var doubled: Int { x * 2 }"
 
 ===
 Stored property with willSet and didSet observers
@@ -446,4 +493,7 @@ source_file
 
 ---
 
-unsupported_node "var counter: Int = 0 {\n  willSet { print(newValue) }\n  didSet { print(oldValue) }\n}"
+top_level
+  body:
+    block
+      stmt: unsupported_node "var counter: Int = 0 {\n  willSet { print(newValue) }\n  didSet { print(oldValue) }\n}"

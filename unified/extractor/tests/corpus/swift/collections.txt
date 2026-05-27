@@ -22,7 +22,10 @@ source_file
 
 ---
 
-unsupported_node "let xs = [1, 2, 3]"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let xs = [1, 2, 3]"
 
 ===
 Empty array literal with type
@@ -54,7 +57,10 @@ source_file
 
 ---
 
-unsupported_node "let xs: [Int] = []"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let xs: [Int] = []"
 
 ===
 Dictionary literal
@@ -84,7 +90,10 @@ source_file
 
 ---
 
-unsupported_node "let d = [\"a\": 1, \"b\": 2]"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let d = [\"a\": 1, \"b\": 2]"
 
 ===
 Set literal
@@ -121,7 +130,10 @@ source_file
 
 ---
 
-unsupported_node "let s: Set<Int> = [1, 2, 3]"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let s: Set<Int> = [1, 2, 3]"
 
 ===
 Tuple literal
@@ -148,7 +160,10 @@ source_file
 
 ---
 
-unsupported_node "let t = (1, \"two\", 3.0)"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let t = (1, \"two\", 3.0)"
 
 ===
 Subscript access
@@ -181,7 +196,10 @@ source_file
 
 ---
 
-unsupported_node "// TODO: tree-sitter-swift parses `xs[0]` as a call_expression (same shape\n// as `xs(0)`), so the mapping currently produces a call_expr. Update the\n// parser / add a separate subscript_expr node and remap when fixed.\nlet first = xs[0]"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let first = xs[0]"
 
 ===
 Dictionary subscript
@@ -214,7 +232,10 @@ source_file
 
 ---
 
-unsupported_node "// TODO: same parser issue as the array subscript case above —\n// `d[\"key\"]` is parsed as `call_expression(d, (\"key\"))`.\nlet v = d[\"key\"]"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let v = d[\"key\"]"
 
 ===
 Tuple member access
@@ -240,4 +261,7 @@ source_file
 
 ---
 
-unsupported_node "let n = t.0"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let n = t.0"

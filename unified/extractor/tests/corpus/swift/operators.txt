@@ -14,7 +14,10 @@ source_file
 
 ---
 
-unsupported_node "a + b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "a + b"
 
 ===
 Subtraction
@@ -32,7 +35,10 @@ source_file
 
 ---
 
-unsupported_node "a - b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "a - b"
 
 ===
 Multiplication
@@ -50,7 +56,10 @@ source_file
 
 ---
 
-unsupported_node "a * b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "a * b"
 
 ===
 Division
@@ -68,7 +77,10 @@ source_file
 
 ---
 
-unsupported_node "a / b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "a / b"
 
 ===
 Operator precedence: addition and multiplication
@@ -90,7 +102,10 @@ source_file
 
 ---
 
-unsupported_node "a + b * c"
+top_level
+  body:
+    block
+      stmt: unsupported_node "a + b * c"
 
 ===
 Parenthesised expression
@@ -114,7 +129,10 @@ source_file
 
 ---
 
-unsupported_node "(a + b) * c"
+top_level
+  body:
+    block
+      stmt: unsupported_node "(a + b) * c"
 
 ===
 Comparison
@@ -132,7 +150,10 @@ source_file
 
 ---
 
-unsupported_node "a < b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "a < b"
 
 ===
 Equality
@@ -150,7 +171,10 @@ source_file
 
 ---
 
-unsupported_node "a == b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "a == b"
 
 ===
 Logical and
@@ -168,7 +192,10 @@ source_file
 
 ---
 
-unsupported_node "a && b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "a && b"
 
 ===
 Logical or
@@ -186,7 +213,10 @@ source_file
 
 ---
 
-unsupported_node "a || b"
+top_level
+  body:
+    block
+      stmt: unsupported_node "a || b"
 
 ===
 Logical not
@@ -203,7 +233,10 @@ source_file
 
 ---
 
-unsupported_node "!a"
+top_level
+  body:
+    block
+      stmt: unsupported_node "!a"
 
 ===
 Range operator
@@ -221,7 +254,10 @@ source_file
 
 ---
 
-unsupported_node "1...10"
+top_level
+  body:
+    block
+      stmt: unsupported_node "1...10"
 
 ===
 Identity operators (=== and !==)
@@ -258,7 +294,12 @@ source_file
 
 ---
 
-unsupported_node "let same = a === b\nlet diff = a !== b"
+top_level
+  body:
+    block
+      stmt:
+        unsupported_node "let same = a === b"
+        unsupported_node "let diff = a !== b"
 
 ===
 Chained method calls
@@ -295,7 +336,10 @@ source_file
 
 ---
 
-unsupported_node "let x = a.foo().bar()"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = a.foo().bar()"
 
 ===
 Chained member access
@@ -326,7 +370,10 @@ source_file
 
 ---
 
-unsupported_node "let x = a.b.c"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = a.b.c"
 
 ===
 Chained casts
@@ -363,7 +410,10 @@ source_file
 
 ---
 
-unsupported_node "let x = v as? Base as? Sub"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let x = v as? Base as? Sub"
 
 ===
 Inout expression
@@ -391,7 +441,10 @@ source_file
 
 ---
 
-unsupported_node "swap(&x, &y)"
+top_level
+  body:
+    block
+      stmt: unsupported_node "swap(&x, &y)"
 
 ===
 Function reference
@@ -424,4 +477,7 @@ source_file
 
 ---
 
-unsupported_node "let f = String.init(describing:)"
+top_level
+  body:
+    block
+      stmt: unsupported_node "let f = String.init(describing:)"
