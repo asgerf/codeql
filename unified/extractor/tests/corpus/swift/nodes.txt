@@ -1153,7 +1153,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "while true { break }"
+      stmt:
+        while_stmt
+          body:
+            block
+              stmt: return_expr "break"
+          condition: boolean_literal "true"
 
 ===
 Continue statement
@@ -1176,7 +1181,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "while true { continue }"
+      stmt:
+        while_stmt
+          body:
+            block
+              stmt: return_expr "continue"
+          condition: boolean_literal "true"
 
 ===
 Import declaration

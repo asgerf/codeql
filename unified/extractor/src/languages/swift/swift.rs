@@ -305,6 +305,47 @@ fn translation_rules() -> Vec<yeast::Rule> {
         ),
         // If-condition — unwrap (pass through the inner expression/pattern)
         rule!((if_condition (_) @inner) => {inner}),
+        // ---- Loops ----
+        // For-in loop with where clause
+        rule!(
+            (for_statement
+                item: (_) @pat
+                collection: (_) @iter
+                (where_clause (where_keyword) (_) @guard)
+                (statements (_)* @body))
+            =>
+            (for_each_stmt
+                pattern: {pat}
+                iterable: {iter}
+                guard: {guard}
+                body: (block stmt: {..body}))
+        ),
+        // For-in loop (no where clause)
+        rule!(
+            (for_statement
+                item: (_) @pat
+                collection: (_) @iter
+                (statements (_)* @body))
+            =>
+            (for_each_stmt
+                pattern: {pat}
+                iterable: {iter}
+                body: (block stmt: {..body}))
+        ),
+        // While loop
+        rule!(
+            (while_statement condition: (_) @cond (statements (_)* @body))
+            =>
+            (while_stmt condition: {cond} body: (block stmt: {..body}))
+        ),
+        // Repeat-while loop
+        rule!(
+            (repeat_while_statement condition: (_) @cond (statements (_)* @body))
+            =>
+            (do_while_stmt condition: {cond} body: (block stmt: {..body}))
+        ),
+        // Statement label
+        rule!((statement_label) @lbl => (unsupported_node)),
         // ---- Fallbacks ----
         rule!(
             (_)
