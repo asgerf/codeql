@@ -622,7 +622,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let y: Swift.Int = 42"
+      stmt:
+        variable_declaration
+          value: int_literal "42"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "y"
 
 ===
 Nested generic type
@@ -672,7 +678,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x: Array<Array<Int>> = [[1, 2], [3, 4]]"
+      stmt:
+        variable_declaration
+          value: unsupported_node "[[1, 2], [3, 4]]"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Enum with method
@@ -880,7 +892,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let n = MemoryLayout<Int>.size"
+      stmt:
+        variable_declaration
+          value: unsupported_node "MemoryLayout<Int>.size"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "n"
 
 ===
 Constructor inside conditional-compilation block at class scope

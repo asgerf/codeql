@@ -401,8 +401,34 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "let same = a === b"
-        unsupported_node "let diff = a !== b"
+        variable_declaration
+          value:
+            binary_expr
+              operator: operator "==="
+              left:
+                name_expr
+                  identifier: identifier "a"
+              right:
+                name_expr
+                  identifier: identifier "b"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "same"
+        variable_declaration
+          value:
+            binary_expr
+              operator: operator "!=="
+              left:
+                name_expr
+                  identifier: identifier "a"
+              right:
+                name_expr
+                  identifier: identifier "b"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "diff"
 
 ===
 Chained method calls
@@ -442,7 +468,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = a.foo().bar()"
+      stmt:
+        variable_declaration
+          value: unsupported_node "a.foo().bar()"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Chained member access
@@ -476,7 +508,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = a.b.c"
+      stmt:
+        variable_declaration
+          value: unsupported_node "a.b.c"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Chained casts
@@ -516,7 +554,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = v as? Base as? Sub"
+      stmt:
+        variable_declaration
+          value: unsupported_node "v as? Base as? Sub"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Inout expression
@@ -583,4 +627,10 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let f = String.init(describing:)"
+      stmt:
+        variable_declaration
+          value: unsupported_node "String.init(describing:)"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "f"

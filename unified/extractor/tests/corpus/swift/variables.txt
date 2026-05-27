@@ -20,7 +20,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = 1"
+      stmt:
+        variable_declaration
+          value: int_literal "1"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Var binding
@@ -44,7 +50,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "var x = 1"
+      stmt:
+        variable_declaration
+          value: int_literal "1"
+          modifier: modifier "var"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Let with type annotation
@@ -74,7 +86,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x: Int = 1"
+      stmt:
+        variable_declaration
+          value: int_literal "1"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Var without initialiser
@@ -103,7 +121,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "var x: Int"
+      stmt:
+        variable_declaration
+          modifier: modifier "var"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Tuple destructuring binding
@@ -158,7 +181,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = 1, y = 2"
+      stmt:
+        variable_declaration
+          value: int_literal "1"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Assignment
@@ -181,7 +210,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "x = 1"
+      stmt:
+        assign_expr
+          target:
+            name_expr
+              identifier: identifier "x"
+          value: int_literal "1"
 
 ===
 Compound assignment
@@ -204,7 +238,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "x += 1"
+      stmt:
+        compound_assign_expr
+          operator: operator "+="
+          target:
+            name_expr
+              identifier: identifier "x"
+          value: int_literal "1"
 
 ===
 Discard underscore
@@ -231,7 +271,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "_ = sideEffect()"
+      stmt:
+        assign_expr
+          target:
+            name_expr
+              identifier: identifier "_"
+          value: unsupported_node "sideEffect()"
 
 ===
 Backtick identifier
@@ -255,7 +300,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let `class` = 1"
+      stmt:
+        variable_declaration
+          value: int_literal "1"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "`class`"
 
 ===
 Underscore in identifier names
@@ -288,8 +339,18 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "let _foo = 1"
-        unsupported_node "let my_var = 2"
+        variable_declaration
+          value: int_literal "1"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "_foo"
+        variable_declaration
+          value: int_literal "2"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "my_var"
 
 ===
 Variable initialized with if-expression
@@ -322,7 +383,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = if cond { 1 } else { 2 }"
+      stmt:
+        variable_declaration
+          value: unsupported_node "if cond { 1 } else { 2 }"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Variable initialized with switch-expression
@@ -363,7 +430,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let label = switch state {\ncase .on: \"on\"\ndefault: \"off\"\n}"
+      stmt:
+        variable_declaration
+          value: unsupported_node "switch state {\ncase .on: \"on\"\ndefault: \"off\"\n}"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "label"
 
 ===
 Assignment with if-expression value
@@ -446,7 +519,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "var doubled: Int { x * 2 }"
+      stmt:
+        variable_declaration
+          modifier: modifier "var"
+          pattern:
+            name_pattern
+              identifier: identifier "doubled"
 
 ===
 Stored property with willSet and didSet observers
@@ -496,4 +574,10 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "var counter: Int = 0 {\n  willSet { print(newValue) }\n  didSet { print(oldValue) }\n}"
+      stmt:
+        variable_declaration
+          value: int_literal "0"
+          modifier: modifier "var"
+          pattern:
+            name_pattern
+              identifier: identifier "counter"

@@ -176,9 +176,24 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "let hex = 0xFF"
-        unsupported_node "let bin = 0b1010"
-        unsupported_node "let oct = 0o77"
+        variable_declaration
+          value: int_literal "0xFF"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "hex"
+        variable_declaration
+          value: int_literal "0b1010"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "bin"
+        variable_declaration
+          value: int_literal "0o77"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "oct"
 
 ===
 Float with exponent
@@ -202,7 +217,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = 1.5e-3"
+      stmt:
+        variable_declaration
+          value: float_literal "1.5e-3"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Hex floating-point literal
@@ -226,7 +247,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = 0xFp2"
+      stmt:
+        variable_declaration
+          value: float_literal "0xFp2"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Multi-line string literal
@@ -255,7 +282,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let s = \"\"\"\n  hi\n  there\n  \"\"\""
+      stmt:
+        variable_declaration
+          value: string_literal "\"\"\"\n  hi\n  there\n  \"\"\""
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "s"
 
 ===
 Raw string literal
@@ -281,7 +314,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let s = #\"hello \\(name)\"#"
+      stmt:
+        variable_declaration
+          value: string_literal "#\"hello \\(name)\"#"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "s"
 
 ===
 Negative float literal
@@ -320,5 +359,21 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "let x = -3.14"
-        unsupported_node "let y = -1.5e-3"
+        variable_declaration
+          value:
+            unary_expr
+              operator: operator "-"
+              operand: float_literal "3.14"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
+        variable_declaration
+          value:
+            unary_expr
+              operator: operator "-"
+              operand: float_literal "1.5e-3"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "y"

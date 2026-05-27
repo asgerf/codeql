@@ -28,7 +28,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x: Int? = nil"
+      stmt:
+        variable_declaration
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Optional chaining
@@ -65,7 +70,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let n = obj?.foo?.bar"
+      stmt:
+        variable_declaration
+          value: unsupported_node "obj?.foo?.bar"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "n"
 
 ===
 Force unwrap
@@ -92,7 +103,18 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let n = opt!"
+      stmt:
+        variable_declaration
+          value:
+            unary_expr
+              operator: operator "!"
+              operand:
+                name_expr
+                  identifier: identifier "opt"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "n"
 
 ===
 Nil-coalescing
@@ -119,7 +141,19 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let n = opt ?? 0"
+      stmt:
+        variable_declaration
+          value:
+            binary_expr
+              operator: operator "??"
+              left:
+                name_expr
+                  identifier: identifier "opt"
+              right: int_literal "0"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "n"
 
 ===
 Throwing function
@@ -222,7 +256,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let result = try? foo()"
+      stmt:
+        variable_declaration
+          value: unsupported_node "try? foo()"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "result"
 
 ===
 Try! expression
@@ -253,7 +293,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let result = try! foo()"
+      stmt:
+        variable_declaration
+          value: unsupported_node "try! foo()"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "result"
 
 ===
 Double optional type
@@ -285,7 +331,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x: Int?? = 42"
+      stmt:
+        variable_declaration
+          value: int_literal "42"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Implicitly unwrapped optional type
@@ -318,7 +370,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let y: String! = \"hello\""
+      stmt:
+        variable_declaration
+          value: string_literal "\"hello\""
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "y"
 
 ===
 Catch with where clause

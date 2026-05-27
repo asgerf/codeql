@@ -43,6 +43,51 @@ fn translation_rules() -> Vec<yeast::Rule> {
         // Parenthesised single-value tuple is a grouping expression; pass through.
         // Multi-value tuples become tuple_expr.
         rule!((tuple_expression value: (_)* @v) => (tuple_expr element: {..v})),
+        // ---- Variables ----
+        // Plain assignment: `x = expr`
+        rule!(
+            (assignment operator: "=" target: (directly_assignable_expression (_) @target) result: (_) @value)
+            =>
+            (assign_expr target: {target} value: {value})
+        ),
+        // Compound assignment: `x += expr` etc.
+        rule!(
+            (assignment operator: _ @op target: (directly_assignable_expression (_) @target) result: (_) @value)
+            =>
+            (compound_assign_expr target: {target} operator: (operator #{op}) value: {value})
+        ),
+        // Property declaration (let/var binding) with value
+        rule!(
+            (property_declaration
+                (value_binding_pattern mutability: _ @binding_kind)
+                name: (pattern bound_identifier: (_) @name)
+                value: (_) @val)
+            =>
+            (variable_declaration
+                modifier: (modifier #{binding_kind})
+                pattern: (name_pattern identifier: (identifier #{name}))
+                value: {val})
+        ),
+        // Property declaration (let/var binding) without value (type-only decl)
+        rule!(
+            (property_declaration
+                (value_binding_pattern mutability: _ @binding_kind)
+                name: (pattern bound_identifier: (_) @name))
+            =>
+            (variable_declaration
+                modifier: (modifier #{binding_kind})
+                pattern: (name_pattern identifier: (identifier #{name})))
+        ),
+        // Unwrap `type` wrapper node
+        rule!((type name: (_) @inner) => {inner}),
+        // User type → named_type_expr
+        rule!((user_type (type_identifier) @name) => (named_type_expr name: (identifier #{name}))),
+        // `directly_assignable_expression` is just a wrapper; unwrap it
+        rule!((directly_assignable_expression (_) @inner) => {inner}),
+        // Pattern with bound_identifier → name_pattern
+        rule!((pattern bound_identifier: (_) @name) => (name_pattern identifier: (identifier #{name}))),
+        // Tuple pattern (destructuring)
+        rule!((pattern (pattern)* @elems) => (tuple_pattern element: {..elems})),
         // ---- Fallbacks ----
         rule!(
             (_)

@@ -20,7 +20,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = 0xFF"
+      stmt:
+        variable_declaration
+          value: int_literal "0xFF"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Octal literal
@@ -44,7 +50,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = 0o17"
+      stmt:
+        variable_declaration
+          value: int_literal "0o17"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Binary literal
@@ -68,7 +80,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = 0b1010"
+      stmt:
+        variable_declaration
+          value: int_literal "0b1010"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Real literal
@@ -92,7 +110,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = 3.14"
+      stmt:
+        variable_declaration
+          value: float_literal "3.14"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Boolean true
@@ -117,7 +141,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = true"
+      stmt:
+        variable_declaration
+          value: boolean_literal "true"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Boolean false
@@ -142,7 +172,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = false"
+      stmt:
+        variable_declaration
+          value: boolean_literal "false"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Nil literal
@@ -174,7 +210,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x: Int? = nil"
+      stmt:
+        variable_declaration
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Multi-line string literal
@@ -202,7 +243,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = \"\"\"\nhello\n\"\"\""
+      stmt:
+        variable_declaration
+          value: string_literal "\"\"\"\nhello\n\"\"\""
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Raw string literal
@@ -228,7 +275,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = #\"hello \\(name)\"#"
+      stmt:
+        variable_declaration
+          value: string_literal "#\"hello \\(name)\"#"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Regex literal
@@ -252,7 +305,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let r = /a+b*/"
+      stmt:
+        variable_declaration
+          value: regex_literal "/a+b*/"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "r"
 
 ===
 Self expression
@@ -469,7 +528,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = y as Int"
+      stmt:
+        variable_declaration
+          value: unsupported_node "y as Int"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 As? expression
@@ -501,7 +566,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = y as? Int"
+      stmt:
+        variable_declaration
+          value: unsupported_node "y as? Int"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Is check expression
@@ -533,7 +604,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let b = y is Int"
+      stmt:
+        variable_declaration
+          value: unsupported_node "y is Int"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "b"
 
 ===
 Await expression
@@ -563,7 +640,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = await foo()"
+      stmt:
+        variable_declaration
+          value: unsupported_node "await foo()"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Try expression bare
@@ -639,7 +722,21 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = a & b"
+      stmt:
+        variable_declaration
+          value:
+            binary_expr
+              operator: operator "&"
+              left:
+                name_expr
+                  identifier: identifier "a"
+              right:
+                name_expr
+                  identifier: identifier "b"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Bitwise or
@@ -667,7 +764,21 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = a | b"
+      stmt:
+        variable_declaration
+          value:
+            binary_expr
+              operator: operator "|"
+              left:
+                name_expr
+                  identifier: identifier "a"
+              right:
+                name_expr
+                  identifier: identifier "b"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Bitwise xor
@@ -695,7 +806,21 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = a ^ b"
+      stmt:
+        variable_declaration
+          value:
+            binary_expr
+              operator: operator "^"
+              left:
+                name_expr
+                  identifier: identifier "a"
+              right:
+                name_expr
+                  identifier: identifier "b"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Left shift
@@ -723,7 +848,19 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = a << 2"
+      stmt:
+        variable_declaration
+          value:
+            binary_expr
+              operator: operator "<<"
+              left:
+                name_expr
+                  identifier: identifier "a"
+              right: int_literal "2"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Postfix force unwrap
@@ -750,7 +887,18 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = y!"
+      stmt:
+        variable_declaration
+          value:
+            unary_expr
+              operator: operator "!"
+              operand:
+                name_expr
+                  identifier: identifier "y"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Ternary expression
@@ -778,7 +926,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x = c ? a : b"
+      stmt:
+        variable_declaration
+          value: unsupported_node "c ? a : b"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Switch statement
@@ -1017,7 +1171,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let s = #selector(foo)"
+      stmt:
+        variable_declaration
+          value: unsupported_node "#selector(foo)"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "s"
 
 ===
 KeyPath expression
@@ -1048,7 +1208,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let kp = \\Person.name"
+      stmt:
+        variable_declaration
+          value: unsupported_node "\\Person.name"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "kp"
 
 ===
 Macro invocation
@@ -1094,7 +1260,17 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let r = 0..<10"
+      stmt:
+        variable_declaration
+          value:
+            binary_expr
+              operator: operator "..<"
+              left: int_literal "0"
+              right: int_literal "10"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "r"
 
 ===
 Range closed
@@ -1122,7 +1298,17 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let r = 0...10"
+      stmt:
+        variable_declaration
+          value:
+            binary_expr
+              operator: operator "..."
+              left: int_literal "0"
+              right: int_literal "10"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "r"
 
 ===
 Open end range
@@ -1148,7 +1334,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let r = 0..."
+      stmt:
+        variable_declaration
+          value: unsupported_node "0..."
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "r"
 
 ===
 Open start range
@@ -1174,7 +1366,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let r = ...10"
+      stmt:
+        variable_declaration
+          value: unsupported_node "...10"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "r"
 
 ===
 Tuple expression
@@ -1202,7 +1400,17 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let t = (1, 2)"
+      stmt:
+        variable_declaration
+          value:
+            tuple_expr
+              element:
+                int_literal "1"
+                int_literal "2"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "t"
 
 ===
 Array type
@@ -1237,7 +1445,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let xs: [Int] = []"
+      stmt:
+        variable_declaration
+          value: unsupported_node "[]"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "xs"
 
 ===
 Dictionary type
@@ -1277,7 +1491,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let m: [String: Int] = [:]"
+      stmt:
+        variable_declaration
+          value: unsupported_node "[:]"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "m"
 
 ===
 Optional type
@@ -1309,7 +1529,12 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x: Int? = nil"
+      stmt:
+        variable_declaration
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Implicitly unwrapped type
@@ -1340,7 +1565,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "var x: Int! = 1"
+      stmt:
+        variable_declaration
+          value: int_literal "1"
+          modifier: modifier "var"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Tuple type
@@ -1387,7 +1618,17 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let t: (Int, String) = (1, \"a\")"
+      stmt:
+        variable_declaration
+          value:
+            tuple_expr
+              element:
+                int_literal "1"
+                string_literal "\"a\""
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "t"
 
 ===
 Function type
@@ -1438,7 +1679,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let f: (Int) -> Int = { x in x }"
+      stmt:
+        variable_declaration
+          value: unsupported_node "{ x in x }"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "f"
 
 ===
 Generic user type
@@ -1474,7 +1721,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let xs: Array<Int> = []"
+      stmt:
+        variable_declaration
+          value: unsupported_node "[]"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "xs"
 
 ===
 Some opaque type
@@ -1535,7 +1788,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let x: any Equatable = 1"
+      stmt:
+        variable_declaration
+          value: int_literal "1"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "x"
 
 ===
 Attribute on declaration

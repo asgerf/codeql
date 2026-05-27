@@ -25,7 +25,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let xs = [1, 2, 3]"
+      stmt:
+        variable_declaration
+          value: unsupported_node "[1, 2, 3]"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "xs"
 
 ===
 Empty array literal with type
@@ -60,7 +66,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let xs: [Int] = []"
+      stmt:
+        variable_declaration
+          value: unsupported_node "[]"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "xs"
 
 ===
 Dictionary literal
@@ -93,7 +105,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let d = [\"a\": 1, \"b\": 2]"
+      stmt:
+        variable_declaration
+          value: unsupported_node "[\"a\": 1, \"b\": 2]"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "d"
 
 ===
 Set literal
@@ -133,7 +151,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let s: Set<Int> = [1, 2, 3]"
+      stmt:
+        variable_declaration
+          value: unsupported_node "[1, 2, 3]"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "s"
 
 ===
 Tuple literal
@@ -163,7 +187,18 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let t = (1, \"two\", 3.0)"
+      stmt:
+        variable_declaration
+          value:
+            tuple_expr
+              element:
+                int_literal "1"
+                string_literal "\"two\""
+                float_literal "3.0"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "t"
 
 ===
 Subscript access
@@ -199,7 +234,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let first = xs[0]"
+      stmt:
+        variable_declaration
+          value: unsupported_node "xs[0]"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "first"
 
 ===
 Dictionary subscript
@@ -235,7 +276,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let v = d[\"key\"]"
+      stmt:
+        variable_declaration
+          value: unsupported_node "d[\"key\"]"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "v"
 
 ===
 Tuple member access
@@ -264,4 +311,10 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "let n = t.0"
+      stmt:
+        variable_declaration
+          value: unsupported_node "t.0"
+          modifier: modifier "let"
+          pattern:
+            name_pattern
+              identifier: identifier "n"
