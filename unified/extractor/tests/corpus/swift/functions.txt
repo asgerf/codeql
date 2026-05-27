@@ -215,7 +215,8 @@ top_level
       stmt:
         unsupported_node "func move(_ x: Int, to y: Int, by step: Int) {\n  print(x, y, step)\n}"
         unsupported_node "==="
-        unsupported_node "Function"
+        name_expr
+          identifier: identifier "Function"
         unsupported_node "==="
         unsupported_node "func greet(name: String = \"world\") {\n  print(name)\n}"
 

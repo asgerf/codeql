@@ -414,23 +414,28 @@ top_level
       stmt:
         unsupported_node "super.x"
         unsupported_node "==="
-        unsupported_node "Super"
+        name_expr
+          identifier: identifier "Super"
         unsupported_node "==="
         unsupported_node "super.greet()"
         unsupported_node "==="
-        unsupported_node "Super"
+        name_expr
+          identifier: identifier "Super"
         unsupported_node "==="
         unsupported_node "super.add(1, 2)"
         unsupported_node "==="
-        unsupported_node "initializer"
+        name_expr
+          identifier: identifier "initializer"
         unsupported_node "==="
         unsupported_node "super.init(name: \"x\")"
         unsupported_node "==="
-        unsupported_node "Super"
+        name_expr
+          identifier: identifier "Super"
         unsupported_node "==="
         unsupported_node "super.foo.bar"
         unsupported_node "==="
-        unsupported_node "Wildcard"
+        name_expr
+          identifier: identifier "Wildcard"
         unsupported_node "==="
         unsupported_node "let _ = 1"
 

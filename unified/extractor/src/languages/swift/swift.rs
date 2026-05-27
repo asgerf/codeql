@@ -22,6 +22,27 @@ fn translation_rules() -> Vec<yeast::Rule> {
         rule!((multi_line_string_literal) => (string_literal)),
         rule!((raw_string_literal) => (string_literal)),
         rule!((regex_literal) => (regex_literal)),
+        // ---- Names ----
+        rule!((simple_identifier) @id => (name_expr identifier: (identifier #{id}))),
+        // ---- Operators ----
+        // All binary operators share the lhs/op/rhs shape.
+        rule!((additive_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        rule!((multiplicative_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        rule!((comparison_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        rule!((equality_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        rule!((conjunction_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        rule!((disjunction_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        rule!((infix_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        rule!((range_expression start: (_) @l op: _ @op end: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        rule!((bitwise_operation lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        rule!((nil_coalescing_expression value: (_) @l if_nil: (_) @r) => (binary_expr left: {l} operator: (operator "??") right: {r})),
+        // Prefix unary operators
+        rule!((prefix_expression operation: _ @op target: (_) @operand) => (unary_expr operator: (operator #{op}) operand: {operand})),
+        // Postfix unary operators
+        rule!((postfix_expression operation: _ @op target: (_) @operand) => (unary_expr operator: (operator #{op}) operand: {operand})),
+        // Parenthesised single-value tuple is a grouping expression; pass through.
+        // Multi-value tuples become tuple_expr.
+        rule!((tuple_expression value: (_)* @v) => (tuple_expr element: {..v})),
         // ---- Fallbacks ----
         rule!(
             (_)
