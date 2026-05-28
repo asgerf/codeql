@@ -712,11 +712,14 @@ top_level
   body:
     block
       stmt:
-        call_expr
-          argument:
-          function:
-            name_expr
-              identifier: identifier "foo"
+        unary_expr
+          operator: operator "try"
+          operand:
+            call_expr
+              argument:
+              function:
+                name_expr
+                  identifier: identifier "foo"
 
 ===
 Try? expression bare
@@ -741,11 +744,14 @@ top_level
   body:
     block
       stmt:
-        call_expr
-          argument:
-          function:
-            name_expr
-              identifier: identifier "foo"
+        unary_expr
+          operator: operator "try?"
+          operand:
+            call_expr
+              argument:
+              function:
+                name_expr
+                  identifier: identifier "foo"
 
 ===
 Bitwise and
@@ -1088,11 +1094,14 @@ top_level
           body:
             block
               stmt:
-                call_expr
-                  argument:
-                  function:
-                    name_expr
-                      identifier: identifier "foo"
+                unary_expr
+                  operator: operator "try"
+                  operand:
+                    call_expr
+                      argument:
+                      function:
+                        name_expr
+                          identifier: identifier "foo"
           catch_clause:
             catch_clause
               body:

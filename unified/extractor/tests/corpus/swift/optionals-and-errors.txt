@@ -246,11 +246,14 @@ top_level
           body:
             block
               stmt:
-                call_expr
-                  argument:
-                  function:
-                    name_expr
-                      identifier: identifier "foo"
+                unary_expr
+                  operator: operator "try"
+                  operand:
+                    call_expr
+                      argument:
+                      function:
+                        name_expr
+                          identifier: identifier "foo"
           catch_clause:
             catch_clause
               body:
@@ -298,11 +301,14 @@ top_level
       stmt:
         variable_declaration
           value:
-            call_expr
-              argument:
-              function:
-                name_expr
-                  identifier: identifier "foo"
+            unary_expr
+              operator: operator "try?"
+              operand:
+                call_expr
+                  argument:
+                  function:
+                    name_expr
+                      identifier: identifier "foo"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -340,11 +346,14 @@ top_level
       stmt:
         variable_declaration
           value:
-            call_expr
-              argument:
-              function:
-                name_expr
-                  identifier: identifier "foo"
+            unary_expr
+              operator: operator "try!"
+              operand:
+                call_expr
+                  argument:
+                  function:
+                    name_expr
+                      identifier: identifier "foo"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -485,11 +494,14 @@ top_level
           body:
             block
               stmt:
-                call_expr
-                  argument:
-                  function:
-                    name_expr
-                      identifier: identifier "foo"
+                unary_expr
+                  operator: operator "try"
+                  operand:
+                    call_expr
+                      argument:
+                      function:
+                        name_expr
+                          identifier: identifier "foo"
           catch_clause:
             catch_clause
               body:
@@ -558,11 +570,14 @@ top_level
                   body:
                     block
                       stmt:
-                        call_expr
-                          argument:
-                          function:
-                            name_expr
-                              identifier: identifier "remove"
+                        unary_expr
+                          operator: operator "try"
+                          operand:
+                            call_expr
+                              argument:
+                              function:
+                                name_expr
+                                  identifier: identifier "remove"
                   catch_clause:
                     catch_clause
                       body: block "catch CocoaError.fileNoSuchFile {\n    }"

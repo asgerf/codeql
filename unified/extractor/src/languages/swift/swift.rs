@@ -449,8 +449,8 @@ fn translation_rules() -> Vec<yeast::Rule> {
         // ---- Optionals and errors ----
         // Optional chaining — unwrap the marker
         rule!((optional_chain_marker (_) @inner) => {inner}),
-        // try expression — just pass through to the inner expression
-        rule!((try_expression expr: (_) @inner) => {inner}),
+        // try/try?/try! expr → unary_expr with operator "try", "try?" or "try!"
+        rule!((try_expression (try_operator) @op expr: (_) @inner) => (unary_expr operator: (operator #{op}) operand: {inner})),
         // Do-catch → try_expr
         rule!(
             (do_statement (statements (_)* @body) (catch_block)* @catches)
