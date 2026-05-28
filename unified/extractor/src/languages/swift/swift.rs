@@ -505,6 +505,23 @@ fn translation_rules() -> Vec<yeast::Rule> {
         // Await expression → unary_expr with operator "await"
         rule!((await_expression expr: (_) @val) => (unary_expr operator: (operator "await") operand: {val})),
         rule!((await_expression (_) @val) => (unary_expr operator: (operator "await") operand: {val})),
+        // Import declaration → import_declaration with path identifiers
+        rule!(
+            (import_declaration (identifier (simple_identifier)* @parts) (modifiers)* @mods)
+            =>
+            {..{
+                let path: Vec<usize> = parts.iter().map(|&p| {
+                    let text = __yeast_ctx.ast.source_text(p.into());
+                    __yeast_ctx.literal("identifier", &text)
+                }).collect();
+                let mod_ids: Vec<usize> = mods.iter().map(|&m| m.into()).collect();
+                let mut fields: Vec<(&str, Vec<usize>)> = vec![("path", path)];
+                if !mod_ids.is_empty() {
+                    fields.push(("modifier", mod_ids));
+                }
+                vec![__yeast_ctx.node("import_declaration", fields)]
+            }}
+        ),
         // ---- Types and classes ----
         // Self expression → keyword_literal
         rule!((self_expression) => (keyword_literal)),

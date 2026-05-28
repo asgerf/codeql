@@ -1289,7 +1289,9 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "import Foundation"
+      stmt:
+        import_declaration
+          path: identifier "Foundation"
 
 ===
 Typealias declaration
