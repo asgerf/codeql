@@ -989,22 +989,14 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 parameter: {..params}
                 body: (block))
         ),
-        // Associated type declaration
+        // Associated type declaration (with optional bound)
         rule!(
-            (associatedtype_declaration name: (_) @name (modifiers)* @mods)
-            =>
-            (associated_type_declaration
-                modifier: {..mods}
-                name: (identifier #{name}))
-        ),
-        // Associated type with bound
-        rule!(
-            (associatedtype_declaration name: (_) @name inherits_from: (_) @bound (modifiers)* @mods)
+            (associatedtype_declaration name: (_) @name inherits_from: (_)? @bound (modifiers)* @mods)
             =>
             (associated_type_declaration
                 modifier: {..mods}
                 name: (identifier #{name})
-                bound: {bound})
+                bound: {..bound})
         ),
         // Protocol property requirements — just discard
         rule!((protocol_property_requirements) => (unsupported_node)),
