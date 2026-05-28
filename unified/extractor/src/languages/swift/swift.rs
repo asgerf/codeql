@@ -33,7 +33,11 @@ fn translation_rules() -> Vec<yeast::Rule> {
         rule!((conjunction_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
         rule!((disjunction_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
         rule!((infix_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        // Range expression `a..<b` / `a...b`
         rule!((range_expression start: (_) @l op: _ @op end: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
+        // Open-ended ranges `a...` / `...b`
+        rule!((open_end_range_expression start: (_) @l) => (unary_expr operator: (operator "...") operand: {l})),
+        rule!((open_start_range_expression end: (_) @r) => (unary_expr operator: (operator "...") operand: {r})),
         rule!((bitwise_operation lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
         rule!((nil_coalescing_expression value: (_) @l if_nil: (_) @r) => (binary_expr left: {l} operator: (operator "??") right: {r})),
         // Prefix unary operators

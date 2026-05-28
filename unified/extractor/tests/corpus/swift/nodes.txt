@@ -1514,7 +1514,10 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "0..."
+          value:
+            unary_expr
+              operator: operator "..."
+              operand: int_literal "0"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -1546,7 +1549,10 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "...10"
+          value:
+            unary_expr
+              operator: operator "..."
+              operand: int_literal "10"
           modifier: modifier "let"
           pattern:
             name_pattern
