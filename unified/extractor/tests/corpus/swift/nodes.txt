@@ -667,7 +667,15 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "y is Int"
+          value:
+            type_test_expr
+              expr:
+                name_expr
+                  identifier: identifier "y"
+              operator: operator "is"
+              type:
+                named_type_expr
+                  name: identifier "Int"
           modifier: modifier "let"
           pattern:
             name_pattern

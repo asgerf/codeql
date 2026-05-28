@@ -500,6 +500,8 @@ fn translation_rules() -> Vec<yeast::Rule> {
         ),
         // As expression (type cast) — as?, as!
         rule!((as_expression (as_operator) @op expr: (_) @val type: (_) @ty) => (type_cast_expr expr: {val} operator: (operator #{op}) type: {ty})),
+        // Check expression (`x is T`) → type_test_expr
+        rule!((check_expression op: _ @op target: (_) @val type: (_) @ty) => (type_test_expr expr: {val} operator: (operator #{op}) type: {ty})),
         // ---- Types and classes ----
         // Self expression → keyword_literal
         rule!((self_expression) => (keyword_literal)),
