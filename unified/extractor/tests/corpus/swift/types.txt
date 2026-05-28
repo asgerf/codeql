@@ -1985,21 +1985,19 @@ source_file
       type
         name:
           function_type
-            params:
-              tuple_type
-                element:
-                  tuple_type_item
-                    type:
-                      type
-                        name:
-                          user_type
-                            type_identifier "Int"
-                  tuple_type_item
-                    type:
-                      type
-                        name:
-                          user_type
-                            type_identifier "String"
+            parameter:
+              function_type_parameter
+                type:
+                  type
+                    name:
+                      user_type
+                        type_identifier "Int"
+              function_type_parameter
+                type:
+                  type
+                    name:
+                      user_type
+                        type_identifier "String"
             return_type:
               type
                 name:
@@ -2016,9 +2014,6 @@ top_level
           name: identifier "F"
           type:
             function_type_expr
-              return_type:
-                named_type_expr
-                  name: identifier "Bool"
               parameter:
                 parameter
                   type:
@@ -2028,6 +2023,9 @@ top_level
                   type:
                     named_type_expr
                       name: identifier "String"
+              return_type:
+                named_type_expr
+                  name: identifier "Bool"
 
 ===
 Typealias for array of qualified type
@@ -2191,6 +2189,12 @@ top_level
                           identifier: identifier "xs"
                       member: identifier "first"
           name: identifier "first"
+          parameter:
+            parameter
+              external_name: identifier "_"
+              pattern:
+                name_pattern
+                  identifier: identifier "xs"
           return_type:
             generic_type_expr
               base:
@@ -2199,12 +2203,6 @@ top_level
               type_argument:
                 named_type_expr
                   name: identifier "T"
-          parameter:
-            parameter
-              external_name: identifier "_"
-              pattern:
-                name_pattern
-                  identifier: identifier "xs"
 
 ===
 Generic function with multiple constraints in where clause
@@ -2298,9 +2296,6 @@ top_level
                         name_expr
                           identifier: identifier "y"
           name: identifier "compare"
-          return_type:
-            named_type_expr
-              name: identifier "Bool"
           parameter:
             parameter
               external_name: identifier "_"
@@ -2312,6 +2307,9 @@ top_level
               pattern:
                 name_pattern
                   identifier: identifier "y"
+          return_type:
+            named_type_expr
+              name: identifier "Bool"
 
 ===
 Generic class with where clause

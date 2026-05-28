@@ -182,6 +182,10 @@ module.exports = grammar({
     [$._contextual_simple_identifier, $.type_parameter_pack],
     [$._contextual_simple_identifier, $.type_pack_expansion],
     [$._contextual_simple_identifier, $.visibility_modifier],
+    // tuple_type_item and function_type_parameter have the same structure
+    [$.tuple_type_item, $.function_type_parameter],
+    // (...)  could be the start of a tuple_type or a function_type
+    [$.tuple_type, $.function_type],
   ],
   extras: ($) => [
     $.comment,
@@ -474,11 +478,22 @@ module.exports = grammar({
       ),
     function_type: ($) =>
       seq(
-        field("params", choice($.tuple_type, $.unannotated_type)),
+        "(",
+        optional(sep1Opt(field("parameter", $.function_type_parameter), ",")),
+        ")",
         optional($._async_keyword),
         optional(choice($.throws_clause, $.throws)),
         $._arrow_operator,
         field("return_type", $.type)
+      ),
+    function_type_parameter: ($) =>
+      prec(
+        PRECS.expr,
+        seq(
+          optional($._tuple_type_item_identifier),
+          optional($.parameter_modifiers),
+          field("type", $.type)
+        )
       ),
     array_type: ($) => seq("[", field("element", $.type), "]"),
     dictionary_type: ($) =>
@@ -1191,29 +1206,32 @@ module.exports = grammar({
       choice(
         $.expression,
         $.local_declaration,
-        $._labeled_statement,
+        $._labelable_statement,
         $.control_transfer_statement
       ),
     _top_level_statement: ($) =>
       choice(
         $.expression,
         $.global_declaration,
-        $._labeled_statement,
-        $._throw_statement
+        $._labelable_statement,
+        $.throw_statement
       ),
     _block: ($) => prec(PRECS.block, seq("{", optional($.statements), "}")),
-    _labeled_statement: ($) =>
+    labeled_statement: ($) =>
       seq(
-        optional($.statement_label),
-        choice(
-          $.for_statement,
-          $.while_statement,
-          $.repeat_while_statement,
-          $.do_statement,
-          $.if_statement,
-          $.guard_statement,
-          $.switch_statement
-        )
+        field("label", $.statement_label),
+        field("statement", $._labelable_statement)
+      ),
+    _labelable_statement: ($) =>
+      choice(
+        $.for_statement,
+        $.while_statement,
+        $.repeat_while_statement,
+        $.do_statement,
+        $.if_statement,
+        $.guard_statement,
+        $.switch_statement,
+        $.labeled_statement,
       ),
     statement_label: ($) => token(/[a-zA-Z_][a-zA-Z_0-9]*:/),
     for_statement: ($) =>
@@ -1266,7 +1284,7 @@ module.exports = grammar({
       ),
     control_transfer_statement: ($) =>
       choice(
-        prec.right(PRECS.control_transfer, $._throw_statement),
+        prec.right(PRECS.control_transfer, $.throw_statement),
         prec.right(
           PRECS.control_transfer,
           seq(
@@ -1275,7 +1293,7 @@ module.exports = grammar({
           )
         )
       ),
-    _throw_statement: ($) => seq($.throw_keyword, $.expression),
+    throw_statement: ($) => seq($.throw_keyword, $.expression),
     throw_keyword: ($) => "throw",
     _optionally_valueful_control_keyword: ($) =>
       choice("return", "continue", "break", "yield"),

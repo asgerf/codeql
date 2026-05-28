@@ -1147,12 +1147,13 @@ throw MyError.bad
 ---
 
 source_file
-  throw_keyword "throw"
-  navigation_expression
-    suffix:
-      navigation_suffix
-        suffix: simple_identifier "bad"
-    target: simple_identifier "MyError"
+  throw_statement
+    throw_keyword "throw"
+    navigation_expression
+      suffix:
+        navigation_suffix
+          suffix: simple_identifier "bad"
+      target: simple_identifier "MyError"
 
 ---
 
@@ -1846,15 +1847,13 @@ source_file
         type
           name:
             function_type
-              params:
-                tuple_type
-                  element:
-                    tuple_type_item
-                      type:
-                        type
-                          name:
-                            user_type
-                              type_identifier "Int"
+              parameter:
+                function_type_parameter
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "Int"
               return_type:
                 type
                   name:

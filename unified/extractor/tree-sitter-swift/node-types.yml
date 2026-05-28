@@ -196,7 +196,7 @@ named:
     $children+: [lambda_literal, value_arguments]
     name*: simple_identifier
   control_transfer_statement:
-    $children*: [expression, throw_keyword]
+    $children?: throw_statement
     result?: expression
   custom_operator:
   default_keyword:
@@ -269,8 +269,12 @@ named:
   function_modifier:
   function_type:
     $children?: [throws, throws_clause]
-    params: unannotated_type
+    parameter*: function_type_parameter
     return_type: type
+  function_type_parameter:
+    $children*: [parameter_modifiers, wildcard_pattern]
+    name?: simple_identifier
+    type: type
   getter_specifier:
     $children*: [mutation_modifier, throws, throws_clause]
   guard_statement:
@@ -317,6 +321,9 @@ named:
     $children*: [array_type, bang, dictionary_type, simple_identifier, type_arguments, type_identifier, value_argument]
   key_path_string_expression:
     $children: expression
+  labeled_statement:
+    label: statement_label
+    statement: [do_statement, for_statement, guard_statement, if_statement, labeled_statement, repeat_while_statement, switch_statement, while_statement]
   lambda_function_type:
     $children*: [lambda_function_type_parameters, throws, throws_clause]
     return_type?: [implicitly_unwrapped_type, type]
@@ -466,11 +473,11 @@ named:
   shebang_line:
   simple_identifier:
   source_file:
-    $children*: [do_statement, expression, for_statement, global_declaration, guard_statement, repeat_while_statement, shebang_line, statement_label, throw_keyword, while_statement]
+    $children*: [do_statement, expression, for_statement, global_declaration, guard_statement, labeled_statement, repeat_while_statement, shebang_line, throw_statement, while_statement]
   special_literal:
   statement_label:
   statements:
-    $children+: [control_transfer_statement, do_statement, expression, for_statement, guard_statement, local_declaration, repeat_while_statement, statement_label, while_statement]
+    $children+: [control_transfer_statement, do_statement, expression, for_statement, guard_statement, labeled_statement, local_declaration, repeat_while_statement, while_statement]
   str_escaped_char:
   subscript_declaration:
     $children+: [attribute, computed_property, modifiers, parameter, type_constraints, type_parameters]
@@ -491,6 +498,8 @@ named:
     if_false: expression
     if_true: expression
   throw_keyword:
+  throw_statement:
+    $children+: [expression, throw_keyword]
   throws:
   throws_clause:
     type: unannotated_type

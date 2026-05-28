@@ -381,33 +381,35 @@ outer: for i in [1, 2, 3] {
 ---
 
 source_file
-  statement_label "outer:"
-  for_statement
-    collection:
-      array_literal
-        element:
-          integer_literal "1"
-          integer_literal "2"
-          integer_literal "3"
-    item:
-      pattern
-        bound_identifier: simple_identifier "i"
-    statements
+  labeled_statement
+    label: statement_label "outer:"
+    statement:
       for_statement
         collection:
           array_literal
             element:
-              integer_literal "4"
-              integer_literal "5"
-              integer_literal "6"
+              integer_literal "1"
+              integer_literal "2"
+              integer_literal "3"
         item:
           pattern
-            bound_identifier: simple_identifier "j"
+            bound_identifier: simple_identifier "i"
         statements
-          control_transfer_statement
-            result: simple_identifier "outer"
-          control_transfer_statement
-            result: simple_identifier "outer"
+          for_statement
+            collection:
+              array_literal
+                element:
+                  integer_literal "4"
+                  integer_literal "5"
+                  integer_literal "6"
+            item:
+              pattern
+                bound_identifier: simple_identifier "j"
+            statements
+              control_transfer_statement
+                result: simple_identifier "outer"
+              control_transfer_statement
+                result: simple_identifier "outer"
 
 ---
 
@@ -416,6 +418,7 @@ top_level
     block
       stmt:
         labeled_stmt
+          label: identifier "outer"
           stmt:
             for_each_stmt
               body:
@@ -447,7 +450,6 @@ top_level
                     int_literal "1"
                     int_literal "2"
                     int_literal "3"
-          label: identifier "outer"
 
 ===
 While let
