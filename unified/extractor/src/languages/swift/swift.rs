@@ -699,47 +699,21 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 base_type: {..bases}
                 member: {..members})
         ),
-        // Protocol function → function_declaration
+        // Protocol function — return type and body statements both optional.
         rule!(
             (protocol_function_declaration
                 name: (_) @name
                 (parameter)* @params
-                return_type: (_) @ret
-                body: (function_body (statements (_)* @body_stmts))
+                return_type: (_)? @ret
+                body: (function_body (statements (_)* @body_stmts)?)?
                 (modifiers)* @mods)
             =>
             (function_declaration
                 modifier: {..mods}
                 name: (identifier #{name})
                 parameter: {..params}
-                return_type: {ret}
+                return_type: {..ret}
                 body: (block stmt: {..body_stmts}))
-        ),
-        rule!(
-            (protocol_function_declaration
-                name: (_) @name
-                (parameter)* @params
-                return_type: (_) @ret
-                (modifiers)* @mods)
-            =>
-            (function_declaration
-                modifier: {..mods}
-                name: (identifier #{name})
-                parameter: {..params}
-                return_type: {ret}
-                body: (block))
-        ),
-        rule!(
-            (protocol_function_declaration
-                name: (_) @name
-                (parameter)* @params
-                (modifiers)* @mods)
-            =>
-            (function_declaration
-                modifier: {..mods}
-                name: (identifier #{name})
-                parameter: {..params}
-                body: (block))
         ),
         // Protocol property → computed_property_declaration
         rule!(
