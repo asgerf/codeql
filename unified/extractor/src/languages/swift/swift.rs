@@ -83,6 +83,9 @@ fn translation_rules() -> Vec<yeast::Rule> {
         rule!((regex_literal) => (regex_literal)),
         // ---- Names ----
         rule!((simple_identifier) @id => (name_expr identifier: (identifier #{id}))),
+        // A referenceable_operator (e.g. `+` used as a value, as in `reduce(0, +)`)
+        // is treated as a name reference to the operator symbol.
+        rule!((referenceable_operator) @op => (name_expr identifier: (identifier #{op}))),
         // ---- Operators ----
         // All binary operators share the lhs/op/rhs shape.
         rule!((additive_expression lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),

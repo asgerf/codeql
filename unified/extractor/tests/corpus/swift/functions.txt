@@ -394,7 +394,9 @@ top_level
                         argument
                           value: int_literal "0"
                         argument
-                          value: unsupported_node "+"
+                          value:
+                            name_expr
+                              identifier: identifier "+"
                       function:
                         member_access_expr
                           target:
