@@ -680,6 +680,9 @@ top_level
                           left: keyword_literal "self"
                           right: keyword_literal "self"
               name: identifier "squared"
+              return_type:
+                named_type_expr
+                  name: identifier "Int"
 
 ===
 Computed property
@@ -1058,6 +1061,9 @@ top_level
                     return_expr
                       value: string_literal "\"x\""
               name: identifier "describe"
+              return_type:
+                named_type_expr
+                  name: identifier "String"
 
 ===
 Protocol with property requirement
@@ -2185,6 +2191,14 @@ top_level
                           identifier: identifier "xs"
                       member: identifier "first"
           name: identifier "first"
+          return_type:
+            generic_type_expr
+              base:
+                named_type_expr
+                  name: identifier "Optional"
+              type_argument:
+                named_type_expr
+                  name: identifier "T"
           parameter:
             parameter
               external_name: identifier "_"
@@ -2284,6 +2298,9 @@ top_level
                         name_expr
                           identifier: identifier "y"
           name: identifier "compare"
+          return_type:
+            named_type_expr
+              name: identifier "Bool"
           parameter:
             parameter
               external_name: identifier "_"

@@ -219,56 +219,19 @@ fn translation_rules() -> Vec<yeast::Rule> {
         rule!((pattern (pattern)* @elems) => (tuple_pattern element: {..elems})),
         // ---- Functions ----
         // Function declaration
+        // Function declaration (return type optional, body statements optional).
         rule!(
             (function_declaration
                 name: (_) @name
                 (parameter)* @params
-                body: (function_body (statements (_)* @body_stmts)))
+                return_type: (_)? @ret
+                body: (function_body (statements (_)* @body_stmts)?))
             =>
             (function_declaration
                 name: (identifier #{name})
                 parameter: {..params}
+                return_type: {..ret}
                 body: (block stmt: {..body_stmts}))
-        ),
-        // Function declaration with return type
-        rule!(
-            (function_declaration
-                name: (_) @name
-                (parameter)* @params
-                return_type: (_) @ret
-                body: (function_body (statements (_)* @body_stmts)))
-            =>
-            (function_declaration
-                name: (identifier #{name})
-                parameter: {..params}
-                return_type: {ret}
-                body: (block stmt: {..body_stmts}))
-        ),
-        // Function declaration with empty body
-        rule!(
-            (function_declaration
-                name: (_) @name
-                (parameter)* @params
-                body: (function_body))
-            =>
-            (function_declaration
-                name: (identifier #{name})
-                parameter: {..params}
-                body: (block))
-        ),
-        // Function declaration with return type and empty body
-        rule!(
-            (function_declaration
-                name: (_) @name
-                (parameter)* @params
-                return_type: (_) @ret
-                body: (function_body))
-            =>
-            (function_declaration
-                name: (identifier #{name})
-                parameter: {..params}
-                return_type: {ret}
-                body: (block))
         ),
         // Parameter with external name and type
         rule!(

@@ -107,6 +107,9 @@ top_level
                         name_expr
                           identifier: identifier "b"
           name: identifier "add"
+          return_type:
+            named_type_expr
+              name: identifier "Int"
           parameter:
             parameter
               external_name: identifier "_"
@@ -404,6 +407,9 @@ top_level
                               identifier: identifier "values"
                           member: identifier "reduce"
           name: identifier "sum"
+          return_type:
+            named_type_expr
+              name: identifier "Int"
           parameter:
             parameter
               external_name: identifier "_"
@@ -568,6 +574,9 @@ top_level
                     name_expr
                       identifier: identifier "x"
           name: identifier "identity"
+          return_type:
+            named_type_expr
+              name: identifier "T"
           parameter:
             parameter
               external_name: identifier "_"
@@ -632,14 +641,28 @@ top_level
             block
               stmt: boolean_literal "false"
           name: identifier "always"
+          return_type:
+            named_type_expr
+              name: identifier "Bool"
         function_declaration
           body:
             block
               stmt: float_literal "3.14"
           name: identifier "pi"
+          return_type:
+            named_type_expr
+              name: identifier "Double"
         function_declaration
           body: block "func none() -> Int? { nil }"
           name: identifier "none"
+          return_type:
+            generic_type_expr
+              base:
+                named_type_expr
+                  name: identifier "Optional"
+              type_argument:
+                named_type_expr
+                  name: identifier "Int"
 
 ===
 Function declaration modifiers
@@ -754,6 +777,9 @@ top_level
                 block
                   stmt: boolean_literal "false"
               name: identifier "<"
+              return_type:
+                named_type_expr
+                  name: identifier "Bool"
               parameter:
                 parameter
                   pattern:

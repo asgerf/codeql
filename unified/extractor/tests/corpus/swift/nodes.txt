@@ -1203,6 +1203,9 @@ top_level
                 return_expr
                   value: int_literal "1"
           name: identifier "f"
+          return_type:
+            named_type_expr
+              name: identifier "Int"
 
 ===
 Break statement
@@ -1955,6 +1958,7 @@ top_level
                 return_expr
                   value: int_literal "1"
           name: identifier "f"
+          return_type: unsupported_node "some Equatable"
 
 ===
 Any existential type
