@@ -38,6 +38,27 @@ fn translation_rules() -> Vec<yeast::Rule> {
         // Open-ended ranges `a...` / `...b`
         rule!((open_end_range_expression start: (_) @l) => (unary_expr operator: (operator "...") operand: {l})),
         rule!((open_start_range_expression end: (_) @r) => (unary_expr operator: (operator "...") operand: {r})),
+        // Custom operator declaration: `[prefix|infix|postfix] operator OP [: PrecedenceGroup]`.
+        // The fixity keyword is an anonymous child of `operator_declaration`, so we
+        // dispatch on it with one rule per keyword.
+        rule!(
+            (operator_declaration "prefix" (referenceable_operator (_) @op) (simple_identifier)? @prec)
+            =>
+            (operator_syntax_declaration name: (identifier #{op}) fixity: (fixity "prefix") precedence: {..prec})
+        ),
+        rule!(
+            (operator_declaration "postfix" (referenceable_operator (_) @op) (simple_identifier)? @prec)
+            =>
+            (operator_syntax_declaration name: (identifier #{op}) fixity: (fixity "postfix") precedence: {..prec})
+        ),
+        rule!(
+            (operator_declaration "infix" (referenceable_operator (_) @op) (simple_identifier)? @prec)
+            =>
+            (operator_syntax_declaration
+                name: (identifier #{op})
+                fixity: (fixity "infix")
+                precedence: {..prec})
+        ),
         rule!((bitwise_operation lhs: (_) @l op: _ @op rhs: (_) @r) => (binary_expr left: {l} operator: (operator #{op}) right: {r})),
         rule!((nil_coalescing_expression value: (_) @l if_nil: (_) @r) => (binary_expr left: {l} operator: (operator "??") right: {r})),
         // Prefix unary operators

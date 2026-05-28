@@ -2214,7 +2214,13 @@ source_file
 top_level
   body:
     block
-      stmt: unsupported_node "infix operator +++ : AdditionPrecedence"
+      stmt:
+        operator_syntax_declaration
+          name: identifier "+++"
+          fixity: fixity "infix"
+          precedence:
+            name_expr
+              identifier: identifier "AdditionPrecedence"
 
 ===
 Enum case with raw value
