@@ -726,11 +726,12 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 modifier: {..mods}
                 name: (identifier #{name}))
         ),
-        // Init declaration → constructor_declaration
+        // Init declaration → constructor_declaration. Body statements optional;
+        // body itself is also optional (protocol requirement).
         rule!(
             (init_declaration
                 (parameter)* @params
-                body: (function_body (statements (_)* @body_stmts))
+                body: (function_body (statements (_)* @body_stmts)?)?
                 (modifiers)* @mods)
             =>
             (constructor_declaration
@@ -738,47 +739,15 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 parameter: {..params}
                 body: (block stmt: {..body_stmts}))
         ),
-        // Init with empty body
-        rule!(
-            (init_declaration
-                (parameter)* @params
-                body: (function_body)
-                (modifiers)* @mods)
-            =>
-            (constructor_declaration
-                modifier: {..mods}
-                parameter: {..params}
-                body: (block))
-        ),
-        // Init without body (protocol requirement)
-        rule!(
-            (init_declaration
-                (parameter)* @params
-                (modifiers)* @mods)
-            =>
-            (constructor_declaration
-                modifier: {..mods}
-                parameter: {..params}
-                body: (block))
-        ),
-        // Deinit declaration → destructor_declaration
+        // Deinit declaration → destructor_declaration. Body statements optional.
         rule!(
             (deinit_declaration
-                body: (function_body (statements (_)* @body_stmts))
+                body: (function_body (statements (_)* @body_stmts)?)
                 (modifiers)* @mods)
             =>
             (destructor_declaration
                 modifier: {..mods}
                 body: (block stmt: {..body_stmts}))
-        ),
-        rule!(
-            (deinit_declaration
-                body: (function_body)
-                (modifiers)* @mods)
-            =>
-            (destructor_declaration
-                modifier: {..mods}
-                body: (block))
         ),
         // Enum case group → flatten cases
         rule!(
