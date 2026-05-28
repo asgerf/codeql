@@ -470,30 +470,18 @@ fn translation_rules() -> Vec<yeast::Rule> {
         // If-condition — unwrap (pass through the inner expression/pattern)
         rule!((if_condition (_) @inner) => {inner}),
         // ---- Loops ----
-        // For-in loop with where clause
+        // For-in loop with optional where-clause guard.
         rule!(
             (for_statement
                 item: (_) @pat
                 collection: (_) @iter
-                (where_clause (where_keyword) (_) @guard)
+                (where_clause (where_keyword) (_) @guard)?
                 (statements (_)* @body))
             =>
             (for_each_stmt
                 pattern: {pat}
                 iterable: {iter}
-                guard: {guard}
-                body: (block stmt: {..body}))
-        ),
-        // For-in loop (no where clause)
-        rule!(
-            (for_statement
-                item: (_) @pat
-                collection: (_) @iter
-                (statements (_)* @body))
-            =>
-            (for_each_stmt
-                pattern: {pat}
-                iterable: {iter}
+                guard: {..guard}
                 body: (block stmt: {..body}))
         ),
         // While loop
