@@ -454,9 +454,6 @@ top_level
     block
       stmt:
         switch_expr
-          value:
-            name_expr
-              identifier: identifier "x"
           case:
             switch_case
               body:
@@ -500,6 +497,9 @@ top_level
                         name_expr
                           identifier: identifier "print"
               pattern:
+          value:
+            name_expr
+              identifier: identifier "x"
 
 ===
 Switch with binding pattern
@@ -555,9 +555,6 @@ top_level
     block
       stmt:
         switch_expr
-          value:
-            name_expr
-              identifier: identifier "shape"
           case:
             switch_case
               body:
@@ -595,6 +592,9 @@ top_level
                   element:
                     name_pattern
                       identifier: identifier "s"
+          value:
+            name_expr
+              identifier: identifier "shape"
 
 ===
 Switch case with where clause
@@ -672,9 +672,6 @@ top_level
     block
       stmt:
         switch_expr
-          value:
-            name_expr
-              identifier: identifier "p"
           case:
             switch_case
               body:
@@ -724,6 +721,9 @@ top_level
                         name_expr
                           identifier: identifier "print"
               pattern:
+          value:
+            name_expr
+              identifier: identifier "p"
 
 ===
 Switch with multi-pattern case
@@ -797,9 +797,6 @@ top_level
     block
       stmt:
         switch_expr
-          value:
-            name_expr
-              identifier: identifier "x"
           case:
             switch_case
               body:
@@ -847,6 +844,9 @@ top_level
                         name_expr
                           identifier: identifier "print"
               pattern:
+          value:
+            name_expr
+              identifier: identifier "x"
 
 ===
 Switch with range patterns
@@ -917,9 +917,6 @@ top_level
     block
       stmt:
         switch_expr
-          value:
-            name_expr
-              identifier: identifier "n"
           case:
             switch_case
               body:
@@ -961,6 +958,9 @@ top_level
                         name_expr
                           identifier: identifier "print"
               pattern:
+          value:
+            name_expr
+              identifier: identifier "n"
 
 ===
 Multi-condition if-let

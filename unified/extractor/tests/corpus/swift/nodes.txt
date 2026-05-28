@@ -463,7 +463,7 @@ source_file
   property_declaration
     name:
       pattern
-        wildcard_pattern "_"
+        wildcard_pattern
     value: integer_literal "1"
     value_binding_pattern
       mutability: let
@@ -1045,9 +1045,6 @@ top_level
     block
       stmt:
         switch_expr
-          value:
-            name_expr
-              identifier: identifier "x"
           case:
             switch_case
               body:
@@ -1065,6 +1062,9 @@ top_level
                     name_expr
                       identifier: identifier "z"
               pattern:
+          value:
+            name_expr
+              identifier: identifier "x"
 
 ===
 Do-catch statement
@@ -2225,9 +2225,11 @@ source_file
   class_declaration
     body:
       enum_class_body
-        enum_entry
-          name: simple_identifier "a"
-          raw_value: integer_literal "1"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "a"
+              value: integer_literal "1"
     declaration_kind: enum
     name: type_identifier "E"
     inheritance_specifier
@@ -2268,18 +2270,23 @@ source_file
   class_declaration
     body:
       enum_class_body
-        enum_entry
-          data_contents:
-            enum_type_parameters
-              type
-                name:
-                  user_type
-                    type_identifier "Int"
-              type
-                name:
-                  user_type
-                    type_identifier "String"
-          name: simple_identifier "some"
+        enum_case_group
+          case:
+            enum_struct_case
+              data_content:
+                enum_data_content
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "Int"
+                enum_data_content
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "String"
+              name: simple_identifier "some"
     declaration_kind: enum
     name: type_identifier "E"
 
@@ -2297,6 +2304,18 @@ top_level
             class_like_declaration
               name: identifier "some"
               modifier: modifier "enum_case"
+              member:
+                constructor_declaration
+                  body: block "some(Int, String)"
+                  parameter:
+                    parameter
+                      type:
+                        named_type_expr
+                          name: identifier "Int"
+                    parameter
+                      type:
+                        named_type_expr
+                          name: identifier "String"
 
 ===
 Inheritance specifier

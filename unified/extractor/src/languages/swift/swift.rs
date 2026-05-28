@@ -714,32 +714,60 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 modifier: {..mods}
                 body: (block))
         ),
-        // Enum entry with associated values → class_like_declaration with "enum_case" modifier
+        // Enum case group → flatten cases
         rule!(
-            (enum_entry name: (_)* @names data_contents: (enum_type_parameters) @_data)
+            (enum_case_group case: (_)* @cases)
+            =>
+            {..cases}
+        ),
+        // Enum data content → parameter
+        rule!(
+            (enum_data_content external_name: (_) @ext name: (_) @int type: (_) @ty)
+            =>
+            (parameter
+                external_name: (identifier #{ext})
+                pattern: (name_pattern identifier: (identifier #{int}))
+                type: {ty})
+        ),
+        rule!(
+            (enum_data_content external_name: (_) @ext type: (_) @ty)
+            =>
+            (parameter
+                external_name: (identifier #{ext})
+                type: {ty})
+        ),
+        rule!(
+            (enum_data_content name: (_) @n type: (_) @ty)
+            =>
+            (parameter
+                external_name: (identifier #{n})
+                type: {ty})
+        ),
+        rule!(
+            (enum_data_content type: (_) @ty)
+            =>
+            (parameter
+                type: {ty})
+        ),
+        // Enum struct case → class_like_declaration with constructor
+        rule!(
+            (enum_struct_case name: (_) @name data_content: (_)* @params)
             =>
             (class_like_declaration
                 modifier: (modifier "enum_case")
-                name: {..{
-                    names.iter().map(|&n| {
-                        let text = __yeast_ctx.ast.source_text(n.into());
-                        __yeast_ctx.literal("identifier", &text)
-                    }).collect::<Vec<_>>()
-                }})
+                name: (identifier #{name})
+                member: (constructor_declaration
+                    parameter: {..params}
+                    body: (block)))
         ),
-        // Enum entry without data → variable_declaration with "enum_case" modifier
+        // Enum scalar case → variable_declaration
         rule!(
-            (enum_entry name: (_)* @names)
+            (enum_scalar_case name: (_) @name)
             =>
             (variable_declaration
                 modifier: (modifier "enum_case")
-                pattern: {..{
-                    names.iter().map(|&n| {
-                        let text = __yeast_ctx.ast.source_text(n.into());
-                        let ident = __yeast_ctx.literal("identifier", &text);
-                        __yeast_ctx.node("name_pattern", vec![("identifier", vec![ident])])
-                    }).collect::<Vec<_>>()
-                }})
+                pattern: (name_pattern
+                    identifier: (identifier #{name})))
         ),
         // Typealias declaration — uses code block to work around `type` keyword issue in macro
         rule!(

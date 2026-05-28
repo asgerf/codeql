@@ -461,9 +461,6 @@ top_level
         variable_declaration
           value:
             switch_expr
-              value:
-                name_expr
-                  identifier: identifier "state"
               case:
                 switch_case
                   body:
@@ -477,6 +474,9 @@ top_level
                     block
                       stmt: string_literal "\"off\""
                   pattern:
+              value:
+                name_expr
+                  identifier: identifier "state"
           modifier: modifier "let"
           pattern:
             name_pattern

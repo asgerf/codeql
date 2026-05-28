@@ -225,15 +225,22 @@ named:
   do_statement:
     $children*: [catch_block, statements]
   else:
-  enum_class_body:
-    $children*: [enum_entry, type_level_declaration]
-  enum_entry:
+  enum_case_group:
     $children?: modifiers
-    data_contents*: enum_type_parameters
-    name+: simple_identifier
-    raw_value*: expression
-  enum_type_parameters:
-    $children*: [expression, type, wildcard_pattern]
+    case+: [enum_scalar_case, enum_struct_case]
+  enum_class_body:
+    $children*: [enum_case_group, type_level_declaration]
+  enum_data_content:
+    default_value?: expression
+    external_name?: simple_identifier
+    name?: simple_identifier
+    type: type
+  enum_scalar_case:
+    name: simple_identifier
+    value?: expression
+  enum_struct_case:
+    data_content*: enum_data_content
+    name: simple_identifier
   equality_constraint:
     $children*: attribute
     constrained_type: [identifier, nested_type_identifier]
@@ -616,6 +623,7 @@ unnamed:
   - "]"
   - "^"
   - "^{"
+  - "_"
   - "_modify"
   - "actor"
   - "any"

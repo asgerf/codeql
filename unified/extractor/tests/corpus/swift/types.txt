@@ -363,14 +363,22 @@ source_file
   class_declaration
     body:
       enum_class_body
-        enum_entry
-          name: simple_identifier "north"
-        enum_entry
-          name: simple_identifier "south"
-        enum_entry
-          name: simple_identifier "east"
-        enum_entry
-          name: simple_identifier "west"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "north"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "south"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "east"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "west"
     declaration_kind: enum
     name: type_identifier "Direction"
 
@@ -421,24 +429,30 @@ source_file
   class_declaration
     body:
       enum_class_body
-        enum_entry
-          data_contents:
-            enum_type_parameters
-              simple_identifier "radius"
-              type
-                name:
-                  user_type
-                    type_identifier "Double"
-          name: simple_identifier "circle"
-        enum_entry
-          data_contents:
-            enum_type_parameters
-              simple_identifier "side"
-              type
-                name:
-                  user_type
-                    type_identifier "Double"
-          name: simple_identifier "square"
+        enum_case_group
+          case:
+            enum_struct_case
+              data_content:
+                enum_data_content
+                  name: simple_identifier "radius"
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "Double"
+              name: simple_identifier "circle"
+        enum_case_group
+          case:
+            enum_struct_case
+              data_content:
+                enum_data_content
+                  name: simple_identifier "side"
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "Double"
+              name: simple_identifier "square"
     declaration_kind: enum
     name: type_identifier "Shape"
 
@@ -456,9 +470,27 @@ top_level
             class_like_declaration
               name: identifier "circle"
               modifier: modifier "enum_case"
+              member:
+                constructor_declaration
+                  body: block "circle(radius: Double)"
+                  parameter:
+                    parameter
+                      external_name: identifier "radius"
+                      type:
+                        named_type_expr
+                          name: identifier "Double"
             class_like_declaration
               name: identifier "square"
               modifier: modifier "enum_case"
+              member:
+                constructor_declaration
+                  body: block "square(side: Double)"
+                  parameter:
+                    parameter
+                      external_name: identifier "side"
+                      type:
+                        named_type_expr
+                          name: identifier "Double"
 
 ===
 Enum with external labels, defaults, and positional payloads
@@ -476,36 +508,46 @@ source_file
   class_declaration
     body:
       enum_class_body
-        enum_entry
-          data_contents:
-            enum_type_parameters
-              simple_identifier "label"
-              type
-                name:
-                  user_type
-                    type_identifier "Int"
-              integer_literal "0"
-          name: simple_identifier "named"
-        enum_entry
-          data_contents:
-            enum_type_parameters
-              wildcard_pattern "_"
-              simple_identifier "x"
-              type
-                name:
-                  user_type
-                    type_identifier "String"
-              line_string_literal
-                text: line_str_text "hi"
-          name: simple_identifier "external"
-        enum_entry
-          data_contents:
-            enum_type_parameters
-              type
-                name:
-                  user_type
-                    type_identifier "Bool"
-          name: simple_identifier "positional"
+        enum_case_group
+          case:
+            enum_struct_case
+              data_content:
+                enum_data_content
+                  default_value: integer_literal "0"
+                  name: simple_identifier "label"
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "Int"
+              name: simple_identifier "named"
+        enum_case_group
+          case:
+            enum_struct_case
+              data_content:
+                enum_data_content
+                  default_value:
+                    line_string_literal
+                      text: line_str_text "hi"
+                  external_name: simple_identifier "_"
+                  name: simple_identifier "x"
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "String"
+              name: simple_identifier "external"
+        enum_case_group
+          case:
+            enum_struct_case
+              data_content:
+                enum_data_content
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "Bool"
+              name: simple_identifier "positional"
     declaration_kind: enum
     name: type_identifier "Event"
 
@@ -523,12 +565,41 @@ top_level
             class_like_declaration
               name: identifier "named"
               modifier: modifier "enum_case"
+              member:
+                constructor_declaration
+                  body: block "named(label: Int = 0)"
+                  parameter:
+                    parameter
+                      external_name: identifier "label"
+                      type:
+                        named_type_expr
+                          name: identifier "Int"
             class_like_declaration
               name: identifier "external"
               modifier: modifier "enum_case"
+              member:
+                constructor_declaration
+                  body: block "external(_ x: String = \"hi\")"
+                  parameter:
+                    parameter
+                      external_name: identifier "_"
+                      type:
+                        named_type_expr
+                          name: identifier "String"
+                      pattern:
+                        name_pattern
+                          identifier: identifier "x"
             class_like_declaration
               name: identifier "positional"
               modifier: modifier "enum_case"
+              member:
+                constructor_declaration
+                  body: block "positional(Bool)"
+                  parameter:
+                    parameter
+                      type:
+                        named_type_expr
+                          name: identifier "Bool"
 
 ===
 Protocol declaration
@@ -954,10 +1025,14 @@ source_file
   class_declaration
     body:
       enum_class_body
-        enum_entry
-          name: simple_identifier "a"
-        enum_entry
-          name: simple_identifier "b"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "a"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "b"
         function_declaration
           body:
             function_body
@@ -1576,20 +1651,27 @@ source_file
   class_declaration
     body:
       enum_class_body
-        enum_entry
-          name: simple_identifier "a"
-        enum_entry
-          data_contents:
-            enum_type_parameters
-              simple_identifier "x"
-              type
-                name:
-                  user_type
-                    type_identifier "Int"
-          name: simple_identifier "b"
-        enum_entry
-          name: simple_identifier "c"
-          raw_value: integer_literal "1"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "a"
+        enum_case_group
+          case:
+            enum_struct_case
+              data_content:
+                enum_data_content
+                  name: simple_identifier "x"
+                  type:
+                    type
+                      name:
+                        user_type
+                          type_identifier "Int"
+              name: simple_identifier "b"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "c"
+              value: integer_literal "1"
     declaration_kind: enum
     name: type_identifier "E"
     modifiers
@@ -1669,6 +1751,15 @@ top_level
             class_like_declaration
               name: identifier "b"
               modifier: modifier "enum_case"
+              member:
+                constructor_declaration
+                  body: block "b(x: Int)"
+                  parameter:
+                    parameter
+                      external_name: identifier "x"
+                      type:
+                        named_type_expr
+                          name: identifier "Int"
             variable_declaration
               modifier: modifier "enum_case"
               pattern:
@@ -2465,12 +2556,18 @@ source_file
   class_declaration
     body:
       enum_class_body
-        enum_entry
-          name: simple_identifier "red"
-        enum_entry
-          name: simple_identifier "green"
-        enum_entry
-          name: simple_identifier "blue"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "red"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "green"
+        enum_case_group
+          case:
+            enum_scalar_case
+              name: simple_identifier "blue"
     declaration_kind: enum
     name: type_identifier "Color"
     inheritance_specifier

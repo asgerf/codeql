@@ -1673,43 +1673,38 @@ module.exports = grammar({
     throws_clause: ($) =>
       seq($._throws_keyword, "(", field("type", $.unannotated_type), ")"),
     enum_class_body: ($) =>
-      seq("{", repeat(choice($.enum_entry, $.type_level_declaration)), "}"),
-    enum_entry: ($) =>
+      seq("{", repeat(choice($.enum_case_group, $.type_level_declaration)), "}"),
+    enum_case_group: ($) =>
       seq(
         optional($.modifiers),
         optional("indirect"),
         "case",
-        sep1(
-          seq(
-            field("name", $.simple_identifier),
-            optional($._enum_entry_suffix)
-          ),
-          ","
-        ),
+        sep1(field("case", $._enum_case), ","),
         optional(";")
       ),
-    _enum_entry_suffix: ($) =>
-      choice(
-        field("data_contents", $.enum_type_parameters),
-        seq($._equal_sign, field("raw_value", $.expression))
+    _enum_case: ($) => choice($.enum_scalar_case, $.enum_struct_case),
+    enum_scalar_case: ($) => seq(
+      field("name", $.simple_identifier),
+      optional(
+        seq($._equal_sign, field("value", $.expression))
       ),
-    enum_type_parameters: ($) =>
-      seq(
-        "(",
-        optional(
-          sep1(
-            seq(
-              optional(
-                seq(optional($.wildcard_pattern), $.simple_identifier, ":")
-              ),
-              $.type,
-              optional(seq($._equal_sign, $.expression))
-            ),
-            ","
-          )
-        ),
-        ")"
+    ),
+    enum_struct_case: ($) => seq(
+      field("name", $.simple_identifier),
+      "(",
+      optional(sep1(field("data_content", $.enum_data_content), ",")),
+      ")"
+    ),
+    enum_data_content: ($) => seq(
+      optional(
+        seq(
+          optional(field("external_name", alias("_", $.simple_identifier))),
+          field("name", $.simple_identifier),
+          ":")
       ),
+      field("type", $.type),
+      optional(seq($._equal_sign, field("default_value", $.expression)))
+    ),
     protocol_declaration: ($) =>
       prec.right(
         seq(
