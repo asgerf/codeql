@@ -339,7 +339,7 @@ top_level
                       right: int_literal "0"
                   then:
                     block
-                      stmt: return_expr "continue"
+                      stmt: continue_expr "continue"
                 if_expr
                   condition:
                     binary_expr
@@ -350,7 +350,7 @@ top_level
                       right: int_literal "100"
                   then:
                     block
-                      stmt: return_expr "break"
+                      stmt: break_expr "break"
                 call_expr
                   argument:
                     argument
@@ -415,41 +415,39 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "outer:"
-        for_each_stmt
-          body:
-            block
-              stmt:
-                for_each_stmt
-                  body:
-                    block
-                      stmt:
-                        return_expr
-                          value:
-                            name_expr
-                              identifier: identifier "outer"
-                        return_expr
-                          value:
-                            name_expr
-                              identifier: identifier "outer"
-                  pattern:
-                    name_pattern
-                      identifier: identifier "j"
-                  iterable:
-                    array_literal
-                      element:
-                        int_literal "4"
-                        int_literal "5"
-                        int_literal "6"
-          pattern:
-            name_pattern
-              identifier: identifier "i"
-          iterable:
-            array_literal
-              element:
-                int_literal "1"
-                int_literal "2"
-                int_literal "3"
+        labeled_stmt
+          stmt:
+            for_each_stmt
+              body:
+                block
+                  stmt:
+                    for_each_stmt
+                      body:
+                        block
+                          stmt:
+                            break_expr
+                              label: identifier "outer"
+                            continue_expr
+                              label: identifier "outer"
+                      pattern:
+                        name_pattern
+                          identifier: identifier "j"
+                      iterable:
+                        array_literal
+                          element:
+                            int_literal "4"
+                            int_literal "5"
+                            int_literal "6"
+              pattern:
+                name_pattern
+                  identifier: identifier "i"
+              iterable:
+                array_literal
+                  element:
+                    int_literal "1"
+                    int_literal "2"
+                    int_literal "3"
+          label: identifier "outer"
 
 ===
 While let

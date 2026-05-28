@@ -1160,12 +1160,13 @@ top_level
   body:
     block
       stmt:
-        unsupported_node "throw"
-        member_access_expr
-          target:
-            name_expr
-              identifier: identifier "MyError"
-          member: identifier "bad"
+        throw_expr
+          value:
+            member_access_expr
+              target:
+                name_expr
+                  identifier: identifier "MyError"
+              member: identifier "bad"
 
 ===
 Return statement
@@ -1228,7 +1229,7 @@ top_level
         while_stmt
           body:
             block
-              stmt: return_expr "break"
+              stmt: break_expr "break"
           condition: boolean_literal "true"
 
 ===
@@ -1256,7 +1257,7 @@ top_level
         while_stmt
           body:
             block
-              stmt: return_expr "continue"
+              stmt: continue_expr "continue"
           condition: boolean_literal "true"
 
 ===

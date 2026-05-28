@@ -1,6 +1,63 @@
 use codeql_extractor::extractor::simple;
 use yeast::{rule, DesugaringConfig, PhaseKind};
 
+/// Combine adjacent `throw_keyword`/expression sibling pairs into a single
+/// `throw_expr` node. At the top level (and occasionally elsewhere) the
+/// tree-sitter grammar exposes `throw EXPR` as two sibling children rather
+/// than a wrapping `control_transfer_statement`.
+/// Post-process children of `source_file` / `statements`:
+///
+/// - Combine sibling `throw_keyword` + expression pairs into a `throw_expr`.
+/// - Combine `statement_label` + statement pairs into a `labeled_stmt`.
+fn combine_throw_keyword(
+    ctx: &mut yeast::build::BuildCtx<'_>,
+    children: &[yeast::NodeRef],
+) -> Vec<yeast::Id> {
+    let mut result: Vec<yeast::Id> = Vec::with_capacity(children.len());
+    let mut i = 0;
+    while i < children.len() {
+        let id: yeast::Id = children[i].into();
+        let src = ctx.ast.source_text(id);
+        if src == "throw" && i + 1 < children.len() {
+            let val: yeast::Id = children[i + 1].into();
+            result.push(ctx.node("throw_expr", vec![("value", vec![val])]));
+            i += 2;
+            continue;
+        }
+        // A `statement_label` is text like "outer:". Detect it and wrap the
+        // following statement in a `labeled_stmt`.
+        if src.ends_with(':')
+            && i + 1 < children.len()
+            && !src.contains('\n')
+            && src.chars().take(src.len() - 1).all(|c| c.is_alphanumeric() || c == '_')
+            && is_statement_label(ctx, id)
+        {
+            let label_text = &src[..src.len() - 1];
+            let label = ctx.literal("identifier", label_text);
+            let stmt: yeast::Id = children[i + 1].into();
+            result.push(ctx.node("labeled_stmt", vec![
+                ("label", vec![label]),
+                ("stmt", vec![stmt]),
+            ]));
+            i += 2;
+            continue;
+        }
+        result.push(id);
+        i += 1;
+    }
+    result
+}
+
+/// Check that the given node was originally a `statement_label` (it has been
+/// rewritten to `unsupported_node` by the time this runs).
+fn is_statement_label(ctx: &yeast::build::BuildCtx<'_>, id: yeast::Id) -> bool {
+    ctx.ast
+        .get_node(id)
+        .map(|n| n.kind())
+        .map(|k| k == "unsupported_node")
+        .unwrap_or(false)
+}
+
 fn translation_rules() -> Vec<yeast::Rule> {
     vec![
         // ---- Top-level ----
@@ -8,7 +65,9 @@ fn translation_rules() -> Vec<yeast::Rule> {
             (source_file (_)* @children)
             =>
             (top_level
-                body: (block stmt: {..children})
+                body: (block stmt: {..{
+                    combine_throw_keyword(&mut __yeast_ctx, &children)
+                }})
             )
         ),
         // ---- Literals ----
@@ -285,20 +344,19 @@ fn translation_rules() -> Vec<yeast::Rule> {
             =>
             (member_access_expr target: {target} member: (identifier #{member}))
         ),
-        // Return statement
-        rule!(
-            (control_transfer_statement result: (_) @val)
-            =>
-            (return_expr value: {val})
-        ),
-        // Bare return (no value)
-        rule!(
-            (control_transfer_statement)
-            =>
-            (return_expr)
-        ),
+        // Return / break / continue / throw, one rule per keyword.
+        // The anonymous "return"/"break"/"continue" keywords are matched as
+        // string literals; throw_keyword is a named node.
+        rule!((control_transfer_statement "return" result: (_)? @val) => (return_expr value: {..val})),
+        rule!((control_transfer_statement (throw_keyword) result: (_) @val) => (throw_expr value: {val})),
+        rule!((control_transfer_statement "break" result: (_) @lbl) => (break_expr label: (identifier #{lbl}))),
+        rule!((control_transfer_statement "break") => (break_expr)),
+        rule!((control_transfer_statement "continue" result: (_) @lbl) => (continue_expr label: (identifier #{lbl}))),
+        rule!((control_transfer_statement "continue") => (continue_expr)),
         // Statements block (used inside function bodies and other scopes)
-        rule!((statements (_)* @stmts) => (block stmt: {..stmts})),
+        rule!((statements (_)* @stmts) => (block stmt: {..{
+            combine_throw_keyword(&mut __yeast_ctx, &stmts)
+        }})),
         // Function body wrapper — unwrap
         rule!((function_body (_) @inner) => {inner}),
         // ---- Closures ----
