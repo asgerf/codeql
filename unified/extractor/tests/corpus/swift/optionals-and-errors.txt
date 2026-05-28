@@ -581,5 +581,8 @@ top_level
                   catch_clause:
                     catch_clause
                       body: block "catch CocoaError.fileNoSuchFile {\n    }"
+                      pattern:
+                        tuple_pattern
+                          element:
           name: identifier "f"
           parameter:

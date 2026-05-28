@@ -482,17 +482,21 @@ fn translation_rules() -> Vec<yeast::Rule> {
             =>
             (catch_clause body: (block stmt: {..body}))
         ),
-        // Catch block with unhandled pattern — just map the body
+        // Catch block with unhandled pattern — preserve pattern, map body
         rule!(
-            (catch_block (catch_keyword) error: (_) @_pat (statements (_)* @body))
+            (catch_block (catch_keyword) error: (_) @pat (statements (_)* @body))
             =>
-            (catch_clause body: (block stmt: {..body}))
+            (catch_clause
+                pattern: {pat}
+                body: (block stmt: {..body}))
         ),
         // Catch block with pattern but no statements (empty body)
         rule!(
-            (catch_block (catch_keyword) error: (_) @_pat)
+            (catch_block (catch_keyword) error: (_) @pat)
             =>
-            (catch_clause body: (block))
+            (catch_clause
+                pattern: {pat}
+                body: (block))
         ),
         // As expression (type cast) — as?, as!
         // Type output field not yet supported; just unwrap to the inner expr
