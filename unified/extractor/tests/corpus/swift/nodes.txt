@@ -345,36 +345,6 @@ Super member access
 
 super.x
 
-===
-Super method call
-===
-
-super.greet()
-
-===
-Super method call with arguments
-===
-
-super.add(1, 2)
-
-===
-Super initializer call
-===
-
-super.init(name: "x")
-
-===
-Super chained member access
-===
-
-super.foo.bar
-
-===
-Wildcard in let
-===
-
-let _ = 1
-
 ---
 
 source_file
@@ -384,11 +354,26 @@ source_file
         suffix: simple_identifier "x"
     target:
       super_expression
-  referenceable_operator
-  simple_identifier "Super"
-  ERROR
-    ERROR "method call"
-  referenceable_operator
+
+---
+
+top_level
+  body:
+    block
+      stmt:
+        member_access_expr
+          target: super_expr "super"
+          member: identifier "x"
+
+===
+Super method call
+===
+
+super.greet()
+
+---
+
+source_file
   call_expression
     navigation_expression
       suffix:
@@ -398,11 +383,29 @@ source_file
         super_expression
     call_suffix
       value_arguments
-  referenceable_operator
-  simple_identifier "Super"
-  ERROR
-    ERROR "method call with arguments"
-  referenceable_operator
+
+---
+
+top_level
+  body:
+    block
+      stmt:
+        call_expr
+          argument:
+          function:
+            member_access_expr
+              target: super_expr "super"
+              member: identifier "greet"
+
+===
+Super method call with arguments
+===
+
+super.add(1, 2)
+
+---
+
+source_file
   call_expression
     navigation_expression
       suffix:
@@ -416,13 +419,33 @@ source_file
           value: integer_literal "1"
         value_argument
           value: integer_literal "2"
-  referenceable_operator
-  ERROR
-    simple_identifier "Super"
-  simple_identifier "initializer"
-  ERROR
-    ERROR "call"
-  referenceable_operator
+
+---
+
+top_level
+  body:
+    block
+      stmt:
+        call_expr
+          argument:
+            argument
+              value: int_literal "1"
+            argument
+              value: int_literal "2"
+          function:
+            member_access_expr
+              target: super_expr "super"
+              member: identifier "add"
+
+===
+Super initializer call
+===
+
+super.init(name: "x")
+
+---
+
+source_file
   call_expression
     navigation_expression
       suffix:
@@ -439,12 +462,32 @@ source_file
           value:
             line_string_literal
               text: line_str_text "x"
-  referenceable_operator
-  simple_identifier "Super"
-  ERROR
-    ERROR "cha"
-    ERROR "ed member access"
-  referenceable_operator
+
+---
+
+top_level
+  body:
+    block
+      stmt:
+        call_expr
+          argument:
+            argument
+              name: identifier "name"
+              value: string_literal "\"x\""
+          function:
+            member_access_expr
+              target: super_expr "super"
+              member: identifier "init"
+
+===
+Super chained member access
+===
+
+super.foo.bar
+
+---
+
+source_file
   navigation_expression
     suffix:
       navigation_suffix
@@ -456,10 +499,29 @@ source_file
             suffix: simple_identifier "foo"
         target:
           super_expression
-  referenceable_operator
-  simple_identifier "Wildcard"
-  ERROR
-  referenceable_operator
+
+---
+
+top_level
+  body:
+    block
+      stmt:
+        member_access_expr
+          target:
+            member_access_expr
+              target: super_expr "super"
+              member: identifier "foo"
+          member: identifier "bar"
+
+===
+Wildcard in let
+===
+
+let _ = 1
+
+---
+
+source_file
   property_declaration
     name:
       pattern
@@ -474,60 +536,6 @@ top_level
   body:
     block
       stmt:
-        member_access_expr
-          target: super_expr "super"
-          member: identifier "x"
-        unsupported_node "==="
-        name_expr
-          identifier: identifier "Super"
-        unsupported_node "==="
-        call_expr
-          argument:
-          function:
-            member_access_expr
-              target: super_expr "super"
-              member: identifier "greet"
-        unsupported_node "==="
-        name_expr
-          identifier: identifier "Super"
-        unsupported_node "==="
-        call_expr
-          argument:
-            argument
-              value: int_literal "1"
-            argument
-              value: int_literal "2"
-          function:
-            member_access_expr
-              target: super_expr "super"
-              member: identifier "add"
-        unsupported_node "==="
-        name_expr
-          identifier: identifier "initializer"
-        unsupported_node "==="
-        call_expr
-          argument:
-            argument
-              name: identifier "name"
-              value: string_literal "\"x\""
-          function:
-            member_access_expr
-              target: super_expr "super"
-              member: identifier "init"
-        unsupported_node "==="
-        name_expr
-          identifier: identifier "Super"
-        unsupported_node "==="
-        member_access_expr
-          target:
-            member_access_expr
-              target: super_expr "super"
-              member: identifier "foo"
-          member: identifier "bar"
-        unsupported_node "==="
-        name_expr
-          identifier: identifier "Wildcard"
-        unsupported_node "==="
         variable_declaration
           value: int_literal "1"
           modifier: modifier "let"

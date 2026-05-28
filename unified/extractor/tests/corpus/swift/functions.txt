@@ -186,14 +186,6 @@ func move(_ x: Int, to y: Int, by step: Int) {
   print(x, y, step)
 }
 
-===
-Function with default parameter value
-===
-
-func greet(name: String = "world") {
-  print(name)
-}
-
 ---
 
 source_file
@@ -236,35 +228,6 @@ source_file
           name:
             user_type
               type_identifier "Int"
-  referenceable_operator
-  simple_identifier "Function"
-  ERROR
-    ERROR "with"
-    default_keyword "default"
-    ERROR "parameter val"
-    ERROR "e"
-  referenceable_operator
-  function_declaration
-    body:
-      function_body
-        statements
-          call_expression
-            simple_identifier "print"
-            call_suffix
-              value_arguments
-                value_argument
-                  value: simple_identifier "name"
-    default_value:
-      line_string_literal
-        text: line_str_text "world"
-    name: simple_identifier "greet"
-    parameter
-      name: simple_identifier "name"
-      type:
-        type
-          name:
-            user_type
-              type_identifier "String"
 
 ---
 
@@ -310,10 +273,46 @@ top_level
               pattern:
                 name_pattern
                   identifier: identifier "step"
-        unsupported_node "==="
-        name_expr
-          identifier: identifier "Function"
-        unsupported_node "==="
+
+===
+Function with default parameter value
+===
+
+func greet(name: String = "world") {
+  print(name)
+}
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          call_expression
+            simple_identifier "print"
+            call_suffix
+              value_arguments
+                value_argument
+                  value: simple_identifier "name"
+    default_value:
+      line_string_literal
+        text: line_str_text "world"
+    name: simple_identifier "greet"
+    parameter
+      name: simple_identifier "name"
+      type:
+        type
+          name:
+            user_type
+              type_identifier "String"
+
+---
+
+top_level
+  body:
+    block
+      stmt:
         function_declaration
           body:
             block
