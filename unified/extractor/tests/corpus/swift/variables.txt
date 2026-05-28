@@ -591,11 +591,21 @@ top_level
   body:
     block
       stmt:
-        variable_declaration
+        computed_property_declaration
+          name: identifier "doubled"
           modifier: modifier "var"
-          pattern:
-            name_pattern
-              identifier: identifier "doubled"
+          accessors:
+            computed_property_accessor
+              body:
+                block
+                  stmt:
+                    binary_expr
+                      operator: operator "*"
+                      left:
+                        name_expr
+                          identifier: identifier "x"
+                      right: int_literal "2"
+              accessor_kind: accessor_kind "get"
 
 ===
 Stored property with willSet and didSet observers
@@ -646,9 +656,36 @@ top_level
   body:
     block
       stmt:
-        variable_declaration
-          value: int_literal "0"
+        computed_property_declaration
+          name: identifier "counter"
           modifier: modifier "var"
-          pattern:
-            name_pattern
-              identifier: identifier "counter"
+          accessors:
+            computed_property_accessor
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value:
+                            name_expr
+                              identifier: identifier "newValue"
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              accessor_kind: accessor_kind "willSet"
+            computed_property_accessor
+              body:
+                block
+                  stmt:
+                    call_expr
+                      argument:
+                        argument
+                          value:
+                            name_expr
+                              identifier: identifier "oldValue"
+                      function:
+                        name_expr
+                          identifier: identifier "print"
+              accessor_kind: accessor_kind "didSet"
+          initializer: int_literal "0"

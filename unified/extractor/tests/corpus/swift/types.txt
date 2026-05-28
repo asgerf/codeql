@@ -277,8 +277,8 @@ top_level
           modifier: modifier "class"
           base_type:
             base_type
-              name:
-                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+              type:
+                named_type_expr
                   name: identifier "Animal"
           member:
 
@@ -714,11 +714,25 @@ top_level
               pattern:
                 name_pattern
                   identifier: identifier "h"
-            variable_declaration
+            computed_property_declaration
+              name: identifier "area"
               modifier: modifier "var"
-              pattern:
-                name_pattern
-                  identifier: identifier "area"
+              accessors:
+                computed_property_accessor
+                  body:
+                    block
+                      stmt:
+                        return_expr
+                          value:
+                            binary_expr
+                              operator: operator "*"
+                              left:
+                                name_expr
+                                  identifier: identifier "w"
+                              right:
+                                name_expr
+                                  identifier: identifier "h"
+                  accessor_kind: accessor_kind "get"
 
 ===
 Property with getter and setter
@@ -795,11 +809,31 @@ top_level
               pattern:
                 name_pattern
                   identifier: identifier "_v"
-            variable_declaration
+            computed_property_declaration
+              name: identifier "v"
               modifier: modifier "var"
-              pattern:
-                name_pattern
-                  identifier: identifier "v"
+              accessors:
+                computed_property_accessor
+                  body:
+                    block
+                      stmt:
+                        return_expr
+                          value:
+                            name_expr
+                              identifier: identifier "_v"
+                  accessor_kind: accessor_kind "get"
+                computed_property_accessor
+                  body:
+                    block
+                      stmt:
+                        assign_expr
+                          target:
+                            name_expr
+                              identifier: identifier "_v"
+                          value:
+                            name_expr
+                              identifier: identifier "newValue"
+                  accessor_kind: accessor_kind "set"
 
 ===
 Qualified type reference
@@ -1699,15 +1733,26 @@ top_level
           modifier: modifier "class"
           base_type:
             base_type
-              name:
-                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+              type:
+                named_type_expr
                   name: identifier "B"
           member:
-            variable_declaration
+            computed_property_declaration
+              name: identifier "x"
               modifier: modifier "var"
-              pattern:
-                name_pattern
-                  identifier: identifier "x"
+              accessors:
+                computed_property_accessor
+                  body:
+                    block
+                      stmt:
+                        return_expr
+                          value:
+                            name_expr
+                              identifier: identifier "_x"
+                  accessor_kind: accessor_kind "get"
+                computed_property_accessor
+                  body: block "set {}"
+                  accessor_kind: accessor_kind "set"
 
 ===
 Empty getter body
@@ -1758,11 +1803,16 @@ top_level
           modifier: modifier "class"
           base_type:
           member:
-            variable_declaration
+            computed_property_declaration
+              name: identifier "y"
               modifier: modifier "var"
-              pattern:
-                name_pattern
-                  identifier: identifier "y"
+              accessors:
+                computed_property_accessor
+                  body: block "get {}"
+                  accessor_kind: accessor_kind "get"
+                computed_property_accessor
+                  body: block "set {}"
+                  accessor_kind: accessor_kind "set"
 
 ===
 Override stored property with empty didSet
@@ -1817,11 +1867,13 @@ top_level
           modifier: modifier "class"
           base_type:
           member:
-            variable_declaration
+            computed_property_declaration
+              name: identifier "x"
               modifier: modifier "var"
-              pattern:
-                name_pattern
-                  identifier: identifier "x"
+              accessors:
+                computed_property_accessor
+                  body: block "didSet {}"
+                  accessor_kind: accessor_kind "didSet"
 
 ===
 Typealias for labeled tuple type
@@ -2304,16 +2356,16 @@ top_level
           modifier: modifier "class"
           base_type:
             base_type
-              name:
-                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+              type:
+                named_type_expr
                   name: identifier "Animal"
             base_type
-              name:
-                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+              type:
+                named_type_expr
                   name: identifier "Pet"
             base_type
-              name:
-                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+              type:
+                named_type_expr
                   name: identifier "Trainable"
           member:
 
@@ -2378,12 +2430,12 @@ top_level
           modifier: modifier "struct"
           base_type:
             base_type
-              name:
-                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+              type:
+                named_type_expr
                   name: identifier "Equatable"
             base_type
-              name:
-                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+              type:
+                named_type_expr
                   name: identifier "Hashable"
           member:
             variable_declaration
@@ -2437,8 +2489,8 @@ top_level
           modifier: modifier "enum"
           base_type:
             base_type
-              name:
-                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+              type:
+                named_type_expr
                   name: identifier "String"
           member:
             variable_declaration
@@ -2495,12 +2547,12 @@ top_level
           modifier: modifier "protocol"
           base_type:
             base_type
-              name:
-                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+              type:
+                named_type_expr
                   name: identifier "Renderable"
             base_type
-              name:
-                named_type_expr <-- ERROR: the node 'base_type' has no field 'name'
+              type:
+                named_type_expr
                   name: identifier "Identifiable"
           member:
             function_declaration

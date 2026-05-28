@@ -44,6 +44,58 @@ fn translation_rules() -> Vec<yeast::Rule> {
         // Multi-value tuples become tuple_expr.
         rule!((tuple_expression value: (_)* @v) => (tuple_expr element: {..v})),
         // ---- Variables ----
+        // Computed property with just a body (shorthand getter) — must be before general accessor rule
+        rule!(
+            (property_declaration
+                (value_binding_pattern mutability: _ @binding_kind)
+                name: (pattern bound_identifier: (_) @name)
+                computed_value: (computed_property (statements (_)* @body)))
+            =>
+            (computed_property_declaration
+                modifier: (modifier #{binding_kind})
+                name: (identifier #{name})
+                accessors: (computed_property_accessor
+                    accessor_kind: (accessor_kind "get")
+                    body: (block stmt: {..body})))
+        ),
+        // Computed property (with accessors via computed_value field)
+        rule!(
+            (property_declaration
+                (value_binding_pattern mutability: _ @binding_kind)
+                name: (pattern bound_identifier: (_) @name)
+                computed_value: (computed_property (_)* @accessors))
+            =>
+            (computed_property_declaration
+                modifier: (modifier #{binding_kind})
+                name: (identifier #{name})
+                accessors: {..accessors})
+        ),
+        // Property with willSet/didSet observers (with value)
+        rule!(
+            (property_declaration
+                (value_binding_pattern mutability: _ @binding_kind)
+                name: (pattern bound_identifier: (_) @name)
+                value: (_) @val
+                (willset_didset_block (_)* @observers))
+            =>
+            (computed_property_declaration
+                modifier: (modifier #{binding_kind})
+                name: (identifier #{name})
+                initializer: {val}
+                accessors: {..observers})
+        ),
+        // Property with willSet/didSet observers (no value)
+        rule!(
+            (property_declaration
+                (value_binding_pattern mutability: _ @binding_kind)
+                name: (pattern bound_identifier: (_) @name)
+                (willset_didset_block (_)* @observers))
+            =>
+            (computed_property_declaration
+                modifier: (modifier #{binding_kind})
+                name: (identifier #{name})
+                accessors: {..observers})
+        ),
         // Plain assignment: `x = expr`
         rule!(
             (assignment operator: "=" target: (directly_assignable_expression (_) @target) result: (_) @value)
@@ -464,7 +516,10 @@ fn translation_rules() -> Vec<yeast::Rule> {
         // Type annotations — unwrap
         rule!((type_annotation (_) @inner) => {inner}),
         // Inheritance specifier → base_type
-        rule!((inheritance_specifier inherits_from: (_) @ty) => (base_type name: {ty})),
+        rule!((inheritance_specifier inherits_from: (_) @ty) => {..{
+            let ty_id: usize = ty.into();
+            vec![__yeast_ctx.node("base_type", vec![("type", vec![ty_id])])]
+        }}),
         // User type with multiple components (qualified) → nested named_type_expr
         rule!((user_type (type_identifier)* @parts (type_arguments (_)* @args))
             => (generic_type_expr
@@ -702,19 +757,6 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 vec![__yeast_ctx.node("type_alias_declaration", fields)]
             }}
         ),
-        // Computed property (with accessors)
-        rule!(
-            (property_declaration
-                (value_binding_pattern mutability: _ @binding_kind)
-                name: (pattern bound_identifier: (_) @name)
-                (computed_getter)* @getters
-                (computed_setter)* @setters
-                (computed_modify)* @modifiers_list)
-            =>
-            (computed_property_declaration
-                modifier: (modifier #{binding_kind})
-                name: (identifier #{name}))
-        ),
         // Subscript declaration (treat as function for now)
         rule!(
             (subscript_declaration (parameter)* @params (modifiers)* @mods)
@@ -744,6 +786,72 @@ fn translation_rules() -> Vec<yeast::Rule> {
         ),
         // Protocol property requirements — just discard
         rule!((protocol_property_requirements) => (unsupported_node)),
+        // Computed getter → computed_property_accessor
+        rule!(
+            (computed_getter (getter_specifier) (statements (_)* @body))
+            =>
+            (computed_property_accessor
+                accessor_kind: (accessor_kind "get")
+                body: (block stmt: {..body}))
+        ),
+        rule!(
+            (computed_getter (getter_specifier))
+            =>
+            (computed_property_accessor
+                accessor_kind: (accessor_kind "get")
+                body: (block))
+        ),
+        // Computed setter → computed_property_accessor
+        rule!(
+            (computed_setter (setter_specifier) (_) @param (statements (_)* @body))
+            =>
+            (computed_property_accessor
+                accessor_kind: (accessor_kind "set")
+                parameter: (parameter pattern: (name_pattern identifier: (identifier #{param})))
+                body: (block stmt: {..body}))
+        ),
+        rule!(
+            (computed_setter (setter_specifier) (statements (_)* @body))
+            =>
+            (computed_property_accessor
+                accessor_kind: (accessor_kind "set")
+                body: (block stmt: {..body}))
+        ),
+        rule!(
+            (computed_setter (setter_specifier))
+            =>
+            (computed_property_accessor
+                accessor_kind: (accessor_kind "set")
+                body: (block))
+        ),
+        // Computed modify → computed_property_accessor
+        rule!(
+            (computed_modify (modify_specifier) (statements (_)* @body))
+            =>
+            (computed_property_accessor
+                accessor_kind: (accessor_kind "modify")
+                body: (block stmt: {..body}))
+        ),
+        // willset/didset block — spread to children
+        rule!((willset_didset_block (_)* @clauses) => {..clauses}),
+        // willset clause → computed_property_accessor
+        rule!(
+            (willset_clause (statements (_)* @body))
+            =>
+            (computed_property_accessor
+                accessor_kind: (accessor_kind "willSet")
+                body: (block stmt: {..body}))
+        ),
+        // didset clause → computed_property_accessor
+        rule!(
+            (didset_clause (statements (_)* @body))
+            =>
+            (computed_property_accessor
+                accessor_kind: (accessor_kind "didSet")
+                body: (block stmt: {..body}))
+        ),
+        rule!((didset_clause) => (computed_property_accessor accessor_kind: (accessor_kind "didSet") body: (block))),
+        rule!((willset_clause) => (computed_property_accessor accessor_kind: (accessor_kind "willSet") body: (block))),
         // Preprocessor conditionals — unsupported
         rule!((diagnostic) => (unsupported_node)),
         // ---- Fallbacks ----
