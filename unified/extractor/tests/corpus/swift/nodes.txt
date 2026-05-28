@@ -711,7 +711,15 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "await foo()"
+          value:
+            unary_expr
+              operator: operator "await"
+              operand:
+                call_expr
+                  argument:
+                  function:
+                    name_expr
+                      identifier: identifier "foo"
           modifier: modifier "let"
           pattern:
             name_pattern
