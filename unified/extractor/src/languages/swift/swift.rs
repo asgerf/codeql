@@ -241,8 +241,6 @@ fn translation_rules() -> Vec<yeast::Rule> {
         ),
         // Unwrap `type` wrapper node
         rule!((type name: (_) @inner) => {inner}),
-        // User type → named_type_expr
-        rule!((user_type (type_identifier) @name) => (named_type_expr name: (identifier #{name}))),
         // `directly_assignable_expression` is just a wrapper; unwrap it
         rule!((directly_assignable_expression (_) @inner) => {inner}),
         // Pattern with bound_identifier → name_pattern
@@ -626,6 +624,77 @@ fn translation_rules() -> Vec<yeast::Rule> {
         rule!((property_behavior_modifier) @m => (modifier #{m})),
         // Type annotations — unwrap
         rule!((type_annotation (_) @inner) => {inner}),
+        // User type → named_type_expr (single or qualified component)
+        rule!((user_type (type_identifier)+ @parts) => {..{
+            let mut acc: Option<usize> = None;
+            for p in parts.iter() {
+                let text = __yeast_ctx.ast.source_text((*p).into());
+                let name_node = __yeast_ctx.literal("identifier", &text);
+                acc = Some(match acc {
+                    None => __yeast_ctx.node("named_type_expr", vec![("name", vec![name_node])]),
+                    Some(qual) => __yeast_ctx.node("named_type_expr", vec![
+                        ("qualifier", vec![qual]),
+                        ("name", vec![name_node]),
+                    ]),
+                });
+            }
+            acc.into_iter().collect::<Vec<_>>()
+        }}),
+        // Tuple type → tuple_type_expr
+        rule!((tuple_type element: (_)* @elems) => (tuple_type_expr element: {..elems})),
+        rule!((tuple_type_item name: (_) @name type: (_) @ty) => (tuple_type_element name: (identifier #{name}) type: {ty})),
+        rule!((tuple_type_item type: (_) @ty) => (tuple_type_element type: {ty})),
+        // Array type `[T]` → generic_type_expr with Array base
+        rule!((array_type element: (_) @e) => (generic_type_expr
+            base: (named_type_expr name: (identifier "Array"))
+            type_argument: {e})),
+        // Dictionary type `[K: V]` → generic_type_expr with Dictionary base
+        rule!((dictionary_type key: (_) @k value: (_) @v) => (generic_type_expr
+            base: (named_type_expr name: (identifier "Dictionary"))
+            type_argument: {k}
+            type_argument: {v})),
+        // Optional type `T?` → generic_type_expr with Optional base
+        rule!((optional_type wrapped: (_) @w) => (generic_type_expr
+            base: (named_type_expr name: (identifier "Optional"))
+            type_argument: {w})),
+        // Function type `(Params) -> Ret` → function_type_expr.
+        // The params field is a tuple_type whose elements become parameters.
+        rule!(
+            (function_type params: (tuple_type element: (_)* @ps) return_type: (_) @ret)
+            =>
+            (function_type_expr
+                parameter: {..{
+                    ps.iter().map(|&p| {
+                        // p is the (already-translated) tuple_type_element
+                        let pid: yeast::Id = p.into();
+                        // Detect labeled vs unlabeled by trying to read fields, but in any
+                        // case wrap as a parameter with type and optional external_name.
+                        let kind = __yeast_ctx.ast.get_node(pid).map(|n| n.kind()).unwrap_or("");
+                        if kind == "tuple_type_element" {
+                            let elem = __yeast_ctx.ast.get_node(pid).unwrap();
+                            let name_field = __yeast_ctx.ast.field_id_for_name("name");
+                            let type_field = __yeast_ctx.ast.field_id_for_name("type");
+                            let names: Vec<yeast::Id> = name_field
+                                .map(|f| elem.field_children(f).to_vec())
+                                .unwrap_or_default();
+                            let types: Vec<yeast::Id> = type_field
+                                .map(|f| elem.field_children(f).to_vec())
+                                .unwrap_or_default();
+                            let mut fields: Vec<(&str, Vec<usize>)> = Vec::new();
+                            if !names.is_empty() {
+                                fields.push(("external_name", names));
+                            }
+                            if !types.is_empty() {
+                                fields.push(("type", types));
+                            }
+                            __yeast_ctx.node("parameter", fields)
+                        } else {
+                            pid
+                        }
+                    }).collect::<Vec<_>>()
+                }}
+                return_type: {ret})
+        ),
         // Inheritance specifier → base_type
         rule!((inheritance_specifier inherits_from: (_) @ty) => {..{
             let ty_id: usize = ty.into();

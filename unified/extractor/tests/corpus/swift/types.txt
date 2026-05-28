@@ -1950,7 +1950,19 @@ top_level
       stmt:
         type_alias_declaration
           name: identifier "T"
-          type: unsupported_node "(a: A, b: B)"
+          type:
+            tuple_type_expr
+              element:
+                tuple_type_element
+                  name: identifier "a"
+                  type:
+                    named_type_expr
+                      name: identifier "A"
+                tuple_type_element
+                  name: identifier "b"
+                  type:
+                    named_type_expr
+                      name: identifier "B"
 
 ===
 Typealias for function type
@@ -1996,7 +2008,20 @@ top_level
       stmt:
         type_alias_declaration
           name: identifier "F"
-          type: unsupported_node "(Int, String) -> Bool"
+          type:
+            function_type_expr
+              return_type:
+                named_type_expr
+                  name: identifier "Bool"
+              parameter:
+                parameter
+                  type:
+                    named_type_expr
+                      name: identifier "Int"
+                parameter
+                  type:
+                    named_type_expr
+                      name: identifier "String"
 
 ===
 Typealias for array of qualified type
@@ -2028,7 +2053,17 @@ top_level
       stmt:
         type_alias_declaration
           name: identifier "T"
-          type: unsupported_node "[A.B]"
+          type:
+            generic_type_expr
+              base:
+                named_type_expr
+                  name: identifier "Array"
+              type_argument:
+                named_type_expr
+                  name: identifier "B"
+                  qualifier:
+                    named_type_expr
+                      name: identifier "A"
 
 ===
 Typealias for optional dictionary
@@ -2066,7 +2101,21 @@ top_level
       stmt:
         type_alias_declaration
           name: identifier "T"
-          type: unsupported_node "[A: B]?"
+          type:
+            generic_type_expr
+              base:
+                named_type_expr
+                  name: identifier "Optional"
+              type_argument:
+                generic_type_expr
+                  base:
+                    named_type_expr
+                      name: identifier "Dictionary"
+                  type_argument:
+                    named_type_expr
+                      name: identifier "A"
+                    named_type_expr
+                      name: identifier "B"
 
 ===
 Generic function with conformance constraint
