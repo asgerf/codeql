@@ -844,22 +844,15 @@ fn translation_rules() -> Vec<yeast::Rule> {
         ),
         // Protocol property requirements — just discard
         rule!((protocol_property_requirements) => (unsupported_node)),
-        // Computed getter → computed_property_accessor
+        // Computed getter → computed_property_accessor (body optional).
         rule!(
-            (computed_getter (getter_specifier) (statements (_)* @body))
+            (computed_getter (getter_specifier) (statements (_)* @body)?)
             =>
             (computed_property_accessor
                 accessor_kind: (accessor_kind "get")
                 body: (block stmt: {..body}))
         ),
-        rule!(
-            (computed_getter (getter_specifier))
-            =>
-            (computed_property_accessor
-                accessor_kind: (accessor_kind "get")
-                body: (block))
-        ),
-        // Computed setter → computed_property_accessor
+        // Computed setter with explicit parameter name.
         rule!(
             (computed_setter (setter_specifier) (_) @param (statements (_)* @body))
             =>
@@ -868,19 +861,13 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 parameter: (parameter pattern: (name_pattern identifier: (identifier #{param})))
                 body: (block stmt: {..body}))
         ),
+        // Computed setter without explicit parameter name; body optional.
         rule!(
-            (computed_setter (setter_specifier) (statements (_)* @body))
+            (computed_setter (setter_specifier) (statements (_)* @body)?)
             =>
             (computed_property_accessor
                 accessor_kind: (accessor_kind "set")
                 body: (block stmt: {..body}))
-        ),
-        rule!(
-            (computed_setter (setter_specifier))
-            =>
-            (computed_property_accessor
-                accessor_kind: (accessor_kind "set")
-                body: (block))
         ),
         // Computed modify → computed_property_accessor
         rule!(
@@ -892,24 +879,22 @@ fn translation_rules() -> Vec<yeast::Rule> {
         ),
         // willset/didset block — spread to children
         rule!((willset_didset_block (_)* @clauses) => {..clauses}),
-        // willset clause → computed_property_accessor
+        // willset clause → computed_property_accessor (body optional).
         rule!(
-            (willset_clause (statements (_)* @body))
+            (willset_clause (statements (_)* @body)?)
             =>
             (computed_property_accessor
                 accessor_kind: (accessor_kind "willSet")
                 body: (block stmt: {..body}))
         ),
-        // didset clause → computed_property_accessor
+        // didset clause → computed_property_accessor (body optional).
         rule!(
-            (didset_clause (statements (_)* @body))
+            (didset_clause (statements (_)* @body)?)
             =>
             (computed_property_accessor
                 accessor_kind: (accessor_kind "didSet")
                 body: (block stmt: {..body}))
         ),
-        rule!((didset_clause) => (computed_property_accessor accessor_kind: (accessor_kind "didSet") body: (block))),
-        rule!((willset_clause) => (computed_property_accessor accessor_kind: (accessor_kind "willSet") body: (block))),
         // Preprocessor conditionals — unsupported
         rule!((diagnostic) => (unsupported_node)),
         // ---- Fallbacks ----
