@@ -1271,7 +1271,9 @@ top_level
       stmt:
         type_alias_declaration
           name: identifier "Number"
-          modifier:
+          type:
+            named_type_expr
+              name: identifier "Int"
 
 ===
 Selector expression

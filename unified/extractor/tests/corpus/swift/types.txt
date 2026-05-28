@@ -1131,7 +1131,9 @@ top_level
           member:
             type_alias_declaration
               name: identifier "T"
-              modifier:
+              type:
+                named_type_expr
+                  name: identifier "Int"
 
 ===
 Static member access on a generic type
@@ -1567,6 +1569,9 @@ top_level
       stmt:
         type_alias_declaration
           name: identifier "Name"
+          type:
+            named_type_expr
+              name: identifier "String"
           modifier: modifier "public"
         class_like_declaration
           name: identifier "P"
@@ -1857,7 +1862,7 @@ top_level
       stmt:
         type_alias_declaration
           name: identifier "T"
-          modifier:
+          type: unsupported_node "(a: A, b: B)"
 
 ===
 Typealias for function type
@@ -1903,7 +1908,7 @@ top_level
       stmt:
         type_alias_declaration
           name: identifier "F"
-          modifier:
+          type: unsupported_node "(Int, String) -> Bool"
 
 ===
 Typealias for array of qualified type
@@ -1935,7 +1940,7 @@ top_level
       stmt:
         type_alias_declaration
           name: identifier "T"
-          modifier:
+          type: unsupported_node "[A.B]"
 
 ===
 Typealias for optional dictionary
@@ -1973,7 +1978,7 @@ top_level
       stmt:
         type_alias_declaration
           name: identifier "T"
-          modifier:
+          type: unsupported_node "[A: B]?"
 
 ===
 Generic function with conformance constraint
