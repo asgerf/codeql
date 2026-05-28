@@ -157,30 +157,18 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 name: (identifier #{name})
                 accessors: {..accessors})
         ),
-        // Property with willSet/didSet observers (with value)
+        // Property with willSet/didSet observers (initializer optional).
         rule!(
             (property_declaration
                 (value_binding_pattern mutability: _ @binding_kind)
                 name: (pattern bound_identifier: (_) @name)
-                value: (_) @val
+                value: (_)? @val
                 (willset_didset_block (_)* @observers))
             =>
             (computed_property_declaration
                 modifier: (modifier #{binding_kind})
                 name: (identifier #{name})
-                initializer: {val}
-                accessors: {..observers})
-        ),
-        // Property with willSet/didSet observers (no value)
-        rule!(
-            (property_declaration
-                (value_binding_pattern mutability: _ @binding_kind)
-                name: (pattern bound_identifier: (_) @name)
-                (willset_didset_block (_)* @observers))
-            =>
-            (computed_property_declaration
-                modifier: (modifier #{binding_kind})
-                name: (identifier #{name})
+                initializer: {..val}
                 accessors: {..observers})
         ),
         // Plain assignment: `x = expr`
@@ -195,49 +183,31 @@ fn translation_rules() -> Vec<yeast::Rule> {
             =>
             (compound_assign_expr target: {target} operator: (operator #{op}) value: {value})
         ),
-        // Property declaration (let/var binding) with value
+        // Property declaration (let/var binding) with simple identifier pattern;
+        // value is optional (type-only declaration).
         rule!(
             (property_declaration
                 (value_binding_pattern mutability: _ @binding_kind)
                 name: (pattern bound_identifier: (_) @name)
-                value: (_) @val)
+                value: (_)? @val)
             =>
             (variable_declaration
                 modifier: (modifier #{binding_kind})
                 pattern: (name_pattern identifier: (identifier #{name}))
-                value: {val})
+                value: {..val})
         ),
-        // Property declaration (let/var binding) without value (type-only decl)
-        rule!(
-            (property_declaration
-                (value_binding_pattern mutability: _ @binding_kind)
-                name: (pattern bound_identifier: (_) @name))
-            =>
-            (variable_declaration
-                modifier: (modifier #{binding_kind})
-                pattern: (name_pattern identifier: (identifier #{name})))
-        ),
-        // Property declaration with a complex pattern (tuple destructuring etc.)
+        // Property declaration with a complex pattern (tuple destructuring etc.);
+        // value optional.
         rule!(
             (property_declaration
                 (value_binding_pattern mutability: _ @binding_kind)
                 name: (_) @pat
-                value: (_) @val)
+                value: (_)? @val)
             =>
             (variable_declaration
                 modifier: (modifier #{binding_kind})
                 pattern: {pat}
-                value: {val})
-        ),
-        // Property declaration with complex pattern, no value
-        rule!(
-            (property_declaration
-                (value_binding_pattern mutability: _ @binding_kind)
-                name: (_) @pat)
-            =>
-            (variable_declaration
-                modifier: (modifier #{binding_kind})
-                pattern: {pat})
+                value: {..val})
         ),
         // Unwrap `type` wrapper node
         rule!((type name: (_) @inner) => {inner}),
