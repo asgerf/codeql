@@ -579,8 +579,20 @@ top_level
       stmt:
         variable_declaration
           value:
-            name_expr
-              identifier: identifier "v"
+            type_cast_expr
+              expr:
+                type_cast_expr
+                  expr:
+                    name_expr
+                      identifier: identifier "v"
+                  operator: operator "as?"
+                  type:
+                    named_type_expr
+                      name: identifier "Base"
+              operator: operator "as?"
+              type:
+                named_type_expr
+                  name: identifier "Sub"
           modifier: modifier "let"
           pattern:
             name_pattern

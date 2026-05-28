@@ -568,8 +568,14 @@ top_level
       stmt:
         variable_declaration
           value:
-            name_expr
-              identifier: identifier "y"
+            type_cast_expr
+              expr:
+                name_expr
+                  identifier: identifier "y"
+              operator: operator "as"
+              type:
+                named_type_expr
+                  name: identifier "Int"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -608,8 +614,14 @@ top_level
       stmt:
         variable_declaration
           value:
-            name_expr
-              identifier: identifier "y"
+            type_cast_expr
+              expr:
+                name_expr
+                  identifier: identifier "y"
+              operator: operator "as?"
+              type:
+                named_type_expr
+                  name: identifier "Int"
           modifier: modifier "let"
           pattern:
             name_pattern
