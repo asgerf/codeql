@@ -543,21 +543,16 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 body: (block stmt: {..body})
                 catch_clause: {..catches})
         ),
-        // Catch block
+        // Catch block with bound identifier; optional where-clause guard.
         rule!(
-            (catch_block (catch_keyword) error: (pattern bound_identifier: (_) @name) (statements (_)* @body))
+            (catch_block (catch_keyword)
+                error: (pattern bound_identifier: (_) @name)
+                (where_clause (where_keyword) (_) @guard)?
+                (statements (_)* @body))
             =>
             (catch_clause
                 pattern: (name_pattern identifier: (identifier #{name}))
-                body: (block stmt: {..body}))
-        ),
-        // Catch block with where clause
-        rule!(
-            (catch_block (catch_keyword) error: (pattern bound_identifier: (_) @name) (where_clause (where_keyword) (_) @guard) (statements (_)* @body))
-            =>
-            (catch_clause
-                pattern: (name_pattern identifier: (identifier #{name}))
-                guard: {guard}
+                guard: {..guard}
                 body: (block stmt: {..body}))
         ),
         // Catch block without error binding
@@ -566,21 +561,13 @@ fn translation_rules() -> Vec<yeast::Rule> {
             =>
             (catch_clause body: (block stmt: {..body}))
         ),
-        // Catch block with unhandled pattern — preserve pattern, map body
+        // Catch block with unhandled pattern — preserve pattern; optional body.
         rule!(
-            (catch_block (catch_keyword) error: (_) @pat (statements (_)* @body))
+            (catch_block (catch_keyword) error: (_) @pat (statements (_)* @body)?)
             =>
             (catch_clause
                 pattern: {pat}
                 body: (block stmt: {..body}))
-        ),
-        // Catch block with pattern but no statements (empty body)
-        rule!(
-            (catch_block (catch_keyword) error: (_) @pat)
-            =>
-            (catch_clause
-                pattern: {pat}
-                body: (block))
         ),
         // As expression (type cast) — as?, as!
         rule!((as_expression (as_operator) @op expr: (_) @val type: (_) @ty) => (type_cast_expr expr: {val} operator: (operator #{op}) type: {ty})),

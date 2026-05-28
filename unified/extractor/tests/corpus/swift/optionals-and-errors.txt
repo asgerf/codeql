@@ -511,6 +511,16 @@ top_level
                       function:
                         name_expr
                           identifier: identifier "print"
+              guard:
+                binary_expr
+                  operator: operator ">"
+                  left:
+                    member_access_expr
+                      target:
+                        name_expr
+                          identifier: identifier "e"
+                      member: identifier "code"
+                  right: int_literal "0"
               pattern:
                 name_pattern
                   identifier: identifier "e"
