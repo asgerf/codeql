@@ -695,6 +695,20 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 }}
                 return_type: {ret})
         ),
+        // Selector expression: `#selector(inner)` → call_expr of `#selector` with one argument
+        rule!(
+            (selector_expression (_) @inner)
+            =>
+            (call_expr
+                function: (name_expr identifier: (identifier "#selector"))
+                argument: (argument value: {inner}))
+        ),
+        // Key path expression: `\Person.name` parses as a navigation_expression
+        // whose target is `key_path_expression` containing a type_identifier.
+        // Translate the key-path leader to a name_expr containing the literal
+        // source text (e.g. `\Person`) so the surrounding member access still
+        // works.
+        rule!((key_path_expression) @kp => (name_expr identifier: (identifier #{kp}))),
         // Inheritance specifier → base_type
         rule!((inheritance_specifier inherits_from: (_) @ty) => {..{
             let ty_id: usize = ty.into();

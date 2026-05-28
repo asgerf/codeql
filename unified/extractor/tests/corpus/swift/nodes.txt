@@ -1337,7 +1337,16 @@ top_level
     block
       stmt:
         variable_declaration
-          value: unsupported_node "#selector(foo)"
+          value:
+            call_expr
+              argument:
+                argument
+                  value:
+                    name_expr
+                      identifier: identifier "foo"
+              function:
+                name_expr
+                  identifier: identifier "#selector"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -1376,7 +1385,9 @@ top_level
         variable_declaration
           value:
             member_access_expr
-              target: unsupported_node "\\Person"
+              target:
+                name_expr
+                  identifier: identifier "\\Person"
               member: identifier "name"
           modifier: modifier "let"
           pattern:
