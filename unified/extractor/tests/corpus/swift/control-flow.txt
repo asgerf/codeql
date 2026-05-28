@@ -466,9 +466,7 @@ top_level
                       function:
                         name_expr
                           identifier: identifier "print"
-              pattern:
-                tuple_pattern
-                  element:
+              pattern: tuple_pattern "1"
             switch_case
               body:
                 block
@@ -481,10 +479,8 @@ top_level
                         name_expr
                           identifier: identifier "print"
               pattern:
-                tuple_pattern
-                  element:
-                tuple_pattern
-                  element:
+                tuple_pattern "2"
+                tuple_pattern "3"
             switch_case
               body:
                 block
@@ -496,7 +492,6 @@ top_level
                       function:
                         name_expr
                           identifier: identifier "print"
-              pattern:
           value:
             name_expr
               identifier: identifier "x"
@@ -687,10 +682,8 @@ top_level
               pattern:
                 tuple_pattern
                   element:
-                    tuple_pattern
-                      element:
-                    tuple_pattern
-                      element:
+                    tuple_pattern "x"
+                    tuple_pattern "y"
             switch_case
               body:
                 block
@@ -705,10 +698,8 @@ top_level
               pattern:
                 tuple_pattern
                   element:
-                    tuple_pattern
-                      element:
-                    tuple_pattern
-                      element:
+                    tuple_pattern "0"
+                    tuple_pattern "0"
             switch_case
               body:
                 block
@@ -720,7 +711,6 @@ top_level
                       function:
                         name_expr
                           identifier: identifier "print"
-              pattern:
           value:
             name_expr
               identifier: identifier "p"
@@ -810,12 +800,9 @@ top_level
                         name_expr
                           identifier: identifier "print"
               pattern:
-                tuple_pattern
-                  element:
-                tuple_pattern
-                  element:
-                tuple_pattern
-                  element:
+                tuple_pattern "1"
+                tuple_pattern "2"
+                tuple_pattern "3"
             switch_case
               body:
                 block
@@ -828,10 +815,8 @@ top_level
                         name_expr
                           identifier: identifier "print"
               pattern:
-                tuple_pattern
-                  element:
-                tuple_pattern
-                  element:
+                tuple_pattern "4"
+                tuple_pattern "5"
             switch_case
               body:
                 block
@@ -843,7 +828,6 @@ top_level
                       function:
                         name_expr
                           identifier: identifier "print"
-              pattern:
           value:
             name_expr
               identifier: identifier "x"
@@ -929,9 +913,7 @@ top_level
                       function:
                         name_expr
                           identifier: identifier "print"
-              pattern:
-                tuple_pattern
-                  element:
+              pattern: tuple_pattern "0..<10"
             switch_case
               body:
                 block
@@ -943,9 +925,7 @@ top_level
                       function:
                         name_expr
                           identifier: identifier "print"
-              pattern:
-                tuple_pattern
-                  element:
+              pattern: tuple_pattern "10...100"
             switch_case
               body:
                 block
@@ -957,7 +937,6 @@ top_level
                       function:
                         name_expr
                           identifier: identifier "print"
-              pattern:
           value:
             name_expr
               identifier: identifier "n"

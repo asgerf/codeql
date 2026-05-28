@@ -41,7 +41,6 @@ top_level
                     name_expr
                       identifier: identifier "print"
           name: identifier "greet"
-          parameter:
 
 ===
 Function with parameters and return type
@@ -631,19 +630,14 @@ top_level
             block
               stmt: boolean_literal "false"
           name: identifier "always"
-          parameter:
         function_declaration
           body:
             block
               stmt: float_literal "3.14"
           name: identifier "pi"
-          parameter:
         function_declaration
-          body:
-            block
-              stmt:
+          body: block "func none() -> Int? { nil }"
           name: identifier "none"
-          parameter:
 
 ===
 Function declaration modifiers
@@ -691,15 +685,12 @@ top_level
         function_declaration
           body: block "public func a() {}"
           name: identifier "a"
-          parameter:
         function_declaration
           body: block "private static func b() {}"
           name: identifier "b"
-          parameter:
         function_declaration
           body: block "@available(*, deprecated)\ninternal func c() {}"
           name: identifier "c"
-          parameter:
 
 ===
 Function with operator name
@@ -755,7 +746,6 @@ top_level
         class_like_declaration
           name: identifier "S"
           modifier: modifier "struct"
-          base_type:
           member:
             function_declaration
               body:

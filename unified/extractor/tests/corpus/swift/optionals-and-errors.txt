@@ -202,7 +202,6 @@ top_level
                 return_expr
                   value: string_literal "\"\""
           name: identifier "read"
-          parameter:
 
 ===
 Do-catch
@@ -250,7 +249,6 @@ top_level
                   operator: operator "try"
                   operand:
                     call_expr
-                      argument:
                       function:
                         name_expr
                           identifier: identifier "foo"
@@ -305,7 +303,6 @@ top_level
               operator: operator "try?"
               operand:
                 call_expr
-                  argument:
                   function:
                     name_expr
                       identifier: identifier "foo"
@@ -350,7 +347,6 @@ top_level
               operator: operator "try!"
               operand:
                 call_expr
-                  argument:
                   function:
                     name_expr
                       identifier: identifier "foo"
@@ -498,7 +494,6 @@ top_level
                   operator: operator "try"
                   operand:
                     call_expr
-                      argument:
                       function:
                         name_expr
                           identifier: identifier "foo"
@@ -574,15 +569,11 @@ top_level
                           operator: operator "try"
                           operand:
                             call_expr
-                              argument:
                               function:
                                 name_expr
                                   identifier: identifier "remove"
                   catch_clause:
                     catch_clause
                       body: block "catch CocoaError.fileNoSuchFile {\n    }"
-                      pattern:
-                        tuple_pattern
-                          element:
+                      pattern: tuple_pattern "CocoaError.fileNoSuchFile"
           name: identifier "f"
-          parameter:

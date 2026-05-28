@@ -204,7 +204,6 @@ top_level
                 block
                   stmt:
                     call_expr
-                      argument:
                       function:
                         member_access_expr
                           target: keyword_literal "self"

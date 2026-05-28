@@ -162,10 +162,8 @@ top_level
           pattern:
             tuple_pattern
               element:
-                tuple_pattern
-                  element:
-                tuple_pattern
-                  element:
+                tuple_pattern "a"
+                tuple_pattern "b"
 
 ===
 Multiple bindings on one line
@@ -290,7 +288,6 @@ top_level
               identifier: identifier "_"
           value:
             call_expr
-              argument:
               function:
                 name_expr
                   identifier: identifier "sideEffect"
@@ -466,14 +463,11 @@ top_level
                   body:
                     block
                       stmt: string_literal "\"on\""
-                  pattern:
-                    tuple_pattern
-                      element:
+                  pattern: tuple_pattern ".on"
                 switch_case
                   body:
                     block
                       stmt: string_literal "\"off\""
-                  pattern:
               value:
                 name_expr
                   identifier: identifier "state"
@@ -554,7 +548,6 @@ top_level
                         block
                           stmt: int_literal "1"
           name: identifier "f"
-          parameter:
 
 ===
 Top-level computed property

@@ -92,9 +92,7 @@ source_file
 ---
 
 top_level
-  body:
-    block
-      stmt:
+  body: block "nil"
 
 ===
 String literal

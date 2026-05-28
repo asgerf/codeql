@@ -472,12 +472,10 @@ top_level
         variable_declaration
           value:
             call_expr
-              argument:
               function:
                 member_access_expr
                   target:
                     call_expr
-                      argument:
                       function:
                         member_access_expr
                           target:

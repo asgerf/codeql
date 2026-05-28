@@ -391,7 +391,6 @@ top_level
     block
       stmt:
         call_expr
-          argument:
           function:
             member_access_expr
               target: super_expr "super"
@@ -539,9 +538,7 @@ top_level
         variable_declaration
           value: int_literal "1"
           modifier: modifier "let"
-          pattern:
-            tuple_pattern
-              element:
+          pattern: tuple_pattern "_"
 
 ===
 As expression
@@ -716,7 +713,6 @@ top_level
               operator: operator "await"
               operand:
                 call_expr
-                  argument:
                   function:
                     name_expr
                       identifier: identifier "foo"
@@ -752,7 +748,6 @@ top_level
           operator: operator "try"
           operand:
             call_expr
-              argument:
               function:
                 name_expr
                   identifier: identifier "foo"
@@ -784,7 +779,6 @@ top_level
           operator: operator "try?"
           operand:
             call_expr
-              argument:
               function:
                 name_expr
                   identifier: identifier "foo"
@@ -1076,16 +1070,13 @@ top_level
                   stmt:
                     name_expr
                       identifier: identifier "y"
-              pattern:
-                tuple_pattern
-                  element:
+              pattern: tuple_pattern "1"
             switch_case
               body:
                 block
                   stmt:
                     name_expr
                       identifier: identifier "z"
-              pattern:
           value:
             name_expr
               identifier: identifier "x"
@@ -1134,7 +1125,6 @@ top_level
                   operator: operator "try"
                   operand:
                     call_expr
-                      argument:
                       function:
                         name_expr
                           identifier: identifier "foo"
@@ -1144,7 +1134,6 @@ top_level
                 block
                   stmt:
                     call_expr
-                      argument:
                       function:
                         name_expr
                           identifier: identifier "bar"
@@ -1213,7 +1202,6 @@ top_level
                 return_expr
                   value: int_literal "1"
           name: identifier "f"
-          parameter:
 
 ===
 Break statement
@@ -1631,9 +1619,7 @@ top_level
     block
       stmt:
         variable_declaration
-          value:
-            array_literal
-              element:
+          value: array_literal "[]"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -1679,9 +1665,7 @@ top_level
     block
       stmt:
         variable_declaration
-          value:
-            map_literal
-              element:
+          value: map_literal "[:]"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -1917,9 +1901,7 @@ top_level
     block
       stmt:
         variable_declaration
-          value:
-            array_literal
-              element:
+          value: array_literal "[]"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -1961,7 +1943,6 @@ top_level
                 return_expr
                   value: int_literal "1"
           name: identifier "f"
-          parameter:
 
 ===
 Any existential type
@@ -2029,7 +2010,6 @@ top_level
         function_declaration
           body: block "@available(*, deprecated) func f() {}"
           name: identifier "f"
-          parameter:
 
 ===
 Visibility modifier
@@ -2059,8 +2039,6 @@ top_level
           modifier:
             modifier "class"
             modifier "public"
-          base_type:
-          member:
 
 ===
 Static modifier
@@ -2095,7 +2073,6 @@ top_level
         class_like_declaration
           name: identifier "Foo"
           modifier: modifier "class"
-          base_type:
           member:
             variable_declaration
               value: int_literal "1"
@@ -2131,11 +2108,9 @@ top_level
         class_like_declaration
           name: identifier "Foo"
           modifier: modifier "class"
-          base_type:
           member:
             destructor_declaration
               body: block "deinit { }"
-              modifier:
 
 ===
 Subscript declaration
@@ -2180,12 +2155,10 @@ top_level
         class_like_declaration
           name: identifier "Foo"
           modifier: modifier "class"
-          base_type:
           member:
             function_declaration
               body: block "subscript(i: Int) -> Int { return i }"
               name: identifier "subscript"
-              modifier:
               parameter:
                 parameter
                   pattern:
@@ -2218,11 +2191,9 @@ top_level
         class_like_declaration
           name: identifier "P"
           modifier: modifier "protocol"
-          base_type:
           member:
             associated_type_declaration
               name: identifier "T"
-              modifier:
 
 ===
 Operator declaration
@@ -2331,7 +2302,6 @@ top_level
         class_like_declaration
           name: identifier "E"
           modifier: modifier "enum"
-          base_type:
           member:
             class_like_declaration
               name: identifier "some"
@@ -2382,7 +2352,6 @@ top_level
               type:
                 named_type_expr
                   name: identifier "Animal"
-          member:
 
 ===
 Tuple destructuring
@@ -2424,7 +2393,5 @@ top_level
           pattern:
             tuple_pattern
               element:
-                tuple_pattern
-                  element:
-                tuple_pattern
-                  element:
+                tuple_pattern "a"
+                tuple_pattern "b"

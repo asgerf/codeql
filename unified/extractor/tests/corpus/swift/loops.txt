@@ -504,7 +504,6 @@ top_level
             pattern_guard_expr
               value:
                 call_expr
-                  argument:
                   function:
                     name_expr
                       identifier: identifier "readline"

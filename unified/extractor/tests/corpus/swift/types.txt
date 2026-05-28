@@ -22,8 +22,6 @@ top_level
         class_like_declaration
           name: identifier "Foo"
           modifier: modifier "class"
-          base_type:
-          member:
 
 ===
 Class with stored properties
@@ -76,7 +74,6 @@ top_level
         class_like_declaration
           name: identifier "Point"
           modifier: modifier "class"
-          base_type:
           member:
             variable_declaration
               modifier: modifier "var"
@@ -153,7 +150,6 @@ top_level
         class_like_declaration
           name: identifier "Point"
           modifier: modifier "class"
-          base_type:
           member:
             variable_declaration
               modifier: modifier "var"
@@ -172,7 +168,6 @@ top_level
                       value:
                         name_expr
                           identifier: identifier "x"
-              modifier:
               parameter:
                 parameter
                   pattern:
@@ -226,7 +221,6 @@ top_level
         class_like_declaration
           name: identifier "Counter"
           modifier: modifier "class"
-          base_type:
           member:
             variable_declaration
               value: int_literal "0"
@@ -245,7 +239,6 @@ top_level
                           identifier: identifier "n"
                       value: int_literal "1"
               name: identifier "bump"
-              parameter:
 
 ===
 Class inheritance
@@ -280,7 +273,6 @@ top_level
               type:
                 named_type_expr
                   name: identifier "Animal"
-          member:
 
 ===
 Struct
@@ -333,7 +325,6 @@ top_level
         class_like_declaration
           name: identifier "Point"
           modifier: modifier "struct"
-          base_type:
           member:
             variable_declaration
               modifier: modifier "let"
@@ -391,7 +382,6 @@ top_level
         class_like_declaration
           name: identifier "Direction"
           modifier: modifier "enum"
-          base_type:
           member:
             variable_declaration
               modifier: modifier "enum_case"
@@ -465,7 +455,6 @@ top_level
         class_like_declaration
           name: identifier "Shape"
           modifier: modifier "enum"
-          base_type:
           member:
             class_like_declaration
               name: identifier "circle"
@@ -560,7 +549,6 @@ top_level
         class_like_declaration
           name: identifier "Event"
           modifier: modifier "enum"
-          base_type:
           member:
             class_like_declaration
               name: identifier "named"
@@ -629,13 +617,10 @@ top_level
         class_like_declaration
           name: identifier "Drawable"
           modifier: modifier "protocol"
-          base_type:
           member:
             function_declaration
               body: block "func draw()"
               name: identifier "draw"
-              modifier:
-              parameter:
 
 ===
 Extension
@@ -683,7 +668,6 @@ top_level
         class_like_declaration
           name: identifier "Int"
           modifier: modifier "extension"
-          base_type:
           member:
             function_declaration
               body:
@@ -696,7 +680,6 @@ top_level
                           left: keyword_literal "self"
                           right: keyword_literal "self"
               name: identifier "squared"
-              parameter:
 
 ===
 Computed property
@@ -773,7 +756,6 @@ top_level
         class_like_declaration
           name: identifier "Rect"
           modifier: modifier "class"
-          base_type:
           member:
             variable_declaration
               modifier: modifier "var"
@@ -872,7 +854,6 @@ top_level
         class_like_declaration
           name: identifier "Box"
           modifier: modifier "class"
-          base_type:
           member:
             variable_declaration
               value: int_literal "0"
@@ -1059,7 +1040,6 @@ top_level
         class_like_declaration
           name: identifier "E"
           modifier: modifier "enum"
-          base_type:
           member:
             variable_declaration
               modifier: modifier "enum_case"
@@ -1078,7 +1058,6 @@ top_level
                     return_expr
                       value: string_literal "\"x\""
               name: identifier "describe"
-              parameter:
 
 ===
 Protocol with property requirement
@@ -1136,14 +1115,11 @@ top_level
         class_like_declaration
           name: identifier "P"
           modifier: modifier "protocol"
-          base_type:
           member:
             computed_property_declaration
               name: identifier "x"
-              modifier:
             computed_property_declaration
               name: identifier "y"
-              modifier:
 
 ===
 Class with nested type
@@ -1190,12 +1166,10 @@ top_level
         class_like_declaration
           name: identifier "Outer"
           modifier: modifier "class"
-          base_type:
           member:
             class_like_declaration
               name: identifier "Inner"
               modifier: modifier "class"
-              base_type:
               member:
                 variable_declaration
                   modifier: modifier "var"
@@ -1236,7 +1210,6 @@ top_level
         class_like_declaration
           name: identifier "C"
           modifier: modifier "class"
-          base_type:
           member:
             type_alias_declaration
               name: identifier "T"
@@ -1334,12 +1307,9 @@ top_level
         class_like_declaration
           name: identifier "C"
           modifier: modifier "class"
-          base_type:
-          member:
         unsupported_node "#if DEBUG"
         constructor_declaration <-- ERROR: The field block.stmt should contain stmt, but got constructor_declaration
           body: block "init(x: Int) {}"
-          modifier:
           parameter:
             parameter
               pattern:
@@ -1408,37 +1378,27 @@ top_level
           modifier:
             modifier "class"
             modifier "public"
-          base_type:
-          member:
         class_like_declaration
           name: identifier "S"
           modifier:
             modifier "struct"
             modifier "private"
-          base_type:
-          member:
         class_like_declaration
           name: identifier "E"
           modifier:
             modifier "enum"
             modifier "internal"
-          base_type:
-          member:
         class_like_declaration
           name: identifier "F"
           modifier:
             modifier "class"
             modifier "fileprivate"
             modifier "final"
-          base_type:
-          member:
         class_like_declaration
           name: identifier "O"
           modifier:
             modifier "class"
             modifier "open"
-          base_type:
-          member:
 
 ===
 Modifiers on members (methods and properties)
@@ -1515,7 +1475,6 @@ top_level
         class_like_declaration
           name: identifier "C"
           modifier: modifier "class"
-          base_type:
           member:
             variable_declaration
               value: int_literal "0"
@@ -1532,11 +1491,9 @@ top_level
             function_declaration
               body: block "public func greet() {}"
               name: identifier "greet"
-              parameter:
             function_declaration
               body: block "private static func help() {}"
               name: identifier "help"
-              parameter:
 
 ===
 Modifiers on init, deinit, subscript, typealias, protocol and enum entries
@@ -1694,7 +1651,6 @@ top_level
           modifier:
             modifier "protocol"
             modifier "public"
-          base_type:
           member:
             function_declaration
               body: block "static func foo() -> Int"
@@ -1703,34 +1659,26 @@ top_level
                 named_type_expr
                   name: identifier "Int"
               modifier: modifier "static"
-              parameter:
             computed_property_declaration
               name: identifier "x"
-              modifier:
             associated_type_declaration
               name: identifier "A"
-              modifier:
             associated_type_declaration
               name: identifier "B"
-              modifier:
         class_like_declaration
           name: identifier "C"
           modifier: modifier "class"
-          base_type:
           member:
             constructor_declaration
               body: block "public required init() {}"
               modifier:
                 modifier "public"
                 modifier "required"
-              parameter:
             destructor_declaration
               body: block "deinit {}"
-              modifier:
             function_declaration
               body: block "public subscript(i: Int) -> Int { return i }"
               name: identifier "subscript"
-              modifier:
               parameter:
                 parameter
                   pattern:
@@ -1741,7 +1689,6 @@ top_level
           modifier:
             modifier "enum"
             modifier "public"
-          base_type:
           member:
             variable_declaration
               modifier: modifier "enum_case"
@@ -1892,7 +1839,6 @@ top_level
         class_like_declaration
           name: identifier "C"
           modifier: modifier "class"
-          base_type:
           member:
             computed_property_declaration
               name: identifier "y"
@@ -1956,7 +1902,6 @@ top_level
         class_like_declaration
           name: identifier "C"
           modifier: modifier "class"
-          base_type:
           member:
             computed_property_declaration
               name: identifier "x"
@@ -2355,7 +2300,6 @@ top_level
         class_like_declaration
           name: identifier "Box"
           modifier: modifier "class"
-          base_type:
           member:
             variable_declaration
               modifier: modifier "let"
@@ -2403,11 +2347,9 @@ top_level
         class_like_declaration
           name: identifier "Container"
           modifier: modifier "protocol"
-          base_type:
           member:
             associated_type_declaration
               name: identifier "Element"
-              modifier:
 
 ===
 Class with base class and protocols
@@ -2458,7 +2400,6 @@ top_level
               type:
                 named_type_expr
                   name: identifier "Trainable"
-          member:
 
 ===
 Struct conforming to protocol
@@ -2655,5 +2596,3 @@ top_level
             function_declaration
               body: block "func draw()"
               name: identifier "draw"
-              modifier:
-              parameter:

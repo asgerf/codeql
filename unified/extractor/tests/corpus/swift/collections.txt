@@ -73,9 +73,7 @@ top_level
     block
       stmt:
         variable_declaration
-          value:
-            array_literal
-              element:
+          value: array_literal "[]"
           modifier: modifier "let"
           pattern:
             name_pattern
