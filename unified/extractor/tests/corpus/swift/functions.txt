@@ -792,3 +792,48 @@ top_level
               return_type:
                 named_type_expr
                   name: identifier "Bool"
+
+===
+Function reference as argument
+===
+
+f(foo(bar:))
+
+---
+
+source_file
+  call_expression
+    simple_identifier "f"
+    call_suffix
+      value_arguments
+        value_argument
+          value:
+            call_expression
+              simple_identifier "foo"
+              call_suffix
+                value_arguments
+                  value_argument
+                    reference_specifier:
+                      value_argument_label
+                        simple_identifier "bar"
+
+---
+
+top_level
+  body:
+    block
+      stmt:
+        call_expr
+          argument:
+            argument
+              value:
+                call_expr
+                  argument:
+                    argument
+                      name: identifier "bar"
+                  function:
+                    name_expr
+                      identifier: identifier "foo"
+          function:
+            name_expr
+              identifier: identifier "f"

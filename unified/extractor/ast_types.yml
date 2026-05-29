@@ -151,7 +151,7 @@ named:
   argument:
     modifier*: modifier
     name?: identifier
-    value: expr
+    value?: expr
 
   # Member access, such as `obj.member`.
   #
