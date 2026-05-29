@@ -1042,6 +1042,9 @@ top_level
         if_expr
           condition:
             pattern_guard_expr
+              value:
+                name_expr
+                  identifier: identifier "x"
               pattern:
                 name_pattern
                   identifier: identifier "x"

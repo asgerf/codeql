@@ -327,12 +327,20 @@ fn translation_rules() -> Vec<yeast::Rule> {
         ),
         // Switch pattern — unwrap to inner pattern
         rule!((switch_pattern (pattern)* @inner) => {..inner}),
-        // If-let binding (value optional → shorthand form).
+        // If-let binding with explicit value: if let x = expr
         rule!(
-            (if_let_binding (value_binding_pattern mutability: _ @binding_kind) bound_identifier: (_) @name (_)? @val)
+            (if_let_binding (value_binding_pattern) bound_identifier: (_) @name (_) @val)
             =>
             (pattern_guard_expr
-                value: {..val}
+                value: {val}
+                pattern: (name_pattern identifier: (identifier #{name})))
+        ),
+        // Shorthand if-let binding (Swift 5.7+): if let x (implicitly bound to itself)
+        rule!(
+            (if_let_binding (value_binding_pattern) bound_identifier: (_) @name)
+            =>
+            (pattern_guard_expr
+                value: (name_expr identifier: (identifier #{name}))
                 pattern: (name_pattern identifier: (identifier #{name})))
         ),
         // If-condition — unwrap (pass through the inner expression/pattern)
