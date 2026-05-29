@@ -284,7 +284,7 @@ top_level
                     name_pattern
                       identifier: identifier "value"
                   constructor:
-                    member_access_expr
+                    shorthand_member_access_expr
                       member: identifier "some"
           then:
             block
@@ -338,7 +338,7 @@ top_level
                     name_pattern
                       identifier: identifier "value"
                   constructor:
-                    member_access_expr
+                    shorthand_member_access_expr
                       member: identifier "some"
           else:
             block
@@ -1007,7 +1007,7 @@ top_level
                     name_pattern
                       identifier: identifier "x"
                   constructor:
-                    member_access_expr
+                    shorthand_member_access_expr
                       member: identifier "some"
           then:
             block
@@ -1066,7 +1066,7 @@ top_level
                     name_pattern
                       identifier: identifier "x"
                   constructor:
-                    member_access_expr
+                    shorthand_member_access_expr
                       member: identifier "some"
           then:
             block

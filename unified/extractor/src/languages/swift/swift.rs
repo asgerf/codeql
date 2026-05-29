@@ -342,7 +342,7 @@ fn translation_rules() -> Vec<yeast::Rule> {
             (pattern_guard_expr
                 value: {val}
                 pattern: (constructor_pattern
-                    constructor: (member_access_expr member: (identifier "some"))
+                    constructor: (shorthand_member_access_expr member: (identifier "some"))
                     argument: (name_pattern identifier: (identifier #{name}))))
         ),
         // Shorthand if let x (Swift 5.7+) — also semantically .some(x)
@@ -352,7 +352,7 @@ fn translation_rules() -> Vec<yeast::Rule> {
             (pattern_guard_expr
                 value: (name_expr identifier: (identifier #{name}))
                 pattern: (constructor_pattern
-                    constructor: (member_access_expr member: (identifier "some"))
+                    constructor: (shorthand_member_access_expr member: (identifier "some"))
                     argument: (name_pattern identifier: (identifier #{name}))))
         ),
         // If-condition — unwrap (pass through the inner expression/pattern)

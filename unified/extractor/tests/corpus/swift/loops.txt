@@ -513,7 +513,7 @@ top_level
                     name_pattern
                       identifier: identifier "line"
                   constructor:
-                    member_access_expr
+                    shorthand_member_access_expr
                       member: identifier "some"
 
 ===
