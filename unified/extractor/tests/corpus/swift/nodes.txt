@@ -193,7 +193,7 @@ source_file
     name:
       pattern
         bound_identifier: simple_identifier "x"
-    value: nil
+    value: nil_literal "nil"
     value_binding_pattern
       mutability: let
     type_annotation
@@ -212,6 +212,7 @@ top_level
     block
       stmt:
         variable_declaration
+          value: keyword_literal "nil"
           modifier: modifier "let"
           pattern:
             name_pattern
@@ -1700,7 +1701,7 @@ source_file
     name:
       pattern
         bound_identifier: simple_identifier "x"
-    value: nil
+    value: nil_literal "nil"
     value_binding_pattern
       mutability: let
     type_annotation
@@ -1719,6 +1720,7 @@ top_level
     block
       stmt:
         variable_declaration
+          value: keyword_literal "nil"
           modifier: modifier "let"
           pattern:
             name_pattern

@@ -297,6 +297,7 @@ module.exports = grammar({
       ),
     identifier: ($) => sep1($.simple_identifier, $._dot),
     // Literals
+    nil_literal: ($) => "nil",
     _basic_literal: ($) =>
       choice(
         $.integer_literal,
@@ -307,7 +308,7 @@ module.exports = grammar({
         $.boolean_literal,
         $._string_literal,
         $.regex_literal,
-        "nil"
+        $.nil_literal
       ),
     real_literal: ($) =>
       token(

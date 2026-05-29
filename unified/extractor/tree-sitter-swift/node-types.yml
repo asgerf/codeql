@@ -31,8 +31,8 @@ supertypes:
     - multi_line_string_literal
     - multiplicative_expression
     - navigation_expression
-    - "nil"
     - nil_coalescing_expression
+    - nil_literal
     - oct_literal
     - open_end_range_expression
     - open_start_range_expression
@@ -204,7 +204,7 @@ named:
     $children?: modifiers
     body: function_body
   deprecated_operator_declaration_body:
-    $children*: [bin_literal, boolean_literal, hex_literal, integer_literal, line_string_literal, multi_line_string_literal, oct_literal, raw_string_literal, real_literal, regex_literal, simple_identifier]
+    $children*: [bin_literal, boolean_literal, hex_literal, integer_literal, line_string_literal, multi_line_string_literal, nil_literal, oct_literal, raw_string_literal, real_literal, regex_literal, simple_identifier]
   diagnostic:
   dictionary_literal:
     key*: expression
@@ -377,6 +377,7 @@ named:
   nil_coalescing_expression:
     if_nil: expression
     value: expression
+  nil_literal:
   oct_literal:
   opaque_type:
     $children: unannotated_type
@@ -695,7 +696,6 @@ unnamed:
   - "line"
   - "macro"
   - "mutating"
-  - "nil"
   - "nonisolated"
   - "nonmutating"
   - "open"

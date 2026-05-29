@@ -621,6 +621,7 @@ source_file
     body:
       function_body
         statements
+          nil_literal "nil"
     name: simple_identifier "none"
     return_type:
       type
@@ -653,7 +654,9 @@ top_level
             named_type_expr
               name: identifier "Double"
         function_declaration
-          body: block "func none() -> Int? { nil }"
+          body:
+            block
+              stmt: keyword_literal "nil"
           name: identifier "none"
           return_type:
             generic_type_expr

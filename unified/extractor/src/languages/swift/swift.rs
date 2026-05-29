@@ -19,6 +19,7 @@ fn translation_rules() -> Vec<yeast::Rule> {
         rule!((oct_literal) => (int_literal)),
         rule!((real_literal) => (float_literal)),
         rule!((boolean_literal) => (boolean_literal)),
+        rule!((nil_literal) => (keyword_literal)),
         rule!((line_string_literal) => (string_literal)),
         rule!((multi_line_string_literal) => (string_literal)),
         rule!((raw_string_literal) => (string_literal)),
