@@ -327,21 +327,33 @@ fn translation_rules() -> Vec<yeast::Rule> {
         ),
         // Switch pattern — unwrap to inner pattern
         rule!((switch_pattern (pattern)* @inner) => {..inner}),
-        // If-let binding with explicit value: if let x = expr
+        // if case let x = expr — the pattern is taken as-is (no Optional wrapping)
         rule!(
-            (if_let_binding (value_binding_pattern) bound_identifier: (_) @name (_) @val)
+            (if_let_binding "case" (value_binding_pattern) bound_identifier: (_) @name (_) @val)
             =>
             (pattern_guard_expr
                 value: {val}
                 pattern: (name_pattern identifier: (identifier #{name})))
         ),
-        // Shorthand if-let binding (Swift 5.7+): if let x (implicitly bound to itself)
+        // if let x = optional — semantically matches .some(x), so wrap in Optional pattern
+        rule!(
+            (if_let_binding (value_binding_pattern) bound_identifier: (_) @name (_) @val)
+            =>
+            (pattern_guard_expr
+                value: {val}
+                pattern: (constructor_pattern
+                    constructor: (member_access_expr member: (identifier "some"))
+                    argument: (name_pattern identifier: (identifier #{name}))))
+        ),
+        // Shorthand if let x (Swift 5.7+) — also semantically .some(x)
         rule!(
             (if_let_binding (value_binding_pattern) bound_identifier: (_) @name)
             =>
             (pattern_guard_expr
                 value: (name_expr identifier: (identifier #{name}))
-                pattern: (name_pattern identifier: (identifier #{name})))
+                pattern: (constructor_pattern
+                    constructor: (member_access_expr member: (identifier "some"))
+                    argument: (name_pattern identifier: (identifier #{name}))))
         ),
         // If-condition — unwrap (pass through the inner expression/pattern)
         rule!((if_condition (_) @inner) => {inner}),

@@ -508,8 +508,13 @@ top_level
                     name_expr
                       identifier: identifier "readline"
               pattern:
-                name_pattern
-                  identifier: identifier "line"
+                constructor_pattern
+                  argument:
+                    name_pattern
+                      identifier: identifier "line"
+                  constructor:
+                    member_access_expr
+                      member: identifier "some"
 
 ===
 For-in with where clause
