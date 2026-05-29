@@ -460,6 +460,7 @@ fn translation_rules() -> Vec<yeast::Rule> {
         rule!((super_expression) => (super_expr)),
         // Modifiers — unwrap to individual modifier children
         rule!((modifiers (_)* @mods) => {..mods}),
+        rule!((attribute) @m => (modifier #{m})),
         rule!((visibility_modifier) @m => (modifier #{m})),
         rule!((function_modifier) @m => (modifier #{m})),
         rule!((member_modifier) @m => (modifier #{m})),

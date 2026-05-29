@@ -2418,3 +2418,71 @@ top_level
               element:
                 tuple_pattern "a"
                 tuple_pattern "b"
+
+===
+Attributes as modifiers
+===
+
+@objc
+@available(iOS 16, *)
+public class Foo {}
+
+@discardableResult
+func f() -> Int { 0 }
+
+---
+
+source_file
+  class_declaration
+    body:
+      class_body
+    declaration_kind: class
+    name: type_identifier "Foo"
+    modifiers
+      attribute
+        user_type
+          type_identifier "objc"
+      attribute
+        user_type
+          type_identifier "available"
+        simple_identifier "iOS"
+        integer_literal "16"
+        referenceable_operator
+      visibility_modifier
+  function_declaration
+    body:
+      function_body
+        statements
+          integer_literal "0"
+    name: simple_identifier "f"
+    return_type:
+      type
+        name:
+          user_type
+            type_identifier "Int"
+    modifiers
+      attribute
+        user_type
+          type_identifier "discardableResult"
+
+---
+
+top_level
+  body:
+    block
+      stmt:
+        class_like_declaration
+          name: identifier "Foo"
+          modifier:
+            modifier "class"
+            modifier "@objc"
+            modifier "@available(iOS 16, *)"
+            modifier "public"
+        function_declaration
+          body:
+            block
+              stmt: int_literal "0"
+          name: identifier "f"
+          return_type:
+            named_type_expr
+              name: identifier "Int"
