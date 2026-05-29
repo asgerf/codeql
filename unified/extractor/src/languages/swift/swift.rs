@@ -421,6 +421,12 @@ fn translation_rules() -> Vec<yeast::Rule> {
             =>
             (catch_clause body: (block stmt: {..body}))
         ),
+        // Empty catch block: catch {}
+        rule!(
+            (catch_block (catch_keyword))
+            =>
+            (catch_clause body: (block))
+        ),
         // Catch block with unhandled pattern — preserve pattern; optional body.
         rule!(
             (catch_block (catch_keyword) error: (_) @pat (statements (_)* @body)?)

@@ -589,5 +589,60 @@ top_level
                   catch_clause:
                     catch_clause
                       body: block "catch CocoaError.fileNoSuchFile {\n    }"
-                      pattern: tuple_pattern "CocoaError.fileNoSuchFile"
+          name: identifier "f"
+
+===
+Empty catch block
+===
+
+func f() {
+  do {
+    try x()
+  } catch {}
+}
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          do_statement
+            statements
+              try_expression
+                expr:
+                  call_expression
+                    simple_identifier "x"
+                    call_suffix
+                      value_arguments
+                try_operator
+            catch_block
+              catch_keyword "catch"
+    name: simple_identifier "f"
+
+---
+
+top_level
+  body:
+    block
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                try_expr
+                  body:
+                    block
+                      stmt:
+                        unary_expr
+                          operator: operator "try"
+                          operand:
+                            call_expr
+                              function:
+                                name_expr
+                                  identifier: identifier "x"
+                  catch_clause:
+                    catch_clause
+                      body: block "catch {}"
           name: identifier "f"
