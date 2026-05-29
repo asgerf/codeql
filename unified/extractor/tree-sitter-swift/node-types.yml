@@ -85,6 +85,7 @@ supertypes:
     - associatedtype_declaration
     - class_declaration
     - deinit_declaration
+    - directive
     - function_declaration
     - import_declaration
     - init_declaration

@@ -1351,7 +1351,8 @@ module.exports = grammar({
         $.subscript_declaration,
         $.operator_declaration,
         $.precedence_group_declaration,
-        $.associatedtype_declaration
+        $.associatedtype_declaration,
+        $.directive
       ),
     local_declaration: ($) =>
       choice(

@@ -837,3 +837,146 @@ top_level
           function:
             name_expr
               identifier: identifier "f"
+
+===
+Call with nil arguments
+===
+
+func f() {
+  super.init(
+    timestamp: nil,
+    messageBody: nil
+  )
+}
+
+---
+
+source_file
+  function_declaration
+    body:
+      function_body
+        statements
+          call_expression
+            navigation_expression
+              suffix:
+                navigation_suffix
+                  suffix: simple_identifier "init"
+              target:
+                super_expression
+            call_suffix
+              value_arguments
+                value_argument
+                  name:
+                    value_argument_label
+                      simple_identifier "timestamp"
+                  value: nil_literal "nil"
+                value_argument
+                  name:
+                    value_argument_label
+                      simple_identifier "messageBody"
+                  value: nil_literal "nil"
+    name: simple_identifier "f"
+
+---
+
+top_level
+  body:
+    block
+      stmt:
+        function_declaration
+          body:
+            block
+              stmt:
+                call_expr
+                  argument:
+                    argument
+                      name: identifier "timestamp"
+                      value: keyword_literal "nil"
+                    argument
+                      name: identifier "messageBody"
+                      value: keyword_literal "nil"
+                  function:
+                    member_access_expr
+                      target: super_expr "super"
+                      member: identifier "init"
+          name: identifier "f"
+
+===
+Call with nested call and nil args
+===
+
+DDLog.log(asynchronous: true, message: DDLogMessage(
+  message: "foo",
+  tag: nil
+))
+
+---
+
+source_file
+  call_expression
+    navigation_expression
+      suffix:
+        navigation_suffix
+          suffix: simple_identifier "log"
+      target: simple_identifier "DDLog"
+    call_suffix
+      value_arguments
+        value_argument
+          name:
+            value_argument_label
+              simple_identifier "asynchronous"
+          value:
+            boolean_literal
+        value_argument
+          name:
+            value_argument_label
+              simple_identifier "message"
+          value:
+            call_expression
+              simple_identifier "DDLogMessage"
+              call_suffix
+                value_arguments
+                  value_argument
+                    name:
+                      value_argument_label
+                        simple_identifier "message"
+                    value:
+                      line_string_literal
+                        text: line_str_text "foo"
+                  value_argument
+                    name:
+                      value_argument_label
+                        simple_identifier "tag"
+                    value: nil_literal "nil"
+
+---
+
+top_level
+  body:
+    block
+      stmt:
+        call_expr
+          argument:
+            argument
+              name: identifier "asynchronous"
+              value: boolean_literal "true"
+            argument
+              name: identifier "message"
+              value:
+                call_expr
+                  argument:
+                    argument
+                      name: identifier "message"
+                      value: string_literal "\"foo\""
+                    argument
+                      name: identifier "tag"
+                      value: keyword_literal "nil"
+                  function:
+                    name_expr
+                      identifier: identifier "DDLogMessage"
+          function:
+            member_access_expr
+              target:
+                name_expr
+                  identifier: identifier "DDLog"
+              member: identifier "log"

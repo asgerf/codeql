@@ -144,9 +144,13 @@ unified_argument_name(
   unique int name: @unified_token_identifier ref
 );
 
+unified_argument_value(
+  unique int unified_argument: @unified_argument ref,
+  unique int value: @unified_expr ref
+);
+
 unified_argument_def(
-  unique int id: @unified_argument,
-  int value: @unified_expr ref
+  unique int id: @unified_argument
 );
 
 #keyset[unified_array_literal, index]

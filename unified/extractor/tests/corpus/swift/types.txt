@@ -1286,23 +1286,23 @@ source_file
   class_declaration
     body:
       class_body
+        ERROR
+        directive
+          simple_identifier "DEBUG"
+        init_declaration
+          body:
+            function_body
+          name: init
+          parameter
+            name: simple_identifier "x"
+            type:
+              type
+                name:
+                  user_type
+                    type_identifier "Int"
+        directive
     declaration_kind: class
     name: type_identifier "C"
-  directive
-    simple_identifier "DEBUG"
-  init_declaration
-    body:
-      function_body
-    name: init
-    parameter
-      name: simple_identifier "x"
-      type:
-        type
-          name:
-            user_type
-              type_identifier "Int"
-  directive
-  ERROR
 
 ---
 
@@ -1313,15 +1313,16 @@ top_level
         class_like_declaration
           name: identifier "C"
           modifier: modifier "class"
-        unsupported_node "#if DEBUG"
-        constructor_declaration <-- ERROR: The field block.stmt should contain stmt, but got constructor_declaration
-          body: block "init(x: Int) {}"
-          parameter:
-            parameter
-              pattern:
-                name_pattern
-                  identifier: identifier "x"
-        unsupported_node "#endif"
+          member:
+            unsupported_node "#if DEBUG"
+            constructor_declaration
+              body: block "init(x: Int) {}"
+              parameter:
+                parameter
+                  pattern:
+                    name_pattern
+                      identifier: identifier "x"
+            unsupported_node "#endif"
 
 ===
 Visibility and member modifiers on class-like declarations

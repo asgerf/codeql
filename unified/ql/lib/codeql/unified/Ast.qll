@@ -99,13 +99,13 @@ module Unified {
     final Identifier getName() { unified_argument_name(this, result) }
 
     /** Gets the node corresponding to the field `value`. */
-    final Expr getValue() { unified_argument_def(this, result) }
+    final Expr getValue() { unified_argument_value(this, result) }
 
     /** Gets a field or child node of this node. */
     final override AstNode getAFieldOrChild() {
       unified_argument_modifier(this, _, result) or
       unified_argument_name(this, result) or
-      unified_argument_def(this, result)
+      unified_argument_value(this, result)
     }
   }
 
