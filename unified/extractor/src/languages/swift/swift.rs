@@ -490,21 +490,10 @@ fn translation_rules() -> Vec<yeast::Rule> {
         // Type annotations — unwrap
         rule!((type_annotation (_) @inner) => {inner}),
         // User type → named_type_expr (single or qualified component)
-        rule!((user_type (type_identifier)+ @parts) => {..{
-            let mut acc: Option<usize> = None;
-            for p in parts.iter() {
-                let text = __yeast_ctx.ast.source_text((*p).into());
-                let name_node = __yeast_ctx.literal("identifier", &text);
-                acc = Some(match acc {
-                    None => __yeast_ctx.node("named_type_expr", vec![("name", vec![name_node])]),
-                    Some(qual) => __yeast_ctx.node("named_type_expr", vec![
-                        ("qualifier", vec![qual]),
-                        ("name", vec![name_node]),
-                    ]),
-                });
-            }
-            acc.into_iter().collect::<Vec<_>>()
-        }}),
+        rule!((user_type (type_identifier)+ @parts) => {parts}.reduce_left(
+            first -> (named_type_expr name: (identifier #{first})),
+            prev, p -> (named_type_expr qualifier: {prev} name: (identifier #{p}))
+        )),
         // Tuple type → tuple_type_expr
         rule!((tuple_type element: (_)* @elems) => (tuple_type_expr element: {..elems})),
         rule!((tuple_type_item name: (_) @name type: (_) @ty) => (tuple_type_element name: (identifier #{name}) type: {ty})),
@@ -548,23 +537,9 @@ fn translation_rules() -> Vec<yeast::Rule> {
         // User type with multiple components (qualified) → nested named_type_expr
         rule!((user_type (type_identifier)* @parts (type_arguments (_)* @args))
             => (generic_type_expr
-                base: {..{
-                    let result = parts.iter().copied().fold(None, |acc: Option<usize>, part| {
-                        let text = __yeast_ctx.ast.source_text(part.into());
-                        let name_node = __yeast_ctx.literal("identifier", &text);
-                        Some(if let Some(qual) = acc {
-                            __yeast_ctx.node("named_type_expr", vec![
-                                ("qualifier", vec![qual]),
-                                ("name", vec![name_node]),
-                            ])
-                        } else {
-                            __yeast_ctx.node("named_type_expr", vec![
-                                ("name", vec![name_node]),
-                            ])
-                        })
-                    });
-                    result.into_iter().collect::<Vec<_>>()
-                }}
+                base: {parts}.reduce_left(
+                    first -> (named_type_expr name: (identifier #{first})),
+                    prev, p -> (named_type_expr qualifier: {prev} name: (identifier #{p})))
                 type_argument: {..args})),
         // Class declaration with body containing members
         rule!(
