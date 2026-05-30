@@ -709,24 +709,14 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 pattern: (name_pattern
                     identifier: (identifier #{name})))
         ),
-        // Typealias declaration — uses code block to work around `type` keyword issue in macro
+        // Typealias declaration
         rule!(
             (typealias_declaration name: (_) @name value: (_) @val (modifiers)* @mods)
             =>
-            {..{
-                let name_text = __yeast_ctx.ast.source_text(name.into());
-                let ident = __yeast_ctx.literal("identifier", &name_text);
-                let val_id: usize = val.into();
-                let mut fields = vec![
-                    ("name", vec![ident]),
-                    ("type", vec![val_id]),
-                ];
-                let mod_ids: Vec<usize> = mods.iter().map(|&m| m.into()).collect();
-                if !mod_ids.is_empty() {
-                    fields.push(("modifier", mod_ids));
-                }
-                vec![__yeast_ctx.node("type_alias_declaration", fields)]
-            }}
+            (type_alias_declaration
+                modifier: {..mods}
+                name: (identifier #{name})
+                r#type: {val})
         ),
         // Subscript declaration (treat as function for now)
         rule!(
