@@ -466,18 +466,9 @@ fn translation_rules() -> Vec<yeast::Rule> {
         rule!(
             (import_declaration (identifier (simple_identifier)* @parts) (modifiers)* @mods)
             =>
-            {..{
-                let path: Vec<usize> = parts.iter().map(|&p| {
-                    let text = __yeast_ctx.ast.source_text(p.into());
-                    __yeast_ctx.literal("identifier", &text)
-                }).collect();
-                let mod_ids: Vec<usize> = mods.iter().map(|&m| m.into()).collect();
-                let mut fields: Vec<(&str, Vec<usize>)> = vec![("path", path)];
-                if !mod_ids.is_empty() {
-                    fields.push(("modifier", mod_ids));
-                }
-                vec![__yeast_ctx.node("import_declaration", fields)]
-            }}
+            (import_declaration
+                path: {parts}.map(p -> (identifier #{p}))
+                modifier: {..mods})
         ),
         // ---- Types and classes ----
         // Self expression → keyword_literal
