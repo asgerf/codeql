@@ -206,7 +206,9 @@ top_level
                     call_expr
                       function:
                         member_access_expr
-                          target: keyword_literal "self"
+                          target:
+                            name_expr
+                              identifier: identifier "self"
                           member: identifier "doThing"
           modifier: modifier "let"
           pattern:

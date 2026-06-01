@@ -471,8 +471,8 @@ fn translation_rules() -> Vec<yeast::Rule> {
                 modifier: {..mods})
         ),
         // ---- Types and classes ----
-        // Self expression → keyword_literal
-        rule!((self_expression) => (keyword_literal)),
+        // Self expression → name_expr
+        rule!((self_expression) => (name_expr identifier: (identifier "self"))),
         // Super expression → super_expr
         rule!((super_expression) => (super_expr)),
         // Modifiers — unwrap to individual modifier children

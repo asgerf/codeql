@@ -163,7 +163,9 @@ top_level
                     assign_expr
                       target:
                         member_access_expr
-                          target: keyword_literal "self"
+                          target:
+                            name_expr
+                              identifier: identifier "self"
                           member: identifier "x"
                       value:
                         name_expr
@@ -677,8 +679,12 @@ top_level
                       value:
                         binary_expr
                           operator: operator "*"
-                          left: keyword_literal "self"
-                          right: keyword_literal "self"
+                          left:
+                            name_expr
+                              identifier: identifier "self"
+                          right:
+                            name_expr
+                              identifier: identifier "self"
               name: identifier "squared"
               return_type:
                 named_type_expr
