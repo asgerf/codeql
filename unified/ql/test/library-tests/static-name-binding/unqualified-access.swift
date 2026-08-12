@@ -5,15 +5,15 @@ class A {
 }
 
 class ASub : A { // $ access=A
-    let x1: B = nil; // $ access=A.B
-    let x2: B.C = nil; // $ access=A.B access=A.B.C
+    let x1: B = nil; // $ access=A.B SPURIOUS: access=top.B
+    let x2: B.C = nil; // $ access=A.B access=A.B.C SPURIOUS: access=top.B
 
-    class BSub : B { // $ access=A.B
-        let x3: B = nil; // $ access=A.B
+    class BSub : B { // $ access=A.B SPURIOUS: access=top.B
+        let x3: B = nil; // $ access=A.B SPURIOUS: access=top.B
         let x4: C = nil; // $ access=A.B.C
     }
 
-    class BSub2 : B { // $ access=A.B
+    class BSub2 : B { // $ access=A.B SPURIOUS: access=top.B
         class C {} // shadow the inherited C
         let x5: C = nil; // $ access=ASub.BSub2.C
     }
