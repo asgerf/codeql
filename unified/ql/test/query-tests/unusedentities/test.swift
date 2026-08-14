@@ -3,3 +3,8 @@ func t1() -> Int {
     let b = 2
     return b
 }
+
+func t2() -> String {
+    let a = 123 // $ SPURIOUS: Alert[unified/unused-variable]
+    return "a = \(a)"
+}
