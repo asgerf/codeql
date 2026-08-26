@@ -729,8 +729,8 @@ fn translation_rules() -> Vec<Rule<SwiftContext>> {
                     arguments: _* @elements))
             =>
             argument {
+                let constructor = translate_non_pattern(&mut ctx, constructor)?;
                 if ctx.in_pattern {
-                    let constructor = translate_non_pattern(&mut ctx, constructor)?;
                     tree!((pattern_element
                         key: (identifier #{lbl})?
                         pattern: (constructor_pattern
