@@ -5,6 +5,7 @@ overlay[local?]
 module;
 
 private import codeql.files.FileSystem
+private import codeql.unified.internal.LocalNameBinding as LocalNameBinding
 
 module Unified {
   private import Ast::Unified as G
@@ -75,6 +76,27 @@ module Unified {
       or
       result = this.getParent().(Argument).getParent()
     }
+
+    /**
+     * Holds if this expression appears in a context where it receives an incoming value.
+     *
+     * Typical examples are the left-hand side of an assignment or the binding pattern
+     * in a variable declaration, parameter, catch clause, or switch case, as well as their nested sub-patterns.
+     */
+    predicate hasIncomingValue() {
+      LocalNameBinding::bindingContext(this, _, _) or isPartOfAssignmentTarget(this)
+    }
+  }
+
+  private predicate isPartOfAssignmentTarget(Expr e) {
+    e = any(AssignExpr asn).getTarget()
+    or
+    e = any(CompoundAssignExpr asn).getTarget()
+    or
+    exists(TupleExpr tuple |
+      isPartOfAssignmentTarget(tuple) and
+      e = tuple.getAnElement().getValue()
+    )
   }
 
   class AccessorDeclaration extends G::AccessorDeclaration {
