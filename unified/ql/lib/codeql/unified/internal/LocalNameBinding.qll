@@ -166,13 +166,15 @@ private module LocalNameBindingInput implements LocalNameBindingInputSig<Locatio
     abstract AstNode getElse();
   }
 
-  private class LocalVariableDeclarationSiblingShadowingDecl extends SiblingShadowingDecl instanceof LocalVariableDeclaration
+  private class VariableDeclarationSiblingShadowingDecl extends SiblingShadowingDecl instanceof VariableDeclaration
   {
-    LocalVariableDeclarationSiblingShadowingDecl() { not this instanceof TopLevelStmt }
+    VariableDeclarationSiblingShadowingDecl() {
+      not isInstanceMember(this) and not isStaticMember(this)
+    }
 
-    override Expr getPattern() { result = LocalVariableDeclaration.super.getPattern() }
+    override Expr getPattern() { result = VariableDeclaration.super.getPattern() }
 
-    override AstNode getRhs() { result = LocalVariableDeclaration.super.getValue() }
+    override AstNode getRhs() { result = VariableDeclaration.super.getValue() }
 
     override AstNode getElse() { none() }
   }

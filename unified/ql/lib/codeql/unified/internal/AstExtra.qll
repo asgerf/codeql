@@ -26,30 +26,6 @@ module Public {
   }
 
   /**
-   * Declaration of a local or top-level variable.
-   */
-  class LocalVariableDeclaration extends VariableDeclaration {
-    private Block block;
-
-    LocalVariableDeclaration() { this = block.getStmt(_) }
-
-    /** Gets the block in which this variable is declared. */
-    Block getDeclaringBlock() { result = block }
-  }
-
-  /**
-   * Declaration of a local or top-level function.
-   */
-  class LocalFunctionDeclaration extends FunctionDeclaration {
-    private Block block;
-
-    LocalFunctionDeclaration() { this = block.getStmt(_) }
-
-    /** Gets the block in which this function is declared. */
-    Block getDeclaringBlock() { result = block }
-  }
-
-  /**
    * A comment appearing in the source code.
    */
   class Comment extends TriviaToken {
