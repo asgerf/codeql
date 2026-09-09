@@ -19,7 +19,8 @@ private predicate hasOnlyIncomingValue(Expr e) {
 
 private newtype TDataFlowNode =
   TValueNode(Expr expr) or
-  TStrictlyIncomingValue(Expr expr) { hasBothResultAndIncomingValue(expr) }
+  TStrictlyIncomingValue(Expr expr) { hasBothResultAndIncomingValue(expr) } or
+  TLocalVariableNode(LocalVariable v)
 
 /**
  * A node representing something that can have a value.
@@ -34,6 +35,9 @@ class Node extends TDataFlowNode {
     or
     hasBothResultAndIncomingValue(expr) and this = TStrictlyIncomingValue(expr)
   }
+
+  /** Holds if this represents the value stored in the given local variable. */
+  predicate isLocalVariable(LocalVariable v) { this = TLocalVariableNode(v) }
 
   /** Gets the expression represented by this node. */
   Expr asExpr() { this = TValueNode(result) }
@@ -51,11 +55,27 @@ class Node extends TDataFlowNode {
       this = TStrictlyIncomingValue(expr) and
       result = "[incoming] " + expr.toString()
     )
+    or
+    exists(LocalVariable v |
+      this.isLocalVariable(v) and
+      result = "[variable] " + v.toString()
+    )
   }
 
   /** Gets the location of this data flow node. */
-  Location getLocation() { result = this.getWrappedAstNode().getLocation() }
+  Location getLocation() {
+    result = this.getWrappedAstNode().getLocation()
+    or
+    exists(LocalVariable v | this.isLocalVariable(v) and result = v.getLocation())
+  }
 
   /** Gets the callable containing this data flow node. */
-  Callable getEnclosingCallable() { result = this.getWrappedAstNode().getEnclosingCallable() }
+  Callable getEnclosingCallable() {
+    result = this.getWrappedAstNode().getEnclosingCallable()
+    or
+    exists(LocalVariable v |
+      this.isLocalVariable(v) and
+      result = v.getABinding().getEnclosingCallable()
+    )
+  }
 }
