@@ -40,13 +40,14 @@ predicate performsVariableAccess(
   )
 }
 
-private newtype TDataFlowNode =
+newtype TDataFlowNode =
   TValueNode(Expr expr) or
   TStrictlyIncomingValue(Expr expr) { hasBothResultAndIncomingValue(expr) } or
   TPostUpdateNode(Expr expr) { hasPostUpdate(expr) } or
   TLocalVariableRefNode(Expr expr, LocalVariable var, VariableRefKind kind) {
     performsVariableAccess(expr, var, kind, _)
-  }
+  } or
+  TLocalSsaNode(LocalSsaDataFlowOutput::SsaNode node)
 
 /**
  * A node representing something that can have a value.
@@ -62,19 +63,24 @@ class Node extends TDataFlowNode {
     hasBothResultAndIncomingValue(expr) and this = TStrictlyIncomingValue(expr)
   }
 
+  /** Holds if this represents the reference to `v` at `access`. */
+  predicate isLocalVariableRef(Expr access, LocalVariable v, VariableRefKind kind) {
+    this = TLocalVariableRefNode(access, v, kind)
+  }
+
   /** Holds if this represents the value read from `v` at `access`. */
   predicate isLocalVariableRead(Expr access, LocalVariable v) {
-    this = TLocalVariableRefNode(access, v, any(VariableRefKind k | k.isRead()))
+    this.isLocalVariableRef(access, v, TRead())
   }
 
   /** Holds if this represents the value written to `v` at `access`. */
   predicate isLocalVariableWrite(Expr access, LocalVariable v) {
-    this = TLocalVariableRefNode(access, v, any(VariableRefKind k | k.isWrite()))
+    this.isLocalVariableRef(access, v, TWrite())
   }
 
   /** Holds if this represents the updated state of the value hold in `v` after it has been mutated at `when`. */
   predicate isLocalVariablePostUpdate(Expr access, LocalVariable v) {
-    this = TLocalVariableRefNode(access, v, any(VariableRefKind k | k.isPostUpdate()))
+    this.isLocalVariableRef(access, v, TPostUpdate())
   }
 
   /** Holds if this represents the updated state of the value returned by `expr` after it has been mutated by the surrounding assignment or call. */
@@ -109,18 +115,42 @@ class Node extends TDataFlowNode {
       this = TLocalVariableRefNode(_, v, kind) and
       result = "[variable " + kind + "] " + v.toString()
     )
+    or
+    exists(LocalSsaDataFlowOutput::SsaNode node |
+      this = TLocalSsaNode(node) and
+      result = node.toString()
+    )
   }
 
   /** Gets the location of this data flow node. */
-  Location getLocation() { result = this.getWrappedAstNode().getLocation() }
+  Location getLocation() {
+    result = this.getWrappedAstNode().getLocation()
+    or
+    exists(LocalSsaDataFlowOutput::SsaNode node |
+      this = TLocalSsaNode(node) and
+      result = node.getLocation()
+    )
+  }
 
   /** Gets the callable containing this data flow node. */
-  Callable getEnclosingCallable() { result = this.getWrappedAstNode().getEnclosingCallable() }
+  Callable getEnclosingCallable() {
+    result = this.getWrappedAstNode().getEnclosingCallable()
+    or
+    exists(LocalSsaDataFlowOutput::SsaNode node |
+      this = TLocalSsaNode(node) and
+      result = node.getSourceVariable().getDeclaringCallable()
+    )
+  }
 }
 
 Node getPostUpdateNode(Node pre) {
   exists(Expr expr |
     pre.isResultValue(expr) and
     result.isPostUpdate(expr)
+  )
+  or
+  exists(Expr expr, LocalVariable var |
+    pre.isLocalVariableRead(expr, var) and
+    result.isLocalVariablePostUpdate(expr, var)
   )
 }
