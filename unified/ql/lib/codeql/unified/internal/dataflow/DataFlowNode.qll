@@ -30,13 +30,22 @@ private predicate hasPostUpdate(Expr expr) {
 predicate performsVariableAccess(
   Expr expr, LocalVariable var, VariableRefKind kind, ControlFlowNode cfgNode
 ) {
-  // TODO: add UnqualifiedMemberAccess here
   exists(LocalVariableAccess access | var = access.getLocalVariable() and expr = access |
     hasResultValue(access) and kind.isRead() and cfgNode.isAfter(expr)
     or
     access.hasIncomingValue() and kind.isWrite() and cfgNode.asExpr() = expr // TODO: use more precise CFG node
     or
     hasPostUpdate(access) and kind.isPostUpdate() and cfgNode.asExpr() = expr // TODO: use more precise CFG node
+  )
+  or
+  exists(UnqualifiedMemberAccess access |
+    access.isInstanceAccess() and var = access.getImplicitQualifierVariable() and expr = access
+  |
+    kind.isRead() and cfgNode.isBefore(access)
+    or
+    (access.hasIncomingValue() or hasPostUpdate(access)) and
+    kind.isPostUpdate() and
+    cfgNode.asExpr() = access // TODO: use more precise CFG node
   )
 }
 
