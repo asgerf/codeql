@@ -365,6 +365,23 @@ module LocalNameBinding<LocationSig Location, LocalNameBindingInputSig<Location>
     implicitDeclInScope(name, scope)
   }
 
+  pragma[nomagic]
+  private predicate resolveInScope(string name, Scope lookup, Local l) {
+    exists(Scope scope | lookupInScope(name, lookup, scope) |
+      l = TExplicitLocal(_, name, scope) or
+      l = TImplicitLocal(name, scope)
+    )
+  }
+
+  cached
+  private predicate access(AstNode access, Local l) {
+    CachedStage::ref() and
+    exists(Scope lookup, string name |
+      accessCandInLookupScope(access, name, lookup) and
+      resolveInScope(name, lookup, l)
+    )
+  }
+
   /**
    * Holds if `name`, when resolved from `lookup`, may resolve to one of the uncertain members of `scope`.
    */
@@ -447,23 +464,6 @@ module LocalNameBinding<LocationSig Location, LocalNameBindingInputSig<Location>
     override string getName() { result = name }
 
     override Location getLocation() { result = scope.getLocation() }
-  }
-
-  pragma[nomagic]
-  private predicate resolveInScope(string name, Scope lookup, Local l) {
-    exists(Scope scope | lookupInScope(name, lookup, scope) |
-      l = TExplicitLocal(_, name, scope) or
-      l = TImplicitLocal(name, scope)
-    )
-  }
-
-  cached
-  private predicate access(AstNode access, Local l) {
-    CachedStage::ref() and
-    exists(Scope lookup, string name |
-      accessCandInLookupScope(access, name, lookup) and
-      resolveInScope(name, lookup, l)
-    )
   }
 
   /** A local access. */
