@@ -1,0 +1,846 @@
+func foo() -> String { "42" }
+func explicitReturn() -> String { return "42" }
+func multipleStatements() -> String {
+  print("first")
+  return "42"
+}
+func empty() {}
+func declarationOnly() { let x = 42 }
+func nestedBlock(_ condition: Bool) {
+  if condition { print("not returned") }
+}
+func conditional(_ condition: Bool) -> String {
+  if condition { "yes" } else { "no" }
+}
+struct ImplicitGetters {
+  var implicitGetter: String { "42" }
+  var explicitGetter: String { get { "42" } }
+  var readWrite: String {
+    get { "42" }
+    set { print(newValue) }
+  }
+  init() { print("not returned") }
+  deinit { print("not returned") }
+}
+let closure = { "42" }
+let explicitClosure = { return "42" }
+let multipleClosure = { print("first"); return "42" }
+
+---
+
+sourceFile
+  endOfFileToken: endOfFile
+  statements:
+    codeBlockItem
+      item:
+        functionDecl
+          attributes:
+          body:
+            codeBlock
+              leftBrace: {
+              rightBrace: }
+              statements:
+                codeBlockItem
+                  item:
+                    stringLiteralExpr
+                      closingQuote: "
+                      openingQuote: "
+                      segments:
+                        stringSegment
+                          content: stringSegment "42"
+          name: identifier "foo"
+          modifiers:
+          signature:
+            functionSignature
+              parameterClause:
+                functionParameterClause
+                  leftParen: (
+                  rightParen: )
+                  parameters:
+              returnClause:
+                returnClause
+                  arrow: ->
+                  type:
+                    identifierType
+                      name: identifier "String"
+          funcKeyword: func
+    codeBlockItem
+      item:
+        functionDecl
+          attributes:
+          body:
+            codeBlock
+              leftBrace: {
+              rightBrace: }
+              statements:
+                codeBlockItem
+                  item:
+                    returnStmt
+                      expression:
+                        stringLiteralExpr
+                          closingQuote: "
+                          openingQuote: "
+                          segments:
+                            stringSegment
+                              content: stringSegment "42"
+                      returnKeyword: return
+          name: identifier "explicitReturn"
+          modifiers:
+          signature:
+            functionSignature
+              parameterClause:
+                functionParameterClause
+                  leftParen: (
+                  rightParen: )
+                  parameters:
+              returnClause:
+                returnClause
+                  arrow: ->
+                  type:
+                    identifierType
+                      name: identifier "String"
+          funcKeyword: func
+    codeBlockItem
+      item:
+        functionDecl
+          attributes:
+          body:
+            codeBlock
+              leftBrace: {
+              rightBrace: }
+              statements:
+                codeBlockItem
+                  item:
+                    functionCallExpr
+                      leftParen: (
+                      rightParen: )
+                      arguments:
+                        labeledExpr
+                          expression:
+                            stringLiteralExpr
+                              closingQuote: "
+                              openingQuote: "
+                              segments:
+                                stringSegment
+                                  content: stringSegment "first"
+                      additionalTrailingClosures:
+                      calledExpression:
+                        declReferenceExpr
+                          baseName: identifier "print"
+                codeBlockItem
+                  item:
+                    returnStmt
+                      expression:
+                        stringLiteralExpr
+                          closingQuote: "
+                          openingQuote: "
+                          segments:
+                            stringSegment
+                              content: stringSegment "42"
+                      returnKeyword: return
+          name: identifier "multipleStatements"
+          modifiers:
+          signature:
+            functionSignature
+              parameterClause:
+                functionParameterClause
+                  leftParen: (
+                  rightParen: )
+                  parameters:
+              returnClause:
+                returnClause
+                  arrow: ->
+                  type:
+                    identifierType
+                      name: identifier "String"
+          funcKeyword: func
+    codeBlockItem
+      item:
+        functionDecl
+          attributes:
+          body:
+            codeBlock
+              leftBrace: {
+              rightBrace: }
+              statements:
+          name: identifier "empty"
+          modifiers:
+          signature:
+            functionSignature
+              parameterClause:
+                functionParameterClause
+                  leftParen: (
+                  rightParen: )
+                  parameters:
+          funcKeyword: func
+    codeBlockItem
+      item:
+        functionDecl
+          attributes:
+          body:
+            codeBlock
+              leftBrace: {
+              rightBrace: }
+              statements:
+                codeBlockItem
+                  item:
+                    variableDecl
+                      attributes:
+                      modifiers:
+                      bindingSpecifier: let
+                      bindings:
+                        patternBinding
+                          initializer:
+                            initializerClause
+                              equal: =
+                              value:
+                                integerLiteralExpr
+                                  literal: integerLiteral "42"
+                          pattern:
+                            identifierPattern
+                              identifier: identifier "x"
+          name: identifier "declarationOnly"
+          modifiers:
+          signature:
+            functionSignature
+              parameterClause:
+                functionParameterClause
+                  leftParen: (
+                  rightParen: )
+                  parameters:
+          funcKeyword: func
+    codeBlockItem
+      item:
+        functionDecl
+          attributes:
+          body:
+            codeBlock
+              leftBrace: {
+              rightBrace: }
+              statements:
+                codeBlockItem
+                  item:
+                    expressionStmt
+                      expression:
+                        ifExpr
+                          body:
+                            codeBlock
+                              leftBrace: {
+                              rightBrace: }
+                              statements:
+                                codeBlockItem
+                                  item:
+                                    functionCallExpr
+                                      leftParen: (
+                                      rightParen: )
+                                      arguments:
+                                        labeledExpr
+                                          expression:
+                                            stringLiteralExpr
+                                              closingQuote: "
+                                              openingQuote: "
+                                              segments:
+                                                stringSegment
+                                                  content: stringSegment "not returned"
+                                      additionalTrailingClosures:
+                                      calledExpression:
+                                        declReferenceExpr
+                                          baseName: identifier "print"
+                          conditions:
+                            conditionElement
+                              condition:
+                                declReferenceExpr
+                                  baseName: identifier "condition"
+                          ifKeyword: if
+          name: identifier "nestedBlock"
+          modifiers:
+          signature:
+            functionSignature
+              parameterClause:
+                functionParameterClause
+                  leftParen: (
+                  rightParen: )
+                  parameters:
+                    functionParameter
+                      colon: :
+                      attributes:
+                      modifiers:
+                      type:
+                        identifierType
+                          name: identifier "Bool"
+                      firstName: _
+                      secondName: identifier "condition"
+          funcKeyword: func
+    codeBlockItem
+      item:
+        functionDecl
+          attributes:
+          body:
+            codeBlock
+              leftBrace: {
+              rightBrace: }
+              statements:
+                codeBlockItem
+                  item:
+                    expressionStmt
+                      expression:
+                        ifExpr
+                          body:
+                            codeBlock
+                              leftBrace: {
+                              rightBrace: }
+                              statements:
+                                codeBlockItem
+                                  item:
+                                    stringLiteralExpr
+                                      closingQuote: "
+                                      openingQuote: "
+                                      segments:
+                                        stringSegment
+                                          content: stringSegment "yes"
+                          conditions:
+                            conditionElement
+                              condition:
+                                declReferenceExpr
+                                  baseName: identifier "condition"
+                          elseKeyword: else
+                          elseBody:
+                            codeBlock
+                              leftBrace: {
+                              rightBrace: }
+                              statements:
+                                codeBlockItem
+                                  item:
+                                    stringLiteralExpr
+                                      closingQuote: "
+                                      openingQuote: "
+                                      segments:
+                                        stringSegment
+                                          content: stringSegment "no"
+                          ifKeyword: if
+          name: identifier "conditional"
+          modifiers:
+          signature:
+            functionSignature
+              parameterClause:
+                functionParameterClause
+                  leftParen: (
+                  rightParen: )
+                  parameters:
+                    functionParameter
+                      colon: :
+                      attributes:
+                      modifiers:
+                      type:
+                        identifierType
+                          name: identifier "Bool"
+                      firstName: _
+                      secondName: identifier "condition"
+              returnClause:
+                returnClause
+                  arrow: ->
+                  type:
+                    identifierType
+                      name: identifier "String"
+          funcKeyword: func
+    codeBlockItem
+      item:
+        structDecl
+          attributes:
+          name: identifier "ImplicitGetters"
+          memberBlock:
+            memberBlock
+              leftBrace: {
+              rightBrace: }
+              members:
+                memberBlockItem
+                  decl:
+                    variableDecl
+                      attributes:
+                      modifiers:
+                      bindingSpecifier: var
+                      bindings:
+                        patternBinding
+                          pattern:
+                            identifierPattern
+                              identifier: identifier "implicitGetter"
+                          typeAnnotation:
+                            typeAnnotation
+                              colon: :
+                              type:
+                                identifierType
+                                  name: identifier "String"
+                          accessorBlock:
+                            accessorBlock
+                              accessors:
+                                codeBlockItem
+                                  item:
+                                    stringLiteralExpr
+                                      closingQuote: "
+                                      openingQuote: "
+                                      segments:
+                                        stringSegment
+                                          content: stringSegment "42"
+                              leftBrace: {
+                              rightBrace: }
+                memberBlockItem
+                  decl:
+                    variableDecl
+                      attributes:
+                      modifiers:
+                      bindingSpecifier: var
+                      bindings:
+                        patternBinding
+                          pattern:
+                            identifierPattern
+                              identifier: identifier "explicitGetter"
+                          typeAnnotation:
+                            typeAnnotation
+                              colon: :
+                              type:
+                                identifierType
+                                  name: identifier "String"
+                          accessorBlock:
+                            accessorBlock
+                              accessors:
+                                accessorDecl
+                                  accessorSpecifier: get
+                                  attributes:
+                                  body:
+                                    codeBlock
+                                      leftBrace: {
+                                      rightBrace: }
+                                      statements:
+                                        codeBlockItem
+                                          item:
+                                            stringLiteralExpr
+                                              closingQuote: "
+                                              openingQuote: "
+                                              segments:
+                                                stringSegment
+                                                  content: stringSegment "42"
+                              leftBrace: {
+                              rightBrace: }
+                memberBlockItem
+                  decl:
+                    variableDecl
+                      attributes:
+                      modifiers:
+                      bindingSpecifier: var
+                      bindings:
+                        patternBinding
+                          pattern:
+                            identifierPattern
+                              identifier: identifier "readWrite"
+                          typeAnnotation:
+                            typeAnnotation
+                              colon: :
+                              type:
+                                identifierType
+                                  name: identifier "String"
+                          accessorBlock:
+                            accessorBlock
+                              accessors:
+                                accessorDecl
+                                  accessorSpecifier: get
+                                  attributes:
+                                  body:
+                                    codeBlock
+                                      leftBrace: {
+                                      rightBrace: }
+                                      statements:
+                                        codeBlockItem
+                                          item:
+                                            stringLiteralExpr
+                                              closingQuote: "
+                                              openingQuote: "
+                                              segments:
+                                                stringSegment
+                                                  content: stringSegment "42"
+                                accessorDecl
+                                  accessorSpecifier: set
+                                  attributes:
+                                  body:
+                                    codeBlock
+                                      leftBrace: {
+                                      rightBrace: }
+                                      statements:
+                                        codeBlockItem
+                                          item:
+                                            functionCallExpr
+                                              leftParen: (
+                                              rightParen: )
+                                              arguments:
+                                                labeledExpr
+                                                  expression:
+                                                    declReferenceExpr
+                                                      baseName: identifier "newValue"
+                                              additionalTrailingClosures:
+                                              calledExpression:
+                                                declReferenceExpr
+                                                  baseName: identifier "print"
+                              leftBrace: {
+                              rightBrace: }
+                memberBlockItem
+                  decl:
+                    initializerDecl
+                      attributes:
+                      body:
+                        codeBlock
+                          leftBrace: {
+                          rightBrace: }
+                          statements:
+                            codeBlockItem
+                              item:
+                                functionCallExpr
+                                  leftParen: (
+                                  rightParen: )
+                                  arguments:
+                                    labeledExpr
+                                      expression:
+                                        stringLiteralExpr
+                                          closingQuote: "
+                                          openingQuote: "
+                                          segments:
+                                            stringSegment
+                                              content: stringSegment "not returned"
+                                  additionalTrailingClosures:
+                                  calledExpression:
+                                    declReferenceExpr
+                                      baseName: identifier "print"
+                      modifiers:
+                      signature:
+                        functionSignature
+                          parameterClause:
+                            functionParameterClause
+                              leftParen: (
+                              rightParen: )
+                              parameters:
+                      initKeyword: init
+                memberBlockItem
+                  decl:
+                    deinitializerDecl
+                      attributes:
+                      body:
+                        codeBlock
+                          leftBrace: {
+                          rightBrace: }
+                          statements:
+                            codeBlockItem
+                              item:
+                                functionCallExpr
+                                  leftParen: (
+                                  rightParen: )
+                                  arguments:
+                                    labeledExpr
+                                      expression:
+                                        stringLiteralExpr
+                                          closingQuote: "
+                                          openingQuote: "
+                                          segments:
+                                            stringSegment
+                                              content: stringSegment "not returned"
+                                  additionalTrailingClosures:
+                                  calledExpression:
+                                    declReferenceExpr
+                                      baseName: identifier "print"
+                      modifiers:
+                      deinitKeyword: deinit
+          modifiers:
+          structKeyword: struct
+    codeBlockItem
+      item:
+        variableDecl
+          attributes:
+          modifiers:
+          bindingSpecifier: let
+          bindings:
+            patternBinding
+              initializer:
+                initializerClause
+                  equal: =
+                  value:
+                    closureExpr
+                      leftBrace: {
+                      rightBrace: }
+                      statements:
+                        codeBlockItem
+                          item:
+                            stringLiteralExpr
+                              closingQuote: "
+                              openingQuote: "
+                              segments:
+                                stringSegment
+                                  content: stringSegment "42"
+              pattern:
+                identifierPattern
+                  identifier: identifier "closure"
+    codeBlockItem
+      item:
+        variableDecl
+          attributes:
+          modifiers:
+          bindingSpecifier: let
+          bindings:
+            patternBinding
+              initializer:
+                initializerClause
+                  equal: =
+                  value:
+                    closureExpr
+                      leftBrace: {
+                      rightBrace: }
+                      statements:
+                        codeBlockItem
+                          item:
+                            returnStmt
+                              expression:
+                                stringLiteralExpr
+                                  closingQuote: "
+                                  openingQuote: "
+                                  segments:
+                                    stringSegment
+                                      content: stringSegment "42"
+                              returnKeyword: return
+              pattern:
+                identifierPattern
+                  identifier: identifier "explicitClosure"
+    codeBlockItem
+      item:
+        variableDecl
+          attributes:
+          modifiers:
+          bindingSpecifier: let
+          bindings:
+            patternBinding
+              initializer:
+                initializerClause
+                  equal: =
+                  value:
+                    closureExpr
+                      leftBrace: {
+                      rightBrace: }
+                      statements:
+                        codeBlockItem
+                          item:
+                            functionCallExpr
+                              leftParen: (
+                              rightParen: )
+                              arguments:
+                                labeledExpr
+                                  expression:
+                                    stringLiteralExpr
+                                      closingQuote: "
+                                      openingQuote: "
+                                      segments:
+                                        stringSegment
+                                          content: stringSegment "first"
+                              additionalTrailingClosures:
+                              calledExpression:
+                                declReferenceExpr
+                                  baseName: identifier "print"
+                          semicolon: ;
+                        codeBlockItem
+                          item:
+                            returnStmt
+                              expression:
+                                stringLiteralExpr
+                                  closingQuote: "
+                                  openingQuote: "
+                                  segments:
+                                    stringSegment
+                                      content: stringSegment "42"
+                              returnKeyword: return
+              pattern:
+                identifierPattern
+                  identifier: identifier "multipleClosure"
+
+---
+
+top_level source="⟨body⟩"
+  body:
+    block source="⟨stmt⟩\n⟨stmt⟩\n⟨stmt⟩\n⟨stmt⟩\n⟨stmt⟩\n⟨stmt⟩\n⟨stmt⟩\n⟨stmt⟩\n⟨stmt⟩\n⟨stmt⟩\n⟨stmt⟩"
+      stmt:
+        function_declaration source="func ⟨name_node⟩() -> ⟨return_type⟩ ⟨body⟩"
+          name_node: identifier "foo" source="foo"
+          return_type: identifier "String" source="String"
+          body:
+            block source="{ ⟨stmt⟩ }"
+              stmt:
+                return_expr source="⟨value⟩"
+                  value: string_literal "\"42\"" source="\"42\""
+        function_declaration source="func ⟨name_node⟩() -> ⟨return_type⟩ ⟨body⟩"
+          name_node: identifier "explicitReturn" source="explicitReturn"
+          return_type: identifier "String" source="String"
+          body:
+            block source="{ ⟨stmt⟩ }"
+              stmt:
+                return_expr source="return ⟨value⟩"
+                  value: string_literal "\"42\"" source="\"42\""
+        function_declaration source="func ⟨name_node⟩() -> ⟨return_type⟩ ⟨body⟩"
+          name_node: identifier "multipleStatements" source="multipleStatements"
+          return_type: identifier "String" source="String"
+          body:
+            block source="{\n  ⟨stmt⟩\n  ⟨stmt⟩\n}"
+              stmt:
+                call_expr source="⟨callee⟩(⟨argument⟩)"
+                  callee: identifier "print" source="print"
+                  argument:
+                    argument source="⟨value⟩"
+                      value: string_literal "\"first\"" source="\"first\""
+                return_expr source="return ⟨value⟩"
+                  value: string_literal "\"42\"" source="\"42\""
+        function_declaration source="func ⟨name_node⟩() ⟨body⟩"
+          name_node: identifier "empty" source="empty"
+          body: block "{}" source="{}"
+        function_declaration source="func ⟨name_node⟩() ⟨body⟩"
+          name_node: identifier "declarationOnly" source="declarationOnly"
+          body:
+            block source="{ ⟨stmt⟩ }"
+              stmt:
+                variable_declaration source="⟨modifier⟩ ⟨pattern⟩ = ⟨value⟩"
+                  modifier: modifier "let" source="let"
+                  pattern: identifier "x" source="x"
+                  value: int_literal "42" source="42"
+        function_declaration source="func ⟨name_node⟩(⟨parameter⟩) ⟨body⟩"
+          name_node: identifier "nestedBlock" source="nestedBlock"
+          parameter:
+            parameter source="⟨external_name_node⟩ ⟨pattern⟩: ⟨type⟩"
+              external_name_node: identifier "_" source="_"
+              type: identifier "Bool" source="Bool"
+              pattern: identifier "condition" source="condition"
+          body:
+            block source="{\n  ⟨stmt⟩\n}"
+              stmt:
+                if_expr source="if ⟨condition⟩ ⟨then⟩"
+                  condition: identifier "condition" source="condition"
+                  then:
+                    block source="{ ⟨stmt⟩ }"
+                      stmt:
+                        call_expr source="⟨callee⟩(⟨argument⟩)"
+                          callee: identifier "print" source="print"
+                          argument:
+                            argument source="⟨value⟩"
+                              value: string_literal "\"not returned\"" source="\"not returned\""
+        function_declaration source="func ⟨name_node⟩(⟨parameter⟩) -> ⟨return_type⟩ ⟨body⟩"
+          name_node: identifier "conditional" source="conditional"
+          parameter:
+            parameter source="⟨external_name_node⟩ ⟨pattern⟩: ⟨type⟩"
+              external_name_node: identifier "_" source="_"
+              type: identifier "Bool" source="Bool"
+              pattern: identifier "condition" source="condition"
+          return_type: identifier "String" source="String"
+          body:
+            block source="{\n  ⟨stmt⟩\n}"
+              stmt:
+                if_expr source="if ⟨condition⟩ ⟨then⟩ else ⟨else⟩"
+                  condition: identifier "condition" source="condition"
+                  then:
+                    block source="{ ⟨stmt⟩ }"
+                      stmt: string_literal "\"yes\"" source="\"yes\""
+                  else:
+                    block source="{ ⟨stmt⟩ }"
+                      stmt: string_literal "\"no\"" source="\"no\""
+        class_like_declaration source="⟨modifier⟩ ⟨name_node⟩ {\n  ⟨member⟩\n  var explicitGetter: String { ⟨member⟩ }\n  var readWrite: String {\n    ⟨member⟩\n    ⟨member⟩\n  }\n  ⟨member⟩\n  ⟨member⟩\n}"
+          modifier: modifier "struct" source="struct"
+          name_node: identifier "ImplicitGetters" source="ImplicitGetters"
+          member:
+            accessor_declaration source="⟨modifier⟩ ⟨name_node⟩: ⟨type⟩ ⟨body⟩"
+              modifier: modifier "var" source="var"
+              name_node: identifier "implicitGetter" source="implicitGetter"
+              accessor_kind: accessor_kind "get" source=""
+              type: identifier "String" source="String"
+              body:
+                block source="{ ⟨stmt⟩ }"
+                  stmt:
+                    return_expr source="⟨value⟩"
+                      value: string_literal "\"42\"" source="\"42\""
+            accessor_declaration source="⟨accessor_kind⟩ ⟨body⟩"
+              modifier: modifier "var" source="var" (external)
+              name_node: identifier "explicitGetter" source="explicitGetter" (external)
+              accessor_kind: accessor_kind "get" source="get"
+              type: identifier "String" source="String" (external)
+              body:
+                block source="{ ⟨stmt⟩ }"
+                  stmt:
+                    return_expr source="⟨value⟩"
+                      value: string_literal "\"42\"" source="\"42\""
+            accessor_declaration source="⟨accessor_kind⟩ ⟨body⟩"
+              modifier: modifier "var" source="var" (external)
+              name_node: identifier "readWrite" source="readWrite" (external)
+              accessor_kind: accessor_kind "get" source="get"
+              type: identifier "String" source="String" (external)
+              body:
+                block source="{ ⟨stmt⟩ }"
+                  stmt:
+                    return_expr source="⟨value⟩"
+                      value: string_literal "\"42\"" source="\"42\""
+            accessor_declaration source="⟨accessor_kind⟩ ⟨body⟩"
+              modifier:
+                modifier "var" source="var" (external)
+                modifier "chained_declaration" source=""
+              name_node: identifier "readWrite" source="readWrite" (external)
+              accessor_kind: accessor_kind "set" source="set"
+              type: identifier "String" source="String" (external)
+              body:
+                block source="{ ⟨stmt⟩ }"
+                  stmt:
+                    call_expr source="⟨callee⟩(⟨argument⟩)"
+                      callee: identifier "print" source="print"
+                      argument:
+                        argument source="⟨value⟩"
+                          value: identifier "newValue" source="newValue"
+            constructor_declaration source="⟨name_node⟩() ⟨body⟩"
+              name_node: identifier "init" source="init"
+              body:
+                block source="{ ⟨stmt⟩ }"
+                  stmt:
+                    call_expr source="⟨callee⟩(⟨argument⟩)"
+                      callee: identifier "print" source="print"
+                      argument:
+                        argument source="⟨value⟩"
+                          value: string_literal "\"not returned\"" source="\"not returned\""
+            destructor_declaration source="deinit ⟨body⟩"
+              body:
+                block source="{ ⟨stmt⟩ }"
+                  stmt:
+                    call_expr source="⟨callee⟩(⟨argument⟩)"
+                      callee: identifier "print" source="print"
+                      argument:
+                        argument source="⟨value⟩"
+                          value: string_literal "\"not returned\"" source="\"not returned\""
+        variable_declaration source="⟨modifier⟩ ⟨pattern⟩ = ⟨value⟩"
+          modifier: modifier "let" source="let"
+          pattern: identifier "closure" source="closure"
+          value:
+            function_expr source="{ ⟨body⟩ }"
+              body:
+                block source="⟨stmt⟩"
+                  stmt:
+                    return_expr source="⟨value⟩"
+                      value: string_literal "\"42\"" source="\"42\""
+        variable_declaration source="⟨modifier⟩ ⟨pattern⟩ = ⟨value⟩"
+          modifier: modifier "let" source="let"
+          pattern: identifier "explicitClosure" source="explicitClosure"
+          value:
+            function_expr source="{ ⟨body⟩ }"
+              body:
+                block source="⟨stmt⟩"
+                  stmt:
+                    return_expr source="return ⟨value⟩"
+                      value: string_literal "\"42\"" source="\"42\""
+        variable_declaration source="⟨modifier⟩ ⟨pattern⟩ = ⟨value⟩"
+          modifier: modifier "let" source="let"
+          pattern: identifier "multipleClosure" source="multipleClosure"
+          value:
+            function_expr source="{ ⟨body⟩ }"
+              body:
+                block source="⟨stmt⟩; ⟨stmt⟩"
+                  stmt:
+                    call_expr source="⟨callee⟩(⟨argument⟩)"
+                      callee: identifier "print" source="print"
+                      argument:
+                        argument source="⟨value⟩"
+                          value: string_literal "\"first\"" source="\"first\""
+                    return_expr source="return ⟨value⟩"
+                      value: string_literal "\"42\"" source="\"42\""

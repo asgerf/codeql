@@ -119,6 +119,46 @@ fn declaration_and_operator_tokens_keep_precise_ranges() {
 }
 
 #[test]
+fn implicit_returns_wrap_only_single_expression_callable_bodies() {
+    let source = r#"
+func foo() -> String { "42" }
+func explicitReturn() -> String { return "explicit" }
+func multiple() -> String { print("first"); return "last" }
+func declarationOnly() { let x = 42 }
+func nested() { while true { print("nested") } }
+struct S {
+    var value: String { "getter" }
+    var explicit: String { get { "explicit getter" } }
+    var readWrite: String {
+        get { "read" }
+        set { print(newValue) }
+    }
+    init() { print("init") }
+    deinit { print("deinit") }
+}
+let closure = { "closure" }
+let explicitClosure = { return "explicit closure" }
+let multipleClosure = { print("first"); return "last closure" }
+"#;
+    let ast = desugar(source);
+    let mut actual = spans(&ast, source, "return_expr", None);
+    actual.sort();
+    let mut expected = vec![
+        r#""42""#,
+        r#"return "explicit""#,
+        r#"return "last""#,
+        r#""getter""#,
+        r#""explicit getter""#,
+        r#""read""#,
+        r#""closure""#,
+        r#"return "explicit closure""#,
+        r#"return "last closure""#,
+    ];
+    expected.sort();
+    assert_eq!(actual, expected);
+}
+
+#[test]
 fn closure_bodies_exclude_closure_delimiters() {
     let source = "let f = { (x: Int) -> Int in x * 2 }";
     let ast = desugar(source);

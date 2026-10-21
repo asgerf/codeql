@@ -140,14 +140,18 @@ top_level source="⟨body⟩"
                 function_expr source="{\n  ⟨body⟩\n}"
                   body:
                     block source="⟨stmt⟩"
-                      stmt: identifier "value" source="value"
+                      stmt:
+                        return_expr source="⟨value⟩"
+                          value: identifier "value" source="value"
             argument source="⟨name_node⟩: ⟨value⟩"
               name_node: identifier "completion" source="completion"
               value:
                 function_expr source="{\n  ⟨body⟩\n}"
                   body:
                     block source="⟨stmt⟩"
-                      stmt: identifier "value" source="value"
+                      stmt:
+                        return_expr source="⟨value⟩"
+                          value: identifier "value" source="value"
         macro_call_expr source="#⟨macro_name_node⟩ ⟨argument⟩"
           macro_name_node: identifier "Preview" source="Preview"
           argument:

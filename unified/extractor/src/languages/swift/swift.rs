@@ -1,6 +1,11 @@
 use codeql_extractor::extractor::desugaring;
 use yeast::{ConcreteDesugarer, DesugaringConfig, Rule, rule, tree, tree_at, tree_spanning};
 
+static SWIFT_SCHEMA: std::sync::LazyLock<yeast::schema::Schema> = std::sync::LazyLock::new(|| {
+    yeast::node_types_yaml::schema_from_yaml(include_str!("../../../swift_node_types.yml"))
+        .expect("invalid Swift node types")
+});
+
 /// User context propagated from outer rules down to the inner rules that
 /// emit the corresponding output declarations, so that each emitted node
 /// is born with the outer information (name, type, modifiers, etc.)
@@ -38,6 +43,8 @@ struct SwiftContext {
     /// True while translating a pattern. Optional chaining in this context is
     /// represented as an `Optional.some` call rather than being unwrapped.
     in_pattern: bool,
+    /// Whether the current body/item can implicitly return its sole expression.
+    implicit_return: bool,
 }
 
 impl SwiftContext {
@@ -70,6 +77,29 @@ fn chained_modifier(ctx: &mut yeast::build::BuildCtx<'_, SwiftContext>) -> Optio
     } else {
         None
     }
+}
+
+fn translate_returning_body(
+    ctx: &mut yeast::build::BuildCtx<'_, SwiftContext>,
+    body: yeast::Id,
+) -> Result<Vec<yeast::Id>, String> {
+    ctx.scoped(|ctx| {
+        ctx.reset();
+        ctx.implicit_return = true;
+        ctx.translate(body)
+    })
+}
+
+fn translate_body_statements(
+    ctx: &mut yeast::build::BuildCtx<'_, SwiftContext>,
+    stmts: Vec<yeast::Id>,
+) -> Result<Vec<yeast::Id>, String> {
+    ctx.implicit_return = ctx.implicit_return && stmts.len() == 1;
+    let mut body = Vec::new();
+    for stmt in stmts {
+        body.extend(ctx.translate(stmt)?);
+    }
+    Ok(body)
 }
 
 fn implicit_parameterless_initializer(
@@ -162,7 +192,26 @@ fn translation_rules() -> Vec<Rule<SwiftContext>> {
         // but a single wrapped `variableDecl` can translate to *several*
         // declarations (`let x = 1, y = 2`), so the wrapped node is captured with
         // `_*` and the result annotated `stmt*` to splice all of them.
-        rule!((codeBlockItem item: _* @item) => stmt* { item }),
+        rule!((codeBlockItem item: _ @@value)
+            where ctx.implicit_return && ast.get_node(value).is_some_and(|node| {
+                SWIFT_SCHEMA.supertype_members("expr")
+                    .expect("Swift schema must define expressions")
+                    .iter()
+                    .any(|ty| ty.kind == node.kind_name())
+            })
+            => stmt {
+            ctx.implicit_return = false;
+            let value = ctx.translate(value)?;
+            tree!((return_expr value: {value}))
+        }),
+        rule!((codeBlockItem item: _* @@items) => stmt* {
+            ctx.implicit_return = false;
+            let mut result = Vec::new();
+            for item in items {
+                result.extend(ctx.translate(item)?);
+            }
+            result
+        }),
         // ---- Literals ----
         // swift-syntax does not distinguish the lexical integer/string forms
         // (hex/binary/octal, single- vs multi-line, raw): each is a single
@@ -314,9 +363,16 @@ fn translation_rules() -> Vec<Rule<SwiftContext>> {
             elements: _* @@rest)
             where rest.is_empty() && lbl.is_none() => expr { element }),
         rule!((tupleExpr elements: _* @elements) => (tuple_expr element: {elements})),
-        // A code block contains its statements directly.
-        rule!((codeBlock statements: _* @stmts) => (block stmt: {stmts})),
-        rule!((accessorBlock accessors: (codeBlockItem)* @stmts) => (block stmt: {stmts})),
+        // Only a callable's single-expression body has an implicit return;
+        // nested control-flow blocks and multi-statement bodies do not.
+        rule!((codeBlock statements: _* @@stmts) => block {
+            let body = translate_body_statements(&mut ctx, stmts)?;
+            tree!((block stmt: {body}))
+        }),
+        rule!((accessorBlock accessors: (codeBlockItem)* @@stmts) => block {
+            let body = translate_body_statements(&mut ctx, stmts)?;
+            tree!((block stmt: {body}))
+        }),
         // ---- Properties with accessors ----
         // A computed property with an implicit getter (`var a: T { <stmts> }`)
         // becomes a single `accessor_declaration` of kind `get`. This form is
@@ -329,14 +385,18 @@ fn translation_rules() -> Vec<Rule<SwiftContext>> {
                 bindings: (patternBinding
                     pattern: (identifierPattern identifier: @@name)
                     typeAnnotation: (typeAnnotation type: @ty)
-                    accessorBlock: (accessorBlock accessors: (codeBlockItem)+) @body))
+                    accessorBlock: (accessorBlock accessors: (codeBlockItem)+) @@raw_body))
             =>
-            (accessor_declaration
+            accessor_declaration {
+                let body = translate_returning_body(&mut ctx, raw_body)?;
+                let body = body.into_iter().next().ok_or("implicit getter has no body")?;
+                tree!((accessor_declaration
                 modifier: (modifier #{spec})
                 name_node: (identifier #{name})
                 type: {ty}
                 accessor_kind: {ctx.literal_at_start_of("accessor_kind", "get", body)}
-                body: {body})
+                body: {body}))
+            }
         ),
         // A property with an explicit accessor block. swift-syntax makes both
         // shapes plain `accessorDecl`s, so they are told apart by the presence
@@ -417,6 +477,8 @@ fn translation_rules() -> Vec<Rule<SwiftContext>> {
                 let body = match body {
                     Some(block) => {
                         ctx.reset();
+                        ctx.implicit_return = ctx.ast.get_node(spec)
+                            .is_some_and(|node| node.opt_string_content().as_deref() == Some("get"));
                         ctx.translate(block)?.into_iter().next()
                     }
                     None => None,
@@ -606,7 +668,7 @@ fn translation_rules() -> Vec<Rule<SwiftContext>> {
                 signature: (functionSignature
                     parameterClause: (functionParameterClause parameters: _* @params)
                     returnClause: (returnClause type: @ret)?)
-                body: (codeBlock) @body)
+                body: (codeBlock) @@body)
             =>
             (function_declaration
                 modifier: {mods}
@@ -614,7 +676,7 @@ fn translation_rules() -> Vec<Rule<SwiftContext>> {
                 type_parameter: {type_params}
                 parameter: {params}
                 return_type: {ret}
-                body: {body})
+                body: {translate_returning_body(&mut ctx, body)?})
         ),
         rule!(
             (functionDecl
@@ -814,14 +876,18 @@ fn translation_rules() -> Vec<Rule<SwiftContext>> {
                     capture: (closureCaptureClause items: _* @captures)?
                     parameterClause: _* @params
                     returnClause: (returnClause type: @ret)?)?
-                statements: _* @body)
+                statements: _* @@body)
             =>
             (function_expr
                 modifier: {attrs}
                 capture_declaration: {captures}
                 parameter: {params}
                 return_type: {ret}
-                body: (block stmt: {body}))
+                body: (block stmt: {
+                    ctx.reset();
+                    ctx.implicit_return = true;
+                    translate_body_statements(&mut ctx, body)?
+                }))
         ),
         // A closure capture (`[weak self]`, `[x]`, `[y = expr]`).
         // Normalize so there is always an explicit initializer, expanding `[x]` into `[x = x]`.

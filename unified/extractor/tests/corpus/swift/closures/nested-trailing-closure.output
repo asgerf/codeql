@@ -70,7 +70,9 @@ top_level source="⟨body⟩"
                           body:
                             block source="⟨stmt⟩"
                               stmt:
-                                binary_expr source="⟨left⟩ ⟨operator⟩ ⟨right⟩"
-                                  left: identifier "$0" source="$0"
-                                  operator: infix_operator "*" source="*"
-                                  right: int_literal "2" source="2"
+                                return_expr source="⟨value⟩"
+                                  value:
+                                    binary_expr source="⟨left⟩ ⟨operator⟩ ⟨right⟩"
+                                      left: identifier "$0" source="$0"
+                                      operator: infix_operator "*" source="*"
+                                      right: int_literal "2" source="2"

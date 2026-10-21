@@ -80,10 +80,12 @@ top_level source="⟨body⟩"
           body:
             block source="{\n  ⟨stmt⟩\n}"
               stmt:
-                unresolved_operator_sequence source="⟨element⟩ ⟨element⟩ ⟨element⟩ ⟨element⟩ ⟨element⟩"
-                  element:
-                    ignore_pattern "_" source="_"
-                    infix_operator "=" source="="
-                    identifier "a" source="a"
-                    infix_operator ".&" source=".&"
-                    identifier "b" source="b"
+                return_expr source="⟨value⟩"
+                  value:
+                    unresolved_operator_sequence source="⟨element⟩ ⟨element⟩ ⟨element⟩ ⟨element⟩ ⟨element⟩"
+                      element:
+                        ignore_pattern "_" source="_"
+                        infix_operator "=" source="="
+                        identifier "a" source="a"
+                        infix_operator ".&" source=".&"
+                        identifier "b" source="b"

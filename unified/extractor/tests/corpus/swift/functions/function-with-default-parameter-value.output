@@ -76,8 +76,10 @@ top_level source="⟨body⟩"
           body:
             block source="{\n  ⟨stmt⟩\n}"
               stmt:
-                call_expr source="⟨callee⟩(⟨argument⟩)"
-                  callee: identifier "print" source="print"
-                  argument:
-                    argument source="⟨value⟩"
-                      value: identifier "name" source="name"
+                return_expr source="⟨value⟩"
+                  value:
+                    call_expr source="⟨callee⟩(⟨argument⟩)"
+                      callee: identifier "print" source="print"
+                      argument:
+                        argument source="⟨value⟩"
+                          value: identifier "name" source="name"

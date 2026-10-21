@@ -51,7 +51,9 @@ top_level source="⟨body⟩"
               body:
                 block source="⟨stmt⟩"
                   stmt:
-                    binary_expr source="⟨left⟩ ⟨operator⟩ ⟨right⟩"
-                      left: identifier "$0" source="$0"
-                      operator: infix_operator "+" source="+"
-                      right: identifier "$1" source="$1"
+                    return_expr source="⟨value⟩"
+                      value:
+                        binary_expr source="⟨left⟩ ⟨operator⟩ ⟨right⟩"
+                          left: identifier "$0" source="$0"
+                          operator: infix_operator "+" source="+"
+                          right: identifier "$1" source="$1"
