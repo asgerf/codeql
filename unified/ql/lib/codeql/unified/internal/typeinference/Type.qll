@@ -6,6 +6,7 @@ import unified // reexport in order to shadow e.g. the `TypeParameter` class
 private import unified as Unified
 private import TypeInference
 private import codeql.unified.internal.StaticNameBinding
+private import codeql.unified.internal.mad.LegacyMaD as MaD
 
 /**
  * Holds if `a` is an associated type of `c`, in which case we model it
@@ -56,6 +57,7 @@ newtype TType =
   ) {
     associatedTypeParameter(c, a, inherited)
   } or
+  TModelType(MaD::TypeSelector selector) or
   TUnknownType() or
   TUnknownTypeTypeParameter(int i) { i in [0 .. 20] }
 
@@ -120,6 +122,26 @@ class ClassLikeDeclarationType extends TypeImpl, TClassLikeDeclarationType {
   override string toString() { result = c.getName() }
 
   override Location getLocation() { result = c.getLocation() }
+}
+
+/**
+ * A type described by a type selector in a models-as-data row.
+ */
+class ModelType extends TypeImpl, TModelType {
+  private MaD::TypeSelector selector;
+
+  ModelType() { this = TModelType(selector) }
+
+  /** Gets the type selector describing this type. */
+  MaD::TypeSelector getTypeSelector() { result = selector }
+
+  override TypeParameter getPositionalTypeParameter(int i) { none() }
+
+  override Identifier getNameNode() { none() }
+
+  override string toString() { result = selector }
+
+  override Location getLocation() { result instanceof EmptyLocation }
 }
 
 /**

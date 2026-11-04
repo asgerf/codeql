@@ -85,6 +85,8 @@ private class NonAliasExprTypeMention extends ExprTypeMentionImpl {
     result = Plugin::getFunctionExprType(this)
     or
     result.(Plugin::TupleType).getArity() = this.(TupleExpr).getNumberOfElements()
+    or
+    result.(ModelType).getTypeSelector().getAStaticRef() = this
   }
 
   Type getRootType() {
