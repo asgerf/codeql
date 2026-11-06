@@ -860,6 +860,14 @@ predicate inferTypeUnique = M3::inferTypeUnique/2;
 
 predicate inferTypeCertain = M3::inferTypeCertain/2;
 
+/** Gets the type of the given base of `access`. */
+Type inferBaseType(MemberAccess access) {
+  result = inferType(access.(MemberAccessExpr).getBase())
+  or
+  result.asClass().getAMemberIncludingExtensions() =
+    access.(UnqualifiedMemberAccess).getImplicitQualifierVariable().getDeclaringCallable()
+}
+
 module Consistency = M3::Consistency;
 
 module CachedStage = M3::CachedStage;
