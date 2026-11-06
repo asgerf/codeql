@@ -36,7 +36,7 @@ predicate isInTypeContext(Expr expr) {
   or
   expr.getParent() instanceof TypeConstraint
   or
-  exists(NameBinding::getTypeFromRef(expr))
+  NameBinding::isTypeRef(expr)
   or
   any(ExprPositionsPlugin p).isInTypeContext(expr)
   or
