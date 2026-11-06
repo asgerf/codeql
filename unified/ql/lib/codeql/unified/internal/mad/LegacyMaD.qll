@@ -131,14 +131,6 @@ private predicate isRawPropertyName(string name) {
   not name.matches("%(%")
 }
 
-/** Holds if `cls` is named `type` or, if `subtypes` is true, is a subclass of `type`. */
-bindingset[cls, type]
-private predicate classMatchesType(ClassLikeDeclaration cls, string type, boolean subtypes) {
-  cls.getQualifiedName() = type and subtypes = [true, false]
-  or
-  isSubclassOfType(cls, type) and subtypes = true
-}
-
 /**
  * Holds if `access` may be an access to the property `name`, and its base has the inferred
  * type `baseType`.
